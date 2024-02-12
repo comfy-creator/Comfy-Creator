@@ -18,12 +18,15 @@ import ReactFlow, {
   NodeToolbar,
 } from "reactflow";
 import { useNodeTypes } from "../contexts/NodeTypes.tsx";
+import { useContextMenu } from "../contexts/ContextMenu.tsx";
 
 export function MainFlow() {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
 
   const { nodeTypes } = useNodeTypes();
+  const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } =
+    useContextMenu();
 
   // Standard React Flow Handlers
   const onNodesChange = useCallback(
@@ -45,12 +48,16 @@ export function MainFlow() {
 
   return (
     <ReactFlow
+      onContextMenu={onContextMenu}
+      onNodeContextMenu={onNodeContextMenu}
+      onPaneClick={onPaneClick}
       nodes={nodes}
       onNodesChange={onNodesChange}
       edges={edges}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
       nodeTypes={nodeTypes}
+      ref={menuRef}
       fitView
     >
       <Background variant={BackgroundVariant.Lines} />

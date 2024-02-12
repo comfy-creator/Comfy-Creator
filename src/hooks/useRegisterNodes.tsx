@@ -1,5 +1,5 @@
 import { NodeData } from "../types.ts";
-import { NodeTemplate } from "../components/NodeTemplate.tsx";
+import { NodeTemplate } from "../components/templates/NodeTemplate.tsx";
 import { useNodeTypes } from "../contexts/NodeTypes.tsx";
 
 export function useRegisterNodes() {
