@@ -16,3 +16,13 @@ export type NodeData = {
     optional?: Record<string, InputSpec>;
   };
 };
+
+export interface ContextMenuProps {
+  id?: string | null;
+  top: number;
+  left: number;
+  right: number;
+  bottom: number;
+
+  [key: string]: any;
+}
