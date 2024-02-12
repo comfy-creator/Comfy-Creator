@@ -4,13 +4,14 @@ import {
   ReactNode,
   useContext,
   useState,
+  useCallback
 } from "react";
 import { NodeProps, NodeTypes } from "reactflow";
 
 interface INodeTypes {
-  registerNodeType: (type: string, node: ComponentType<NodeProps>) => void;
-  unregisterNodeType: (type: string) => void;
   nodeTypes: NodeTypes;
+  registerNodeType: (typeName: string, node: ComponentType<NodeProps>) => void;
+  unregisterNodeType: (typeName: string) => void;
 }
 
 const NodeTypesContext = createContext<INodeTypes | null>(null);
@@ -29,32 +30,17 @@ export function NodeTypesProvider({
 }: Readonly<{ children: ReactNode }>) {
   const [nodeTypes, setNodeTypes] = useState<NodeTypes>({});
 
-  const registerNodeType = (type: string, node: ComponentType<NodeProps>) => {
-    if (nodeTypes[type]) {
-      throw new Error(`Node type '${type}' already exists`);
-    }
-
-    return setNodeTypes((prev) => ({
+  // This will overwrite old node-definitions of the same name
+  const registerNodeType = useCallback((typeName: string, node: ComponentType<NodeProps>) => {
+    setNodeTypes((prev) => ({
       ...prev,
-      [type]: node,
+      [typeName]: node,
     }));
-  };
+  }, []);
 
-  const unregisterNodeType = (type: string) => {
-    if (!nodeTypes[type]) {
-      throw new Error(`Node type '${type}' does not exist`);
-    }
-
-    return setNodeTypes((prev) =>
-      Object.keys(prev).reduce((obj, key) => {
-        if (key !== type) {
-          obj[key] = prev[key];
-        }
-
-        return obj;
-      }, {} as NodeTypes)
-    );
-  };
+  const unregisterNodeType = useCallback((typeName: string) => {
+    return setNodeTypes(({ [typeName]: _, ...otherNodes }) => otherNodes);
+  }, []);
 
   return (
     <NodeTypesContext.Provider

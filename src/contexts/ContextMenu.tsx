@@ -9,7 +9,7 @@ import {
   useState,
 } from "react";
 import { ContextMenuProps } from "../types.ts";
-import { ContextMenuTemplate } from "../components/templates/ContextMenuTemplate.tsx";
+import { ContextMenuTemplate } from "../components/template/ContextMenuTemplate.tsx";
 import { Node } from "reactflow";
 
 interface IContextMenu {
@@ -43,7 +43,6 @@ export function ContextMenuProvider({
       const menuData = getMenuData(event);
       if (!menuData) return;
 
-      // @ts-ignore
       setMenuProps(menuData);
     },
     [setMenuProps],
@@ -55,7 +54,6 @@ export function ContextMenuProvider({
       const menuData = getMenuData(event);
       if (!menuData) return;
 
-      // @ts-ignore
       setMenuProps(menuData);
       setNodeId(node.id);
     },
@@ -67,10 +65,10 @@ export function ContextMenuProvider({
     if (!pane) return;
 
     return {
-      top: event.clientY < pane.height - 200 && event.clientY,
-      left: event.clientX < pane.width - 200 && event.clientX,
-      right: event.clientX >= pane.width - 200 && pane.width - event.clientX,
-      bottom: event.clientY >= pane.height - 200 && pane.height - event.clientY,
+      top: event.clientY < pane.height - 200 ? event.clientY : undefined,
+      left: event.clientX < pane.width - 200 ? event.clientX : undefined,
+      right: event.clientX >= pane.width - 200 ? pane.width - event.clientX : undefined,
+      bottom: event.clientY >= pane.height - 200 ? pane.height - event.clientY : undefined,
     };
   };
 
