@@ -12,6 +12,7 @@ export function ContextMenuTemplate({
   ...props
 }: ContextMenuProps) {
   const { getNode, getNodes, addNodes, setNodes, setEdges } = useReactFlow();
+
   const addNewNode = useCallback(() => {
     let node: Node | undefined;
     if (id) {
@@ -21,21 +22,21 @@ export function ContextMenuTemplate({
     const newId = getNodes().length + 1;
     const position = node
       ? { x: node.position.x + 50, y: node.position.y + 50 }
-      : { x: top + 250, y: left + 250 };
+      : { x: (top || 0) + 250, y: (left || 0) + 250 };
 
     addNodes({
       position,
       id: String(newId),
       data: { label: `Node ${newId}` },
     });
-  }, [id, getNode, addNodes]);
+  }, [id, getNode, getNodes, addNodes, top, left]);
 
   const deleteNode = useCallback(() => {
     setNodes((nodes) => nodes.filter((node) => node.id !== id));
     setEdges((edges) => edges.filter((edge) => edge.source !== id));
 
     reset?.();
-  }, [id, setNodes, setEdges]);
+  }, [id, setNodes, setEdges, reset]);
 
   useEffect(() => {
     console.log(id);
@@ -43,7 +44,12 @@ export function ContextMenuTemplate({
 
   return (
     <div
-      style={{ top, left, right, bottom }}
+      style = {{
+        ...(top !== undefined ? { top: `${top}px` } : {}),
+        ...(left !== undefined ? { left: `${left}px` } : {}),
+        ...(right !== undefined ? { right: `${right}px` } : {}),
+        ...(bottom !== undefined ? { bottom: `${bottom}px` } : {}),
+      }}
       className="context-menu"
       {...props}
     >

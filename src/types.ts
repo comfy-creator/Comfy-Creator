@@ -19,10 +19,10 @@ export type NodeData = {
 
 export interface ContextMenuProps {
   id?: string | null;
-  top: number;
-  left: number;
-  right: number;
-  bottom: number;
+  top?: number;
+  left?: number;
+  right?: number;
+  bottom?: number;
 
   reset?: () => void;
 
