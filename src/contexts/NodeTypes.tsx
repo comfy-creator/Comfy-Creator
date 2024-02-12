@@ -52,7 +52,7 @@ export function NodeTypesProvider({
         }
 
         return obj;
-      }, {} as NodeTypes),
+      }, {} as NodeTypes)
     );
   };
 

@@ -16,9 +16,11 @@ import ReactFlow, {
   NodeChange,
   NodeResizer,
   NodeToolbar,
+  Panel
 } from "reactflow";
 import { useNodeTypes } from "../contexts/NodeTypes.tsx";
 import { useContextMenu } from "../contexts/ContextMenu.tsx";
+import ControlPanel from "./ControlPanel/ControlPanel.tsx";
 
 export function MainFlow() {
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -65,6 +67,9 @@ export function MainFlow() {
       <MiniMap />
       <NodeResizer />
       <NodeToolbar />
+      <Panel position="top-right">
+        <ControlPanel />
+      </Panel>
     </ReactFlow>
   );
 }

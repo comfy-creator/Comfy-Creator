@@ -28,6 +28,19 @@ body {
 	color: var(--fg-color);
 }
 
+.custom-button {
+	color: var(--input-text);
+    background-color: var(--comfy-input-bg);
+    border-radius: 8px;
+    border-color: var(--border-color);
+    border-style: solid;
+    margin-top: 2px;
+}
+
+
+/* ComfyTS styles */
+
+
 #graph-canvas {
 	width: 100%;
 	height: 100%;
