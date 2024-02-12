@@ -6,6 +6,7 @@ export type InputSpec = {
   max?: number;
   step?: number;
   default?: number;
+  options?: string[];
 };
 
 export type NodeData = {
