@@ -10,32 +10,3 @@ body,
     height: 100%;
     margin: 0;
 }
-
-.context-menu {
-    z-index: 5;
-    width: 200px;
-    background: white;
-    position: absolute;
-    border: 1.5px solid #d0cfcf;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.context-menu h4 {
-    margin: 0;
-    padding: 0.3em;
-}
-
-.context-menu button {
-    width: 100%;
-    border: none;
-    display: block;
-    padding: 0.5em;
-    cursor: pointer;
-    font-size: 16px;
-    text-align: left;
-    background: inherit;
-}
-
-.context-menu button:hover {
-    background: #f2f2f2;
-}

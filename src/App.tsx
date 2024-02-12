@@ -1,10 +1,12 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-import { NodeTypesProvider } from "./contexts/NodeTypes.tsx";
-import { MainFlow } from "./components/MainFlow.tsx";
+import { NodeTypesProvider } from "./contexts/NodeTypes";
+import { MainFlow } from "./components/MainFlow";
 
 import "reactflow/dist/style.css";
-import { ContextMenuProvider } from "./contexts/ContextMenu.tsx";
+import { ContextMenuProvider } from "./contexts/ContextMenu";
+import { ApiContextProvider } from "./contexts/apiContext";
+import { SettingsContextProvider } from "./contexts/settingsContext";
 import { ReactFlowProvider } from "reactflow";
 
 function App() {
@@ -12,7 +14,11 @@ function App() {
     <ReactFlowProvider>
       <NodeTypesProvider>
         <ContextMenuProvider>
-          <MainFlow />
+          <ApiContextProvider>
+            <SettingsContextProvider>
+              <MainFlow />
+            </SettingsContextProvider>
+          </ApiContextProvider>
         </ContextMenuProvider>
       </NodeTypesProvider>
     </ReactFlowProvider>
