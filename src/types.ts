@@ -24,5 +24,7 @@ export interface ContextMenuProps {
   right: number;
   bottom: number;
 
+  reset?: () => void;
+
   [key: string]: any;
 }

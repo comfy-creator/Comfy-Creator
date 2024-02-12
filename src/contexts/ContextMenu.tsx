@@ -77,12 +77,24 @@ export function ContextMenuProvider({
   // Close the context menu if it's open whenever the window is clicked.
   const onPaneClick = useCallback(() => setMenuProps(null), [setMenuProps]);
 
+  const reset = () => {
+    setMenuProps(null);
+    setNodeId(null);
+  };
+
   return (
     <ContextMenuContext.Provider
-      value={{ onContextMenu, onNodeContextMenu, onPaneClick, menuRef }}
+      value={{
+        onContextMenu,
+        onNodeContextMenu,
+        onPaneClick,
+        menuRef,
+      }}
     >
       {children}
-      {menuProps && <ContextMenuTemplate id={nodeId} {...menuProps} />}
+      {menuProps && (
+        <ContextMenuTemplate reset={reset} id={nodeId} {...menuProps} />
+      )}
     </ContextMenuContext.Provider>
   );
 }

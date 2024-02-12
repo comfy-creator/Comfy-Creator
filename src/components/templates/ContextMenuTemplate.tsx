@@ -8,6 +8,7 @@ export function ContextMenuTemplate({
   left,
   right,
   bottom,
+  reset,
   ...props
 }: ContextMenuProps) {
   const { getNode, getNodes, addNodes, setNodes, setEdges } = useReactFlow();
@@ -32,6 +33,8 @@ export function ContextMenuTemplate({
   const deleteNode = useCallback(() => {
     setNodes((nodes) => nodes.filter((node) => node.id !== id));
     setEdges((edges) => edges.filter((edge) => edge.source !== id));
+
+    reset?.();
   }, [id, setNodes, setEdges]);
 
   useEffect(() => {
