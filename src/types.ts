@@ -5,7 +5,7 @@ export type InputSpec = {
   min?: number;
   max?: number;
   step?: number;
-  default?: number;
+  default?: any;
   options?: string[];
 };
 
@@ -20,6 +20,15 @@ export type NodeData = {
   };
 };
 
+export type NodeWidget =
+  | ButtonWidget
+  | ToggleWidget
+  | SliderWidget
+  | NumberWidget
+  | ComboWidget
+  | StringWidget
+  | TextWidget;
+
 export interface ContextMenuProps {
   id?: string | null;
   top?: number;
@@ -32,56 +41,68 @@ export interface ContextMenuProps {
   [key: string]: any;
 }
 
-export interface Widget {
+export type WidgetTypes =
+  | "button"
+  | "toggle"
+  | "slider"
+  | "number"
+  | "combo"
+  | "text"
+  | "string";
+
+export interface Widget<Value extends any, Options extends any> {
+  name: string;
+  value: Value;
+  options?: Options;
+  type: WidgetTypes;
+  label?: string;
   y?: number;
   last_y: number;
   disabled?: boolean;
-  width?: number;
-  clicked?: boolean;
-  value?: any;
-  options?: any;
-  marker?: any;
 }
 
-export interface ButtonWidget extends Widget {
+export interface ButtonWidget extends Widget<null, {}> {
   type: "button";
-  label?: string;
-  name?: string;
-
   onClick?: (e: MouseEvent<HTMLButtonElement>) => void;
 }
 
-export interface ToggleWidget extends Widget {
+export interface ToggleWidget
+  extends Widget<boolean, { on?: string; off?: string }> {
   type: "toggle";
-  label?: string;
-  name?: string;
-  value?: boolean;
-
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
-export interface SliderWidget extends Widget {
+export interface SliderWidget
+  extends Widget<number, { max: number; min: number }> {
   type: "slider";
-  options: {
-    min: number;
-    max: number;
-    slider_color?: string;
-    marker_color?: string;
-  };
 }
 
-export interface NumberWidget extends Widget {
+export interface NumberWidget extends Widget<number, {}> {
   type: "number";
+  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
-export interface ComboWidget extends Widget {
+export interface ComboWidget
+  extends Widget<string[], { values: string[] | (() => string[]) }> {
   type: "combo";
+  onChange?: (e: ChangeEvent<HTMLSelectElement>) => void;
 }
 
-export interface StringWidget extends Widget {
+export interface StringWidget extends Widget<string, {}> {
   type: "string";
+  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
-export interface TextWidget extends Widget {
+export interface TextWidget extends Widget<string, {}> {
   type: "text";
+  onChange?: (e: ChangeEvent<HTMLTextAreaElement>) => void;
 }
+
+type InputTypes =
+  | "INT"
+  | "STRING"
+  | "BOOLEAN"
+  | "FLOAT"
+  | "IMAGEUPLOAD"
+  | "INT:seed"
+  | "INT:noise_seed";

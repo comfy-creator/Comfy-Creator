@@ -1,25 +1,23 @@
-import { ToggleWidget } from "../../types.ts";
+import { StringWidget } from "../../types.ts";
 
-export function Toggle({
+export function String({
   label,
   name,
-  options,
   disabled,
   value,
   onChange,
-}: ToggleWidget) {
+}: StringWidget) {
   return (
     <>
       <label>{label || name}</label>
       <input
+        type="text"
         value={value}
-        type="checkbox"
         disabled={disabled}
         onChange={(e) => {
           onChange?.(e);
         }}
-      />{" "}
-      {value ? options?.on || "true" : options?.off || "false"}
+      />
     </>
   );
 }
