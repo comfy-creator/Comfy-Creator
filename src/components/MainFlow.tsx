@@ -1,6 +1,6 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ReactFlow, {
   addEdge,
   applyEdgeChanges,
@@ -16,17 +16,36 @@ import ReactFlow, {
   NodeChange,
   NodeResizer,
   NodeToolbar,
-  Panel
+  Panel,
 } from "reactflow";
 import { useNodeTypes } from "../contexts/NodeTypes.tsx";
 import { useContextMenu } from "../contexts/ContextMenu.tsx";
 import ControlPanel from "./ControlPanel/ControlPanel.tsx";
+import { useRegisterNodes } from "../hooks/useRegisterNodes.tsx";
+import { videoModelDef } from "../node_definitions/videoModel.ts";
 
 export function MainFlow() {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
 
+  const { registerNode } = useRegisterNodes();
   const { nodeTypes } = useNodeTypes();
+
+  useEffect(() => {
+    registerNode("VideoModel", videoModelDef);
+  }, []);
+
+  useEffect(() => {
+    setNodes([
+      {
+        id: "1",
+        type: "VideoModel",
+        position: { x: 250, y: 5 },
+        data: {},
+      },
+    ]);
+  }, []);
+
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } =
     useContextMenu();
 
@@ -61,6 +80,10 @@ export function MainFlow() {
       nodeTypes={nodeTypes}
       ref={menuRef}
       fitView
+      style={{
+        backgroundColor: "var(--bg-color)",
+        color: "var(--fg-color)",
+      }}
     >
       <Background variant={BackgroundVariant.Lines} />
       <Controls />

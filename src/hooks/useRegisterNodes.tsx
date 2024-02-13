@@ -14,4 +14,6 @@ export function useRegisterNodes() {
   const registerNode = (nodeId: string, nodeData: NodeData) => {
     registerNodeType(nodeId, () => <NodeTemplate data={nodeData} />);
   };
+
+  return { registerNodesFromDefs, registerNode };
 }
