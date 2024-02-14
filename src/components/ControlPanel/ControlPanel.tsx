@@ -124,17 +124,15 @@ const ControlPanel = () => {
 
   return (
     <Draggable
-      //   axis="x"
       handle=".drag-handle"
       defaultPosition={{ x: 0, y: 100 }}
-      //   position={null}
       grid={[25, 25]}
       scale={1}
       //  onStart={this.handleStart}
       //  onDrag={this.handleDrag}
       //  onStop={this.handleStop}
     >
-      <div className="control-panel handle">
+      <div className="control-panel">
         <div className="comfy-menu" ref={menuContainerEl}>
           {fileInput}
           <div

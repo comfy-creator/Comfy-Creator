@@ -13,50 +13,6 @@
     box-sizing: border-box;
 }
 
-.context-menu {
-    font-family: Tahoma, sans-serif;
-    position: fixed;
-    top: 100px;
-    left: 100px;
-    min-width: 100px;
-    color: #aaf;
-    padding: 0;
-    box-shadow: 0 0 10px black !important;
-    background-color: #2e2e2e !important;
-	z-index: 10;
-    padding: 0.3rem;
-}
-
-.context-menu.dark {
-    background-color: #000 !important;
-}
-
-.context-menu h4 {
-    color: white;
-    font-size: 16px;
-    margin: 0;
-    padding: 0.3em;
-}
-
-.context-menu button {
-    width: 100%;
-    border: none;
-    display: block;
-    padding: 0.3em;
-    cursor: pointer;
-    font-size: 16px;
-    text-align: left;
-    background: inherit;
-    transition: all 0.2s ease-in-out;
-    color: #f2f2f2;
-}
-
-.context-menu button:hover {
-    background: #f2f2f2;
-    color: #2e2e2e;
-}
-
-
 .litegraph.litecontextmenu .litemenu-title img {
     margin-top: 2px;
     margin-left: 2px;

@@ -1,6 +1,6 @@
-import { NodeData } from "../types.ts";
-import { NodeTemplate } from "../components/template/NodeTemplate.tsx";
-import { useNodeTypes } from "../contexts/NodeTypes.tsx";
+import { NodeData } from "../types";
+import { NodeTemplate } from "../components/template/NodeTemplate";
+import { useNodeTypes } from "../contexts/NodeTypes";
 
 export function useRegisterNodes() {
   const { registerNodeType } = useNodeTypes();

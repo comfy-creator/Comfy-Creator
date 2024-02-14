@@ -128,8 +128,9 @@
     background-color: var(--comfy-menu-bg);
     font-family: sans-serif;
     padding: 10px;
-    border-radius: 0 8px 8px 8px;
+    border-radius: 8px;
     box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.4);
+    height: min-content;
 }
 
 .comfy-menu-header {
@@ -317,13 +318,11 @@ button.comfy-queue-btn {
         top: 0 !important;
         bottom: 0 !important;
         left: auto !important;
-        right: 0 !important;
-        border-radius: 0;
     }
 
-    .comfy-menu span.drag-handle {
+    /* .comfy-menu span.drag-handle {
         display: none;
-    }
+    } */
 
     .comfy-menu-queue-size {
         flex: unset;

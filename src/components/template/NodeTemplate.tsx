@@ -7,6 +7,7 @@ import { String } from "../widgets/String.tsx";
 import { Text } from "../widgets/Text.tsx";
 import { Toggle } from "../widgets/Toggle.tsx";
 import { Combo } from "../widgets/Combo.tsx";
+import { toast } from "react-toastify";
 
 const inputWidgetTypes = [
   "INT",
@@ -31,13 +32,13 @@ export const NodeTemplate = ({ data }: { data: NodeData }) => {
 
   const getNonWidgetInputs = (inputs: Record<string, InputSpec>) => {
     return Object.entries(inputs).filter(
-      ([key, value]) => !isWidgetInput(value.type),
+      ([key, value]) => !isWidgetInput(value.type)
     );
   };
 
   const getWidgetInputs = (inputs: Record<string, InputSpec>) => {
     return Object.entries(inputs).filter(([key, value]) =>
-      isWidgetInput(value.type),
+      isWidgetInput(value.type)
     );
   };
 
@@ -67,114 +68,59 @@ export const NodeTemplate = ({ data }: { data: NodeData }) => {
     } as NodeWidget;
   };
 
-  return (
-    <div
-      style={{
-        fontSize: "10px",
-        width: "180px",
-        border: "1px solid #ddd",
-        padding: "3px",
-        borderRadius: "5px",
-        background: "#353535",
-      }}
-    >
-      <div
-        style={{
-          fontSize: ".5em",
-          fontFamily: "unset",
-          fontWeight: "normal",
-          textAlign: "center",
-        }}
-      >
-        {data.label}
-      </div>
+  const onClick = () => toast.success("File uploaded successfully!")
 
-      {/* Render input handles */}
-      {getNonWidgetInputs({
-        ...data.inputs.required,
-        ...data.inputs.optional,
-      }).map(([key], index, array) => (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          <Handle
-            key={key}
-            type="source"
-            position={Position.Left}
-            id={key}
-            style={{
-              left: 0,
-              background: "purple",
-              top: "unset",
-              width: "5px",
-              height: "5px",
-              borderRadius: "50%",
-              border: "1px solid transparent",
-            }}
-          />
-          <div
-            style={{
-              marginLeft: "8px",
-              fontWeight: "normal",
-              fontSize: "0.5em",
-            }}
-          >
-            {key}
+  return (
+    <div className="node">
+      <div className="node_container">
+        <div className="node_label" onClick={onClick}>{data.label}</div>
+
+        <div className="flow_input_output_container">
+          <div className="flow_input_container">
+            {/* Render input handles */}
+            {getNonWidgetInputs({
+              ...data.inputs.required,
+              ...data.inputs.optional,
+            }).map(([key], index, array) => (
+              <div className="flow_input">
+                <Handle
+                  key={key}
+                  type="source"
+                  position={Position.Left}
+                  id={key}
+                  className={`flow_handler left ${key}`}
+                />
+                <span className="flow_input_text">{key}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flow_output_container">
+            {/* Render output handles */}
+            {data.outputs.map((output, index) => (
+              <div className="flow_output">
+                <Handle
+                  key={output}
+                  type="source"
+                  position={Position.Right}
+                  id={output}
+                  className={`flow_handler right ${output}`}
+                />
+                <span className="flow_output_text">{output}</span>
+              </div>
+            ))}
           </div>
         </div>
-      ))}
 
-      {/* Render output handles */}
-      {data.outputs.map((output, index) => (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-          }}
-        >
-          <Handle
-            key={output}
-            type="source"
-            position={Position.Right}
-            id={output}
-            style={{
-              background: "yellow",
-              top: "unset",
-              width: "5px",
-              height: "5px",
-              borderRadius: "50%",
-              border: "1px solid transparent",
-            }}
-          />
-          <span style={{ marginLeft: "5px", fontSize: "0.8em" }}>{output}</span>
-        </div>
-      ))}
-      <div style={{ marginTop: "3px" }}>
-        {getWidgetInputs({
-          ...data.inputs.required,
-          ...data.inputs.optional,
-        }).map(([key, value]) => {
-          const widget = inputToWidget(key, value);
+        <div className="widgets_container">
+          {getWidgetInputs({
+            ...data.inputs.required,
+            ...data.inputs.optional,
+          }).map(([key, value]) => {
+            const widget = inputToWidget(key, value);
 
-          return (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                width: "100%",
-              }}
-            >
-              <div
-                style={{
-                  marginLeft: "8px",
-                  fontWeight: "normal",
-                  fontSize: "0.5em",
-                  width: "100%",
-                }}
-              >
+            return (
+              <div className="widget_container">
                 {widget.type === "button" ? (
                   <Button {...widget} />
                 ) : widget.type === "number" ? (
@@ -189,9 +135,9 @@ export const NodeTemplate = ({ data }: { data: NodeData }) => {
                   <Combo {...widget} />
                 ) : null}
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
