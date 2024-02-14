@@ -18,11 +18,11 @@ import ReactFlow, {
   NodeToolbar,
   Panel,
 } from "reactflow";
-import { useNodeTypes } from "../contexts/NodeTypes.tsx";
-import { useContextMenu } from "../contexts/ContextMenu.tsx";
-import ControlPanel from "./ControlPanel/ControlPanel.tsx";
-import { useRegisterNodes } from "../hooks/useRegisterNodes.tsx";
-import { videoModelDef } from "../node_definitions/videoModel.ts";
+import { useNodeTypes } from "../contexts/NodeTypes";
+import { useContextMenu } from "../contexts/ContextMenu";
+import ControlPanel from "./ControlPanel/ControlPanel";
+import { useRegisterNodes } from "../hooks/useRegisterNodes";
+import { videoModelDef } from "../node_definitions/videoModel";
 
 export function MainFlow() {
   const [nodes, setNodes] = useState<Node[]>([]);
