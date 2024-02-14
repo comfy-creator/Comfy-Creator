@@ -1,24 +1,66 @@
 import { ChangeEvent, MouseEvent } from "react";
 
-export type InputSpec = {
-  type: string;
-  min?: number;
-  max?: number;
-  step?: number;
-  default?: any;
-  options?: string[];
-};
+// This type is outdated
+// export type NodeData = {
+//   label: string;
+//   function: string;
+//   category: string;
+//   inputs: {
+//     required: Record<string, InputSpec>;
+//     optional?: Record<string, InputSpec>;
+//   };
+//   outputs: string[];
+// };
 
-export type NodeData = {
-  label: string;
-  function: string;
-  category: string;
-  outputs: string[];
-  inputs: {
-    required: Record<string, InputSpec>;
-    optional?: Record<string, InputSpec>;
-  };
-};
+export type InputSpec = {
+      default?: number | string,
+      min?: number,
+      max?: number,
+      step?: number,
+      round?: number | boolean,
+      display?: "color", // what is this?
+      multiline?: boolean,
+      image_upload?: boolean // dumb
+    }
+
+type EdgeType = "MODEL" | "INT" | "FLOAT" | "STRING" | "CONDITIONING" | "LATENT" | "CLIP" | "VAE" | "MASK" | "IMAGE" | "CLIP_VISION" | "CLIP_VISION_OUTPUT" | "STYLE_MODEL" | "CONTROL_NET" | "UPSCALE_MODEL" | "SAMPLER" | "SIGMAS" | "PHOTOMAKER" | "MASK"
+
+type EdgeValueSpec = 
+  | undefined 
+  | string[] 
+  | InputSpec
+
+// This is adapted from ComfyUI's getNodeDefs
+export type NodeDefinition = {
+  [nodeName: string]: {
+    inputs: {
+      // Example:
+      // { images: ['IMAGE'],
+      //    scale_ratio: ['FLOAT', { default: 4.0, min: 0.0, max: 10.0, step: 0.01 }] 
+      // }
+      required: Record<string, [EdgeType, EdgeValueSpec]>,
+      optional?: Record<string, [EdgeType, EdgeValueSpec]>,
+      // IDK what this was used for?
+      // hidden?: {
+      //   prompt: "PROMPT",
+      //   extra_pnginfo: "EXTRA_PNGINFO"
+      // }
+    },
+    // Example: { positive: 'CONDITIONING' }
+    outputs: Record<string, EdgeType>,
+    name: string,
+    display_name: string,
+    description: string,
+
+    // example: "conditioning/upscale_diffusion"
+    category: string,
+    output_node: boolean
+
+    // Internally, these are also defined, but not returned by the API:
+    // label: string
+    // function: string
+  }
+}
 
 export type NodeWidget =
   | ButtonWidget
