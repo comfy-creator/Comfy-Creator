@@ -47,6 +47,31 @@ const getWidget = (input: InputSpec) => {
   //   // onChange: inputSpec.onChange // Assuming onChange is part of InputSpec
   // };
 
+  switch (input.dataType) {
+    case 'BOOLEAN':
+      widgetComponent = <Toggle {...commonProps} />;
+      break;
+
+    case 'INT':
+    case 'FLOAT':
+      widgetComponent = <Number {...commonProps} />;
+      break;
+
+    case 'STRING':
+      widgetComponent = <String {...commonProps} />;
+      break;
+
+    case 'ENUM':
+      const enumProps = { ...commonProps, options: input.options };
+      widgetComponent = <Dropdown {...enumProps} />;
+      break;
+
+    default:
+      console.warn(`Unsupported data type: ${input.dataType}`);
+  }
+
+  return widgetComponent;
+
   switch (widgetType) {
     case 'button':
       return <Button {...widgetProps} />;

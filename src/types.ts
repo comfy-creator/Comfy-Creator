@@ -15,7 +15,7 @@ import { ChangeEvent, MouseEvent } from 'react';
 // TO DO: when the fuck is this a 'string[]' and why? Combo type?
 // I removed 'string[]' for now
 // export type InputSpec = {
-//   default?: number | string;
+//   defaultValue?: number | string;
 //   min?: number;
 //   max?: number;
 //   step?: number;
@@ -57,12 +57,12 @@ export interface BaseInputSpec {
 
 export interface BoolInput extends BaseInputSpec {
   dataType: 'BOOLEAN';
-  default: boolean;
+  defaultValue: boolean;
 }
 
 export interface IntInput extends BaseInputSpec {
   dataType: 'INT';
-  default: number;
+  defaultValue: number;
   min: number;
   max: number;
   step?: number;
@@ -70,7 +70,7 @@ export interface IntInput extends BaseInputSpec {
 
 export interface FloatInput extends BaseInputSpec {
   dataType: 'FLOAT';
-  default: number;
+  defaultValue: number;
   min: number;
   max: number;
   step?: number;
@@ -79,13 +79,13 @@ export interface FloatInput extends BaseInputSpec {
 
 export interface StringInput extends BaseInputSpec {
   dataType: 'STRING';
-  default?: string;
+  defaultValue?: string;
   multiline?: boolean;
 }
 
 export interface EnumInput extends BaseInputSpec {
   dataType: 'ENUM';
-  default?: string;
+  defaultValue?: string;
   options: string[];
   multiSelect?: boolean;
 }
@@ -106,7 +106,7 @@ export type NodeDefinitions = Record<string, NodeDefinition>;
 
 // Example:
 // { images: ['IMAGE'],
-//    scale_ratio: ['FLOAT', { default: 4.0, min: 0.0, max: 10.0, step: 0.01 }]
+//    scale_ratio: ['FLOAT', { defaultValue: 4.0, min: 0.0, max: 10.0, step: 0.01 }]
 // }
 
 // Example: { positive: { dataType: 'CONDITIONING' } }
@@ -154,6 +154,11 @@ export type NodeWidget =
   | TextWidget;
 
 export type WidgetTypes = 'button' | 'toggle' | 'slider' | 'number' | 'combo' | 'text' | 'string';
+
+export interface ComponentProps {
+  disabled?: boolean;
+  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+}
 
 export interface Widget<Value, Options> {
   // name: string;
