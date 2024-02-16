@@ -7,7 +7,6 @@ import { String } from "../widgets/String.tsx";
 import { Text } from "../widgets/Text.tsx";
 import { Toggle } from "../widgets/Toggle.tsx";
 import { Combo } from "../widgets/Combo.tsx";
-import { toast } from "react-toastify";
 
 const inputWidgetTypes = [
   "INT",
@@ -68,12 +67,10 @@ export const NodeTemplate = ({ data }: { data: NodeData }) => {
     } as NodeWidget;
   };
 
-  const onClick = () => toast.success("File uploaded successfully!")
-
   return (
     <div className="node">
       <div className="node_container">
-        <div className="node_label" onClick={onClick}>{data.label}</div>
+        <div className="node_label">{data.label}</div>
 
         <div className="flow_input_output_container">
           <div className="flow_input_container">

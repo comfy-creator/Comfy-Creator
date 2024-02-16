@@ -43,6 +43,8 @@ export function ContextMenuProvider({
       const menuData = getMenuData(event);
       if (!menuData) return;
 
+      console.log("Event>>", menuData)
+
       setMenuProps(menuData);
     },
     [setMenuProps],

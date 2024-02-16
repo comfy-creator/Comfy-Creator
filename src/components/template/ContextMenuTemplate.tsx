@@ -1,6 +1,84 @@
-import { ContextMenuProps } from "../../types.ts";
+import { ContextMenuProps } from "../../types";
 import { Node, useReactFlow } from "reactflow";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
+import Menu, { IMenuType } from "./menuData";
+
+// const renderMenu = (menuItems: IMenuType[]) => {
+//   const handleOpen = () => {
+
+//   }
+//   return menuItems.map((menuItem: IMenuType, index) => (
+//     <div key={index} className={`litemenu-entry submenu ${menuItem.hasSubMenu && "has_submenu"}`}>
+//       {menuItem.label}
+//       {menuItem.subMenu && menuItem?.isOpen && (
+//         <div className="litegraph litecontextmenu litemenubar-panel">
+//           {renderMenu(menuItem.subMenu)}
+//         </div>
+//       )}
+//     </div>
+//   ));
+// };
+
+const renderMenu = (
+  menuItems: IMenuType[],
+  parentIndex: string = "",
+  setMenu: any
+) => {
+  const handleOpen = (index: string) => {
+    setMenu((currentMenu: any) => {
+      const updateMenuItems = (
+        items: IMenuType[],
+        indexPath: string[]
+      ): IMenuType[] => {
+        return items.map((item, idx) => {
+          const currentIndex = [...indexPath, idx.toString()].join("-");
+          if (item.hasSubMenu && item.subMenu) {
+            const isOpen = currentIndex === index;
+            return {
+              ...item,
+              isOpen,
+              subMenu: updateMenuItems(item.subMenu, [
+                ...indexPath,
+                idx.toString(),
+              ]),
+            };
+          }
+          return item;
+        });
+      };
+
+      return updateMenuItems(currentMenu, []);
+    });
+  };
+
+  return menuItems.map((menuItem: IMenuType, index) => (
+    <>
+      <div className="litegraph litecontextmenu litemenubar-panel">
+        <div
+          key={index}
+          className={`litemenu-entry submenu ${menuItem.hasSubMenu ? "has_submenu" : ""}`}
+          onClick={() =>
+            menuItem.hasSubMenu &&
+            handleOpen(`${parentIndex}${parentIndex ? "-" : ""}${index}`)
+          }
+        >
+          {menuItem.label}
+        </div>
+      </div>
+
+      
+      {menuItem.subMenu && menuItem.isOpen && (
+        <div className="litegraph litecontextmenu litemenubar-panel">
+          {renderMenu(
+            menuItem.subMenu,
+            `${parentIndex}${parentIndex ? "-" : ""}${index}`,
+            setMenu
+          )}
+        </div>
+      )}
+    </>
+  ));
+};
 
 export function ContextMenuTemplate({
   id,
@@ -11,7 +89,26 @@ export function ContextMenuTemplate({
   reset,
   ...props
 }: ContextMenuProps) {
+  const [menu, setMenu] = useState<IMenuType[]>([]);
   const { getNode, getNodes, addNodes, setNodes, setEdges } = useReactFlow();
+
+  useEffect(() => {
+    const updateMenuItems = (items: IMenuType[]): IMenuType[] => {
+      return items.map((item) => {
+        if (item.hasSubMenu && item.subMenu) {
+          return {
+            ...item,
+            isOpen: false,
+            subMenu: updateMenuItems(item.subMenu), // Recursively update submenus
+          };
+        }
+        return item;
+      });
+    };
+
+    const newMenu = updateMenuItems(Menu);
+    setMenu(newMenu);
+  }, []);
 
   const addNewNode = useCallback(() => {
     let node: Node | undefined;
@@ -44,7 +141,7 @@ export function ContextMenuTemplate({
 
   return (
     <div
-      style = {{
+      style={{
         ...(top !== undefined ? { top: `${top}px` } : {}),
         ...(left !== undefined ? { left: `${left}px` } : {}),
         ...(right !== undefined ? { right: `${right}px` } : {}),
@@ -60,6 +157,9 @@ export function ContextMenuTemplate({
 
       <button onClick={addNewNode}>Add Node</button>
       {id && <button onClick={deleteNode}>Remove Node</button>}
+      <div>
+        {renderMenu(menu, "", setMenu)}
+      </div>
     </div>
   );
 }
