@@ -1,25 +1,18 @@
-import { ToggleWidget } from "../../types.ts";
+import { ToggleWidget } from '../../types.ts';
 
-export function Toggle({
-  label,
-  name,
-  options,
-  disabled,
-  value,
-  onChange,
-}: ToggleWidget) {
+export function Toggle({ label, options, disabled, value, onChange }: ToggleWidget) {
   return (
     <>
-      <label>{label || name}</label>
+      <label>{label}</label>
       <input
-        value={value}
+        checked={value}
         type="checkbox"
         disabled={disabled}
         onChange={(e) => {
           onChange?.(e);
         }}
-      />{" "}
-      {value ? options?.on || "true" : options?.off || "false"}
+      />{' '}
+      {value ? options?.on || 'true' : options?.off || 'false'}
     </>
   );
 }

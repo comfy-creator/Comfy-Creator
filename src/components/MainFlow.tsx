@@ -1,6 +1,6 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
   addEdge,
   applyEdgeChanges,
@@ -16,13 +16,13 @@ import ReactFlow, {
   NodeChange,
   NodeResizer,
   NodeToolbar,
-  Panel,
-} from "reactflow";
-import { useNodeTypes } from "../contexts/NodeTypes";
-import { useContextMenu } from "../contexts/ContextMenu";
-import ControlPanel from "./ControlPanel/ControlPanel";
-import { useRegisterNodes } from "../hooks/useRegisterNodes";
-import { videoModelDef } from "../node_definitions/videoModel";
+  Panel
+} from 'reactflow';
+import { useNodeTypes } from '../contexts/NodeTypes';
+import { useContextMenu } from '../contexts/ContextMenu';
+import ControlPanel from './ControlPanel/ControlPanel';
+import { useRegisterNodes } from '../hooks/useRegisterNodes';
+import { videoModelDef } from '../node_definitions/videoModel';
 
 export function MainFlow() {
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -32,40 +32,47 @@ export function MainFlow() {
   const { nodeTypes } = useNodeTypes();
 
   useEffect(() => {
-    registerNode("VideoModel", videoModelDef);
+    registerNode('VideoModel', videoModelDef);
   }, []);
 
   useEffect(() => {
     setNodes([
       {
-        id: "1",
-        type: "VideoModel",
+        id: '1',
+        type: 'VideoModel',
         position: { x: 250, y: 5 },
-        data: {},
-      },
+        data: {}
+      }
     ]);
   }, []);
 
-  const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } =
-    useContextMenu();
+  const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
 
   // Standard React Flow Handlers
   const onNodesChange = useCallback(
-    (changes: NodeChange[]) =>
-      setNodes((nds) => applyNodeChanges(changes, nds)),
-    [setNodes],
+    (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    [setNodes]
   );
 
   const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) =>
-      setEdges((eds) => applyEdgeChanges(changes, eds)),
-    [setEdges],
+    (changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    [setEdges]
   );
 
   const onConnect = useCallback(
     (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
-    [setEdges],
+    [setEdges]
   );
+
+  // TO DO: in the future, check for cicular loops and such
+  const isValidConnection = useCallback((connection: Connection): boolean => {
+    // input === output
+    const node = nodes.find((node) => node.id === connection.source);
+    const handle = node.handles?.find((handle) => {
+      handle.id === connection.sourceHandle;
+    });
+    return connection.targetHandle == connection.sourceHandle;
+  }, []);
 
   return (
     <ReactFlow
@@ -77,12 +84,13 @@ export function MainFlow() {
       edges={edges}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
+      isValidConnection={isValidConnection}
       nodeTypes={nodeTypes}
       ref={menuRef}
       fitView
       style={{
-        backgroundColor: "var(--bg-color)",
-        color: "var(--fg-color)",
+        backgroundColor: 'var(--bg-color)',
+        color: 'var(--fg-color)'
       }}
     >
       <Background variant={BackgroundVariant.Lines} />

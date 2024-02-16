@@ -1,13 +1,6 @@
-import { ComboWidget } from "../../types.ts";
+import { DropdownWidget } from '../../types';
 
-export function Combo({
-  label,
-  name,
-  disabled,
-  value,
-  options,
-  onChange,
-}: ComboWidget) {
+export function Dropdown({ label, disabled, value, options, onChange }: DropdownWidget) {
   const values = options
     ? Array.isArray(options.values)
       ? options.values
@@ -16,7 +9,7 @@ export function Combo({
 
   return (
     <>
-      <label>{label || name}</label>
+      <label>{label}</label>
       <select
         value={value}
         disabled={disabled}

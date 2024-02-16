@@ -1,4 +1,4 @@
-import { ButtonWidget } from "../../types.ts";
+import { ButtonWidget } from '../../types.ts';
 
 //  y?: number;
 //   last_y: number;
@@ -9,16 +9,10 @@ import { ButtonWidget } from "../../types.ts";
 //   options?: any;
 //   marker?: any;
 
-export function Button({ type, disabled, label, name, onClick }: ButtonWidget) {
+export function Button({ disabled, label, onClick }: ButtonWidget) {
   return (
-    <button
-      type={type}
-      disabled={disabled}
-      onClick={(e) => {
-        onClick?.(e);
-      }}
-    >
-      {label || name}
+    <button disabled={disabled} onClick={onClick}>
+      {label}
     </button>
   );
 }

@@ -1,15 +1,9 @@
-import { StringWidget } from "../../types.ts";
+import { StringWidget } from '../../types.ts';
 
-export function String({
-  label,
-  name,
-  disabled,
-  value,
-  onChange,
-}: StringWidget) {
+export function String({ label, disabled, value, onChange }: StringWidget) {
   return (
     <>
-      <label>{label || name}</label>
+      <label>{label}</label>
       <input
         type="text"
         value={value}

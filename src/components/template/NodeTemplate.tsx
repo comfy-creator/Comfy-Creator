@@ -1,112 +1,140 @@
-import React, { useEffect, useState } from "react";
-import { InputSpec, NodeData, NodeWidget, WidgetTypes } from "../../types";
-import { Handle, Position } from "reactflow";
-import { Button } from "../widgets/Button.tsx";
-import { Number } from "../widgets/Number.tsx";
-import { String } from "../widgets/String.tsx";
-import { Text } from "../widgets/Text.tsx";
-import { Toggle } from "../widgets/Toggle.tsx";
-import { Combo } from "../widgets/Combo.tsx";
-import { toast } from "react-toastify";
+import React, { useEffect, useState } from 'react';
+import {
+  InputSpec,
+  NodeDefinition,
+  DataType,
+  NodeWidget,
+  WidgetTypes,
+  canBeWidget
+} from '../../types';
+import { Handle, Position } from 'reactflow';
+import { Button } from '../widgets/Button';
+import { Number } from '../widgets/Number';
+import { String } from '../widgets/String';
+import { Text } from '../widgets/Text';
+import { Toggle } from '../widgets/Toggle';
+import { Dropdown } from '../widgets/Dropdown';
+import { toast } from 'react-toastify';
 
-const inputWidgetTypes = [
-  "INT",
-  "STRING",
-  "BOOLEAN",
-  "FLOAT",
-  "IMAGEUPLOAD",
-  "INT:seed",
-  "INT:noise_seed",
-];
+const dataTypeToWidgetType = (dataType: DataType): WidgetTypes | undefined => {
+  switch (dataType) {
+    case 'INT':
+    case 'FLOAT':
+      return 'number';
 
-export const NodeTemplate = ({ data }: { data: NodeData }) => {
-  const [inputs, setInputs] = useState({});
+    case 'STRING':
+      return 'string';
 
-  useEffect(() => {
-    const {} = data;
-  }, []);
+    case 'BOOLEAN':
+      return 'toggle';
 
-  const isWidgetInput = (type: string) => {
-    return inputWidgetTypes.includes(type);
-  };
+    // case 'IMAGEUPLOAD':
+    //   return 'button';
 
-  const getNonWidgetInputs = (inputs: Record<string, InputSpec>) => {
-    return Object.entries(inputs).filter(
-      ([key, value]) => !isWidgetInput(value.type)
-    );
-  };
+    default:
+      return undefined;
+  }
+};
 
-  const getWidgetInputs = (inputs: Record<string, InputSpec>) => {
-    return Object.entries(inputs).filter(([key, value]) =>
-      isWidgetInput(value.type)
-    );
-  };
+const getWidget = (input: InputSpec) => {
+  const { label, dataType } = input;
+  // const widgetType = dataTypeToWidgetType(dataType);
 
-  const getWidgetType = (type: string): WidgetTypes => {
-    if (type === "INT" || type === "FLOAT") {
-      return "number";
-    } else if (type === "STRING") {
-      return "string";
-    } else if (type === "BOOLEAN") {
-      return "toggle";
-    } else if (type === "IMAGEUPLOAD") {
-      return "button";
-    } else if (type === "INT:seed" || type === "INT:noise_seed") {
-      return "number";
+  // const widgetProps = {
+  //   dataType,
+  //   label,
+  //   value: input.default
+  //   // onChange: inputSpec.onChange // Assuming onChange is part of InputSpec
+  // };
+
+  switch (widgetType) {
+    case 'button':
+      return <Button {...widgetProps} />;
+    case 'number':
+      return <Number {...widgetProps} />;
+    case 'string':
+      return <String {...widgetProps} />;
+    case 'toggle':
+      return <Toggle {...widgetProps} />;
+    case 'combo':
+      return <Dropdown {...widgetProps} />;
+    default:
+      return null; // Or any fallback component
+  }
+};
+
+// If true, this will return a widget, otherwise it will return a target-handle for an
+// edge to connect into
+// const isWidgetInput = (type: string) => {
+//   return inputWidgetTypes.includes(type);
+// };
+
+// This infers the `isHandle` property for each input based on the inputs DataType if
+// 'isHandle' is currently undefined.
+const inferIsHandle = (inputs: InputSpec[]): InputSpec[] => {
+  return inputs.map((input, index) => {
+    if (input.isHandle === undefined) {
+      input.isHandle = !canBeWidget.includes(input.dataType);
     }
+    return input;
+  }, {});
+};
 
-    return "combo";
-  };
+export const NodeTemplate = ({ def }: { def: NodeDefinition }) => {
+  const [inputs, setInputs] = useState(
+    inferIsHandle([...def.inputs.required, ...(def.inputs.optional || [])])
+  );
+  const [outputs, setOutputs] = useState(def.outputs);
 
-  const inputToWidget = (key: string, value: InputSpec) => {
-    return {
-      name: key,
-      label: key,
-      value: value.default || "",
-      type: getWidgetType(value.type),
-      onChange: (value: any) => setInputs({ ...inputs, [key]: value }),
-    } as NodeWidget;
-  };
+  // TO DO: the handles might be separate state from the input and output defs
+  // const [isHandle, setIsHandle] = useState(false);
 
-  const onClick = () => toast.success("File uploaded successfully!")
+  // Update state if our node definition changes
+  useEffect(() => {
+    // TO DO: make sure we're not changing the state of a isHandle component
+    setInputs(inferIsHandle([...def.inputs.required, ...(def.inputs.optional || [])]));
+    setOutputs(def.outputs);
+  }, [def.inputs, def.outputs]);
+
+  // Test
+  const onClick = () => toast.success('File uploaded successfully!');
 
   return (
     <div className="node">
       <div className="node_container">
-        <div className="node_label" onClick={onClick}>{data.label}</div>
+        <div className="node_label" onClick={onClick}>
+          {def.display_name}
+        </div>
 
         <div className="flow_input_output_container">
           <div className="flow_input_container">
             {/* Render input handles */}
-            {getNonWidgetInputs({
-              ...data.inputs.required,
-              ...data.inputs.optional,
-            }).map(([key], index, array) => (
-              <div className="flow_input">
-                <Handle
-                  key={key}
-                  type="source"
-                  position={Position.Left}
-                  id={key}
-                  className={`flow_handler left ${key}`}
-                />
-                <span className="flow_input_text">{key}</span>
-              </div>
-            ))}
+            {Object.entries(inputs)
+              .filter(([_, value]) => value.isHandle)
+              .map(([key, dataType], index) => (
+                <div className="flow_input" key={index}>
+                  <Handle
+                    id={key}
+                    type="target"
+                    position={Position.Left}
+                    className={`flow_handler left ${key}`}
+                  />
+                  <span className="flow_input_text">{key}</span>
+                </div>
+              ))}
           </div>
 
           <div className="flow_output_container">
             {/* Render output handles */}
-            {data.outputs.map((output, index) => (
-              <div className="flow_output">
+            {Object.entries(outputs).map(([key, dataType], index) => (
+              <div className="flow_output" key={index}>
                 <Handle
-                  key={output}
+                  id={key}
                   type="source"
                   position={Position.Right}
-                  id={output}
-                  className={`flow_handler right ${output}`}
+                  className={`flow_handler right ${dataType}`}
                 />
-                <span className="flow_output_text">{output}</span>
+                <span className="flow_output_text">{key}</span>
               </div>
             ))}
           </div>
@@ -115,23 +143,23 @@ export const NodeTemplate = ({ data }: { data: NodeData }) => {
         <div className="widgets_container">
           {getWidgetInputs({
             ...data.inputs.required,
-            ...data.inputs.optional,
+            ...data.inputs.optional
           }).map(([key, value]) => {
             const widget = inputToWidget(key, value);
 
             return (
               <div className="widget_container">
-                {widget.type === "button" ? (
+                {widget.type === 'button' ? (
                   <Button {...widget} />
-                ) : widget.type === "number" ? (
+                ) : widget.type === 'number' ? (
                   <Number {...widget} />
-                ) : widget.type === "string" ? (
+                ) : widget.type === 'string' ? (
                   <String {...widget} />
-                ) : widget.type === "text" ? (
+                ) : widget.type === 'text' ? (
                   <Text {...widget} />
-                ) : widget.type === "toggle" ? (
+                ) : widget.type === 'toggle' ? (
                   <Toggle {...widget} />
-                ) : widget.type === "combo" ? (
+                ) : widget.type === 'combo' ? (
                   <Combo {...widget} />
                 ) : null}
               </div>
