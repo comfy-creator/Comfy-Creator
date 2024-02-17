@@ -1,4 +1,5 @@
 import { ChangeEvent, MouseEvent } from 'react';
+import { Node, XYPosition } from 'reactflow';
 
 // This type is outdated
 // export type NodeData = {
@@ -52,7 +53,8 @@ export type DataType =
 export interface BaseInputSpec {
   label: string;
   dataType: DataType;
-  isHandle?: boolean;
+  optional?: boolean; // assumed false if not present
+  isHandle?: boolean; // imputed based on dataType if not present
 }
 
 export interface BoolInput extends BaseInputSpec {
@@ -118,31 +120,126 @@ export type NodeDefinitions = Record<string, NodeDefinition>;
 // export type Outputs = { [name: string]: Output };
 
 // This is adapted from ComfyUI's getNodeDefs
-export type NodeDefinition = {
-  name: string;
+export type NodeDefinition = Readonly<{
+  type: string;
+  // name: string;
   display_name: string;
   description: string;
   // example: "conditioning/upscale_diffusion"
   category: string;
 
-  inputs: {
-    required: InputSpec[];
-    optional?: InputSpec[];
-    // IDK what this was used for?
-    // hidden?: {
-    //   prompt: "PROMPT",
-    //   extra_pnginfo: "EXTRA_PNGINFO"
-    // }
-  };
+  inputs: InputSpec[];
 
   outputs: OutputSpec[];
 
   output_node: boolean;
 
+  // required: InputSpec[];
+  // optional?: InputSpec[];
+  // IDK what this was used for?
+  // hidden?: {
+  //   prompt: "PROMPT",
+  //   extra_pnginfo: "EXTRA_PNGINFO"
+  // }
+
   // Internally, these are also defined in python, but not returned by the API:
   // label: string
   // function: string
-};
+}>;
+
+// Base class for node instances
+// export class NodeInstance {
+//   definition: NodeDefinition;
+//   state: { [key: string]: any }; // Consider a more specific type
+
+//   constructor(definition: NodeDefinition) {
+//     this.definition = definition;
+//     this.state = {}; // Initialize state based on definition
+//   }
+
+//   // Method to update state
+//   updateState(key: string, value: any) {
+//     this.state[key] = value;
+//   }
+// }
+
+// abstract class NodeTemplate {
+//   abstract name: string;
+//   abstract display_name: string;
+//   // display_name: string;
+//   abstract description: string;
+//   // example: "conditioning/upscale_diffusion"
+//   abstract category: string;
+
+//   abstract inputs: {
+//     required: InputSpec[];
+//     optional?: InputSpec[];
+//     // IDK what this was used for?
+//     // hidden?: {
+//     //   prompt: "PROMPT",
+//     //   extra_pnginfo: "EXTRA_PNGINFO"
+//     // }
+//   };
+
+//   abstract outputs: OutputSpec[];
+
+//   abstract output_node: boolean;
+// }
+
+// Factory function to create classes
+// TO DO: use more specific type than 'object'
+export function createNodeTemplate(def: NodeDefinition) {
+  return class implements Node<object, string> {
+    static type = def.type;
+    static display_name = def.display_name;
+    static description = def.description;
+    static category = def.category;
+
+    static inputs = def.inputs;
+    static outputs = def.outputs;
+    static output_node = def.output_node;
+
+    id: string;
+    position: XYPosition;
+    data: Record<number, any>;
+
+    constructor(id: string, position: XYPosition) {
+      this.id = id;
+      this.position = position;
+
+      // Initialize data based on node-definition
+      this.data = {};
+      def.inputs.forEach((input, index) => {
+        // The key for data is the label of the input
+        // Initialize based on the type of input
+        switch (input.dataType) {
+          case 'BOOLEAN':
+            this.data[index] = input.defaultValue;
+            break;
+
+          case 'INT':
+          case 'FLOAT':
+            // For simplicity, directly assigning defaultValue.
+            // You might want to handle min, max, step, and round as needed.
+            this.data[index] = input.defaultValue;
+            break;
+
+          case 'STRING':
+            this.data[index] = input.defaultValue || '';
+            break;
+
+          case 'ENUM':
+            // For ENUM, you might want to handle multiSelect and options differently
+            this.data[index] = input.defaultValue || input.options[0];
+            break;
+
+          default:
+            console.warn(`Unhandled dataType: ${(input as BaseInputSpec).dataType}`);
+        }
+      });
+    }
+  };
+}
 
 export type NodeWidget =
   | ButtonWidget

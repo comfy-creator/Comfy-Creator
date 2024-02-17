@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
 import { BoolInput, ToggleWidget, ComponentProps } from '../../types';
 
-export function Toggle({ label, defaultValue, disabled, onChange }: BoolInput & ComponentProps) {
-  // Initialize state with defaultValue
-  const [checked, setChecked] = useState(defaultValue);
+type ToggleProps = {
+  label: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (checked: boolean) => void;
+};
 
+export function Toggle({ label, checked, disabled, onChange }: ToggleProps) {
+  // Update state in the parent component
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setChecked(e.target.checked); // Update internal state
-    onChange?.(e); // Call external onChange handler if provided
+    onChange(e.target.checked);
   };
 
   return (
     <>
       <label>{label}</label>
-      <input type="checkbox" checked={checked} disabled={disabled} onChange={handleChange} />{' '}
-      {/* {checked ? options?.on || 'true' : options?.off || 'false'} */}
+      <input type="checkbox" checked={checked} disabled={disabled} onChange={handleChange} />
     </>
   );
 }
