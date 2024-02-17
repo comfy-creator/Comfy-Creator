@@ -9,8 +9,9 @@ import {
   useState,
 } from "react";
 import { ContextMenuProps } from "../types.ts";
-import { ContextMenuTemplate } from "../components/template/ContextMenuTemplate.tsx";
+import { ContextMenu } from "../components/template/ContextMenuTemplate.tsx";
 import { Node } from "reactflow";
+import Menu, { IMenuType } from "../components/template/menuData.ts";
 
 interface IContextMenu {
   onNodeContextMenu: (event: ReactMouseEvent, node: Node) => void;
@@ -37,13 +38,19 @@ export function ContextMenuProvider({
   const [nodeId, setNodeId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const [currentOpenedMenuIndex, setCurrentOpenedMenuIndex] = useState(0);
+  const [menus, setMenus] = useState<ContextMenuProps[]>([]);
+  const [currentSubmenu, setCurrentSubmenu] = useState<ContextMenuProps | null>(
+    null,
+  );
+
   const onContextMenu = useCallback(
     (event: ReactMouseEvent) => {
       event.preventDefault();
-      const menuData = getMenuData(event);
+      const menuData = getMenuData(event, Menu);
       if (!menuData) return;
 
-      console.log("Event>>", menuData)
+      console.log("Event>>", menuData);
 
       setMenuProps(menuData);
     },
@@ -62,16 +69,23 @@ export function ContextMenuProvider({
     [setMenuProps],
   );
 
-  const getMenuData = (event: ReactMouseEvent) => {
+  const getMenuData = (event: ReactMouseEvent, items?: IMenuType[]) => {
     const pane = menuRef.current?.getBoundingClientRect();
     if (!pane) return;
 
     return {
       top: event.clientY < pane.height - 200 ? event.clientY : undefined,
       left: event.clientX < pane.width - 200 ? event.clientX : undefined,
-      right: event.clientX >= pane.width - 200 ? pane.width - event.clientX : undefined,
-      bottom: event.clientY >= pane.height - 200 ? pane.height - event.clientY : undefined,
-    };
+      right:
+        event.clientX >= pane.width - 200
+          ? pane.width - event.clientX
+          : undefined,
+      bottom:
+        event.clientY >= pane.height - 200
+          ? pane.height - event.clientY
+          : undefined,
+      items: items,
+    } as ContextMenuProps;
   };
 
   // Close the context menu if it's open whenever the window is clicked.
@@ -80,6 +94,56 @@ export function ContextMenuProvider({
   const reset = () => {
     setMenuProps(null);
     setNodeId(null);
+  };
+
+  const onSubContextMenu = (
+    event: ReactMouseEvent,
+    parentMenu: ContextMenuProps,
+    parentMenuRef: RefObject<HTMLDivElement>,
+    parentMenuIndex: number,
+    items: IMenuType[] = [],
+  ) => {
+    console.log("onSubContextMenu", parentMenuIndex);
+    event.preventDefault();
+    const submenuData = getMenuData(event, items);
+    if (!submenuData) return;
+
+    console.log(parentMenuIndex, parentMenu);
+    console.log({ parentMenuIndex, currentOpenedMenuIndex });
+
+    if (currentOpenedMenuIndex > parentMenuIndex) {
+      setMenus((menus) => {
+        return menus.slice(0, parentMenuIndex);
+      });
+    } else {
+      if (parentMenuIndex > 0) {
+        setMenus((menus) => {
+          return [...menus, parentMenu];
+        });
+      }
+    }
+
+    const rect = parentMenuRef.current?.getBoundingClientRect();
+    setCurrentSubmenu({
+      ...submenuData,
+      left: rect ? rect.left + rect.width : undefined,
+      top: rect ? rect.top : undefined,
+    });
+    setCurrentOpenedMenuIndex(parentMenuIndex);
+
+    // if (i <= currentOpenedMenuIndex) {
+    //   console.log("i <= currentOpenedMenuIndex", i, currentOpenedMenuIndex);
+    //   setMenus((menus) => {
+    //     return menus.slice(0, i);
+    //   });
+    // } else {
+    //   console.log("i > currentOpenedMenuIndex", i, currentOpenedMenuIndex);
+    //   setMenus((menus) => {
+    //     return [...menus, prev];
+    //   });
+    //
+    //   setCurrentSubmenu(menuData);
+    // }
   };
 
   return (
@@ -92,8 +156,35 @@ export function ContextMenuProvider({
       }}
     >
       {children}
+
       {menuProps && (
-        <ContextMenuTemplate reset={reset} id={nodeId} {...menuProps} />
+        <ContextMenu
+          id={nodeId}
+          reset={reset}
+          menuIndex={0}
+          {...menuProps}
+          onSubmenuClick={onSubContextMenu}
+        />
+      )}
+
+      {menus.map((menu, i) => (
+        <ContextMenu
+          key={i}
+          {...menu}
+          reset={reset}
+          menuIndex={i + 1}
+          onSubmenuClick={onSubContextMenu}
+        />
+      ))}
+
+      {currentSubmenu && (
+        <ContextMenu
+          menuIndex={menus.length + 1}
+          id={nodeId}
+          reset={reset}
+          {...currentSubmenu}
+          onSubmenuClick={onSubContextMenu}
+        />
       )}
     </ContextMenuContext.Provider>
   );

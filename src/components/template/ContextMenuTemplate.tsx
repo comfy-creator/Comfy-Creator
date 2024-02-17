@@ -1,164 +1,130 @@
 import { ContextMenuProps } from "../../types";
-import { Node, useReactFlow } from "reactflow";
-import { useCallback, useEffect, useState } from "react";
-import Menu, { IMenuType } from "./menuData";
+import { MouseEvent, useEffect, useRef } from "react";
+import { IMenuType } from "./menuData";
 
-// const renderMenu = (menuItems: IMenuType[]) => {
-//   const handleOpen = () => {
+export function ContextMenu(prps: ContextMenuProps) {
+  const menuRef = useRef<HTMLDivElement>(null);
 
-//   }
-//   return menuItems.map((menuItem: IMenuType, index) => (
-//     <div key={index} className={`litemenu-entry submenu ${menuItem.hasSubMenu && "has_submenu"}`}>
-//       {menuItem.label}
-//       {menuItem.subMenu && menuItem?.isOpen && (
-//         <div className="litegraph litecontextmenu litemenubar-panel">
-//           {renderMenu(menuItem.subMenu)}
-//         </div>
-//       )}
-//     </div>
-//   ));
-// };
+  const {
+    parentMenu,
+    currentSubmenu,
+    title,
+    items,
 
-const renderMenu = (
-  menuItems: IMenuType[],
-  parentIndex: string = "",
-  setMenu: any
-) => {
-  const handleOpen = (index: string) => {
-    setMenu((currentMenu: any) => {
-      const updateMenuItems = (
-        items: IMenuType[],
-        indexPath: string[]
-      ): IMenuType[] => {
-        return items.map((item, idx) => {
-          const currentIndex = [...indexPath, idx.toString()].join("-");
-          if (item.hasSubMenu && item.subMenu) {
-            const isOpen = currentIndex === index;
-            return {
-              ...item,
-              isOpen,
-              subMenu: updateMenuItems(item.subMenu, [
-                ...indexPath,
-                idx.toString(),
-              ]),
-            };
-          }
-          return item;
-        });
-      };
+    top,
+    left,
+    bottom,
+    right,
 
-      return updateMenuItems(currentMenu, []);
-    });
-  };
+    menuIndex,
+    onSubmenuClick,
 
-  return menuItems.map((menuItem: IMenuType, index) => (
-    <>
-      <div className="litegraph litecontextmenu litemenubar-panel">
-        <div
-          key={index}
-          className={`litemenu-entry submenu ${menuItem.hasSubMenu ? "has_submenu" : ""}`}
-          onClick={() =>
-            menuItem.hasSubMenu &&
-            handleOpen(`${parentIndex}${parentIndex ? "-" : ""}${index}`)
-          }
-        >
-          {menuItem.label}
-        </div>
-      </div>
-
-      
-      {menuItem.subMenu && menuItem.isOpen && (
-        <div className="litegraph litecontextmenu litemenubar-panel">
-          {renderMenu(
-            menuItem.subMenu,
-            `${parentIndex}${parentIndex ? "-" : ""}${index}`,
-            setMenu
-          )}
-        </div>
-      )}
-    </>
-  ));
-};
-
-export function ContextMenuTemplate({
-  id,
-  top,
-  left,
-  right,
-  bottom,
-  reset,
-  ...props
-}: ContextMenuProps) {
-  const [menu, setMenu] = useState<IMenuType[]>([]);
-  const { getNode, getNodes, addNodes, setNodes, setEdges } = useReactFlow();
-
+    ...props
+  } = prps;
   useEffect(() => {
-    const updateMenuItems = (items: IMenuType[]): IMenuType[] => {
-      return items.map((item) => {
-        if (item.hasSubMenu && item.subMenu) {
-          return {
-            ...item,
-            isOpen: false,
-            subMenu: updateMenuItems(item.subMenu), // Recursively update submenus
-          };
-        }
-        return item;
-      });
-    };
-
-    const newMenu = updateMenuItems(Menu);
-    setMenu(newMenu);
+    setTimeout(function () {
+      if (menuRef.current) menuRef.current.style.pointerEvents = "auto";
+    }, 100);
   }, []);
 
-  const addNewNode = useCallback(() => {
-    let node: Node | undefined;
-    if (id) {
-      node = getNode(id);
+  const onItemClick = (
+    e: MouseEvent<HTMLDivElement>,
+    i: number,
+    value: IMenuType,
+  ) => {
+    console.log("[onItemClick]", value.subMenu);
+
+    onSubmenuClick?.(e, prps, menuRef, menuIndex, value.subMenu);
+    var close_parent = true;
+
+    if (currentSubmenu) {
+      currentSubmenu.close(e);
     }
 
-    const newId = getNodes().length + 1;
-    const position = node
-      ? { x: node.position.x + 50, y: node.position.y + 50 }
-      : { x: (top || 0) + 250, y: (left || 0) + 250 };
+    //global callback
+    // if (options.callback) {
+    //   var r = options.callback.call(
+    //     this,
+    //     value,
+    //     options,
+    //     e,
+    //     that,
+    //     options.node,
+    //   );
+    //   if (r === true) {
+    //     close_parent = false;
+    //   }
+    // }
+    //
+    // //special cases
+    // if (value) {
+    //   if (
+    //     value.callback &&
+    //     !options.ignore_item_callbacks &&
+    //     value.disabled !== true
+    //   ) {
+    //     //item callback
+    //     var r = value.callback.call(
+    //       this,
+    //       value,
+    //       options,
+    //       e,
+    //       that,
+    //       options.extra,
+    //     );
+    //     if (r === true) {
+    //       close_parent = false;
+    //     }
+    //   }
+    //   if (value.submenu) {
+    //     if (!value.submenu.options) {
+    //       throw "ContextMenu submenu needs options";
+    //     }
+    //     var submenu = new that.constructor(value.submenu.options, {
+    //       callback: value.submenu.callback,
+    //       event: e,
+    //       parentMenu: that,
+    //       ignore_item_callbacks: value.submenu.ignore_item_callbacks,
+    //       title: value.submenu.title,
+    //       extra: value.submenu.extra,
+    //       autoopen: options.autoopen,
+    //     });
+    //     close_parent = false;
+    //   }
+    // }
 
-    addNodes({
-      position,
-      id: String(newId),
-      data: { label: `Node ${newId}` },
-    });
-  }, [id, getNode, getNodes, addNodes, top, left]);
+    // if (close_parent && !that.lock) {
+    //   that.close();
+    // }
+  };
 
-  const deleteNode = useCallback(() => {
-    setNodes((nodes) => nodes.filter((node) => node.id !== id));
-    setEdges((edges) => edges.filter((edge) => edge.source !== id));
-
-    reset?.();
-  }, [id, setNodes, setEdges, reset]);
-
-  useEffect(() => {
-    console.log(id);
-  }, [id]);
+  const style = {
+    ...(top !== undefined ? { top: `${top}px` } : {}),
+    ...(left !== undefined ? { left: `${left}px` } : {}),
+    ...(right !== undefined ? { right: `${right}px` } : {}),
+    ...(bottom !== undefined ? { bottom: `${bottom}px` } : {}),
+  };
 
   return (
-    <div
-      style={{
-        ...(top !== undefined ? { top: `${top}px` } : {}),
-        ...(left !== undefined ? { left: `${left}px` } : {}),
-        ...(right !== undefined ? { right: `${right}px` } : {}),
-        ...(bottom !== undefined ? { bottom: `${bottom}px` } : {}),
-      }}
-      className="context-menu"
-      {...props}
-    >
-      <div>
-        <h4>{id ? `Node: ${id}` : "Action Menu"}</h4>
-        <hr />
-      </div>
+    <div className="context-menu" {...props} style={{ ...style }}>
+      <div
+        ref={menuRef}
+        style={{ pointerEvents: "none" }}
+        className={"litegraph litecontextmenu litemenubar-panel"}
+      >
+        {title && <div className={"litemenu-title"}>{title}</div>}
 
-      <button onClick={addNewNode}>Add Node</button>
-      {id && <button onClick={deleteNode}>Remove Node</button>}
-      <div>
-        {renderMenu(menu, "", setMenu)}
+        {items.map((item, index) => {
+          return (
+            <div
+              key={index}
+              onClick={(e) => onItemClick(e, index, item)}
+              className={`litemenu-entry submenu ${item === null ? "separator" : (item.subMenu || item.hasSubMenu) && "has_submenu"} ${item.disabled && "disabled"}`}
+            >
+              {item.label}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
