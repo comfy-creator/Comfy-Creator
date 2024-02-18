@@ -1,15 +1,14 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-import { NodeTypesProvider } from "./contexts/NodeTypes";
-import { MainFlow } from "./components/MainFlow";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import { MainFlow } from './components/MainFlow';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
-import "reactflow/dist/style.css";
-import { ContextMenuProvider } from "./contexts/ContextMenu";
-import { ApiContextProvider } from "./contexts/apiContext";
-import { SettingsContextProvider } from "./contexts/settingsContext";
-import { ReactFlowProvider } from "reactflow";
+import 'reactflow/dist/style.css';
+import { ContextMenuProvider } from './contexts/ContextMenu';
+import { ApiContextProvider } from './contexts/apiContext';
+import { SettingsContextProvider } from './contexts/settingsContext';
+import { ReactFlowProvider } from 'reactflow';
 
 function App() {
   return (
@@ -26,15 +25,14 @@ function App() {
         pauseOnHover
         theme="dark"
       />
-      <NodeTypesProvider>
-        <ContextMenuProvider>
-          <ApiContextProvider>
-            <SettingsContextProvider>
-              <MainFlow />
-            </SettingsContextProvider>
-          </ApiContextProvider>
-        </ContextMenuProvider>
-      </NodeTypesProvider>
+
+      <ContextMenuProvider>
+        <ApiContextProvider>
+          <SettingsContextProvider>
+            <MainFlow />
+          </SettingsContextProvider>
+        </ApiContextProvider>
+      </ContextMenuProvider>
     </ReactFlowProvider>
   );
 }

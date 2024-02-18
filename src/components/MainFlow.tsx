@@ -23,10 +23,8 @@ import ReactFlow, {
   NodeTypes,
   OnConnectEnd
 } from 'reactflow';
-import { useNodeTypes } from '../contexts/NodeTypes';
 import { useContextMenu } from '../contexts/ContextMenu';
 import ControlPanel from './ControlPanel/ControlPanel';
-import { videoModelDef } from '../node_definitions/videoModel';
 import { useStore, RFState } from '../store';
 import { NodeState } from '../types';
 
@@ -38,9 +36,9 @@ const selector = (state: RFState) => ({
   onNodesChange: state.onNodesChange,
   onEdgesChange: state.onEdgesChange,
   onConnect: state.onConnect,
-  updateNodeState: state.updateNodeState,
   setNodes: state.setNodes,
-  setEdges: state.setEdges
+  setEdges: state.setEdges,
+  nodeComponents: state.nodeComponents
 });
 
 export function MainFlow() {
@@ -50,13 +48,12 @@ export function MainFlow() {
     onNodesChange,
     onEdgesChange,
     onConnect,
-    updateNodeState,
     setNodes,
-    setEdges
+    setEdges,
+    nodeComponents
   } = useStore(selector);
 
   const { getNodes, getEdges } = useReactFlow<NodeState, string>();
-  const { nodeTypes } = useNodeTypes();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
 
   const [rfInstance, setRFInstance] = useState<ReactFlowInstance | null>(null);
@@ -142,7 +139,7 @@ export function MainFlow() {
       onConnectEnd={oncConnectEnd}
       isValidConnection={isValidConnection}
       onInit={setRFInstance}
-      nodeTypes={nodeTypes}
+      nodeTypes={nodeComponents}
       ref={menuRef}
       fitView
       style={{
