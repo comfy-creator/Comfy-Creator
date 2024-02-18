@@ -14,8 +14,16 @@ import {
   isNode
 } from 'reactflow';
 import { create } from 'zustand';
-import { NodeDefinitions, NodeState, NodeTypes as NodeComponents } from './types';
+import {
+  NodeDefinitions,
+  NodeState,
+  NodeTypes as NodeComponents,
+  WidgetState,
+  EdgeType,
+  UpdateWidgetState
+} from './types';
 import { initialNodeState } from './utils';
+import { createNodeComponentFromDef } from './components/template/NodeTemplate';
 
 export type RFState = {
   nodes: Node<NodeState>[];
@@ -28,14 +36,15 @@ export type RFState = {
   onConnect: OnConnect;
 
   nodeDefs: NodeDefinitions;
+  nodeComponents: NodeComponents;
   addNodeDefs: (defs: NodeDefinitions) => void;
   removeNodeDefs: (typeNames: string[]) => void;
 
   addNode: (type: string, position: XYPosition) => void;
   removeNode: (nodeId: string) => void;
-  updateNodeState: (nodeId: string, newState: Partial<NodeState>) => void;
 
-  nodeComponents: Record<string, NodeComponents>;
+  updateNodeState: (nodeId: string, newState: Partial<NodeState>) => void;
+  updateWidgetState: UpdateWidgetState;
 };
 
 export const useStore = create<RFState>((set, get) => ({
@@ -67,23 +76,36 @@ export const useStore = create<RFState>((set, get) => ({
 
   nodeDefs: {},
 
+  nodeComponents: {},
+
   // This will overwrite old node-definitions of the same name
   addNodeDefs: (defs: NodeDefinitions) => {
+    const updateWidgetState = get().updateWidgetState;
+
     set((state) => {
-      const updatedNodeDefs = { ...state.nodeDefs, ...defs };
-      return { nodeDefs: updatedNodeDefs };
+      const newComponents = Object.entries(defs).reduce((acc, [type, def]) => {
+        acc[type] = createNodeComponentFromDef(def, updateWidgetState);
+        return acc;
+      }, {} as NodeComponents);
+
+      return {
+        nodeDefs: { ...state.nodeDefs, ...defs },
+        nodeComponents: { ...state.nodeComponents, ...newComponents }
+      };
     });
   },
 
   removeNodeDefs: (typeNames: string[]) => {
     set((state) => {
       const updatedNodeDefs = { ...state.nodeDefs };
+      const updatedNodeComponents = { ...state.nodeComponents };
 
       typeNames.forEach((typeName) => {
         delete updatedNodeDefs[typeName];
+        delete updatedNodeComponents[typeName];
       });
 
-      return { nodeDefs: updatedNodeDefs };
+      return { nodeDefs: updatedNodeDefs, nodeComponents: updatedNodeComponents };
     });
   },
 
@@ -135,5 +157,37 @@ export const useStore = create<RFState>((set, get) => ({
     });
   },
 
-  nodeComponents: {}
+  updateWidgetState: (nodeId, widgetLabel, newState) =>
+    set((state) => {
+      const nodeIndex = state.nodes.findIndex((n) => n.id === nodeId);
+      if (nodeIndex === -1) return state; // No update possible
+
+      const nodesCopy = [...state.nodes];
+      const nodeCopy = { ...nodesCopy[nodeIndex] };
+      const inputWidgetsCopy = { ...nodeCopy.data.inputWidgets };
+
+      let widgetState = inputWidgetsCopy[widgetLabel];
+      if (!widgetState) return state; // No update possible
+
+      // Note that edgeType can be changed at runtime
+      widgetState = { ...widgetState, ...(newState as typeof widgetState) };
+
+      // Edge Type cannot be changed
+      //   if (isSameEdgeType(widgetState, newState)) {
+      //     widgetState = { ...widgetState, ...(newState as typeof widgetState) };
+      //   } else {
+      //     console.error(
+      //       `Mismatched edgeType. ${widgetState.edgeType} cannot merge with ${newState.edgeType}`
+      //     );
+      //   }
+
+      nodeCopy.data.inputWidgets = inputWidgetsCopy;
+      nodesCopy[nodeIndex] = nodeCopy;
+
+      return { nodes: nodesCopy };
+    })
 }));
+
+// function isSameEdgeType(stateA: WidgetState, stateB: Partial<WidgetState>): boolean {
+//   return stateA.edgeType === stateB.edgeType;
+// }

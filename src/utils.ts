@@ -1,6 +1,6 @@
 import {
   InputDef,
-  InputState,
+  WidgetState,
   NodeDefinition,
   NodeState,
   InputHandle,
@@ -47,12 +47,12 @@ export function initialNodeState(nodeDef: NodeDefinition): NodeState {
       const defaultToWidget = canBeWidget(def.edgeType);
 
       if (def.isHandle === false || (def.isHandle === undefined && defaultToWidget)) {
-        acc[def.label] = defToInputState(def);
+        acc[def.label] = defToWidgetState(def);
       }
 
       return acc;
     },
-    {} as Record<string, InputState>
+    {} as Record<string, WidgetState>
   );
 
   // Construct and return the node state
@@ -64,7 +64,7 @@ export function initialNodeState(nodeDef: NodeDefinition): NodeState {
   };
 }
 
-export function defToInputState(def: InputDef): InputState {
+export function defToWidgetState(def: InputDef): WidgetState {
   const state = {
     label: def.label,
     optional: def.optional
@@ -100,10 +100,17 @@ export function defToInputState(def: InputDef): InputState {
       };
 
     case 'ENUM':
+      let firstOptionValue;
+      if (typeof def.options === 'function') {
+        firstOptionValue = def.options()[0];
+      } else {
+        firstOptionValue = def.options[0];
+      }
+
       return {
         ...state,
         edgeType: def.edgeType,
-        value: def.defaultValue ?? def.options[0]
+        value: def.defaultValue ?? firstOptionValue
       };
 
     default:

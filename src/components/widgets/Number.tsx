@@ -56,10 +56,16 @@
 //                         }
 //                     }
 
-import { NumberWidget } from '../../types.ts';
 import { useEffect, useState } from 'react';
 
-export function Number({ label, disabled, value, onChange }: NumberWidget) {
+type NumberWidgetProps = {
+  label: string;
+  disabled?: boolean;
+  value: number;
+  onChange?: (value: number) => void;
+};
+
+export const Number: React.FC<NumberWidgetProps> = ({ label, disabled, value, onChange }) => {
   const [input, setInput] = useState(value);
 
   useEffect(() => {
@@ -116,7 +122,7 @@ export function Number({ label, disabled, value, onChange }: NumberWidget) {
       </div>
     </div>
   );
-}
+};
 
 function NumberImgButton({
   type,

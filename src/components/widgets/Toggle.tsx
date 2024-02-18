@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { BoolInput, ToggleWidget, ComponentProps } from '../../types';
 
 type ToggleProps = {
   label: string;

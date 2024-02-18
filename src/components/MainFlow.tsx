@@ -28,6 +28,7 @@ import { useContextMenu } from '../contexts/ContextMenu';
 import ControlPanel from './ControlPanel/ControlPanel';
 import { videoModelDef } from '../node_definitions/videoModel';
 import { useStore, RFState } from '../store';
+import { NodeState } from '../types';
 
 const FLOW_KEY = 'flow';
 
@@ -54,7 +55,7 @@ export function MainFlow() {
     setEdges
   } = useStore(selector);
 
-  const { getNodes, getEdges } = useReactFlow();
+  const { getNodes, getEdges } = useReactFlow<NodeState, string>();
   const { nodeTypes } = useNodeTypes();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
 
@@ -97,6 +98,8 @@ export function MainFlow() {
       const nodes = getNodes();
       const edges = getEdges();
 
+      if (sourceHandle === null || targetHandle === null) return false;
+
       // Find corresponding nodes
       const sourceNode = nodes.find((node) => node.id === source);
       const targetNode = nodes.find((node) => node.id === target);
@@ -118,20 +121,10 @@ export function MainFlow() {
 
       if (hasCycle(targetNode)) return false;
 
-      const whatever = edges[0];
-      whatever.type;
-
-      const whatever2 = nodes[0];
-      whatever2.data;
-
       // Ensure new connection connects compatible types
-      // input === output
-      const node = nodes.find((node) => node.id === connection.source);
-      const handle = node.handles?.find((handle) => {
-        handle.id === connection.sourceHandle;
-      });
-
-      return connection.targetHandle == connection.sourceHandle;
+      const sourceEdgeType = sourceNode.data.outputEdges[Number(sourceHandle)].edgeType;
+      const targetEdgeType = targetNode.data.inputEdges[Number(targetHandle)].edgeType;
+      return sourceEdgeType === targetEdgeType;
     },
     [getNodes, getEdges]
   );

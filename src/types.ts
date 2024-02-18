@@ -91,7 +91,7 @@ export interface StringInputDef extends BaseInputDef {
 export interface EnumInputDef extends BaseInputDef {
   readonly edgeType: 'ENUM';
   readonly defaultValue?: string;
-  readonly options: readonly string[];
+  readonly options: string[] | (() => string[]);
   readonly multiSelect?: boolean;
 }
 
@@ -169,8 +169,7 @@ export interface EnumInputState extends BaseInputState {
   value: string | string[];
 }
 
-export type InputState =
-  | InputHandle
+export type WidgetState =
   | BoolInputState
   | IntInputState
   | FloatInputState
@@ -192,7 +191,7 @@ export type NodeState = {
   readonly display_name: string;
   inputEdges: Record<number, InputHandle>;
   outputEdges: Record<number, OutputHandle>;
-  inputWidgets: Record<string, InputState>;
+  inputWidgets: Record<string, WidgetState>;
 };
 
 // =========== Node Types ===========
@@ -202,6 +201,12 @@ export type NodeState = {
 export type NodeType = ComponentType<NodeProps<NodeState>>;
 
 export type NodeTypes = Record<string, NodeType>;
+
+export type UpdateWidgetState = (
+  nodeId: string,
+  widgetLabel: string,
+  newState: Partial<WidgetState>
+) => void;
 
 // TO DO: we need more specific enums!
 // And we need more specific conditioning, CLIP, VAE,
