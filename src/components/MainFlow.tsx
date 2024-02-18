@@ -20,28 +20,47 @@ import ReactFlow, {
   ReactFlowInstance,
   useReactFlow,
   getOutgoers,
-  NodeTypes
+  NodeTypes,
+  OnConnectEnd
 } from 'reactflow';
 import { useNodeTypes } from '../contexts/NodeTypes';
 import { useContextMenu } from '../contexts/ContextMenu';
 import ControlPanel from './ControlPanel/ControlPanel';
-import { useRegisterNodes } from '../hooks/useRegisterNodes';
 import { videoModelDef } from '../node_definitions/videoModel';
-import { DataType } from '../types';
+import { useStore, RFState } from '../store';
 
 const FLOW_KEY = 'flow';
 
-export function MainFlow() {
-  const [nodes, setNodes] = useState<Node<DataType, string>[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
-  const [rfInstance, setRFInstance] = useState<ReactFlowInstance | null>(null);
+const selector = (state: RFState) => ({
+  nodes: state.nodes,
+  edges: state.edges,
+  onNodesChange: state.onNodesChange,
+  onEdgesChange: state.onEdgesChange,
+  onConnect: state.onConnect,
+  updateNodeState: state.updateNodeState,
+  setNodes: state.setNodes,
+  setEdges: state.setEdges
+});
 
-  const { registerNode } = useRegisterNodes();
+export function MainFlow() {
+  const {
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
+    updateNodeState,
+    setNodes,
+    setEdges
+  } = useStore(selector);
+
+  const { getNodes, getEdges } = useReactFlow();
   const { nodeTypes } = useNodeTypes();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
 
-  const { getNodes, getEdges } = useReactFlow();
+  const [rfInstance, setRFInstance] = useState<ReactFlowInstance | null>(null);
 
+  // Store graph state to local storage
   const serializeGraph = useCallback(() => {
     if (rfInstance) {
       const flow = rfInstance.toObject();
@@ -49,6 +68,7 @@ export function MainFlow() {
     }
   }, [rfInstance]);
 
+  // Load graph state from local storage
   const loadGraph = useCallback(() => {
     const restoreFlow = async () => {
       const flow = JSON.parse(localStorage.getItem(FLOW_KEY) || '');
@@ -62,41 +82,15 @@ export function MainFlow() {
     };
 
     restoreFlow();
+  }, [setNodes, setEdges]);
+
+  // TO DO: open the context menu if you dragged out an edge and didn't connect it,
+  // so we can auto-spawn a compatible node for that edge
+  const oncConnectEnd: OnConnectEnd = useCallback((event: MouseEvent | TouchEvent) => {
+    console.log('onConnectEnd', event);
   }, []);
 
-  // Discard
-  useEffect(() => {
-    registerNode('VideoModel', videoModelDef);
-  }, []);
-
-  // Discard
-  useEffect(() => {
-    setNodes([
-      {
-        id: '1',
-        type: 'VideoModel',
-        position: { x: 250, y: 5 },
-        data: {}
-      }
-    ]);
-  }, []);
-
-  // Standard React Flow Handlers
-  const onNodesChange = useCallback(
-    (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds)),
-    [setNodes]
-  );
-
-  const onEdgesChange = useCallback(
-    (changes: EdgeChange[]) => setEdges((eds) => applyEdgeChanges(changes, eds)),
-    [setEdges]
-  );
-
-  const onConnect = useCallback(
-    (connection: Connection) => setEdges((eds) => addEdge(connection, eds)),
-    [setEdges]
-  );
-
+  // Validation connection for edge-compatability and circular loops
   const isValidConnection = useCallback(
     (connection: Connection): boolean => {
       const { source, target, sourceHandle, targetHandle } = connection;
@@ -152,6 +146,7 @@ export function MainFlow() {
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
+      onConnectEnd={oncConnectEnd}
       isValidConnection={isValidConnection}
       onInit={setRFInstance}
       nodeTypes={nodeTypes}

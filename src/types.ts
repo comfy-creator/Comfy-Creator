@@ -1,5 +1,5 @@
-import { ChangeEvent, MouseEvent } from 'react';
-import { Node, XYPosition } from 'reactflow';
+import { ChangeEvent, MouseEvent, ComponentType } from 'react';
+import { Node, XYPosition, NodeProps } from 'reactflow';
 
 // This type is outdated
 // export type NodeData = {
@@ -7,15 +7,15 @@ import { Node, XYPosition } from 'reactflow';
 //   function: string;
 //   category: string;
 //   inputs: {
-//     required: Record<string, InputSpec>;
-//     optional?: Record<string, InputSpec>;
+//     required: Record<string, InputDef>;
+//     optional?: Record<string, InputDef>;
 //   };
 //   outputs: string[];
 // };
 
 // TO DO: when the fuck is this a 'string[]' and why? Combo type?
 // I removed 'string[]' for now
-// export type InputSpec = {
+// export type InputDef = {
 //   defaultValue?: number | string;
 //   min?: number;
 //   max?: number;
@@ -26,7 +26,7 @@ import { Node, XYPosition } from 'reactflow';
 //   image_upload?: boolean; // dumb
 // };
 
-export type DataType =
+export type EdgeType =
   | 'BOOLEAN'
   | 'INT'
   | 'FLOAT'
@@ -49,103 +49,177 @@ export type DataType =
   | 'MASK'
   | 'ENUM';
 
+// =========== Input Definitions ===========
+// Provides constraints on top of state
+
 // Base type for the discriminator
-export interface BaseInputSpec {
+export interface BaseInputDef {
+  readonly label: string;
+  readonly edgeType: EdgeType;
+  readonly optional?: boolean; // assumed false if undefined
+  readonly isHandle?: boolean; // imputed based on edgeType if undefined
+}
+
+export interface BoolInputDef extends BaseInputDef {
+  readonly edgeType: 'BOOLEAN';
+  readonly defaultValue: boolean;
+}
+
+export interface IntInputDef extends BaseInputDef {
+  readonly edgeType: 'INT';
+  readonly defaultValue: number;
+  readonly min: number;
+  readonly max: number;
+  readonly step?: number;
+}
+
+export interface FloatInputDef extends BaseInputDef {
+  readonly edgeType: 'FLOAT';
+  readonly defaultValue: number;
+  readonly min: number;
+  readonly max: number;
+  readonly step?: number;
+  readonly round?: number;
+}
+
+export interface StringInputDef extends BaseInputDef {
+  readonly edgeType: 'STRING';
+  readonly defaultValue?: string;
+  readonly multiline?: boolean;
+}
+
+export interface EnumInputDef extends BaseInputDef {
+  readonly edgeType: 'ENUM';
+  readonly defaultValue?: string;
+  readonly options: readonly string[];
+  readonly multiSelect?: boolean;
+}
+
+export type InputDef = BoolInputDef | IntInputDef | FloatInputDef | StringInputDef | EnumInputDef;
+
+// =========== Output Definition ===========
+// Note that outputs do not hold any state; on the client we either
+//
+// 1. precompute the outputs, i.e., A-Primitive[string] -> B[string], we take the
+// string from A-Primitive and pass it into B, then remove A-Primitive from the graph.
+//
+// 2. or the outputs will be computed by the Comfy-Server, i.e.,
+// A[conditioning] -> B[conditioning], the A-node will compute conditioning (CLIP text
+// encode), and then pass it as an input into B-node (K-sampler).
+
+export type OutputDef = {
   label: string;
-  dataType: DataType;
-  optional?: boolean; // assumed false if not present
-  isHandle?: boolean; // imputed based on dataType if not present
-}
-
-export interface BoolInput extends BaseInputSpec {
-  dataType: 'BOOLEAN';
-  defaultValue: boolean;
-}
-
-export interface IntInput extends BaseInputSpec {
-  dataType: 'INT';
-  defaultValue: number;
-  min: number;
-  max: number;
-  step?: number;
-}
-
-export interface FloatInput extends BaseInputSpec {
-  dataType: 'FLOAT';
-  defaultValue: number;
-  min: number;
-  max: number;
-  step?: number;
-  round?: number;
-}
-
-export interface StringInput extends BaseInputSpec {
-  dataType: 'STRING';
-  defaultValue?: string;
-  multiline?: boolean;
-}
-
-export interface EnumInput extends BaseInputSpec {
-  dataType: 'ENUM';
-  defaultValue?: string;
-  options: string[];
-  multiSelect?: boolean;
-}
-
-export type InputSpec = BoolInput | IntInput | FloatInput | StringInput | EnumInput;
-
-export type OutputSpec = {
-  label: string;
-  dataType: DataType;
+  edgeType: EdgeType;
 };
 
-// TO DO: we need more specific enums!
-// And we need more specific conditioning, CLIP, VAE,
-// Then we need specific CLP, clip vision, clip vision output
-// For images and latents we could perhaps specify dimensions?
-
-export type NodeDefinitions = Record<string, NodeDefinition>;
-
-// Example:
-// { images: ['IMAGE'],
-//    scale_ratio: ['FLOAT', { defaultValue: 4.0, min: 0.0, max: 10.0, step: 0.01 }]
-// }
-
-// Example: { positive: { dataType: 'CONDITIONING' } }
-
-// export type Input = { dataType: DataType; inputSpec?: InputSpec; isHandle?: boolean };
-// export type Output = { dataType: DataType };
-
-// export type Inputs = { [name: string]: Input };
-// export type Outputs = { [name: string]: Output };
+// =========== Enitre Node Definition ===========
 
 // This is adapted from ComfyUI's getNodeDefs
 export type NodeDefinition = Readonly<{
-  type: string;
   // name: string;
   display_name: string;
   description: string;
   // example: "conditioning/upscale_diffusion"
   category: string;
 
-  inputs: InputSpec[];
+  inputs: InputDef[];
 
-  outputs: OutputSpec[];
+  outputs: OutputDef[];
 
   output_node: boolean;
-
-  // required: InputSpec[];
-  // optional?: InputSpec[];
-  // IDK what this was used for?
-  // hidden?: {
-  //   prompt: "PROMPT",
-  //   extra_pnginfo: "EXTRA_PNGINFO"
-  // }
-
-  // Internally, these are also defined in python, but not returned by the API:
-  // label: string
-  // function: string
 }>;
+
+// The key is the name of the node-type
+export type NodeDefinitions = Record<string, NodeDefinition>;
+
+// =========== Input States ===========
+
+export interface BaseInputState {
+  label: string;
+  edgeType: EdgeType;
+  optional?: boolean; // assumed false if undefined
+}
+
+export interface InputHandle extends BaseInputState {
+  isHandle: true;
+}
+
+export interface BoolInputState extends BaseInputState {
+  edgeType: 'BOOLEAN';
+  value: boolean;
+}
+
+export interface IntInputState extends BaseInputState {
+  edgeType: 'INT';
+  value: number;
+}
+
+export interface FloatInputState extends BaseInputState {
+  edgeType: 'FLOAT';
+  value: number;
+}
+
+export interface StringInputState extends BaseInputState {
+  edgeType: 'STRING';
+  value: string;
+}
+
+export interface EnumInputState extends BaseInputState {
+  edgeType: 'ENUM';
+  value: string | string[];
+}
+
+export type InputState =
+  | InputHandle
+  | BoolInputState
+  | IntInputState
+  | FloatInputState
+  | StringInputState
+  | EnumInputState;
+
+// =========== Output States (none) ===========
+
+export type OutputHandle = {
+  label: string;
+  edgeType: EdgeType;
+  isHandle: true;
+};
+
+// =========== Entire Node State ===========
+// This is the 'data' type stored inside of a node instance
+
+export type NodeState = {
+  readonly display_name: string;
+  inputEdges: Record<number, InputHandle>;
+  outputEdges: Record<number, OutputHandle>;
+  inputWidgets: Record<string, InputState>;
+};
+
+// =========== Node Types ===========
+// Node-definitions are converted into React components, and then registered with
+// ReactFlow as a 'NodeType'.
+
+export type NodeType = ComponentType<NodeProps<NodeState>>;
+
+export type NodeTypes = Record<string, NodeType>;
+
+// TO DO: we need more specific enums!
+// And we need more specific conditioning, CLIP, VAE,
+// Then we need specific CLP, clip vision, clip vision output
+// For images and latents we could perhaps specify dimensions?
+
+// Example:
+// { images: ['IMAGE'],
+//    scale_ratio: ['FLOAT', { defaultValue: 4.0, min: 0.0, max: 10.0, step: 0.01 }]
+// }
+
+// Example: { positive: { edgeType: 'CONDITIONING' } }
+
+// export type Input = { edgeType: EdgeType; inputDef?: InputDef; isHandle?: boolean };
+// export type Output = { edgeType: EdgeType };
+
+// export type Inputs = { [name: string]: Input };
+// export type Outputs = { [name: string]: Output };
 
 // Base class for node instances
 // export class NodeInstance {
@@ -172,8 +246,8 @@ export type NodeDefinition = Readonly<{
 //   abstract category: string;
 
 //   abstract inputs: {
-//     required: InputSpec[];
-//     optional?: InputSpec[];
+//     required: InputDef[];
+//     optional?: InputDef[];
 //     // IDK what this was used for?
 //     // hidden?: {
 //     //   prompt: "PROMPT",
@@ -181,128 +255,126 @@ export type NodeDefinition = Readonly<{
 //     // }
 //   };
 
-//   abstract outputs: OutputSpec[];
+//   abstract outputs: OutputDef[];
 
 //   abstract output_node: boolean;
 // }
 
 // Factory function to create classes
 // TO DO: use more specific type than 'object'
-export function createNodeTemplate(def: NodeDefinition) {
-  return class implements Node<object, string> {
-    static type = def.type;
-    static display_name = def.display_name;
-    static description = def.description;
-    static category = def.category;
+// export function createNodeTemplate(def: NodeDefinition) {
+//   return class implements Node<object, string> {
+//     static type = def.type;
+//     static display_name = def.display_name;
+//     static description = def.description;
+//     static category = def.category;
 
-    static inputs = def.inputs;
-    static outputs = def.outputs;
-    static output_node = def.output_node;
+//     static inputs = def.inputs;
+//     static outputs = def.outputs;
+//     static output_node = def.output_node;
 
-    id: string;
-    position: XYPosition;
-    data: Record<number, any>;
+//     id: string;
+//     position: XYPosition;
+//     data: Record<number, any>;
 
-    constructor(id: string, position: XYPosition) {
-      this.id = id;
-      this.position = position;
+//     constructor(id: string, position: XYPosition) {
+//       this.id = id;
+//       this.position = position;
 
-      // Initialize data based on node-definition
-      this.data = {};
-      def.inputs.forEach((input, index) => {
-        // The key for data is the label of the input
-        // Initialize based on the type of input
-        switch (input.dataType) {
-          case 'BOOLEAN':
-            this.data[index] = input.defaultValue;
-            break;
+//       // Initialize data based on node-definition
+//       this.data = {};
+//       def.inputs.forEach((input, index) => {
+//         // The key for data is the label of the input
+//         // Initialize based on the type of input
+//         switch (input.edgeType) {
+//           case 'BOOLEAN':
+//             this.data[index] = input.defaultValue;
+//             break;
 
-          case 'INT':
-          case 'FLOAT':
-            // For simplicity, directly assigning defaultValue.
-            // You might want to handle min, max, step, and round as needed.
-            this.data[index] = input.defaultValue;
-            break;
+//           case 'INT':
+//           case 'FLOAT':
+//             // For simplicity, directly assigning defaultValue.
+//             // You might want to handle min, max, step, and round as needed.
+//             this.data[index] = input.defaultValue;
+//             break;
 
-          case 'STRING':
-            this.data[index] = input.defaultValue || '';
-            break;
+//           case 'STRING':
+//             this.data[index] = input.defaultValue || '';
+//             break;
 
-          case 'ENUM':
-            // For ENUM, you might want to handle multiSelect and options differently
-            this.data[index] = input.defaultValue || input.options[0];
-            break;
+//           case 'ENUM':
+//             // For ENUM, you might want to handle multiSelect and options differently
+//             this.data[index] = input.defaultValue || input.options[0];
+//             break;
 
-          default:
-            console.warn(`Unhandled dataType: ${(input as BaseInputSpec).dataType}`);
-        }
-      });
-    }
-  };
-}
+//           default:
+//             console.warn(`Unhandled edgeType: ${(input as BaseInputDef).edgeType}`);
+//         }
+//       });
+//     }
+//   };
+// }
 
-export type NodeWidget =
-  | ButtonWidget
-  | ToggleWidget
-  | SliderWidget
-  | NumberWidget
-  | DropdownWidget
-  | StringWidget
-  | TextWidget;
+// export type NodeWidget =
+//   | ButtonWidget
+//   | ToggleWidget
+//   | SliderWidget
+//   | NumberWidget
+//   | DropdownWidget
+//   | StringWidget
+//   | TextWidget;
 
-export type WidgetTypes = 'button' | 'toggle' | 'slider' | 'number' | 'combo' | 'text' | 'string';
+// export type WidgetTypes = 'button' | 'toggle' | 'slider' | 'number' | 'combo' | 'text' | 'string';
 
-export interface ComponentProps {
-  disabled?: boolean;
-  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
-}
+// export interface ComponentProps {
+//   disabled?: boolean;
+//   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+// }
 
-export interface Widget<Value, Options> {
-  // name: string;
-  label: string;
-  value: Value;
-  options?: Options;
-  dataType: DataType | null;
-  y?: number;
-  // last_y: number; // what is this used for?
-  disabled?: boolean;
-}
+// export interface Widget<Value, Options> {
+//   // name: string;
+//   label: string;
+//   value: Value;
+//   options?: Options;
+//   edgeType: EdgeType | null;
+//   y?: number;
+//   // last_y: number; // what is this used for?
+//   disabled?: boolean;
+// }
 
-export interface ButtonWidget extends Widget<null, object> {
-  dataType: null;
-  onClick?: (e: MouseEvent<HTMLButtonElement>) => void;
-}
+// export interface ButtonWidget extends Widget<null, object> {
+//   edgeType: null;
+//   onClick?: (e: MouseEvent<HTMLButtonElement>) => void;
+// }
 
-export interface ToggleWidget extends Widget<boolean, { on?: string; off?: string }> {
-  dataType: 'BOOLEAN';
-  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
-}
+// export interface ToggleWidget extends Widget<boolean, { on?: string; off?: string }> {
+//   edgeType: 'BOOLEAN';
+//   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+// }
 
-export interface SliderWidget extends Widget<number, { max: number; min: number }> {
-  dataType: 'FLOAT' | 'INT';
-}
+// export interface SliderWidget extends Widget<number, { max: number; min: number }> {
+//   edgeType: 'FLOAT' | 'INT';
+// }
 
-export interface NumberWidget extends Widget<number, object> {
-  dataType: 'FLOAT' | 'INT';
-  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
-}
+// export interface NumberWidget extends Widget<number, object> {
+//   edgeType: 'FLOAT' | 'INT';
+//   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+// }
 
-export interface DropdownWidget extends Widget<string[], { values: string[] | (() => string[]) }> {
-  dataType: 'ENUM';
-  onChange?: (e: ChangeEvent<HTMLSelectElement>) => void;
-}
+// export interface DropdownWidget extends Widget<string[], { values: string[] | (() => string[]) }> {
+//   edgeType: 'ENUM';
+//   onChange?: (e: ChangeEvent<HTMLSelectElement>) => void;
+// }
 
-export interface StringWidget extends Widget<string, object> {
-  dataType: 'STRING';
-  onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
-}
+// export interface StringWidget extends Widget<string, object> {
+//   edgeType: 'STRING';
+//   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+// }
 
-export interface TextWidget extends Widget<string, object> {
-  dataType: 'STRING';
-  onChange?: (e: ChangeEvent<HTMLTextAreaElement>) => void;
-}
-
-export const canBeWidget = ['INT', 'STRING', 'BOOLEAN', 'FLOAT', 'ENUM'];
+// export interface TextWidget extends Widget<string, object> {
+//   edgeType: 'STRING';
+//   onChange?: (e: ChangeEvent<HTMLTextAreaElement>) => void;
+// }
 
 export interface ContextMenuProps {
   id?: string | null;
@@ -315,3 +387,7 @@ export interface ContextMenuProps {
 
   [key: string]: any;
 }
+
+// These are node-types that are built into React Flow
+// We currently do not allow them to be instantiated, but we could add them
+const defaultNodeDefs = ['default', 'input', 'output', 'group'];
