@@ -1,65 +1,79 @@
-import { ContextMenuProps } from "../../types.ts";
-import { Node, useReactFlow } from "reactflow";
-import { useCallback, useEffect } from "react";
+import { ContextMenuProps } from "../../types";
+import { MouseEvent, useEffect, useRef } from "react";
+import { IMenuType } from "./menuData";
 
-export function ContextMenuTemplate({
-  id,
-  top,
-  left,
-  right,
-  bottom,
-  reset,
-  ...props
-}: ContextMenuProps) {
-  const { getNode, getNodes, addNodes, setNodes, setEdges } = useReactFlow();
+export function ContextMenu(prps: ContextMenuProps) {
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  const addNewNode = useCallback(() => {
-    let node: Node | undefined;
-    if (id) {
-      node = getNode(id);
-    }
+  const {
+    parentMenu,
+    currentSubmenu,
+    title,
+    items,
 
-    const newId = getNodes().length + 1;
-    const position = node
-      ? { x: node.position.x + 50, y: node.position.y + 50 }
-      : { x: (top || 0) + 250, y: (left || 0) + 250 };
+    top,
+    left,
+    bottom,
+    right,
 
-    addNodes({
-      position,
-      id: String(newId),
-      data: { label: `Node ${newId}` },
-    });
-  }, [id, getNode, getNodes, addNodes, top, left]);
+    menuIndex,
+    onSubmenuClick,
 
-  const deleteNode = useCallback(() => {
-    setNodes((nodes) => nodes.filter((node) => node.id !== id));
-    setEdges((edges) => edges.filter((edge) => edge.source !== id));
-
-    reset?.();
-  }, [id, setNodes, setEdges, reset]);
+    ...props
+  } = prps;
 
   useEffect(() => {
-    console.log(id);
-  }, [id]);
+    setTimeout(function () {
+      if (menuRef.current) menuRef.current.style.pointerEvents = "auto";
+    }, 100);
+  }, []);
+
+  const onItemClick = (
+    e: MouseEvent<HTMLDivElement>,
+    i: number,
+    value: IMenuType,
+  ) => {
+    // console.log("[onItemClick]", value);
+
+    if (value.hasSubMenu && value.subMenu) {
+      onSubmenuClick?.(e, prps, menuRef, menuIndex, value.subMenu);
+    } else {
+      alert(`Clicked on ${value.label} Node..`)
+    }
+
+    if (currentSubmenu) {
+      currentSubmenu.close(e);
+    }
+  };
+
+  const style = {
+    ...(top !== undefined ? { top: `${top}px` } : {}),
+    ...(left !== undefined ? { left: `${left}px` } : {}),
+    ...(right !== undefined ? { right: `${right}px` } : {}),
+    ...(bottom !== undefined ? { bottom: `${bottom}px` } : {}),
+  };
 
   return (
-    <div
-      style = {{
-        ...(top !== undefined ? { top: `${top}px` } : {}),
-        ...(left !== undefined ? { left: `${left}px` } : {}),
-        ...(right !== undefined ? { right: `${right}px` } : {}),
-        ...(bottom !== undefined ? { bottom: `${bottom}px` } : {}),
-      }}
-      className="context-menu"
-      {...props}
-    >
-      <div>
-        <h4>{id ? `Node: ${id}` : "Action Menu"}</h4>
-        <hr />
-      </div>
+    <div className="context-menu" {...props} style={{ ...style }}>
+      <div
+        ref={menuRef}
+        style={{ pointerEvents: "none" }}
+        className={"litegraph litecontextmenu litemenubar-panel"}
+      >
+        {title && <div className={"litemenu-title"}>{title}</div>}
 
-      <button onClick={addNewNode}>Add Node</button>
-      {id && <button onClick={deleteNode}>Remove Node</button>}
+        {items.map((item, index) => {
+          return (
+            <div
+              key={index}
+              onClick={(e) => onItemClick(e, index, item)}
+              className={`litemenu-entry submenu ${item === null ? "separator" : (item.subMenu || item.hasSubMenu) && "has_submenu"} ${item.disabled && "disabled"}`}
+            >
+              {item.label}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

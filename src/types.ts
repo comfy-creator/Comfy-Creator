@@ -1,5 +1,6 @@
-import { ChangeEvent, MouseEvent, ComponentType } from 'react';
-import { Node, XYPosition, NodeProps } from 'reactflow';
+import { type MouseEvent as ReactMouseEvent, ComponentType } from 'react';
+import { IMenuType } from './components/template/menuData.ts';
+import { NodeProps } from 'reactflow';
 
 // This type is outdated
 // export type NodeData = {
@@ -12,6 +13,19 @@ import { Node, XYPosition, NodeProps } from 'reactflow';
 //   };
 //   outputs: string[];
 // };
+
+export type InputSpec = {
+  default?: number | string;
+  min?: number;
+  max?: number;
+  step?: number;
+  round?: number | boolean;
+  display?: 'color'; // what is this?
+  multiline?: boolean;
+  image_upload?: boolean; // dumb
+};
+
+type EdgeValueSpec = undefined | string[] | InputSpec;
 
 // TO DO: when the fuck is this a 'string[]' and why? Combo type?
 // I removed 'string[]' for now
@@ -381,12 +395,25 @@ export type UpdateWidgetState = (
 //   onChange?: (e: ChangeEvent<HTMLTextAreaElement>) => void;
 // }
 
+export interface MenuState {
+  items: IMenuType[];
+
+  isOpen?: boolean;
+  close: (event: ReactMouseEvent) => void;
+}
+
 export interface ContextMenuProps {
   id?: string | null;
   top?: number;
   left?: number;
   right?: number;
   bottom?: number;
+
+  title?: string;
+  items: IMenuType[];
+
+  parentMenu: MenuState | null;
+  currentSubmenu: MenuState | null;
 
   reset?: () => void;
 
