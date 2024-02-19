@@ -103,13 +103,13 @@ export function ContextMenuProvider({
     parentMenuIndex: number,
     items: IMenuType[] = [],
   ) => {
-    console.log("onSubContextMenu", parentMenuIndex);
+    // console.log("onSubContextMenu", parentMenuIndex);
     event.preventDefault();
     const submenuData = getMenuData(event, items);
     if (!submenuData) return;
 
-    console.log(parentMenuIndex, parentMenu);
-    console.log({ parentMenuIndex, currentOpenedMenuIndex });
+    // console.log(parentMenuIndex, parentMenu);
+    // console.log({ parentMenuIndex, currentOpenedMenuIndex });
 
     if (currentOpenedMenuIndex > parentMenuIndex) {
       setMenus((menus) => {
@@ -130,20 +130,6 @@ export function ContextMenuProvider({
       top: rect ? rect.top : undefined,
     });
     setCurrentOpenedMenuIndex(parentMenuIndex);
-
-    // if (i <= currentOpenedMenuIndex) {
-    //   console.log("i <= currentOpenedMenuIndex", i, currentOpenedMenuIndex);
-    //   setMenus((menus) => {
-    //     return menus.slice(0, i);
-    //   });
-    // } else {
-    //   console.log("i > currentOpenedMenuIndex", i, currentOpenedMenuIndex);
-    //   setMenus((menus) => {
-    //     return [...menus, prev];
-    //   });
-    //
-    //   setCurrentSubmenu(menuData);
-    // }
   };
 
   return (
