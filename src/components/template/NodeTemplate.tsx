@@ -18,6 +18,8 @@ import { Toggle } from '../widgets/Toggle';
 import { Dropdown } from '../widgets/Dropdown';
 import { toast } from 'react-toastify';
 import { useStore, RFState } from '../../store';
+import { Image } from '../widgets/Image.tsx';
+import { Video } from '../widgets/Video.tsx';
 
 const createWidgetFromSpec = (
   def: InputDef,
@@ -66,6 +68,11 @@ const createWidgetFromSpec = (
           multiSelect={(def as EnumInputDef).multiSelect}
         />
       );
+    case 'IMAGE':
+      return <Image {...commonProps} value={state.value} />;
+
+    case 'VIDEO':
+      return <Video {...commonProps} value={state.value} />;
 
     default:
       console.warn(`Unsupported data type: ${(state as WidgetState).edgeType}`);
@@ -96,9 +103,8 @@ export const createNodeComponentFromDef = (
 
     // Test
     const onClick = () => toast.success('File uploaded successfully!');
-
     // Generate input handles
-    const inputHandles = Object.entries(data.inputEdges).map(([label, handle], index) => (
+    const inputHandles = Object.entries(data.inputEdges || []).map(([label, handle], index) => (
       <div className="flow_input" key={index}>
         <Handle
           id={`input-${label}-${index}`}
@@ -111,7 +117,7 @@ export const createNodeComponentFromDef = (
     ));
 
     // Generate output handles
-    const outputHandles = Object.entries(data.outputEdges).map(([label, handle], index) => (
+    const outputHandles = Object.entries(data.outputEdges || []).map(([label, handle], index) => (
       <div className="flow_output" key={index}>
         <Handle
           id={`output-${label}`}
@@ -124,7 +130,7 @@ export const createNodeComponentFromDef = (
     ));
 
     // Generate widgets
-    const widgets = Object.entries(data.inputWidgets).map(([label, inputState], index) => {
+    const widgets = Object.entries(data.inputWidgets || []).map(([label, inputState], index) => {
       const inputDef = def.inputs.find((input) => input.label === label);
       if (!inputDef) return;
 

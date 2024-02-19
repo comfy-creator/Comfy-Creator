@@ -1,6 +1,6 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-import { useCallback, useEffect, useState } from 'react';
+import { DragEventHandler, useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
   addEdge,
   applyEdgeChanges,
@@ -26,7 +26,9 @@ import ReactFlow, {
 import { useContextMenu } from '../contexts/ContextMenu';
 import ControlPanel from './ControlPanel/ControlPanel';
 import { useStore, RFState } from '../store';
-import { NodeState } from '../types';
+import { InputDef, NodeState, OutputDef } from '../types';
+import { getFileAsDataURL, getFileKind } from '../utils.ts';
+import { previewImage, previewVideo } from '../node_definitions/preview.ts';
 
 const FLOW_KEY = 'flow';
 
@@ -38,7 +40,10 @@ const selector = (state: RFState) => ({
   onConnect: state.onConnect,
   setNodes: state.setNodes,
   setEdges: state.setEdges,
-  nodeComponents: state.nodeComponents
+  nodeComponents: state.nodeComponents,
+  addNodeDefs: state.addNodeDefs,
+  addNode: state.addNode,
+  updateWidgetState: state.updateWidgetState
 });
 
 export function MainFlow() {
@@ -50,13 +55,20 @@ export function MainFlow() {
     onConnect,
     setNodes,
     setEdges,
-    nodeComponents
+    nodeComponents,
+    addNodeDefs,
+    addNode
   } = useStore(selector);
 
   const { getNodes, getEdges } = useReactFlow<NodeState, string>();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
 
   const [rfInstance, setRFInstance] = useState<ReactFlowInstance | null>(null);
+
+  useEffect(() => {
+    // Register some node defs for testing
+    addNodeDefs({ previewImage, previewVideo });
+  }, []);
 
   // Store graph state to local storage
   const serializeGraph = useCallback(() => {
@@ -126,6 +138,72 @@ export function MainFlow() {
     [getNodes, getEdges]
   );
 
+  const onDragOver = useCallback((event: DragEvent) => {
+    event.preventDefault();
+    if (!event.dataTransfer) return;
+
+    event.dataTransfer.dropEffect = 'move';
+  }, []);
+
+  const onDrop = useCallback(
+    async (event: DragEvent) => {
+      event.preventDefault();
+      if (!event.dataTransfer || !rfInstance) return;
+
+      let i = 0;
+      for (const file of event.dataTransfer.files) {
+        const kind = getFileKind(file);
+
+        // TODO: compute position in a better way
+        const xy = { x: event.clientX + i * 100, y: event.clientY + i * 100 };
+        const position = rfInstance.screenToFlowPosition(xy);
+
+        switch (kind) {
+          case 'image':
+            const imageData = await getFileAsDataURL(file);
+            addNode({
+              position,
+              type: 'previewImage',
+              inputWidgetValues: { image: imageData }
+            });
+
+            break;
+          case 'video':
+            const videoData = await getFileAsDataURL(file);
+            addNode({
+              position,
+              type: 'previewVideo',
+              inputWidgetValues: {
+                video: {
+                  src: videoData,
+                  type: file.type
+                }
+              }
+            });
+
+            break;
+          case 'json':
+            try {
+              const flow = JSON.parse(await file.text());
+
+              if (typeof flow == 'object') {
+                setNodes(flow.nodes || []);
+                setEdges(flow.edges || []);
+              }
+            } catch (e) {
+              console.error('Failed to load workflow');
+            }
+            break;
+          default:
+            return;
+        }
+
+        i += 1;
+      }
+    },
+    [rfInstance]
+  );
+
   return (
     <ReactFlow
       onContextMenu={onContextMenu}
@@ -141,6 +219,8 @@ export function MainFlow() {
       onInit={setRFInstance}
       nodeTypes={nodeComponents}
       ref={menuRef}
+      onDrop={onDrop}
+      onDragOver={onDragOver}
       fitView
       style={{
         backgroundColor: 'var(--bg-color)',
