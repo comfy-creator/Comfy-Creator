@@ -1,21 +1,20 @@
-import { StringWidget } from "../../types.ts";
+type StringProps = {
+  label: string;
+  disabled?: boolean;
+  value: string;
+  onChange?: (value: string) => void;
+};
 
-export function String({
-  label,
-  name,
-  disabled,
-  value,
-  onChange,
-}: StringWidget) {
+export function String({ label, disabled, value, onChange }: StringProps) {
   return (
     <>
-      <label>{label || name}</label>
+      <label>{label}</label>
       <input
         type="text"
         value={value}
         disabled={disabled}
         onChange={(e) => {
-          onChange?.(e);
+          onChange?.(e.target.value);
         }}
       />
     </>

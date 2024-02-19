@@ -1,9 +1,9 @@
-import { TextWidget } from "../../types.ts";
+import { TextWidget } from '../../types.ts';
 
-export function Text({ label, name, disabled, value, onChange }: TextWidget) {
+export function Text({ label, disabled, value, onChange }: TextWidget) {
   return (
     <>
-      <label>{label || name}</label>
+      <label>{label}</label>
       <textarea
         value={value}
         disabled={disabled}

@@ -1,25 +1,22 @@
-import { ToggleWidget } from "../../types.ts";
+import React, { useState } from 'react';
 
-export function Toggle({
-  label,
-  name,
-  options,
-  disabled,
-  value,
-  onChange,
-}: ToggleWidget) {
+type ToggleProps = {
+  label: string;
+  checked: boolean;
+  disabled?: boolean;
+  onChange: (checked: boolean) => void;
+};
+
+export function Toggle({ label, checked, disabled, onChange }: ToggleProps) {
+  // Update state in the parent component
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onChange(e.target.checked);
+  };
+
   return (
     <>
-      <label>{label || name}</label>
-      <input
-        value={value}
-        type="checkbox"
-        disabled={disabled}
-        onChange={(e) => {
-          onChange?.(e);
-        }}
-      />{" "}
-      {value ? options?.on || "true" : options?.off || "false"}
+      <label>{label}</label>
+      <input type="checkbox" checked={checked} disabled={disabled} onChange={handleChange} />
     </>
   );
 }
