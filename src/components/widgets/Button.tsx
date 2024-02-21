@@ -1,5 +1,3 @@
-import { ButtonWidget } from '../../types.ts';
-
 //  y?: number;
 //   last_y: number;
 //   disabled?: boolean;
@@ -9,7 +7,13 @@ import { ButtonWidget } from '../../types.ts';
 //   options?: any;
 //   marker?: any;
 
-export function Button({ disabled, label, onClick }: ButtonWidget) {
+type ButtonProps = {
+  disabled?: boolean;
+  label: string;
+  onClick?: () => void;
+};
+
+export function Button({ disabled, label, onClick }: ButtonProps) {
   return (
     <button disabled={disabled} onClick={onClick}>
       {label}

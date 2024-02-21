@@ -1,6 +1,11 @@
-import { TextWidget } from '../../types.ts';
+type TextWidgetProps = {
+  label: string;
+  disabled?: boolean;
+  value: string;
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+};
 
-export function Text({ label, disabled, value, onChange }: TextWidget) {
+export function Text({ label, disabled, value, onChange }: TextWidgetProps) {
   return (
     <>
       <label>{label}</label>

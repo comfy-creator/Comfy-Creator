@@ -6,12 +6,12 @@ import {
   useCallback,
   useContext,
   useRef,
-  useState,
-} from "react";
-import { ContextMenuProps } from "../types.ts";
-import { ContextMenu } from "../components/template/ContextMenuTemplate.tsx";
-import { Node } from "reactflow";
-import Menu, { IMenuType } from "../components/template/menuData.ts";
+  useState
+} from 'react';
+import { ContextMenuProps } from '../types.ts';
+import { ContextMenu } from '../components/template/ContextMenuTemplate.tsx';
+import { Node } from 'reactflow';
+import Menu, { IMenuType } from '../components/template/menuData.ts';
 
 interface IContextMenu {
   onNodeContextMenu: (event: ReactMouseEvent, node: Node) => void;
@@ -25,24 +25,20 @@ const ContextMenuContext = createContext<IContextMenu | null>(null);
 export function useContextMenu() {
   const context = useContext(ContextMenuContext);
   if (!context) {
-    throw new Error("ContextMenu must be used within a ContextMenuProvider");
+    throw new Error('ContextMenu must be used within a ContextMenuProvider');
   }
 
   return context;
 }
 
-export function ContextMenuProvider({
-  children,
-}: Readonly<{ children: ReactNode }>) {
+export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [menuProps, setMenuProps] = useState<ContextMenuProps | null>(null);
-  const [nodeId, setNodeId] = useState<string | null>(null);
+  const [nodeId, setNodeId] = useState<string | undefined>(undefined);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const [currentOpenedMenuIndex, setCurrentOpenedMenuIndex] = useState(0);
   const [menus, setMenus] = useState<ContextMenuProps[]>([]);
-  const [currentSubmenu, setCurrentSubmenu] = useState<ContextMenuProps | null>(
-    null,
-  );
+  const [currentSubmenu, setCurrentSubmenu] = useState<ContextMenuProps | null>(null);
 
   const onContextMenu = useCallback(
     (event: ReactMouseEvent) => {
@@ -50,11 +46,11 @@ export function ContextMenuProvider({
       const menuData = getMenuData(event, Menu);
       if (!menuData) return;
 
-      console.log("Event>>", menuData);
+      console.log('Event>>', menuData);
 
       setMenuProps(menuData);
     },
-    [setMenuProps],
+    [setMenuProps]
   );
 
   const onNodeContextMenu = useCallback(
@@ -66,7 +62,7 @@ export function ContextMenuProvider({
       setMenuProps(menuData);
       setNodeId(node.id);
     },
-    [setMenuProps],
+    [setMenuProps]
   );
 
   const getMenuData = (event: ReactMouseEvent, items?: IMenuType[]) => {
@@ -76,15 +72,9 @@ export function ContextMenuProvider({
     return {
       top: event.clientY < pane.height - 200 ? event.clientY : undefined,
       left: event.clientX < pane.width - 200 ? event.clientX : undefined,
-      right:
-        event.clientX >= pane.width - 200
-          ? pane.width - event.clientX
-          : undefined,
-      bottom:
-        event.clientY >= pane.height - 200
-          ? pane.height - event.clientY
-          : undefined,
-      items: items,
+      right: event.clientX >= pane.width - 200 ? pane.width - event.clientX : undefined,
+      bottom: event.clientY >= pane.height - 200 ? pane.height - event.clientY : undefined,
+      items: items
     } as ContextMenuProps;
   };
 
@@ -93,7 +83,7 @@ export function ContextMenuProvider({
 
   const reset = () => {
     setMenuProps(null);
-    setNodeId(null);
+    setNodeId(undefined);
   };
 
   const onSubContextMenu = (
@@ -101,7 +91,7 @@ export function ContextMenuProvider({
     parentMenu: ContextMenuProps,
     parentMenuRef: RefObject<HTMLDivElement>,
     parentMenuIndex: number,
-    items: IMenuType[] = [],
+    items: IMenuType[] = []
   ) => {
     // console.log("onSubContextMenu", parentMenuIndex);
     event.preventDefault();
@@ -127,7 +117,7 @@ export function ContextMenuProvider({
     setCurrentSubmenu({
       ...submenuData,
       left: rect ? rect.left + rect.width : undefined,
-      top: rect ? rect.top : undefined,
+      top: rect ? rect.top : undefined
     });
     setCurrentOpenedMenuIndex(parentMenuIndex);
   };
@@ -138,7 +128,7 @@ export function ContextMenuProvider({
         onContextMenu,
         onNodeContextMenu,
         onPaneClick,
-        menuRef,
+        menuRef
       }}
     >
       {children}

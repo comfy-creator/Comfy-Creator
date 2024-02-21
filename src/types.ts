@@ -403,7 +403,7 @@ export interface MenuState {
 }
 
 export interface ContextMenuProps {
-  id?: string | null;
+  id?: string;
   top?: number;
   left?: number;
   right?: number;

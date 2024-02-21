@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
-import { usePrompt } from "../../../hooks/usePrompt.tsx";
+import { useEffect, useRef } from 'react';
+import { usePrompt } from '../../../hooks/usePrompt.tsx';
 
 interface SaveButtonProps {
   promptFilename: {
@@ -11,23 +11,23 @@ const SaveButton = ({ promptFilename }: SaveButtonProps) => {
   const { graphToPrompt } = usePrompt();
 
   const handleClick = () => {
-    let filename: string | null = "workflow.json";
+    let filename: string | null = 'workflow.json';
     if (promptFilename.value) {
-      filename = prompt("Save workflow as:", filename);
+      filename = prompt('Save workflow as:', filename);
       if (!filename) return;
-      if (!filename.toLowerCase().endsWith(".json")) {
-        filename += ".json";
+      if (!filename.toLowerCase().endsWith('.json')) {
+        filename += '.json';
       }
     }
 
     graphToPrompt().then((p: any) => {
       const json = JSON.stringify(p.workflow, null, 2); // convert the data to a JSON string
-      const blob = new Blob([json], { type: "application/json" });
+      const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
 
-      const tag = document.createElement("a");
+      const tag = document.createElement('a');
       tag.href = url;
-      tag.download = filename;
+      tag.download = filename || 'workflow_api.json';
       document.body.appendChild(tag);
       tag.click();
 
