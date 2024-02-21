@@ -1,0 +1,48 @@
+{
+  "nodes": [
+    {
+      "id": "1",
+      "data": {
+        "label": "Node 1"
+      },
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "width": 150,
+      "height": 35,
+      "positionAbsolute": {
+        "x": 100,
+        "y": 100
+      }
+    },
+    {
+      "id": "2",
+      "data": {
+        "label": "Node 2"
+      },
+      "position": {
+        "x": 100,
+        "y": 200
+      },
+      "width": 150,
+      "height": 35,
+      "positionAbsolute": {
+        "x": 100,
+        "y": 200
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1-2",
+      "source": "1",
+      "target": "2"
+    }
+  ],
+  "viewport": {
+    "x": 11.106808038270003,
+    "y": 12.361549886128785,
+    "zoom": 1.0000000000000002
+  }
+}
