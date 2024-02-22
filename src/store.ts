@@ -20,7 +20,8 @@ import {
   NodeTypes as NodeComponents,
   WidgetState,
   EdgeType,
-  UpdateWidgetState
+  UpdateWidgetState,
+  AddNodeParams
 } from './types';
 import { initialNodeState } from './utils';
 import { createNodeComponentFromDef } from './components/template/NodeTemplate';
@@ -28,7 +29,7 @@ import { createNodeComponentFromDef } from './components/template/NodeTemplate';
 export type RFState = {
   nodes: Node<NodeState>[];
   edges: Edge[];
-  setNodes: (nodes: Node<NodeState, string>[]) => void;
+  setNodes: (nodes: Node[]) => void;
   setEdges: (edges: Edge[]) => void;
 
   onNodesChange: OnNodesChange;
@@ -40,7 +41,7 @@ export type RFState = {
   addNodeDefs: (defs: NodeDefinitions) => void;
   removeNodeDefs: (typeNames: string[]) => void;
 
-  addNode: (type: string, position: XYPosition) => void;
+  addNode: (params: AddNodeParams) => void;
   removeNode: (nodeId: string) => void;
 
   updateNodeState: (nodeId: string, newState: Partial<NodeState>) => void;
@@ -109,13 +110,13 @@ export const useStore = create<RFState>((set, get) => ({
     });
   },
 
-  addNode: (type: string, position: XYPosition) => {
+  addNode: ({ type, position, inputWidgetValues }: AddNodeParams) => {
     const def = get().nodeDefs[type];
     if (!def) {
       throw new Error(`Node type ${type} does not exist`);
     }
 
-    const data = initialNodeState(def);
+    const data = initialNodeState(def, inputWidgetValues);
 
     // TO DO: use a more robust id generator that is guaranteed unique
     const newNode = {

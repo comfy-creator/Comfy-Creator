@@ -49,7 +49,6 @@ export type EdgeType =
   | 'CONDITIONING'
   | 'LATENT'
   | 'VAE'
-  | 'MASK'
   | 'IMAGE'
   | 'CLIP'
   | 'CLIP_VISION'
@@ -61,6 +60,7 @@ export type EdgeType =
   | 'SIGMAS'
   | 'PHOTOMAKER'
   | 'MASK'
+  | 'VIDEO'
   | 'ENUM';
 
 // =========== Input Definitions ===========
@@ -109,7 +109,24 @@ export interface EnumInputDef extends BaseInputDef {
   readonly multiSelect?: boolean;
 }
 
-export type InputDef = BoolInputDef | IntInputDef | FloatInputDef | StringInputDef | EnumInputDef;
+export interface ImageInputDef extends BaseInputDef {
+  readonly edgeType: 'IMAGE';
+  readonly defaultValue?: string;
+}
+
+export interface VideoInputDef extends BaseInputDef {
+  readonly edgeType: 'VIDEO';
+  readonly defaultValue?: { src: string; type: string };
+}
+
+export type InputDef =
+  | BoolInputDef
+  | IntInputDef
+  | FloatInputDef
+  | StringInputDef
+  | EnumInputDef
+  | ImageInputDef
+  | VideoInputDef;
 
 // =========== Output Definition ===========
 // Note that outputs do not hold any state; on the client we either
@@ -145,6 +162,12 @@ export type NodeDefinition = Readonly<{
 
 // The key is the name of the node-type
 export type NodeDefinitions = Record<string, NodeDefinition>;
+
+export interface AddNodeParams {
+  type: string;
+  position: XYPosition;
+  inputWidgetValues: Record<string, any>;
+}
 
 // =========== Input States ===========
 
@@ -183,12 +206,24 @@ export interface EnumInputState extends BaseInputState {
   value: string | string[];
 }
 
+export interface ImageInputState extends BaseInputState {
+  edgeType: 'IMAGE';
+  value: string;
+}
+
+export interface VideoInputState extends BaseInputState {
+  edgeType: 'VIDEO';
+  value: { src: string; type: string };
+}
+
 export type WidgetState =
   | BoolInputState
   | IntInputState
   | FloatInputState
   | StringInputState
-  | EnumInputState;
+  | EnumInputState
+  | ImageInputState
+  | VideoInputState;
 
 // =========== Output States (none) ===========
 
