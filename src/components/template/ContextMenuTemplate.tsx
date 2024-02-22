@@ -58,16 +58,16 @@ export function ContextMenu(prps: ContextMenuProps) {
       <div
         ref={menuRef}
         style={{ pointerEvents: "none" }}
-        className={"litegraph litecontextmenu litemenubar-panel"}
+        className={"react-flow rflcontextmenu rflmenubar-panel"}
       >
-        {title && <div className={"litemenu-title"}>{title}</div>}
+        {title && <div className={"rflmenu-title"}>{title}</div>}
 
         {items.map((item, index) => {
           return (
             <div
               key={index}
               onClick={(e) => onItemClick(e, index, item)}
-              className={`litemenu-entry submenu ${item === null ? "separator" : (item.subMenu || item.hasSubMenu) && "has_submenu"} ${item.disabled && "disabled"}`}
+              className={`rflmenu-entry submenu ${item === null ? "separator" : (item.subMenu || item.hasSubMenu) && "has_submenu"} ${item.disabled && "disabled"}`}
             >
               {item.label}
             </div>
