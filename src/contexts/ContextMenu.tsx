@@ -6,12 +6,14 @@ import {
   useCallback,
   useContext,
   useRef,
-  useState
+  useState,
+  useEffect
 } from 'react';
 import { ContextMenuProps } from '../types.ts';
 import { ContextMenu } from '../components/template/ContextMenuTemplate.tsx';
 import { Node } from 'reactflow';
 import Menu, { IMenuType } from '../components/template/menuData.ts';
+import SearchWidget from '../components/SearchWidget.tsx';
 
 interface IContextMenu {
   onNodeContextMenu: (event: ReactMouseEvent, node: Node) => void;
@@ -39,6 +41,55 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
   const [currentOpenedMenuIndex, setCurrentOpenedMenuIndex] = useState(0);
   const [menus, setMenus] = useState<ContextMenuProps[]>([]);
   const [currentSubmenu, setCurrentSubmenu] = useState<ContextMenuProps | null>(null);
+
+  // state to manage menu dialog
+  const [showSearchWidget, setShowSearchWidget] = useState(false);
+  const [searchWidgetProps, setSearchWidgetProps] = useState<any>({});
+  const searchWidgetRef = useRef<HTMLDivElement>(null);
+  const [searchWidgetTimeOutID, setSearchWidgetTimeOutID] = useState<NodeJS.Timeout | null>(null);
+
+  // function for handling double click
+  const handleDoubleClick = (event?: MouseEvent) => {
+    const widget = searchWidgetRef.current?.getBoundingClientRect();
+    if (!widget) return;
+
+    if (event) {
+      setSearchWidgetProps({
+        top: event.clientY < widget.height - 200 ? event.clientY : undefined,
+        left: event.clientX < widget.width - 200 ? event.clientX : undefined,
+        right: event.clientX >= widget.width - 200 ? widget.width - event.clientX : undefined,
+        bottom: event.clientY >= widget.height - 200 ? widget.height - event.clientY : undefined
+      });
+    }
+    setShowSearchWidget(true);
+  };
+
+  // function for mouse over
+  const handleMouseLeave = () => {
+    const timeOutID = setTimeout(() => {
+      setShowSearchWidget(false);
+    }, 1000);
+    setSearchWidgetTimeOutID(timeOutID);
+  };
+
+  const handleMouseIn = () => {
+    if (searchWidgetTimeOutID) {
+      clearTimeout(searchWidgetTimeOutID);
+    }
+    setShowSearchWidget(true);
+  };
+
+  useEffect(() => {
+    document.addEventListener('dblclick', (event) => {
+      handleDoubleClick(event);
+      return;
+    });
+    return () => {
+      document.removeEventListener('dblclick', () => {
+        handleDoubleClick();
+      });
+    };
+  }, []);
 
   const onContextMenu = useCallback(
     (event: ReactMouseEvent) => {
@@ -79,7 +130,13 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
   };
 
   // Close the context menu if it's open whenever the window is clicked.
-  const onPaneClick = useCallback(() => setMenuProps(null), [setMenuProps]);
+  const onPaneClick = useCallback(() => {
+    setMenuProps(null);
+    setCurrentOpenedMenuIndex(0);
+    setMenus([]);
+    setCurrentSubmenu(null);
+    setShowSearchWidget(false);
+  }, [setMenuProps, setCurrentOpenedMenuIndex, setMenus, setCurrentSubmenu, setShowSearchWidget]);
 
   const reset = () => {
     setMenuProps(null);
@@ -132,6 +189,14 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
       }}
     >
       {children}
+
+      <SearchWidget
+        handleMouseLeave={handleMouseLeave}
+        handleMouseIn={handleMouseIn}
+        show={showSearchWidget}
+        widgetRef={searchWidgetRef}
+        props={searchWidgetProps}
+      />
 
       {menuProps && (
         <ContextMenu

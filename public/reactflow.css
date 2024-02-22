@@ -1,44 +1,31 @@
 /* this CSS contains only the basic CSS needed to run the app and use it */
 
-.lgraphcanvas {
-    /*cursor: crosshair;*/
-    user-select: none;
-    -moz-user-select: none;
-    -webkit-user-select: none;
-	outline: none;
-    font-family: Tahoma, sans-serif;
-}
-
-.lgraphcanvas * {
-    box-sizing: border-box;
-}
-
-.litegraph.litecontextmenu .litemenu-title img {
+.react-flow.rflcontextmenu .rflmenu-title img {
     margin-top: 2px;
     margin-left: 2px;
     margin-right: 4px;
 }
 
-.litegraph.litecontextmenu .litemenu-entry {
+.react-flow.rflcontextmenu .rflmenu-entry {
     margin: 2px;
     padding: 2px;
 }
 
-.litegraph.litecontextmenu .litemenu-entry.submenu {
+.react-flow.rflcontextmenu .rflmenu-entry.submenu {
     background-color: #2e2e2e !important;
 }
 
-.litegraph.litecontextmenu.dark .litemenu-entry.submenu {
+.react-flow.rflcontextmenu.dark .rflmenu-entry.submenu {
     background-color: #000 !important;
 }
 
-.litegraph .litemenubar ul {
+.react-flow .rflmenubar ul {
     font-family: Tahoma, sans-serif;
     margin: 0;
     padding: 0;
 }
 
-.litegraph .litemenubar li {
+.react-flow .rflmenubar li {
     font-size: 14px;
     color: #999;
     display: inline-block;
@@ -51,12 +38,12 @@
     cursor: pointer;
 }
 
-.litegraph .litemenubar li:hover {
+.react-flow .rflmenubar li:hover {
     background-color: #777;
     color: #eee;
 }
 
-.litegraph .litegraph .litemenubar-panel {
+.react-flow .react-flow .rflmenubar-panel {
     position: absolute;
     top: 5px;
     left: 5px;
@@ -68,8 +55,8 @@
     z-index: 10;
 }
 
-.litegraph .litemenu-entry,
-.litemenu-title {
+.react-flow .rflmenu-entry,
+.rflmenu-title {
     font-size: 12px;
     color: #aaa;
     padding: 0 0 0 4px;
@@ -81,7 +68,7 @@
     cursor: pointer;
 }
 
-.litegraph .litemenu-entry .icon {
+.react-flow .rflmenu-entry .icon {
     display: inline-block;
     width: 12px;
     height: 12px;
@@ -89,21 +76,21 @@
     vertical-align: top;
 }
 
-.litegraph .litemenu-entry.checked .icon {
+.react-flow .rflmenu-entry.checked .icon {
     background-color: #aaf;
 }
 
-.litegraph .litemenu-entry .more {
+.react-flow .rflmenu-entry .more {
     float: right;
     padding-right: 5px;
 }
 
-.litegraph .litemenu-entry.disabled {
+.react-flow .rflmenu-entry.disabled {
     opacity: 0.5;
     cursor: default;
 }
 
-.litegraph .litemenu-entry.separator {
+.react-flow .rflmenu-entry.separator {
     display: block;
     border-top: 1px solid #333;
     border-bottom: 1px solid #666;
@@ -115,11 +102,11 @@
     cursor: default !important;
 }
 
-.litegraph .litemenu-entry.has_submenu {
+.react-flow .rflmenu-entry.has_submenu {
     border-right: 2px solid cyan;
 }
 
-.litegraph .litemenu-title {
+.react-flow .rflmenu-title {
     color: #dde;
     background-color: #111;
     margin: 0;
@@ -127,20 +114,20 @@
     cursor: default;
 }
 
-.litegraph .litemenu-entry:hover:not(.disabled):not(.separator) {
+.react-flow .rflmenu-entry:hover:not(.disabled):not(.separator) {
     background-color: #444 !important;
     color: #eee;
     transition: all 0.2s;
 }
 
-.litegraph .litemenu-entry .property_name {
+.react-flow .rflmenu-entry .property_name {
     display: inline-block;
     text-align: left;
     min-width: 80px;
     min-height: 1.2em;
 }
 
-.litegraph .litemenu-entry .property_value {
+.react-flow .rflmenu-entry .property_value {
     display: inline-block;
     background-color: rgba(0, 0, 0, 0.5);
     text-align: right;
@@ -150,15 +137,15 @@
     padding-right: 10px;
 }
 
-.litegraph.litesearchbox {
+.react-flow.litesearchbox {
     font-family: Tahoma, sans-serif;
     position: absolute;
     background-color: rgba(0, 0, 0, 0.5);
     padding-top: 4px;
 }
 
-.litegraph.litesearchbox input,
-.litegraph.litesearchbox select {
+.react-flow.litesearchbox input,
+.react-flow.litesearchbox select {
     margin-top: 3px;
     min-width: 60px;
     min-height: 1.5em;
@@ -170,48 +157,48 @@
     max-width: 300px;
 }
 
-.litegraph.litesearchbox .name {
+.react-flow.litesearchbox .name {
     display: inline-block;
     min-width: 60px;
     min-height: 1.5em;
     padding-left: 10px;
 }
 
-.litegraph.litesearchbox .helper {
+.react-flow.litesearchbox .helper {
     overflow: auto;
     max-height: 200px;
     margin-top: 2px;
 }
 
-.litegraph.lite-search-item {
+.react-flow.lite-search-item {
     font-family: Tahoma, sans-serif;
     background-color: rgba(0, 0, 0, 0.5);
     color: white;
     padding-top: 2px;
 }
 
-.litegraph.lite-search-item.not_in_filter{
+.react-flow.lite-search-item.not_in_filter{
     /*background-color: rgba(50, 50, 50, 0.5);*/
     /*color: #999;*/
     color: #B99;
     font-style: italic;
 }
 
-.litegraph.lite-search-item.generic_type{
+.react-flow.lite-search-item.generic_type{
     /*background-color: rgba(50, 50, 50, 0.5);*/
     /*color: #DD9;*/
     color: #999;
     font-style: italic;
 }
 
-.litegraph.lite-search-item:hover,
-.litegraph.lite-search-item.selected {
+.react-flow.lite-search-item:hover,
+.react-flow.lite-search-item.selected {
     cursor: pointer;
     background-color: white;
     color: black;
 }
 
-.litegraph.lite-search-item-type {
+.react-flow.lite-search-item-type {
     display: inline-block;
     background: rgba(0,0,0,0.2);
     margin-left: 5px;
@@ -226,7 +213,7 @@
 
 /* DIALOGs ******/
 
-.litegraph .dialog {
+.react-flow .dialog {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -241,7 +228,7 @@
     border-radius: 6px;
 }
 
-.litegraph .dialog.settings {
+.react-flow .dialog.settings {
 	left: 10px;
 	top: 10px;
 	height: calc( 100% - 20px );
@@ -249,7 +236,7 @@
     max-width: 50%;
 }
 
-.litegraph .dialog.centered {
+.react-flow .dialog.centered {
     top: 50px;
     left: 50%;
     position: absolute;
@@ -260,7 +247,7 @@
 	margin: auto;
 }
 
-.litegraph .dialog .close {
+.react-flow .dialog .close {
     float: right;
 	margin: 4px;
 	margin-right: 10px;
@@ -268,26 +255,26 @@
 	font-size: 1.4em;
 }
 
-.litegraph .dialog .close:hover {
+.react-flow .dialog .close:hover {
 	color: white;
 }
 
-.litegraph .dialog .dialog-header {
+.react-flow .dialog .dialog-header {
 	color: #AAA;
 	border-bottom: 1px solid #161616;
 }
 
-.litegraph .dialog .dialog-header { height: 40px; }
-.litegraph .dialog .dialog-footer { height: 50px; padding: 10px; border-top: 1px solid #1a1a1a;}
+.react-flow .dialog .dialog-header { height: 40px; }
+.react-flow .dialog .dialog-footer { height: 50px; padding: 10px; border-top: 1px solid #1a1a1a;}
 
-.litegraph .dialog .dialog-header .dialog-title {
+.react-flow .dialog .dialog-header .dialog-title {
     font: 20px "Arial";
     margin: 4px;
     padding: 4px 10px;
     display: inline-block;
 }
 
-.litegraph .dialog .dialog-content, .litegraph .dialog .dialog-alt-content {
+.react-flow .dialog .dialog-content, .react-flow .dialog .dialog-alt-content {
     height: calc(100% - 90px);
     width: 100%;
 	min-height: 100px;
@@ -297,34 +284,34 @@
     overflow: auto;
 }
 
-.litegraph .dialog .dialog-content h3 {
+.react-flow .dialog .dialog-content h3 {
 	margin: 10px;
 }
 
-.litegraph .dialog .dialog-content .connections {
+.react-flow .dialog .dialog-content .connections {
 	flex-direction: row;
 }
 
-.litegraph .dialog .dialog-content .connections .connections_side {
+.react-flow .dialog .dialog-content .connections .connections_side {
 	width: calc(50% - 5px);
 	min-height: 100px;
 	background-color: black;
 	display: flex;
 }
 
-.litegraph .dialog .node_type {
+.react-flow .dialog .node_type {
 	font-size: 1.2em;
 	display: block;
 	margin: 10px;
 }
 
-.litegraph .dialog .node_desc {
+.react-flow .dialog .node_desc {
 	opacity: 0.5;
 	display: block;
 	margin: 10px;
 }
 
-.litegraph .dialog .separator {
+.react-flow .dialog .separator {
 	display: block;
 	width: calc( 100% - 4px );
 	height: 1px;
@@ -334,16 +321,16 @@
 	padding: 0;
 }
 
-.litegraph .dialog .property {
+.react-flow .dialog .property {
 	margin-bottom: 2px;
 	padding: 4px;
 }
 
-.litegraph .dialog .property:hover {
+.react-flow .dialog .property:hover {
 	background: #545454;
 }
 
-.litegraph .dialog .property_name {
+.react-flow .dialog .property_name {
 	color: #737373;
     display: inline-block;
     text-align: left;
@@ -354,11 +341,11 @@
     margin-right: 6px;
 }
 
-.litegraph .dialog .property:hover .property_name {
+.react-flow .dialog .property:hover .property_name {
     color: white;
 }
 
-.litegraph .dialog .property_value {
+.react-flow .dialog .property_value {
     display: inline-block;
     text-align: right;
 	color: #AAA;
@@ -375,25 +362,25 @@
 	border-radius: 3px;
 }
 
-.litegraph .dialog .property_value:hover {
+.react-flow .dialog .property_value:hover {
 	color: white;
 }
 
-.litegraph .dialog .property.boolean .property_value {
+.react-flow .dialog .property.boolean .property_value {
 	padding-right: 30px;
     color: #A88;
     /*width: auto;
     float: right;*/
 }
 
-.litegraph .dialog .property.boolean.bool-on .property_name{
+.react-flow .dialog .property.boolean.bool-on .property_name{
     color: #8A8;
 }
-.litegraph .dialog .property.boolean.bool-on .property_value{
+.react-flow .dialog .property.boolean.bool-on .property_value{
     color: #8A8;
 }
 
-.litegraph .dialog .btn {
+.react-flow .dialog .btn {
 	border: 0;
 	border-radius: 4px;
     padding: 4px 20px;
@@ -402,46 +389,46 @@
     color: #8e8e8e;
 }
 
-.litegraph .dialog .btn:hover {
+.react-flow .dialog .btn:hover {
     background-color: #111;
     color: #FFF;
 }
 
-.litegraph .dialog .btn.delete:hover {
+.react-flow .dialog .btn.delete:hover {
     background-color: #F33;
     color: black;
 }
 
-.litegraph .subgraph_property {
+.react-flow .subgraph_property {
 	padding: 4px;
 }
 
-.litegraph .subgraph_property:hover {
+.react-flow .subgraph_property:hover {
 	background-color: #333;
 }
 
-.litegraph .subgraph_property.extra {
+.react-flow .subgraph_property.extra {
     margin-top: 8px;
 }
 
-.litegraph .subgraph_property span.name {
+.react-flow .subgraph_property span.name {
 	font-size: 1.3em;
 	padding-left: 4px;
 }
 
-.litegraph .subgraph_property span.type {
+.react-flow .subgraph_property span.type {
 	opacity: 0.5;
 	margin-right: 20px;
 	padding-left: 4px;
 }
 
-.litegraph .subgraph_property span.label {
+.react-flow .subgraph_property span.label {
 	display: inline-block;
 	width: 60px;
 	padding:  0px 10px;
 }
 
-.litegraph .subgraph_property input {
+.react-flow .subgraph_property input {
 	width: 140px;
 	color: #999;
 	background-color: #1A1A1A;
@@ -452,7 +439,7 @@
 	padding-left: 10px;
 }
 
-.litegraph .subgraph_property button {
+.react-flow .subgraph_property button {
 	background-color: #1c1c1c;
 	color: #aaa;
 	border: 0;
@@ -461,15 +448,15 @@
 	cursor: pointer;
 }
 
-.litegraph .subgraph_property.extra {
+.react-flow .subgraph_property.extra {
 	color: #ccc;
 }
 
-.litegraph .subgraph_property.extra input {
+.react-flow .subgraph_property.extra input {
 	background-color: #111;
 }
 
-.litegraph .bullet_icon {
+.react-flow .bullet_icon {
 	margin-left: 10px;
 	border-radius: 10px;
 	width: 12px;
@@ -482,7 +469,7 @@
     -moz-transition: background-color 0.1s ease 0s;
 }
 
-.litegraph .bullet_icon:hover {
+.react-flow .bullet_icon:hover {
 	background-color: #698;
 	cursor: pointer;
 } 
@@ -513,7 +500,7 @@
 }
 
 .graphmenu-entry.event,
-.litemenu-entry.event {
+.rflmenu-entry.event {
     border-left: 8px solid orange;
     padding-left: 12px;
 }
@@ -547,7 +534,7 @@
 }
 
 .graphmenu-entry .property_value,
-.litemenu-entry .property_value {
+.rflmenu-entry .property_value {
     display: inline-block;
     background-color: rgba(0, 0, 0, 0.5);
     text-align: right;
@@ -625,51 +612,51 @@
     color: black;
 }
 
-.litegraph .dialog {
+.react-flow .dialog {
     min-height: 0;
 }
-.litegraph .dialog .dialog-content {
+.react-flow .dialog .dialog-content {
 display: block;
 }
-.litegraph .dialog .dialog-content .subgraph_property {
+.react-flow .dialog .dialog-content .subgraph_property {
 padding: 5px;
 }
-.litegraph .dialog .dialog-footer {
+.react-flow .dialog .dialog-footer {
 margin: 0;
 }
-.litegraph .dialog .dialog-footer .subgraph_property {
+.react-flow .dialog .dialog-footer .subgraph_property {
 margin-top: 0;
 display: flex;
 align-items: center;
 padding: 5px;
 }
-.litegraph .dialog .dialog-footer .subgraph_property .name {
+.react-flow .dialog .dialog-footer .subgraph_property .name {
 flex: 1;
 }
-.litegraph .graphdialog {
+.react-flow .graphdialog {
 display: flex;
 align-items: center;
 border-radius: 20px;
 padding: 4px 10px;
 position: fixed;
 }
-.litegraph .graphdialog .name {
+.react-flow .graphdialog .name {
 padding: 0;
 min-height: 0;
 font-size: 16px;
 vertical-align: middle;
 }
-.litegraph .graphdialog .value {
+.react-flow .graphdialog .value {
 font-size: 16px;
 min-height: 0;
 margin: 0 10px;
 padding: 2px 5px;
 }
-.litegraph .graphdialog input[type="checkbox"] {
+.react-flow .graphdialog input[type="checkbox"] {
 width: 16px;
 height: 16px;
 }
-.litegraph .graphdialog button {
+.react-flow .graphdialog button {
 padding: 4px 18px;
 border-radius: 20px;
 cursor: pointer;
