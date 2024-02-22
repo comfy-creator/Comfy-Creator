@@ -431,3 +431,18 @@ export interface ContextMenuProps {
 // These are node-types that are built into React Flow
 // We currently do not allow them to be instantiated, but we could add them
 const defaultNodeDefs = ['default', 'input', 'output', 'group'];
+
+export interface ComfyError extends Error {
+  details: string;
+  fileName?: string;
+  node_id?: number;
+  node_type?: string;
+  class_type?: string;
+  traceback?: string[];
+  errors?: ComfyError[];
+  exception_message?: string;
+  dependent_outputs?: any[];
+  extra_info?: {
+    [x: string]: any;
+  };
+}
