@@ -1,6 +1,6 @@
 import { type MouseEvent as ReactMouseEvent, ComponentType } from 'react';
 import { IMenuType } from './components/template/menuData.ts';
-import { NodeProps } from 'reactflow';
+import { NodeProps, XYPosition } from 'reactflow';
 
 // This type is outdated
 // export type NodeData = {
