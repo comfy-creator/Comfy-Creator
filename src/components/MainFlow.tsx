@@ -13,7 +13,10 @@ import ReactFlow, {
   ReactFlowInstance,
   useReactFlow,
   getOutgoers,
-  OnConnectEnd
+  OnConnectEnd,
+  Viewport,
+  Rect,
+  getNodesBounds
 } from 'reactflow';
 import { useContextMenu } from '../contexts/ContextMenu';
 import ControlPanel from './ControlPanel/ControlPanel';
@@ -24,6 +27,7 @@ import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../handlers/dragDrop';
 
 const FLOW_KEY = 'flow';
+const PADDING = 50; // in pixels
 
 const selector = (state: RFState) => ({
   nodes: state.nodes,
@@ -61,7 +65,7 @@ export function MainFlow() {
     addHotKeysHandlers
   } = useStore(selector);
 
-  const { getNodes, getEdges } = useReactFlow<NodeState, string>();
+  const { getNodes, getEdges, setViewport, fitBounds } = useReactFlow<NodeState, string>();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
 
   const [rfInstance, setRFInstance] = useState<ReactFlowInstance | null>(null);
@@ -156,6 +160,13 @@ export function MainFlow() {
     [hotKeysHandlers]
   );
 
+  // TO DO: this is powerful; do not change zoom levels. We do not need to have
+  // all nodes on screen at once; we merely do no want to leave too far out
+  const handleMoveEnd = useCallback(() => {
+    const bounds = getNodesBounds(nodes);
+    fitBounds(bounds, { duration: 600, padding: PADDING });
+  }, [fitBounds, nodes]);
+
   return (
     <ReactFlow
       onContextMenu={onContextMenu}
@@ -173,6 +184,7 @@ export function MainFlow() {
       ref={menuRef}
       onDrop={onDrop}
       onDragOver={onDragOver}
+      onMoveEnd={handleMoveEnd}
       fitView
       zoomOnDoubleClick={false}
       style={{
