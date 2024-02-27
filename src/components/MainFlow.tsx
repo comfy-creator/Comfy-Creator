@@ -6,7 +6,6 @@ import ReactFlow, {
   BackgroundVariant,
   Connection,
   Controls,
-  MiniMap,
   Node,
   NodeResizer,
   NodeToolbar,
@@ -70,7 +69,7 @@ export function MainFlow() {
   useEffect(() => {
     // Register some node defs for testing
     addNodeDefs({ previewImage, previewVideo });
-  }, []);
+  }, [addNodeDefs]);
 
   // Store graph state to local storage
   const serializeGraph = useCallback(() => {
@@ -180,11 +179,12 @@ export function MainFlow() {
         backgroundColor: 'var(--bg-color)',
         color: 'var(--fg-color)'
       }}
+      proOptions={{ account: '', hideAttribution: true }}
     >
       <ReactHotkeys keyName={hotKeysShortcut.join(',')} onKeyDown={handleKeyPress}>
         <Background variant={BackgroundVariant.Lines} />
         <Controls />
-        <MiniMap />
+        {/* <MiniMap /> */}
         <NodeResizer />
         <NodeToolbar />
         <Panel position="top-right">
