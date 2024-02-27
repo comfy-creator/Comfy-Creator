@@ -212,62 +212,77 @@ export function dragElement(dragEl: HTMLDivElement, addSetting: any) {
 
 
 export function categorizeObjects(data: Record<string, Record<string, any>>) {
-    const categorizedArray: IMenuType[] = [];
+  const categorizedArray: IMenuType[] = [];
 
-    for (const key in data) {
-        const object = data[key];
-        const categories = object.category.split('/');
-        let currentCategory = categorizedArray;
+  for (const key in data) {
+    const object = data[key];
+    const categories = object.category.split('/');
+    let currentCategory = categorizedArray;
 
-        const stillHasSub = (name: string) => {
-            const found = Object.values(data).filter((value) => value.category.includes(`${name}/`));
-            return found.length > 0
-        }
-
-        categories.forEach((category: string, index: number) => {
-            const foundCategory = currentCategory.find(item => item.label === category);
-            const currentCat = categories.slice(0, index).join("/");
-
-            if (index === categories.length - 1) {
-                if (!foundCategory) {
-                    const newCategory: IMenuType = {
-                        label: category,
-                        hasSubMenu: true,
-                        subMenu: [],
-                        node: null
-                    };
-                    newCategory.subMenu!.push({
-                        label: object.name,
-                        hasSubMenu: false,
-                        subMenu: null,
-                        node: object
-                    })
-                    currentCategory.push(newCategory)
-                } else {
-                    foundCategory.subMenu!.push({
-                        label: object.name,
-                        hasSubMenu: false,
-                        subMenu: null,
-                        node: object
-                    })
-                }
-            } else if (!foundCategory) {
-                const newCategory = {
-                    label: stillHasSub(currentCat) ? category : object.name,
-                    hasSubMenu: stillHasSub(currentCat),
-                    subMenu: stillHasSub(currentCat) ? [] : null,
-                    node: stillHasSub(currentCat) ? null : object,
-                };
-
-                currentCategory.push(newCategory);
-                if (index < categories.length - 1) {
-                    currentCategory = (newCategory.subMenu as IMenuType['subMenu'])!;
-                }
-            } else {
-                currentCategory = foundCategory.subMenu || [];
-            }
-        });
+    const stillHasSub = (name: string) => {
+      const found = Object.values(data).filter((value) => value.category.includes(`${name}/`));
+      return found.length > 0
     }
 
-    return categorizedArray;
+    categories.forEach((category: string, index: number) => {
+      const foundCategory = currentCategory.find(item => item.label === category);
+      const currentCat = categories.slice(0, index).join("/");
+
+      if (index === categories.length - 1) {
+        if (!foundCategory) {
+          const newCategory: IMenuType = {
+            label: category,
+            hasSubMenu: true,
+            subMenu: [],
+            node: null
+          };
+          newCategory.subMenu!.push({
+            label: object.name,
+            hasSubMenu: false,
+            subMenu: null,
+            node: object
+          })
+          currentCategory.push(newCategory)
+        } else {
+          foundCategory.subMenu!.push({
+            label: object.name,
+            hasSubMenu: false,
+            subMenu: null,
+            node: object
+          })
+        }
+      } else if (!foundCategory) {
+        const newCategory = {
+          label: stillHasSub(currentCat) ? category : object.name,
+          hasSubMenu: stillHasSub(currentCat),
+          subMenu: stillHasSub(currentCat) ? [] : null,
+          node: stillHasSub(currentCat) ? null : object,
+        };
+
+        currentCategory.push(newCategory);
+        if (index < categories.length - 1) {
+          currentCategory = (newCategory.subMenu as IMenuType['subMenu'])!;
+        }
+      } else {
+        currentCategory = foundCategory.subMenu || [];
+      }
+    });
+  }
+
+
+  const sort = (arr: IMenuType[]): IMenuType[] =>  {
+    const hasSubMenus = arr.filter((item) => item.hasSubMenu);
+    const noSubMenu = arr.filter((item) => !item.hasSubMenu);
+    const newArr = [...hasSubMenus, ...noSubMenu];
+    return newArr.map((item) => {
+      return {
+        label: item.label,
+        hasSubMenu: item.hasSubMenu,
+        subMenu: item.subMenu ? sort(item.subMenu) : item.subMenu,
+        node: item.node,
+      }
+    })
+  }
+
+  return sort(categorizedArray);
 }
