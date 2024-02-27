@@ -751,7 +751,7 @@ export interface IMenuType {
   disabled?: boolean;
   label: string;
   hasSubMenu: boolean;
-  node: string | null;
+  node: Record<string, Object> | string | null;
   subMenu: IMenuType[] | null;
   isOpen?: boolean;
 }

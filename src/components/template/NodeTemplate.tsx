@@ -10,14 +10,11 @@ import {
   UpdateWidgetState
 } from '../../types';
 import { Handle, Position, NodeProps } from 'reactflow';
-import { Button } from '../widgets/Button';
 import { Number } from '../widgets/Number';
 import { String } from '../widgets/String';
-import { Text } from '../widgets/Text';
 import { Toggle } from '../widgets/Toggle';
 import { Dropdown } from '../widgets/Dropdown';
 import { toast } from 'react-toastify';
-import { useStore, RFState } from '../../store';
 import { Image } from '../widgets/Image.tsx';
 import { Video } from '../widgets/Video.tsx';
 

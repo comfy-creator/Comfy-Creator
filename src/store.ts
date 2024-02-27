@@ -25,6 +25,7 @@ import {
 } from './types';
 import { initialNodeState } from './utils';
 import { createNodeComponentFromDef } from './components/template/NodeTemplate';
+import { DEFAULT_HOTKEYS_HANDLERS, DEFAULT_SHORTCUT_KEYS } from './constants';
 
 export type RFState = {
   nodes: Node<NodeState>[];
@@ -46,6 +47,12 @@ export type RFState = {
 
   updateNodeState: (nodeId: string, newState: Partial<NodeState>) => void;
   updateWidgetState: UpdateWidgetState;
+
+  hotKeysShortcut: string[];
+  addHotKeysShortcut: (keys: string[]) => void;
+
+  hotKeysHandlers: Record<string, Function>;
+  addHotKeysHandlers: (handler: Record<string, Function>) => void;
 };
 
 export const useStore = create<RFState>((set, get) => ({
@@ -186,7 +193,28 @@ export const useStore = create<RFState>((set, get) => ({
       nodesCopy[nodeIndex] = nodeCopy;
 
       return { nodes: nodesCopy };
+    }),
+
+  // hot keys state
+  hotKeysShortcut: DEFAULT_SHORTCUT_KEYS,
+
+  addHotKeysShortcut: (hotKeys) => {
+    set((state) => {
+      return { hotKeysShortcut: [...state.hotKeysShortcut, ...hotKeys] }
     })
+  },
+
+  hotKeysHandlers: DEFAULT_HOTKEYS_HANDLERS,
+
+  addHotKeysHandlers: (handler) => {
+    set((state) => {
+      return {
+        hotKeysHandlers: { ...state.hotKeysHandlers, ...handler },
+        hotKeysShortcut: Array.from(new Set([...state.hotKeysShortcut, Object.keys(handler)[0]]))
+      }
+    })
+  }
+
 }));
 
 // function isSameEdgeType(stateA: WidgetState, stateB: Partial<WidgetState>): boolean {
