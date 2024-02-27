@@ -160,12 +160,12 @@ export function MainFlow() {
     [hotKeysHandlers]
   );
 
-  // TO DO: this is powerful; do not change zoom levels. We do not need to have
+  // TO DO: this is aggressive; do not change zoom levels. We do not need to have
   // all nodes on screen at once; we merely do no want to leave too far out
-  const handleMoveEnd = useCallback(() => {
-    const bounds = getNodesBounds(nodes);
-    fitBounds(bounds, { duration: 600, padding: PADDING });
-  }, [fitBounds, nodes]);
+  //   const handleMoveEnd = useCallback(() => {
+  //     const bounds = getNodesBounds(nodes);
+  //     fitBounds(bounds, { duration: 600, padding: PADDING });
+  //   }, [fitBounds, nodes]);
 
   return (
     <ReactFlow
@@ -184,7 +184,7 @@ export function MainFlow() {
       ref={menuRef}
       onDrop={onDrop}
       onDragOver={onDragOver}
-      onMoveEnd={handleMoveEnd}
+      //   onMoveEnd={handleMoveEnd}
       fitView
       zoomOnDoubleClick={false}
       style={{
