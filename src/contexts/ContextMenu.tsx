@@ -12,8 +12,10 @@ import {
 import { ContextMenuProps } from '../types.ts';
 import { ContextMenu } from '../components/template/ContextMenuTemplate.tsx';
 import { Node } from 'reactflow';
-import Menu, { IMenuType } from '../components/template/menuData.ts';
+import { IMenuType } from '../components/template/menuData.ts';
 import SearchWidget from '../components/SearchWidget.tsx';
+import NodeDefs from "../../node_info.json";
+import { categorizeObjects } from '../utils/ui.tsx';
 
 interface IContextMenu {
   onNodeContextMenu: (event: ReactMouseEvent, node: Node) => void;
@@ -94,10 +96,8 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
   const onContextMenu = useCallback(
     (event: ReactMouseEvent) => {
       event.preventDefault();
-      const menuData = getMenuData(event, Menu);
+      const menuData = getMenuData(event, categorizeObjects(NodeDefs));
       if (!menuData) return;
-
-      console.log('Event>>', menuData);
 
       setMenuProps(menuData);
     },

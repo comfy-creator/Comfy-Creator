@@ -1,6 +1,6 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-import {useCallback, useEffect, useState} from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
     Background,
     BackgroundVariant,
@@ -16,15 +16,13 @@ import ReactFlow, {
     getOutgoers,
     OnConnectEnd
 } from 'reactflow';
-import {useContextMenu} from '../contexts/ContextMenu';
+import { useContextMenu } from '../contexts/ContextMenu';
 import ControlPanel from './ControlPanel/ControlPanel';
-import {useStore, RFState} from '../store';
-import {NodeState} from '../types';
-import {previewImage, previewVideo} from '../node_definitions/preview';
+import { useStore, RFState } from '../store';
+import { NodeState } from '../types';
+import { previewImage, previewVideo } from '../node_definitions/preview';
 import ReactHotkeys from 'react-hot-keys';
-import {shortcutKeys} from '../utils/constant';
-import {dragHandler, dropHandler} from '../handlers/dragDrop';
-import {keyPressHandler} from '../handlers/keyPress.ts';
+import { dragHandler, dropHandler } from '../handlers/dragDrop';
 
 const FLOW_KEY = 'flow';
 
@@ -39,7 +37,11 @@ const selector = (state: RFState) => ({
     nodeComponents: state.nodeComponents,
     addNodeDefs: state.addNodeDefs,
     addNode: state.addNode,
-    updateWidgetState: state.updateWidgetState
+    updateWidgetState: state.updateWidgetState,
+    hotKeysShortcut: state.hotKeysShortcut,
+    hotKeysHandlers: state.hotKeysHandlers,
+    addHotKeysShortcut: state.addHotKeysShortcut,
+    addHotKeysHandlers: state.addHotKeysHandlers,
 });
 
 export function MainFlow() {
@@ -53,17 +55,21 @@ export function MainFlow() {
         setEdges,
         nodeComponents,
         addNodeDefs,
-        addNode
+        addNode,
+        hotKeysShortcut,
+        hotKeysHandlers,
+        addHotKeysShortcut,
+        addHotKeysHandlers
     } = useStore(selector);
 
-    const {getNodes, getEdges} = useReactFlow<NodeState, string>();
-    const {onContextMenu, onNodeContextMenu, onPaneClick, menuRef} = useContextMenu();
+    const { getNodes, getEdges } = useReactFlow<NodeState, string>();
+    const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
 
     const [rfInstance, setRFInstance] = useState<ReactFlowInstance | null>(null);
 
     useEffect(() => {
         // Register some node defs for testing
-        addNodeDefs({previewImage, previewVideo});
+        addNodeDefs({ previewImage, previewVideo });
     }, []);
 
     // Store graph state to local storage
@@ -99,7 +105,7 @@ export function MainFlow() {
     // Validation connection for edge-compatability and circular loops
     const isValidConnection = useCallback(
         (connection: Connection): boolean => {
-            const {source, target, sourceHandle, targetHandle} = connection;
+            const { source, target, sourceHandle, targetHandle } = connection;
             const nodes = getNodes();
             const edges = getEdges();
 
@@ -136,11 +142,15 @@ export function MainFlow() {
 
     const onDragOver = useCallback(dragHandler, []);
 
-    const onDrop = useCallback(dropHandler({rfInstance, addNode, setNodes, setEdges}), [
+    const onDrop = useCallback(dropHandler({ rfInstance, addNode, setNodes, setEdges }), [
         rfInstance
     ]);
 
-    const handleKeyPress = useCallback(keyPressHandler, []);
+    const handleKeyPress = useCallback((keyName: string, event: any) => {
+        event.preventDefault()
+        const func = hotKeysHandlers[keyName];
+        func && func();
+    }, [hotKeysHandlers]);
 
     return (
         <ReactFlow
@@ -166,14 +176,14 @@ export function MainFlow() {
                 color: 'var(--fg-color)'
             }}
         >
-            <ReactHotkeys keyName={shortcutKeys.join(',')} onKeyDown={handleKeyPress}>
-                <Background variant={BackgroundVariant.Lines}/>
-                <Controls/>
-                <MiniMap/>
-                <NodeResizer/>
-                <NodeToolbar/>
+            <ReactHotkeys keyName={hotKeysShortcut.join(',')} onKeyDown={handleKeyPress}>
+                <Background variant={BackgroundVariant.Lines} />
+                <Controls />
+                <MiniMap />
+                <NodeResizer />
+                <NodeToolbar />
                 <Panel position="top-right">
-                    <ControlPanel/>
+                    <ControlPanel />
                 </Panel>
             </ReactHotkeys>
         </ReactFlow>
