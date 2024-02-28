@@ -1,3 +1,5 @@
+import { EdgeType } from './types.ts';
+
 export const SUPPORTED_IMAGE_TYPES = [
   'image/png',
   'image/jpeg',
@@ -50,10 +52,10 @@ export const DEFAULT_HOTKEYS_HANDLERS = {
   'ctrl+m': () => {
     alert('Hey man, you clicked on ctrl+m');
   },
-  'del': () => {
+  del: () => {
     alert('Hey man, you clicked on del');
   },
-  'backspace': () => {
+  backspace: () => {
     alert('Hey man, you clicked on backspace');
   },
   'ctrl+del': () => {
@@ -62,7 +64,7 @@ export const DEFAULT_HOTKEYS_HANDLERS = {
   'ctrl+backspace': () => {
     alert('Hey man, you clicked on ctrl+backspace');
   },
-  'space': () => {
+  space: () => {
     alert('Hey man, you clicked on space');
   },
   'ctrl+left': () => {
@@ -83,13 +85,23 @@ export const DEFAULT_HOTKEYS_HANDLERS = {
   'ctrl+d': () => {
     alert('Hey man, you clicked on ctrl+d');
   },
-  'q': () => {
+  q: () => {
     alert('Hey man, you clicked on q');
   },
-  'h': () => {
+  h: () => {
     alert('Hey man, you clicked on h');
   },
-  'r': () => {
+  r: () => {
     alert('Hey man, you clicked on r');
-  },
-}
+  }
+};
+
+export const WIDGET_TYPES: EdgeType[] = [
+  'INT',
+  'STRING',
+  'BOOLEAN',
+  'FLOAT',
+  'ENUM',
+  'IMAGE',
+  'VIDEO'
+];

@@ -1,26 +1,23 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-import { useCallback, useEffect, useState } from 'react';
+import { DragEvent, useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
   Background,
   BackgroundVariant,
   Connection,
   Controls,
+  getOutgoers,
   Node,
   NodeResizer,
   NodeToolbar,
+  OnConnectEnd,
   Panel,
   ReactFlowInstance,
-  useReactFlow,
-  getOutgoers,
-  OnConnectEnd,
-  Viewport,
-  Rect,
-  getNodesBounds
+  useReactFlow
 } from 'reactflow';
 import { useContextMenu } from '../contexts/ContextMenu';
 import ControlPanel from './ControlPanel/ControlPanel';
-import { useStore, RFState } from '../store';
+import { RFState, useFlowStore } from '../store/flow';
 import { NodeState } from '../types';
 import { previewImage, previewVideo } from '../node_definitions/preview';
 import ReactHotkeys from 'react-hot-keys';
@@ -60,10 +57,8 @@ export function MainFlow() {
     addNodeDefs,
     addNode,
     hotKeysShortcut,
-    hotKeysHandlers,
-    addHotKeysShortcut,
-    addHotKeysHandlers
-  } = useStore(selector);
+    hotKeysHandlers
+  } = useFlowStore(selector);
 
   const { getNodes, getEdges, setViewport, fitBounds } = useReactFlow<NodeState, string>();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
@@ -136,9 +131,9 @@ export function MainFlow() {
       if (hasCycle(targetNode)) return false;
 
       // Ensure new connection connects compatible types
-      const sourceEdgeType = sourceNode.data.outputEdges[Number(sourceHandle)].edgeType;
-      const targetEdgeType = targetNode.data.inputEdges[Number(targetHandle)].edgeType;
-      return sourceEdgeType === targetEdgeType;
+      const { type: sourceType } = sourceNode.data.outputs[Number(sourceHandle)];
+      const { type: targetType } = targetNode.data.inputs[Number(targetHandle)];
+      return sourceType === targetType;
     },
     [getNodes, getEdges]
   );
@@ -146,7 +141,7 @@ export function MainFlow() {
   const onDragOver = useCallback(dragHandler, []);
 
   const onDrop = useCallback(
-    (event: React.DragEvent<HTMLDivElement>) =>
+    (event: DragEvent<HTMLDivElement>) =>
       dropHandler({ rfInstance, addNode, setNodes, setEdges })(event),
     [rfInstance, addNode, setNodes, setEdges]
   );

@@ -1,106 +1,72 @@
-import {
-  InputDef,
-  WidgetState,
-  NodeDefinition,
-  NodeState,
-  InputHandle,
-  OutputHandle,
-  EdgeType
-} from './types';
-import { SUPPORTED_IMAGE_TYPES, SUPPORTED_VIDEO_TYPES } from './constants.ts';
+import { EdgeType, InputDef, NodeDefinition, NodeState, WidgetState } from './types';
+import { SUPPORTED_IMAGE_TYPES, SUPPORTED_VIDEO_TYPES, WIDGET_TYPES } from './constants.ts'; // This returns the 'data' property of a React Flow Node
 
 // This returns the 'data' property of a React Flow Node
 export function initialNodeState(
   nodeDef: NodeDefinition,
-  inputWidgetValues: Record<string, any>
+  widgetValues: Record<string, any>
 ): NodeState {
-  const inputEdges = nodeDef.inputs.reduce(
-    (acc, def, index) => {
-      const defaultToWidget = canBeWidget(def.edgeType);
+  const state: NodeState = { name: nodeDef.display_name, inputs: {}, outputs: {}, widgets: {} };
 
-      if (def.isHandle === true || (def.isHandle === undefined && !defaultToWidget)) {
-        acc[index] = {
-          label: def.label,
-          edgeType: def.edgeType,
-          isHandle: true,
-          optional: def.optional
-        };
-      }
-
-      return acc;
-    },
-    {} as Record<number, InputHandle>
-  );
-
-  // Initialize output handles from output definitions
-  const outputEdges = nodeDef.outputs.reduce(
-    (acc, def, index) => {
-      acc[index] = {
-        label: def.label,
-        edgeType: def.edgeType,
-        isHandle: true
+  let i = 0;
+  for (const input of nodeDef.inputs) {
+    const isWidget = isWidgetInput(input.type);
+    if (isWidget) {
+      state.widgets[input.name] = widgetStateFromDef(input, widgetValues);
+    } else {
+      state.inputs[i] = {
+        name: input.name,
+        type: input.type,
+        optional: input.optional
       };
-      return acc;
-    },
-    {} as Record<number, OutputHandle>
-  );
 
-  // Initialize input widgets from input definitions
-  const inputWidgets = nodeDef.inputs.reduce(
-    (acc, def) => {
-      const defaultToWidget = canBeWidget(def.edgeType);
+      i += 1;
+    }
+  }
 
-      if (def.isHandle === false || (def.isHandle === undefined && defaultToWidget)) {
-        acc[def.label] = defToWidgetState(def, inputWidgetValues);
-      }
+  let j = 0;
+  for (const output of nodeDef.outputs) {
+    state.inputs[j] = {
+      name: output.name,
+      type: output.type
+    };
 
-      return acc;
-    },
-    {} as Record<string, WidgetState>
-  );
+    j += 1;
+  }
 
-  // Construct and return the node state
-  return {
-    display_name: nodeDef.display_name,
-    inputEdges,
-    outputEdges,
-    inputWidgets
-  };
+  return state;
 }
 
-export function defToWidgetState(def: InputDef, values: Record<string, any>): WidgetState {
-  const state = {
-    label: def.label,
-    optional: def.optional
-  };
+export function widgetStateFromDef(def: InputDef, values: Record<string, any>): WidgetState {
+  const state = { name: def.name, optional: def.optional };
 
-  switch (def.edgeType) {
+  switch (def.type) {
     case 'BOOLEAN':
       return {
         ...state,
-        edgeType: def.edgeType,
-        value: values[def.edgeType] ?? def.defaultValue
+        type: def.type,
+        value: values[def.type] ?? def.defaultValue
       };
 
     case 'INT':
       return {
         ...state,
-        edgeType: def.edgeType,
-        value: values[def.edgeType] ?? def.defaultValue
+        type: def.type,
+        value: values[def.type] ?? def.defaultValue
       };
 
     case 'FLOAT':
       return {
         ...state,
-        edgeType: def.edgeType,
-        value: values[def.edgeType] ?? def.defaultValue
+        type: def.type,
+        value: values[def.type] ?? def.defaultValue
       };
 
     case 'STRING':
       return {
         ...state,
-        edgeType: def.edgeType,
-        value: values[def.edgeType] ?? def.defaultValue
+        type: def.type,
+        value: values[def.type] ?? def.defaultValue
       };
 
     case 'ENUM':
@@ -113,36 +79,30 @@ export function defToWidgetState(def: InputDef, values: Record<string, any>): Wi
 
       return {
         ...state,
-        edgeType: def.edgeType,
+        type: def.type,
         value: def.defaultValue ?? firstOptionValue
       };
 
     case 'IMAGE':
       return {
         ...state,
-        edgeType: def.edgeType,
-        value: values[def.label] ?? def.defaultValue
+        type: def.type,
+        value: values[def.name] ?? def.defaultValue
       };
 
     case 'VIDEO':
       return {
         ...state,
-        edgeType: def.edgeType,
-        value: values[def.label] ?? def.defaultValue ?? {}
+        type: def.type,
+        value: values[def.name] ?? def.defaultValue ?? {}
       };
 
     default:
-      throw new Error(`Unsupported input type: ${(def as InputDef).edgeType}`);
+      throw new Error(`Unsupported input type: ${(def as InputDef).type}`);
   }
 }
 
-// This infers the 'isHandle' property based on edgeType if 'isHandle' is undefined
-// in the input definition
-const supportsWidgets: EdgeType[] = ['INT', 'STRING', 'BOOLEAN', 'FLOAT', 'ENUM'];
-
-const canBeWidget = (edgeType: EdgeType): boolean => {
-  return supportsWidgets.includes(edgeType);
-};
+const isWidgetInput = (type: EdgeType) => WIDGET_TYPES.includes(type);
 
 export function getFileKind(file: File) {
   if (file.type === 'application/json') {

@@ -1,15 +1,14 @@
-import React, { useEffect, useState, ComponentType, useCallback } from 'react';
+import React, { ComponentType } from 'react';
 import {
+  BoolInputState,
+  EnumInputDef,
+  InputDef,
   NodeDefinition,
   NodeState,
-  EdgeType,
-  BoolInputState,
-  WidgetState,
-  InputDef,
-  EnumInputDef,
-  UpdateWidgetState
+  UpdateWidgetState,
+  WidgetState
 } from '../../types';
-import { Handle, Position, NodeProps } from 'reactflow';
+import { Handle, NodeProps, Position } from 'reactflow';
 import { Number } from '../widgets/Number';
 import { String } from '../widgets/String';
 import { Toggle } from '../widgets/Toggle';
@@ -26,7 +25,7 @@ const createWidgetFromSpec = (
 ) => {
   const commonProps = { label };
 
-  switch (state.edgeType) {
+  switch (state.type) {
     case 'BOOLEAN':
       return (
         <Toggle
@@ -72,70 +71,56 @@ const createWidgetFromSpec = (
       return <Video {...commonProps} value={state.value} />;
 
     default:
-      console.warn(`Unsupported data type: ${(state as WidgetState).edgeType}`);
+      console.warn(`Unsupported data type: ${(state as WidgetState).type}`);
       return null;
   }
 };
-
-// const selector = (state: RFState) => ({
-//   updateNodeState: state.updateNodeState
-// });
 
 export const createNodeComponentFromDef = (
   def: NodeDefinition,
   updateWidgetState: UpdateWidgetState
 ): ComponentType<NodeProps<NodeState>> => {
   const CustomNode = ({ id, data }: NodeProps<NodeState>) => {
-    // const { updateNodeState } = useStore(selector);
-
-    // const update = useCallback(
-    //   (newState: Partial<NodeState>) => updateWidgetState(id, newState),
-    //   [id]
-    // );
-
-    // Initialize node state from definition if not already present
-    // useEffect(() => {
-    //   update({ ...initialState });
-    // }, [update]);
-
     // Test
     const onClick = () => toast.success('File uploaded successfully!');
+
     // Generate input handles
-    const inputHandles = Object.entries(data.inputEdges || []).map(([label, handle], index) => (
+    const inputHandles = Object.entries(data.inputs || []).map(([label, handle], index) => (
       <div className="flow_input" key={index}>
         <Handle
           id={`input-${label}-${index}`}
           type="target"
           position={Position.Left}
-          className={`flow_handler left ${handle.edgeType}`}
+          className={`flow_handler left ${handle.type}`}
         />
         <span className="flow_input_text">{label}</span>
       </div>
     ));
 
     // Generate output handles
-    const outputHandles = Object.entries(data.outputEdges || []).map(([label, handle], index) => (
+    const outputHandles = Object.entries(data.outputs || []).map(([label, handle], index) => (
       <div className="flow_output" key={index}>
         <Handle
           id={`output-${label}`}
           type="source"
           position={Position.Right}
-          className={`flow_handler right ${handle.edgeType}`}
+          className={`flow_handler right ${handle.type}`}
         />
         <span className="flow_output_text">{label}</span>
       </div>
     ));
 
     // Generate widgets
-    const widgets = Object.entries(data.inputWidgets || []).map(([label, inputState], index) => {
-      const inputDef = def.inputs.find((input) => input.label === label);
+    const widgets = Object.entries(data.widgets || []).map(([name, inputState], index) => {
+      const inputDef = def.inputs.find((input) => input.name === name);
       if (!inputDef) return;
 
-      const update = (newState: Partial<WidgetState>) => updateWidgetState(id, label, newState);
+      const update = (newState: Partial<WidgetState>) =>
+        updateWidgetState({ nodeId: id, name, newState });
 
       return (
         <div key={index} className="widget_container">
-          {createWidgetFromSpec(inputDef, label, inputState, update)}
+          {createWidgetFromSpec(inputDef, name, inputState, update)}
         </div>
       );
     });
@@ -165,8 +150,8 @@ export const createNodeComponentFromDef = (
 //   return inputWidgetTypes.includes(type);
 // };
 
-// const edgeTypeToWidgetType = (edgeType: EdgeType): WidgetTypes | undefined => {
-//   switch (edgeType) {
+// const typeToWidgetType = (type: EdgeType): WidgetTypes | undefined => {
+//   switch (type) {
 //     case 'INT':
 //     case 'FLOAT':
 //       return 'number';

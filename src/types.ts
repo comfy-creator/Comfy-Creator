@@ -1,10 +1,10 @@
-import { type MouseEvent as ReactMouseEvent, ComponentType } from 'react';
+import { ComponentType, type MouseEvent as ReactMouseEvent } from 'react';
 import { IMenuType } from './components/template/menuData.ts';
 import { NodeProps, XYPosition } from 'reactflow';
 
 // This type is outdated
 // export type NodeData = {
-//   label: string;
+//   name: string;
 //   function: string;
 //   category: string;
 //   inputs: {
@@ -68,19 +68,19 @@ export type EdgeType =
 
 // Base type for the discriminator
 export interface BaseInputDef {
-  readonly label: string;
-  readonly edgeType: EdgeType;
+  readonly name: string;
+  readonly type: EdgeType;
   readonly optional?: boolean; // assumed false if undefined
-  readonly isHandle?: boolean; // imputed based on edgeType if undefined
+  readonly isHandle?: boolean; // imputed based on type if undefined
 }
 
 export interface BoolInputDef extends BaseInputDef {
-  readonly edgeType: 'BOOLEAN';
+  readonly type: 'BOOLEAN';
   readonly defaultValue: boolean;
 }
 
 export interface IntInputDef extends BaseInputDef {
-  readonly edgeType: 'INT';
+  readonly type: 'INT';
   readonly defaultValue: number;
   readonly min: number;
   readonly max: number;
@@ -88,7 +88,7 @@ export interface IntInputDef extends BaseInputDef {
 }
 
 export interface FloatInputDef extends BaseInputDef {
-  readonly edgeType: 'FLOAT';
+  readonly type: 'FLOAT';
   readonly defaultValue: number;
   readonly min: number;
   readonly max: number;
@@ -97,25 +97,25 @@ export interface FloatInputDef extends BaseInputDef {
 }
 
 export interface StringInputDef extends BaseInputDef {
-  readonly edgeType: 'STRING';
+  readonly type: 'STRING';
   readonly defaultValue?: string;
   readonly multiline?: boolean;
 }
 
 export interface EnumInputDef extends BaseInputDef {
-  readonly edgeType: 'ENUM';
+  readonly type: 'ENUM';
   readonly defaultValue?: string;
   readonly options: string[] | (() => string[]);
   readonly multiSelect?: boolean;
 }
 
 export interface ImageInputDef extends BaseInputDef {
-  readonly edgeType: 'IMAGE';
+  readonly type: 'IMAGE';
   readonly defaultValue?: string;
 }
 
 export interface VideoInputDef extends BaseInputDef {
-  readonly edgeType: 'VIDEO';
+  readonly type: 'VIDEO';
   readonly defaultValue?: { src: string; type: string };
 }
 
@@ -139,8 +139,8 @@ export type InputDef =
 // encode), and then pass it as an input into B-node (K-sampler).
 
 export type OutputDef = {
-  label: string;
-  edgeType: EdgeType;
+  name: string;
+  type: EdgeType;
 };
 
 // =========== Enitre Node Definition ===========
@@ -154,7 +154,6 @@ export type NodeDefinition = Readonly<{
   category: string;
 
   inputs: InputDef[];
-
   outputs: OutputDef[];
 
   output_node: boolean;
@@ -172,47 +171,50 @@ export interface AddNodeParams {
 // =========== Input States ===========
 
 export interface BaseInputState {
-  label: string;
-  edgeType: EdgeType;
-  optional?: boolean; // assumed false if undefined
+  name: string;
+  type: EdgeType;
+  optional?: boolean;
 }
 
-export interface InputHandle extends BaseInputState {
-  isHandle: true;
+export interface OutputHandle {
+  name: string;
+  type: EdgeType;
 }
+
+export interface InputHandle extends BaseInputState {}
 
 export interface BoolInputState extends BaseInputState {
-  edgeType: 'BOOLEAN';
+  type: 'BOOLEAN';
   value: boolean;
 }
 
 export interface IntInputState extends BaseInputState {
-  edgeType: 'INT';
+  type: 'INT';
   value: number;
 }
 
 export interface FloatInputState extends BaseInputState {
-  edgeType: 'FLOAT';
+  type: 'FLOAT';
   value: number;
 }
 
 export interface StringInputState extends BaseInputState {
-  edgeType: 'STRING';
+  type: 'STRING';
   value: string;
 }
 
 export interface EnumInputState extends BaseInputState {
-  edgeType: 'ENUM';
+  type: 'ENUM';
   value: string | string[];
 }
 
 export interface ImageInputState extends BaseInputState {
-  edgeType: 'IMAGE';
+  type: 'IMAGE';
   value: string;
 }
 
 export interface VideoInputState extends BaseInputState {
-  edgeType: 'VIDEO';
+  type: 'VIDEO';
   value: { src: string; type: string };
 }
 
@@ -225,22 +227,14 @@ export type WidgetState =
   | ImageInputState
   | VideoInputState;
 
-// =========== Output States (none) ===========
-
-export type OutputHandle = {
-  label: string;
-  edgeType: EdgeType;
-  isHandle: true;
-};
-
 // =========== Entire Node State ===========
-// This is the 'data' type stored inside of a node instance
+// This is the 'data' type stored inside a node instance
 
 export type NodeState = {
-  readonly display_name: string;
-  inputEdges: Record<number, InputHandle>;
-  outputEdges: Record<number, OutputHandle>;
-  inputWidgets: Record<string, WidgetState>;
+  readonly name: string;
+  inputs: Record<number, InputHandle>;
+  outputs: Record<number, OutputHandle>;
+  widgets: Record<string, WidgetState>;
 };
 
 // =========== Node Types ===========
@@ -251,11 +245,13 @@ export type NodeType = ComponentType<NodeProps<NodeState>>;
 
 export type NodeTypes = Record<string, NodeType>;
 
-export type UpdateWidgetState = (
-  nodeId: string,
-  widgetLabel: string,
-  newState: Partial<WidgetState>
-) => void;
+export interface UpdateWidgetStateParams {
+  name: string;
+  nodeId: string;
+  newState: Partial<WidgetState>;
+}
+
+export type UpdateWidgetState = (params: UpdateWidgetStateParams) => void;
 
 // TO DO: we need more specific enums!
 // And we need more specific conditioning, CLIP, VAE,
@@ -267,10 +263,10 @@ export type UpdateWidgetState = (
 //    scale_ratio: ['FLOAT', { defaultValue: 4.0, min: 0.0, max: 10.0, step: 0.01 }]
 // }
 
-// Example: { positive: { edgeType: 'CONDITIONING' } }
+// Example: { positive: { type: 'CONDITIONING' } }
 
-// export type Input = { edgeType: EdgeType; inputDef?: InputDef; isHandle?: boolean };
-// export type Output = { edgeType: EdgeType };
+// export type Input = { type: EdgeType; inputDef?: InputDef; isHandle?: boolean };
+// export type Output = { type: EdgeType };
 
 // export type Inputs = { [name: string]: Input };
 // export type Outputs = { [name: string]: Output };
@@ -338,9 +334,9 @@ export type UpdateWidgetState = (
 //       // Initialize data based on node-definition
 //       this.data = {};
 //       def.inputs.forEach((input, index) => {
-//         // The key for data is the label of the input
+//         // The key for data is the name of the input
 //         // Initialize based on the type of input
-//         switch (input.edgeType) {
+//         switch (input.type) {
 //           case 'BOOLEAN':
 //             this.data[index] = input.defaultValue;
 //             break;
@@ -362,7 +358,7 @@ export type UpdateWidgetState = (
 //             break;
 
 //           default:
-//             console.warn(`Unhandled edgeType: ${(input as BaseInputDef).edgeType}`);
+//             console.warn(`Unhandled type: ${(input as BaseInputDef).type}`);
 //         }
 //       });
 //     }
@@ -387,46 +383,46 @@ export type UpdateWidgetState = (
 
 // export interface Widget<Value, Options> {
 //   // name: string;
-//   label: string;
+//   name: string;
 //   value: Value;
 //   options?: Options;
-//   edgeType: EdgeType | null;
+//   type: EdgeType | null;
 //   y?: number;
 //   // last_y: number; // what is this used for?
 //   disabled?: boolean;
 // }
 
 // export interface ButtonWidget extends Widget<null, object> {
-//   edgeType: null;
+//   type: null;
 //   onClick?: (e: MouseEvent<HTMLButtonElement>) => void;
 // }
 
 // export interface ToggleWidget extends Widget<boolean, { on?: string; off?: string }> {
-//   edgeType: 'BOOLEAN';
+//   type: 'BOOLEAN';
 //   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
 // }
 
 // export interface SliderWidget extends Widget<number, { max: number; min: number }> {
-//   edgeType: 'FLOAT' | 'INT';
+//   type: 'FLOAT' | 'INT';
 // }
 
 // export interface NumberWidget extends Widget<number, object> {
-//   edgeType: 'FLOAT' | 'INT';
+//   type: 'FLOAT' | 'INT';
 //   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
 // }
 
 // export interface DropdownWidget extends Widget<string[], { values: string[] | (() => string[]) }> {
-//   edgeType: 'ENUM';
+//   type: 'ENUM';
 //   onChange?: (e: ChangeEvent<HTMLSelectElement>) => void;
 // }
 
 // export interface StringWidget extends Widget<string, object> {
-//   edgeType: 'STRING';
+//   type: 'STRING';
 //   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
 // }
 
 // export interface TextWidget extends Widget<string, object> {
-//   edgeType: 'STRING';
+//   type: 'STRING';
 //   onChange?: (e: ChangeEvent<HTMLTextAreaElement>) => void;
 // }
 
