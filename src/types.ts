@@ -71,7 +71,6 @@ export interface BaseInputDef {
   readonly name: string;
   readonly type: EdgeType;
   readonly optional?: boolean; // assumed false if undefined
-  readonly isHandle?: boolean; // imputed based on type if undefined
 }
 
 export interface BoolInputDef extends BaseInputDef {

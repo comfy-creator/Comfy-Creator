@@ -14,6 +14,7 @@ export function initialNodeState(
     if (isWidget) {
       state.widgets[input.name] = widgetStateFromDef(input, widgetValues);
     } else {
+      console.log(input.name);
       state.inputs[i] = {
         name: input.name,
         type: input.type,

@@ -5,16 +5,16 @@ import {
   RefObject,
   useCallback,
   useContext,
+  useEffect,
   useRef,
-  useState,
-  useEffect
+  useState
 } from 'react';
 import { ContextMenuProps } from '../types.ts';
 import { ContextMenu } from '../components/template/ContextMenuTemplate.tsx';
 import { Node } from 'reactflow';
 import { IMenuType } from '../components/template/menuData.ts';
 import SearchWidget from '../components/SearchWidget.tsx';
-import NodeDefs from "../../node_info.json";
+import NodeDefs from '../../node_info.json';
 import { categorizeObjects } from '../utils/ui.tsx';
 
 interface IContextMenu {
@@ -150,7 +150,6 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
     parentMenuIndex: number,
     items: IMenuType[] = []
   ) => {
-    // console.log("onSubContextMenu", parentMenuIndex);
     event.preventDefault();
     const submenuData = getMenuData(event, items);
     if (!submenuData) return;

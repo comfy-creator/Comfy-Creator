@@ -93,7 +93,7 @@ export const createNodeComponentFromDef = (
           position={Position.Left}
           className={`flow_handler left ${handle.type}`}
         />
-        <span className="flow_input_text">{label}</span>
+        <span className="flow_input_text">{handle.name}</span>
       </div>
     ));
 
@@ -106,7 +106,7 @@ export const createNodeComponentFromDef = (
           position={Position.Right}
           className={`flow_handler right ${handle.type}`}
         />
-        <span className="flow_output_text">{label}</span>
+        <span className="flow_output_text">{handle.name}</span>
       </div>
     ));
 
