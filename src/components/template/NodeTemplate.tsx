@@ -5,6 +5,7 @@ import {
   InputDef,
   NodeDefinition,
   NodeState,
+  StringInputDef,
   UpdateWidgetState,
   WidgetState
 } from '../../types';
@@ -16,6 +17,7 @@ import { Dropdown } from '../widgets/Dropdown';
 import { toast } from 'react-toastify';
 import { Image } from '../widgets/Image.tsx';
 import { Video } from '../widgets/Video.tsx';
+import { Text } from '../widgets/Text.tsx';
 
 const createWidgetFromSpec = (
   def: InputDef,
@@ -24,6 +26,7 @@ const createWidgetFromSpec = (
   updateNodeState: (newState: Partial<WidgetState>) => void
 ) => {
   const commonProps = { label };
+  if (state.type !== def.type) return;
 
   switch (state.type) {
     case 'BOOLEAN':
@@ -46,6 +49,9 @@ const createWidgetFromSpec = (
       );
 
     case 'STRING':
+      if ((def as StringInputDef).multiline) {
+        return <Text {...commonProps} value={state.value} />;
+      }
       return (
         <String
           {...commonProps}
