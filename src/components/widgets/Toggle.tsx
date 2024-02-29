@@ -18,65 +18,31 @@ export const Toggle: React.FC<ToggleProps> = ({ label, disabled, checked, onChan
     setInput((inp) => !inp);
   };
 
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        width: '100%',
-        gap: '15px',
-        marginTop: '1px',
-        marginBottom: '1px'
-      }}
-    >
+  const ToggleCircle = () => {
+    return (
       <div
         style={{
-          display: 'flex',
-          width: '100%',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          border: '1px solid var(--border-color)',
-          borderRadius: '8px',
-          background: 'var(--comfy-input-bg)',
-          color: 'var(--input-text)'
+          width: '8px',
+          height: '8px',
+          marginLeft: '1px',
+          marginRight: '3px',
+          borderRadius: '50%',
+          background: `${input ? '#606f79' : '#363636'}`
         }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <span>{label}</span>
-        </div>
+      />
+    );
+  };
 
-        <div onClick={handleToggle} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <span>{String(input)}</span>
-          <div
-            style={{
-              margin: '3px',
-              height: '8px',
-              width: '8px',
-              borderRadius: '50%',
-              background: `${input ? '#606f79' : '#363636'}`
-            }}
-          />
+  return (
+    <div className={'widget_box'}>
+      <div className={'widget_input'}>
+        <span>{label}</span>
+
+        <div className={'widget_input_item'} onClick={handleToggle}>
+          <span className={'widget_input_item_text'}>{String(input)}</span>
+          <ToggleCircle />
         </div>
       </div>
     </div>
   );
 };
-
-function NumberImgButton({
-  type,
-  onClick
-}: {
-  type: 'increment' | 'decrement';
-  onClick: () => void;
-}) {
-  return (
-    <>
-      <img
-        src={type === 'decrement' ? '/lcaret.svg' : '/rcaret.svg'}
-        style={{ width: '10px', height: '10px' }}
-        onClick={onClick}
-      />
-    </>
-  );
-}

@@ -1,0 +1,51 @@
+import { useEffect, useState } from 'react';
+import { WidgetBackwardIcon, WidgetForwardIcon } from '../WidgetDirectionIcon.tsx';
+
+type EnumProps = {
+  label: string;
+  disabled?: boolean;
+  value: string | string[];
+  options: { values: string[] | (() => string[]) };
+  onChange?: (value: string | string[]) => void;
+  multiSelect?: boolean;
+};
+
+export function Enum({ label, disabled, value, options, onChange, multiSelect }: EnumProps) {
+  const values = options
+    ? Array.isArray(options.values)
+      ? options.values
+      : options.values()
+    : typeof value === 'string'
+      ? [value]
+      : value;
+
+  const [input, setInput] = useState(0);
+
+  useEffect(() => {
+    setInput(input);
+  }, [input]);
+
+  const handleInputIncrement = () => {
+    setInput((i) => (i === values.length - 1 ? 0 : i + 1));
+  };
+
+  const handleBackward = () => {
+    setInput((i) => (i === 0 ? values.length - 1 : i - 1));
+  };
+
+  return (
+    <div className={'widget_box'}>
+      <div className={'widget_input'}>
+        <div className={'widget_input_item'}>
+          <WidgetBackwardIcon onClick={handleBackward} />
+          <span className={'widget_input_item_text'}>{label}</span>
+        </div>
+
+        <div className={'widget_input_item'} style={{ gap: '5px' }}>
+          <span className={'widget_input_item_text'}>{values[input]}</span>
+          <WidgetForwardIcon onClick={handleInputIncrement} />
+        </div>
+      </div>
+    </div>
+  );
+}

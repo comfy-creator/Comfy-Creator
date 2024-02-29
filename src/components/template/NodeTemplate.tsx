@@ -10,14 +10,14 @@ import {
   WidgetState
 } from '../../types';
 import { Handle, NodeProps, Position } from 'reactflow';
-import { Number } from '../widgets/Number';
-import { String } from '../widgets/String';
-import { Toggle } from '../widgets/Toggle';
-import { Dropdown } from '../widgets/Dropdown';
+import { Number as NumberWidget } from '../widgets/Number';
+import { String as StringWidget } from '../widgets/String';
+import { Toggle as ToggleWidget } from '../widgets/Toggle';
+import { Enum as EnumWidget } from '../widgets/Enum.tsx';
 import { toast } from 'react-toastify';
-import { Image } from '../widgets/Image.tsx';
-import { Video } from '../widgets/Video.tsx';
-import { Text } from '../widgets/Text.tsx';
+import { Image as ImageWidget } from '../widgets/Image.tsx';
+import { Video as VideoWidget } from '../widgets/Video.tsx';
+import { Text as TextWidget } from '../widgets/Text.tsx';
 
 const createWidgetFromSpec = (
   def: InputDef,
@@ -31,7 +31,7 @@ const createWidgetFromSpec = (
   switch (state.type) {
     case 'BOOLEAN':
       return (
-        <Toggle
+        <ToggleWidget
           {...commonProps}
           checked={(state as BoolInputState).value || false}
           onChange={(checked: boolean) => updateNodeState({ value: checked })}
@@ -41,7 +41,7 @@ const createWidgetFromSpec = (
     case 'INT':
     case 'FLOAT':
       return (
-        <Number
+        <NumberWidget
           {...commonProps}
           value={state.value}
           onChange={(value: number) => updateNodeState({ value })}
@@ -50,10 +50,10 @@ const createWidgetFromSpec = (
 
     case 'STRING':
       if ((def as StringInputDef).multiline) {
-        return <Text {...commonProps} value={state.value} />;
+        return <TextWidget {...commonProps} value={state.value} />;
       }
       return (
-        <String
+        <StringWidget
           {...commonProps}
           value={state.value}
           onChange={(value: string) => updateNodeState({ value })}
@@ -62,7 +62,7 @@ const createWidgetFromSpec = (
 
     case 'ENUM':
       return (
-        <Dropdown
+        <EnumWidget
           {...commonProps}
           value={state.value}
           onChange={(value: string | string[]) => updateNodeState({ value })}
@@ -71,10 +71,10 @@ const createWidgetFromSpec = (
         />
       );
     case 'IMAGE':
-      return <Image {...commonProps} value={state.value} />;
+      return <ImageWidget {...commonProps} value={state.value} />;
 
     case 'VIDEO':
-      return <Video {...commonProps} value={state.value} />;
+      return <VideoWidget {...commonProps} value={state.value} />;
 
     default:
       console.warn(`Unsupported data type: ${(state as WidgetState).type}`);
@@ -137,6 +137,7 @@ export const createNodeComponentFromDef = (
           <div className="node_label" onClick={onClick}>
             {def.display_name}
           </div>
+
           <div className="flow_input_output_container">
             <div className="flow_input_container">{inputHandles}</div>
             <div className="flow_output_container">{outputHandles}</div>

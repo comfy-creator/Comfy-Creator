@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { WidgetBackwardIcon, WidgetForwardIcon } from '../WidgetDirectionIcon.tsx';
 
 type NumberWidgetProps = {
   label: string;
@@ -14,12 +15,12 @@ export const Number: React.FC<NumberWidgetProps> = ({ label, disabled, value, on
     setInput(input);
   }, [input]);
 
-  const handleInputIncrement = () => {
+  const handleForward = () => {
     const inputValue = parseInt(String(input));
     setInput(isNaN(inputValue) ? 0 : inputValue + 1);
   };
 
-  const handleInputDcrement = () => {
+  const handleBackward = () => {
     const inputValue = parseInt(String(input));
     if (isNaN(inputValue)) {
       setInput(0);
@@ -29,57 +30,18 @@ export const Number: React.FC<NumberWidgetProps> = ({ label, disabled, value, on
   };
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        width: '100%',
-        gap: '15px',
-        marginTop: '1px',
-        marginBottom: '1px'
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          width: '100%',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          border: '1px solid var(--border-color)',
-          borderRadius: '8px',
-          background: 'var(--comfy-input-bg)',
-          color: 'var(--input-text)'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-          <NumberImgButton type={'decrement'} onClick={handleInputDcrement} />
-          <span>{label}</span>
+    <div className={'widget_box'}>
+      <div className={'widget_input'}>
+        <div className={'widget_input_item'}>
+          <WidgetBackwardIcon onClick={handleBackward} />
+          <span className={'widget_input_item_text'}>{label}</span>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <span>{input}</span>
-          <NumberImgButton type={'increment'} onClick={handleInputIncrement} />
+        <div className={'widget_input_item'} style={{ gap: '5px' }}>
+          <span className={'widget_input_item_text'}>{input}</span>
+          <WidgetForwardIcon onClick={handleForward} />
         </div>
       </div>
     </div>
   );
 };
-
-function NumberImgButton({
-  type,
-  onClick
-}: {
-  type: 'increment' | 'decrement';
-  onClick: () => void;
-}) {
-  return (
-    <>
-      <img
-        src={type === 'decrement' ? '/lcaret.svg' : '/rcaret.svg'}
-        style={{ width: '10px', height: '10px' }}
-        onClick={onClick}
-      />
-    </>
-  );
-}
