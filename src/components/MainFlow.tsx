@@ -1,6 +1,6 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, MouseEvent } from 'react';
 import ReactFlow, {
   Background,
   BackgroundVariant,
@@ -14,9 +14,8 @@ import ReactFlow, {
   useReactFlow,
   getOutgoers,
   OnConnectEnd,
-  Viewport,
-  Rect,
-  getNodesBounds
+  getNodesBounds,
+  getViewportForBounds
 } from 'reactflow';
 import { useContextMenu } from '../contexts/ContextMenu';
 import ControlPanel from './ControlPanel/ControlPanel';
@@ -27,7 +26,9 @@ import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../handlers/dragDrop';
 
 const FLOW_KEY = 'flow';
-const PADDING = 50; // in pixels
+const PADDING = 5; // in pixels
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 2;
 
 const selector = (state: RFState) => ({
   nodes: state.nodes,
@@ -65,7 +66,7 @@ export function MainFlow() {
     addHotKeysHandlers
   } = useStore(selector);
 
-  const { getNodes, getEdges, setViewport, fitBounds } = useReactFlow<NodeState, string>();
+  const { getNodes, getEdges, getViewport, fitView } = useReactFlow<NodeState, string>();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
 
   const [rfInstance, setRFInstance] = useState<ReactFlowInstance | null>(null);
@@ -161,11 +162,40 @@ export function MainFlow() {
   );
 
   // TO DO: this is aggressive; do not change zoom levels. We do not need to have
-  // all nodes on screen at once; we merely do no want to leave too far out
-  //   const handleMoveEnd = useCallback(() => {
-  //     const bounds = getNodesBounds(nodes);
-  //     fitBounds(bounds, { duration: 600, padding: PADDING });
-  //   }, [fitBounds, nodes]);
+  // all nodes on screen at once; we merely do not want to leave too far out
+    const handleMoveEnd = useCallback((event: MouseEvent) => {
+      // console.log("event>>", event)
+      const bounds = getNodesBounds(nodes);
+      // console.log("bounds>", bounds)
+      const viewPort = getViewport();
+      //
+      const boundViewPort = getViewportForBounds(
+        bounds,
+        menuRef.current?.clientWidth || 1200,
+        menuRef.current?.clientHeight || 800,
+        0.7,
+        viewPort.zoom
+      )
+      // console.log("Bound view port>>", boundViewPort)
+      // console.log("GET >View port>>", getViewport())
+      //
+      if (viewPort.x > (menuRef.current?.clientWidth || 0) || viewPort.y > (menuRef.current?.clientHeight || 0)) {
+        fitView({
+          minZoom: MIN_ZOOM,
+          maxZoom: viewPort.zoom,
+          duration: 500,
+        })
+      }
+
+      if (viewPort.x < 0 && Math.abs(viewPort.x) > boundViewPort.x) {
+        fitView({
+          minZoom: MIN_ZOOM,
+          maxZoom: viewPort.zoom,
+          duration: 500,
+        })
+      }
+      // console.log("Client>>>", menuRef.current?.clientWidth, menuRef.current?.clientHeight)
+    }, [fitView, nodes]);
 
   return (
     <ReactFlow
@@ -184,8 +214,17 @@ export function MainFlow() {
       ref={menuRef}
       onDrop={onDrop}
       onDragOver={onDragOver}
-      //   onMoveEnd={handleMoveEnd}
+      onMoveEnd={handleMoveEnd}
+
+      maxZoom={MAX_ZOOM}
+      minZoom={MIN_ZOOM}
       fitView
+      fitViewOptions={{
+        padding: 2,
+        minZoom: 1,
+        maxZoom: MAX_ZOOM,
+        duration: 500
+      }}
       zoomOnDoubleClick={false}
       style={{
         backgroundColor: 'var(--bg-color)',
