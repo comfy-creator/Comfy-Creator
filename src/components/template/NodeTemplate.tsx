@@ -18,6 +18,7 @@ import { Enum as EnumWidget } from '../widgets/Enum.tsx';
 import { Image as ImageWidget } from '../widgets/Image.tsx';
 import { Video as VideoWidget } from '../widgets/Video.tsx';
 import { Text as TextWidget } from '../widgets/Text.tsx';
+import ResizableDiv from '../ResizableDiv.tsx';
 
 const createWidgetFromSpec = (
   def: InputDef,
@@ -132,7 +133,8 @@ export const createNodeComponentFromDef = (
     });
 
     return (
-      <div className="node">
+      <ResizableDiv className="node">
+        {/*<div className="node">*/}
         <div className="node_container">
           <div className="node_label" onClick={onClick}>
             {def.display_name}
@@ -144,7 +146,8 @@ export const createNodeComponentFromDef = (
           </div>
           <div className="widgets_container">{widgets}</div>
         </div>
-      </div>
+        {/*</div>*/}
+      </ResizableDiv>
     );
   };
 
