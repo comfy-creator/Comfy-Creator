@@ -14,7 +14,6 @@ export function initialNodeState(
     if (isWidget) {
       state.widgets[input.name] = widgetStateFromDef(input, widgetValues);
     } else {
-      console.log(input.name);
       state.inputs[i] = {
         name: input.name,
         type: input.type,
@@ -27,7 +26,7 @@ export function initialNodeState(
 
   let j = 0;
   for (const output of nodeDef.outputs) {
-    state.inputs[j] = {
+    state.outputs[j] = {
       name: output.name,
       type: output.type
     };
@@ -35,6 +34,7 @@ export function initialNodeState(
     j += 1;
   }
 
+  console.log(state);
   return state;
 }
 

@@ -9,12 +9,12 @@ import {
   UpdateWidgetState,
   WidgetState
 } from '../../types';
+import { toast } from 'react-toastify';
 import { Handle, NodeProps, Position } from 'reactflow';
 import { Number as NumberWidget } from '../widgets/Number';
 import { String as StringWidget } from '../widgets/String';
 import { Toggle as ToggleWidget } from '../widgets/Toggle';
 import { Enum as EnumWidget } from '../widgets/Enum.tsx';
-import { toast } from 'react-toastify';
 import { Image as ImageWidget } from '../widgets/Image.tsx';
 import { Video as VideoWidget } from '../widgets/Video.tsx';
 import { Text as TextWidget } from '../widgets/Text.tsx';

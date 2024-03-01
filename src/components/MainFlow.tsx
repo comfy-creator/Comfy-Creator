@@ -127,7 +127,7 @@ export function MainFlow() {
       }
 
       for (const name in node.output) {
-        const [output] = node.output[name as keyof typeof node.output] as any;
+        const output = node.output[name as keyof typeof node.output] as any;
         def.outputs.push({ name: output, type: output });
       }
 
@@ -251,7 +251,8 @@ export function MainFlow() {
       zoomOnDoubleClick={false}
       style={{
         backgroundColor: 'var(--bg-color)',
-        color: 'var(--fg-color)'
+        color: 'var(--fg-color)',
+        cursor: 'crosshair'
       }}
       proOptions={{ account: '', hideAttribution: true }}
     >

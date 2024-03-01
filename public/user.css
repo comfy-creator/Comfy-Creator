@@ -7,7 +7,6 @@
     left: 100px;
     min-width: 100px;
     color: #aaf;
-    padding: 0;
     box-shadow: 0 0 10px black !important;
     background-color: #2e2e2e !important;
     z-index: 10;
@@ -46,7 +45,8 @@
 /* Node */
 .node {
     padding: 2px;
-    width: 180px;
+    width: 100%;
+    cursor: crosshair;
     border-radius: 5px;
     border: 1px solid #ddd;
 }
@@ -210,4 +210,8 @@
 .widget_input_item_text {
     margin-bottom: 1px;
     color: #b2b2b2;
+}
+
+.react-flow__pane {
+    cursor: default !important;
 }
