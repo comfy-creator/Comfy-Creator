@@ -5,7 +5,7 @@ type VideoProps = {
   };
 };
 
-export function Video({ value }: VideoProps) {
+export function VideoWidget({ value }: VideoProps) {
   return (
     <video autoPlay={true} style={{ width: '100%', height: 'auto' }}>
       <source src={value.src} type={value.type} />

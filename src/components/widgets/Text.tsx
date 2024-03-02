@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 type TextProps = {
   label: string;
   disabled?: boolean;
@@ -5,19 +7,20 @@ type TextProps = {
   onChange?: (value: string) => void;
 };
 
-export function Text({ label, disabled, value, onChange }: TextProps) {
+export function TextWidget({ disabled, value, onChange }: TextProps) {
+  const [inputValue, setInputValue] = useState(value);
+
   return (
-    <>
-      <textarea
-        style={{ width: '100%', outline: 'none' }}
-        className={'comfy-multiline-input'}
-        value={value}
-        disabled={disabled}
-        rows={4}
-        onChange={(e) => {
-          onChange?.(e.target.value);
-        }}
-      ></textarea>
-    </>
+    <textarea
+      rows={4}
+      value={inputValue}
+      disabled={disabled}
+      className={'comfy-multiline-input'}
+      style={{ width: '100%', outline: 'none' }}
+      onChange={(e) => {
+        setInputValue(e.target.value);
+        onChange?.(e.target.value);
+      }}
+    />
   );
 }

@@ -44,10 +44,14 @@
 
 /* Node */
 .node {
-    padding: 2px;
+    padding: 1px;
     width: 100%;
     cursor: crosshair;
     border-radius: 5px;
+}
+
+.node:focus {
+    padding: 3px;
     border: 1px solid #ddd;
 }
 

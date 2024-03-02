@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 
 type ToggleProps = {
   label: string;
@@ -7,7 +7,7 @@ type ToggleProps = {
   onChange: (checked: boolean) => void;
 };
 
-export const Toggle: React.FC<ToggleProps> = ({ label, disabled, checked, onChange }) => {
+export const ToggleWidget: FC<ToggleProps> = ({ label, disabled, checked, onChange }) => {
   const [input, setInput] = useState(checked);
 
   useEffect(() => {

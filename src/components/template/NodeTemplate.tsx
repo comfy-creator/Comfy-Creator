@@ -11,13 +11,13 @@ import {
 } from '../../types';
 import { toast } from 'react-toastify';
 import { Handle, NodeProps, Position } from 'reactflow';
-import { Number as NumberWidget } from '../widgets/Number';
-import { String as StringWidget } from '../widgets/String';
-import { Toggle as ToggleWidget } from '../widgets/Toggle';
-import { Enum as EnumWidget } from '../widgets/Enum.tsx';
-import { Image as ImageWidget } from '../widgets/Image.tsx';
-import { Video as VideoWidget } from '../widgets/Video.tsx';
-import { Text as TextWidget } from '../widgets/Text.tsx';
+import { NumberWidget } from '../widgets/Number';
+import { StringWidget } from '../widgets/String';
+import { ToggleWidget } from '../widgets/Toggle';
+import { EnumWidget } from '../widgets/Enum.tsx';
+import { ImageWidget } from '../widgets/Image.tsx';
+import { VideoWidget } from '../widgets/Video.tsx';
+import { TextWidget } from '../widgets/Text.tsx';
 import ResizableDiv from '../ResizableDiv.tsx';
 
 const createWidgetFromSpec = (
@@ -88,8 +88,11 @@ export const createNodeComponentFromDef = (
   updateWidgetState: UpdateWidgetState
 ): ComponentType<NodeProps<NodeState>> => {
   const CustomNode = ({ id, data }: NodeProps<NodeState>) => {
-    // Test
     const onClick = () => toast.success('File uploaded successfully!');
+
+    const handleNodeClick = () => {
+      console.log('Node clicked');
+    };
 
     // Generate input handles
     const inputHandles = Object.entries(data.inputs || []).map(([label, handle], index) => (
@@ -133,8 +136,12 @@ export const createNodeComponentFromDef = (
     });
 
     return (
-      <ResizableDiv className="node">
-        {/*<div className="node">*/}
+      <ResizableDiv
+        onClick={handleNodeClick}
+        defaultWidth={'100%'}
+        defaultHeight={'auto'}
+        className="node"
+      >
         <div className="node_container">
           <div className="node_label" onClick={onClick}>
             {def.display_name}
@@ -146,7 +153,6 @@ export const createNodeComponentFromDef = (
           </div>
           <div className="widgets_container">{widgets}</div>
         </div>
-        {/*</div>*/}
       </ResizableDiv>
     );
   };
@@ -179,3 +185,4 @@ export const createNodeComponentFromDef = (
 //       return undefined;
 //   }
 // };
+

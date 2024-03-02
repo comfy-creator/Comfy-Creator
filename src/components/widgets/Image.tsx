@@ -4,7 +4,7 @@ type ImageProps = {
   value: string;
 };
 
-export function Image({ value }: ImageProps) {
+export function ImageWidget({ value }: ImageProps) {
   useEffect(() => {
     console.log('Image value:', value);
   }, []);

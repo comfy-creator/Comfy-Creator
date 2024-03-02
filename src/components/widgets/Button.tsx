@@ -4,7 +4,7 @@ type ButtonProps = {
   onClick?: () => void;
 };
 
-export function Button({ disabled, label, onClick }: ButtonProps) {
+export function ButtonWidget({ disabled, label, onClick }: ButtonProps) {
   return (
     <button disabled={disabled} onClick={onClick}>
       {label}

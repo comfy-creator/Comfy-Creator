@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { WidgetBackwardIcon, WidgetForwardIcon } from '../WidgetDirectionIcon.tsx';
+import { EnumDialog } from '../Dialogs/EnumDialog.tsx';
 
 type EnumProps = {
   label: string;
@@ -10,7 +11,7 @@ type EnumProps = {
   multiSelect?: boolean;
 };
 
-export function Enum({ label, disabled, value, options, onChange, multiSelect }: EnumProps) {
+export function EnumWidget({ label, disabled, value, options, onChange, multiSelect }: EnumProps) {
   const values = options
     ? Array.isArray(options.values)
       ? options.values
@@ -20,6 +21,7 @@ export function Enum({ label, disabled, value, options, onChange, multiSelect }:
       : value;
 
   const [input, setInput] = useState(0);
+  const [showDialog, setShowDialog] = useState(false);
 
   useEffect(() => {
     setInput(input);
@@ -46,6 +48,8 @@ export function Enum({ label, disabled, value, options, onChange, multiSelect }:
           <WidgetForwardIcon onClick={handleInputIncrement} />
         </div>
       </div>
+
+      {showDialog && <EnumDialog />}
     </div>
   );
 }

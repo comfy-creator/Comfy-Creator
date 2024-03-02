@@ -1,47 +1,69 @@
-import { useEffect, useState } from 'react';
+import { ChangeEvent, FC, useEffect, useState } from 'react';
+import { InputDialog } from '../Dialogs/InputDialog.tsx';
 import { WidgetBackwardIcon, WidgetForwardIcon } from '../WidgetDirectionIcon.tsx';
 
 type NumberWidgetProps = {
+  value: number;
   label: string;
   disabled?: boolean;
-  value: number;
   onChange?: (value: number) => void;
 };
 
-export const Number: React.FC<NumberWidgetProps> = ({ label, disabled, value, onChange }) => {
-  const [input, setInput] = useState(value);
+export const NumberWidget: FC<NumberWidgetProps> = ({ label, value, onChange }) => {
+  const [inputValue, setInputValue] = useState(value);
+  const [showDialog, setShowDialog] = useState(false);
 
   useEffect(() => {
-    setInput(input);
-  }, [input]);
+    setInputValue(inputValue);
+  }, [inputValue]);
 
-  const handleForward = () => {
-    const inputValue = parseInt(String(input));
-    setInput(isNaN(inputValue) ? 0 : inputValue + 1);
+  const handleClickForward = () => {
+    setInputValue((value) => {
+      return isNaN(value) ? 0 : value + 1;
+    });
   };
 
-  const handleBackward = () => {
-    const inputValue = parseInt(String(input));
-    if (isNaN(inputValue)) {
-      setInput(0);
-    } else if (inputValue > 0) {
-      setInput(input - 1);
-    }
+  const handleClickBackward = () => {
+    setInputValue((value) => {
+      return isNaN(value) ? 0 : value > 0 ? value - 1 : value;
+    });
+  };
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = Number(e.target.value);
+    if (isNaN(value)) return;
+    setInputValue(value);
+  };
+
+  const handleShowDialog = () => {
+    setShowDialog(true);
   };
 
   return (
     <div className={'widget_box'}>
       <div className={'widget_input'}>
         <div className={'widget_input_item'}>
-          <WidgetBackwardIcon onClick={handleBackward} />
-          <span className={'widget_input_item_text'}>{label}</span>
+          <WidgetBackwardIcon onClick={handleClickBackward} />
+          <span className={'widget_input_item_text'} onClick={handleShowDialog}>
+            {label}
+          </span>
         </div>
 
         <div className={'widget_input_item'} style={{ gap: '5px' }}>
-          <span className={'widget_input_item_text'}>{input}</span>
-          <WidgetForwardIcon onClick={handleForward} />
+          <span className={'widget_input_item_text'} onClick={handleShowDialog}>
+            {inputValue}
+          </span>
+          <WidgetForwardIcon onClick={handleClickForward} />
         </div>
       </div>
+
+      {showDialog && (
+        <InputDialog
+          onChange={handleInputChange}
+          value={String(inputValue)}
+          hideDialog={() => setShowDialog(false)}
+        />
+      )}
     </div>
   );
 };
