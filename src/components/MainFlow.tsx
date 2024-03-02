@@ -5,6 +5,7 @@ import ReactFlow, {
   Background,
   BackgroundVariant,
   Connection,
+  ConnectionLineType,
   Controls,
   getNodesBounds,
   getOutgoers,
@@ -27,6 +28,7 @@ import { dragHandler, dropHandler } from '../handlers/dragDrop';
 import nodeInfo from '../../node_info.json';
 import { HANDLE_TYPES } from '../constants.ts';
 import { createEdgeFromTemplate } from './template/EdgeTemplate.tsx';
+import { ConnectionLine } from './ConnectionLIne.tsx';
 
 const FLOW_KEY = 'flow';
 const PADDING = 5; // in pixels
@@ -48,7 +50,8 @@ const selector = (state: RFState) => ({
   hotKeysShortcut: state.hotKeysShortcut,
   hotKeysHandlers: state.hotKeysHandlers,
   addHotKeysShortcut: state.addHotKeysShortcut,
-  addHotKeysHandlers: state.addHotKeysHandlers
+  addHotKeysHandlers: state.addHotKeysHandlers,
+  setCurrentConnectionLineType: state.setCurrentConnectionLineType
 });
 
 export function MainFlow() {
@@ -64,7 +67,8 @@ export function MainFlow() {
     addNodeDefs,
     addNode,
     hotKeysShortcut,
-    hotKeysHandlers
+    hotKeysHandlers,
+    setCurrentConnectionLineType
   } = useFlowStore(selector);
 
   const { getNodes, getEdges, getViewport, fitView } = useReactFlow<NodeState, string>();
@@ -310,6 +314,15 @@ export function MainFlow() {
       }}
       proOptions={{ account: '', hideAttribution: true }}
       edgeTypes={defaultEdgeTypes}
+      connectionLineComponent={ConnectionLine}
+      onConnectStart={(event, params) => {
+        if (!params.handleId) return;
+        const [_category, _index, type] = params.handleId.split('-');
+        if (type) {
+          setCurrentConnectionLineType(type);
+        }
+      }}
+      connectionLineType={ConnectionLineType.Bezier}
     >
       <ReactHotkeys keyName={hotKeysShortcut.join(',')} onKeyDown={handleKeyPress}>
         <Background variant={BackgroundVariant.Lines} />

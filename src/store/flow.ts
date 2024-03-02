@@ -30,6 +30,7 @@ export type RFState = {
   edges: Edge[];
   setNodes: (nodes: Node[]) => void;
   setEdges: (edges: Edge[]) => void;
+  currentConnectionLineType?: string;
 
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
@@ -51,6 +52,8 @@ export type RFState = {
 
   hotKeysHandlers: Record<string, Function>;
   addHotKeysHandlers: (handler: Record<string, Function>) => void;
+
+  setCurrentConnectionLineType: (type: string) => void;
 };
 
 export const useFlowStore = create<RFState>((set, get) => ({
@@ -206,6 +209,10 @@ export const useFlowStore = create<RFState>((set, get) => ({
         hotKeysShortcut: Array.from(new Set([...state.hotKeysShortcut, Object.keys(handler)[0]]))
       };
     });
+  },
+
+  setCurrentConnectionLineType: (type) => {
+    set({ currentConnectionLineType: type });
   }
 }));
 

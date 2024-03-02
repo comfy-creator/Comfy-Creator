@@ -133,16 +133,15 @@
 }
 
 .flow_output_text {
-    text-transform: uppercase;
     color: var(--drag-text);
-    margin-right: 8px;
+    margin-right: 10px;
     font-size: 0.4rem;
-    font-weight: 600;
+    transform: none !important;
 }
 
 .flow_input_text {
     color: var(--drag-text);
-    margin-left: 7px;
+    margin-left: 10px;
     font-size: 0.33rem;
     transform: none !important;
 }

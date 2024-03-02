@@ -107,7 +107,7 @@ export const createNodeComponentFromDef = (
         <div className="flow_input" key={index}>
           <Handle
             style={{ backgroundColor: node_slot[handle.type as keyof typeof node_slot] }}
-            id={`input-${label}-${index}`}
+            id={`input-${index}-${handle.type}`}
             type="target"
             position={Position.Left}
             className={`flow_handler left ${handle.type}`}
@@ -129,7 +129,7 @@ export const createNodeComponentFromDef = (
         <div className="flow_output" key={index}>
           <Handle
             style={{ backgroundColor: node_slot[handle.type as keyof typeof node_slot] }}
-            id={`output-${label}`}
+            id={`output-${label}-${handle.type}`}
             type="source"
             position={Position.Right}
             className={`flow_handler right ${handle.type}`}
