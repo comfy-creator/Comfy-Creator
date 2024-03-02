@@ -323,7 +323,6 @@ button.comfy-queue-btn {
     /* .comfy-menu span.drag-handle {
         display: none;
     } */
-
     .comfy-menu-queue-size {
         flex: unset;
     }
@@ -568,3 +567,4 @@ dialog::backdrop {
         border-top: none;
     }
 }
+

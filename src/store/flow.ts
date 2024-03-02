@@ -1,31 +1,29 @@
 import {
+  addEdge,
+  applyEdgeChanges,
+  applyNodeChanges,
+  Connection,
   Edge,
   EdgeChange,
-  OnConnect,
   Node,
   NodeChange,
-  OnNodesChange,
+  OnConnect,
   OnEdgesChange,
-  applyNodeChanges,
-  applyEdgeChanges,
-  XYPosition,
-  Connection,
-  addEdge,
-  isNode
+  OnNodesChange
 } from 'reactflow';
 import { create } from 'zustand';
 import {
+  AddNodeParams,
   NodeDefinitions,
   NodeState,
   NodeTypes as NodeComponents,
-  WidgetState,
-  EdgeType,
   UpdateWidgetState,
-  AddNodeParams
-} from './types';
-import { initialNodeState } from './utils';
-import { createNodeComponentFromDef } from './components/template/NodeTemplate';
-import { DEFAULT_HOTKEYS_HANDLERS, DEFAULT_SHORTCUT_KEYS } from './constants';
+  UpdateWidgetStateParams,
+  WidgetState
+} from '../types';
+import { initialNodeState } from '../utils';
+import { createNodeComponentFromDef } from '../components/template/NodeTemplate';
+import { DEFAULT_HOTKEYS_HANDLERS, DEFAULT_SHORTCUT_KEYS } from '../constants';
 
 export type RFState = {
   nodes: Node<NodeState>[];
@@ -55,7 +53,7 @@ export type RFState = {
   addHotKeysHandlers: (handler: Record<string, Function>) => void;
 };
 
-export const useStore = create<RFState>((set, get) => ({
+export const useFlowStore = create<RFState>((set, get) => ({
   nodes: [],
 
   edges: [],
@@ -88,17 +86,17 @@ export const useStore = create<RFState>((set, get) => ({
 
   // This will overwrite old node-definitions of the same name
   addNodeDefs: (defs: NodeDefinitions) => {
-    const updateWidgetState = get().updateWidgetState;
+    const { updateWidgetState } = get();
 
     set((state) => {
-      const newComponents = Object.entries(defs).reduce((acc, [type, def]) => {
-        acc[type] = createNodeComponentFromDef(def, updateWidgetState);
-        return acc;
+      const components = Object.entries(defs).reduce((components, [type, def]) => {
+        components[type] = createNodeComponentFromDef(def, updateWidgetState);
+        return components;
       }, {} as NodeComponents);
 
       return {
         nodeDefs: { ...state.nodeDefs, ...defs },
-        nodeComponents: { ...state.nodeComponents, ...newComponents }
+        nodeComponents: { ...state.nodeComponents, ...components }
       };
     });
   },
@@ -123,23 +121,10 @@ export const useStore = create<RFState>((set, get) => ({
       throw new Error(`Node type ${type} does not exist`);
     }
 
+    const id = crypto.randomUUID();
     const data = initialNodeState(def, inputWidgetValues);
 
-    // TO DO: use a more robust id generator that is guaranteed unique
-    const newNode = {
-      id: `${type}-${get().nodes.length + 1}`,
-      type,
-      position,
-      data
-      // example of other properties we could specify:
-      //   style: { border: '1px solid #ddd', padding: '10px' },
-      //   className: 'custom-node-class',
-      //   draggable: true,
-      //   selectable: true,
-      //   connectable: true,
-      //   hidden: false,
-      //   zIndex: 1
-    };
+    const newNode = { id, type, position, data };
 
     set((state) => ({
       nodes: [...state.nodes, newNode]
@@ -165,34 +150,42 @@ export const useStore = create<RFState>((set, get) => ({
     });
   },
 
-  updateWidgetState: (nodeId, widgetLabel, newState) =>
+  updateWidgetState: ({ nodeId, name, newState }: UpdateWidgetStateParams) =>
     set((state) => {
       const nodeIndex = state.nodes.findIndex((n) => n.id === nodeId);
-      if (nodeIndex === -1) return state; // No update possible
+      if (nodeIndex === -1) return state; // Early return if node not found.
 
-      const nodesCopy = [...state.nodes];
-      const nodeCopy = { ...nodesCopy[nodeIndex] };
-      const inputWidgetsCopy = { ...nodeCopy.data.inputWidgets };
+      const node = state.nodes[nodeIndex];
+      const widgetState = node.data.widgets[name];
+      if (!widgetState) {
+        console.error(`Widget '${name}' not found in node '${nodeId}'.`);
+        return state;
+      }
 
-      let widgetState = inputWidgetsCopy[widgetLabel];
-      if (!widgetState) return state; // No update possible
+      if (widgetState.type !== newState.type) {
+        console.error(`Mismatched type. ${widgetState.type} cannot merge with ${newState.type}`);
+        return state;
+      }
 
-      // Note that edgeType can be changed at runtime
-      widgetState = { ...widgetState, ...(newState as typeof widgetState) };
+      // Update the widget state only if types match.
+      const updatedWidgets = {
+        ...node.data.widgets,
+        [name]: { ...widgetState, ...(newState as WidgetState) }
+      };
 
-      // Edge Type cannot be changed
-      //   if (isSameEdgeType(widgetState, newState)) {
-      //     widgetState = { ...widgetState, ...(newState as typeof widgetState) };
-      //   } else {
-      //     console.error(
-      //       `Mismatched edgeType. ${widgetState.edgeType} cannot merge with ${newState.edgeType}`
-      //     );
-      //   }
+      const updatedNodes = state.nodes.map((n, i) =>
+        i === nodeIndex
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                widgets: updatedWidgets
+              }
+            }
+          : n
+      );
 
-      nodeCopy.data.inputWidgets = inputWidgetsCopy;
-      nodesCopy[nodeIndex] = nodeCopy;
-
-      return { nodes: nodesCopy };
+      return { ...state, nodes: updatedNodes };
     }),
 
   // hot keys state
@@ -200,8 +193,8 @@ export const useStore = create<RFState>((set, get) => ({
 
   addHotKeysShortcut: (hotKeys) => {
     set((state) => {
-      return { hotKeysShortcut: [...state.hotKeysShortcut, ...hotKeys] }
-    })
+      return { hotKeysShortcut: [...state.hotKeysShortcut, ...hotKeys] };
+    });
   },
 
   hotKeysHandlers: DEFAULT_HOTKEYS_HANDLERS,
@@ -211,10 +204,9 @@ export const useStore = create<RFState>((set, get) => ({
       return {
         hotKeysHandlers: { ...state.hotKeysHandlers, ...handler },
         hotKeysShortcut: Array.from(new Set([...state.hotKeysShortcut, Object.keys(handler)[0]]))
-      }
-    })
+      };
+    });
   }
-
 }));
 
 // function isSameEdgeType(stateA: WidgetState, stateB: Partial<WidgetState>): boolean {

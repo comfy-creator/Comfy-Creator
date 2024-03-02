@@ -6,9 +6,8 @@ export const previewImage: NodeDefinition = {
   description: 'Preview Image',
   inputs: [
     {
-      label: 'image',
-      isHandle: false,
-      edgeType: 'IMAGE'
+      name: 'image',
+      type: 'IMAGE'
     }
   ],
   outputs: [],
@@ -21,9 +20,8 @@ export const previewVideo: NodeDefinition = {
   description: 'Preview Video',
   inputs: [
     {
-      label: 'video',
-      isHandle: false,
-      edgeType: 'VIDEO'
+      name: 'video',
+      type: 'VIDEO'
     }
   ],
   outputs: [],

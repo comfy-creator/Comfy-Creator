@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { FC, useEffect, useState } from 'react';
 
 type ToggleProps = {
   label: string;
@@ -7,16 +7,42 @@ type ToggleProps = {
   onChange: (checked: boolean) => void;
 };
 
-export function Toggle({ label, checked, disabled, onChange }: ToggleProps) {
-  // Update state in the parent component
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(e.target.checked);
+export const ToggleWidget: FC<ToggleProps> = ({ label, disabled, checked, onChange }) => {
+  const [input, setInput] = useState(checked);
+
+  useEffect(() => {
+    setInput(input);
+  }, [input]);
+
+  const handleToggle = () => {
+    setInput((inp) => !inp);
+  };
+
+  const ToggleCircle = () => {
+    return (
+      <div
+        style={{
+          width: '8px',
+          height: '8px',
+          marginLeft: '1px',
+          marginRight: '3px',
+          borderRadius: '50%',
+          background: `${input ? '#606f79' : '#363636'}`
+        }}
+      />
+    );
   };
 
   return (
-    <>
-      <label>{label}</label>
-      <input type="checkbox" checked={checked} disabled={disabled} onChange={handleChange} />
-    </>
+    <div className={'widget_box'}>
+      <div className={'widget_input'}>
+        <span>{label}</span>
+
+        <div className={'widget_input_item'} onClick={handleToggle}>
+          <span className={'widget_input_item_text'}>{String(input)}</span>
+          <ToggleCircle />
+        </div>
+      </div>
+    </div>
   );
-}
+};

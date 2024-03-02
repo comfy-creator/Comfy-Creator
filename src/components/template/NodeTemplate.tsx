@@ -1,22 +1,24 @@
-import React, { useEffect, useState, ComponentType, useCallback } from 'react';
+import React, { ComponentType } from 'react';
 import {
+  BoolInputState,
+  EnumInputDef,
+  InputDef,
   NodeDefinition,
   NodeState,
-  EdgeType,
-  BoolInputState,
-  WidgetState,
-  InputDef,
-  EnumInputDef,
-  UpdateWidgetState
+  StringInputDef,
+  UpdateWidgetState,
+  WidgetState
 } from '../../types';
-import { Handle, Position, NodeProps } from 'reactflow';
-import { Number } from '../widgets/Number';
-import { String } from '../widgets/String';
-import { Toggle } from '../widgets/Toggle';
-import { Dropdown } from '../widgets/Dropdown';
 import { toast } from 'react-toastify';
-import { Image } from '../widgets/Image.tsx';
-import { Video } from '../widgets/Video.tsx';
+import { Handle, NodeProps, Position } from 'reactflow';
+import { NumberWidget } from '../widgets/Number';
+import { StringWidget } from '../widgets/String';
+import { ToggleWidget } from '../widgets/Toggle';
+import { EnumWidget } from '../widgets/Enum.tsx';
+import { ImageWidget } from '../widgets/Image.tsx';
+import { VideoWidget } from '../widgets/Video.tsx';
+import { TextWidget } from '../widgets/Text.tsx';
+import ResizableDiv from '../ResizableDiv.tsx';
 
 const createWidgetFromSpec = (
   def: InputDef,
@@ -25,11 +27,12 @@ const createWidgetFromSpec = (
   updateNodeState: (newState: Partial<WidgetState>) => void
 ) => {
   const commonProps = { label };
+  if (state.type !== def.type) return;
 
-  switch (state.edgeType) {
+  switch (state.type) {
     case 'BOOLEAN':
       return (
-        <Toggle
+        <ToggleWidget
           {...commonProps}
           checked={(state as BoolInputState).value || false}
           onChange={(checked: boolean) => updateNodeState({ value: checked })}
@@ -39,7 +42,7 @@ const createWidgetFromSpec = (
     case 'INT':
     case 'FLOAT':
       return (
-        <Number
+        <NumberWidget
           {...commonProps}
           value={state.value}
           onChange={(value: number) => updateNodeState({ value })}
@@ -47,8 +50,11 @@ const createWidgetFromSpec = (
       );
 
     case 'STRING':
+      if ((def as StringInputDef).multiline) {
+        return <TextWidget {...commonProps} value={state.value} />;
+      }
       return (
-        <String
+        <StringWidget
           {...commonProps}
           value={state.value}
           onChange={(value: string) => updateNodeState({ value })}
@@ -57,7 +63,7 @@ const createWidgetFromSpec = (
 
     case 'ENUM':
       return (
-        <Dropdown
+        <EnumWidget
           {...commonProps}
           value={state.value}
           onChange={(value: string | string[]) => updateNodeState({ value })}
@@ -66,93 +72,88 @@ const createWidgetFromSpec = (
         />
       );
     case 'IMAGE':
-      return <Image {...commonProps} value={state.value} />;
+      return <ImageWidget {...commonProps} value={state.value} />;
 
     case 'VIDEO':
-      return <Video {...commonProps} value={state.value} />;
+      return <VideoWidget {...commonProps} value={state.value} />;
 
     default:
-      console.warn(`Unsupported data type: ${(state as WidgetState).edgeType}`);
+      console.warn(`Unsupported data type: ${(state as WidgetState).type}`);
       return null;
   }
 };
-
-// const selector = (state: RFState) => ({
-//   updateNodeState: state.updateNodeState
-// });
 
 export const createNodeComponentFromDef = (
   def: NodeDefinition,
   updateWidgetState: UpdateWidgetState
 ): ComponentType<NodeProps<NodeState>> => {
   const CustomNode = ({ id, data }: NodeProps<NodeState>) => {
-    // const { updateNodeState } = useStore(selector);
-
-    // const update = useCallback(
-    //   (newState: Partial<NodeState>) => updateWidgetState(id, newState),
-    //   [id]
-    // );
-
-    // Initialize node state from definition if not already present
-    // useEffect(() => {
-    //   update({ ...initialState });
-    // }, [update]);
-
-    // Test
     const onClick = () => toast.success('File uploaded successfully!');
+
+    const handleNodeClick = () => {
+      console.log('Node clicked');
+    };
+
     // Generate input handles
-    const inputHandles = Object.entries(data.inputEdges || []).map(([label, handle], index) => (
+    const inputHandles = Object.entries(data.inputs || []).map(([label, handle], index) => (
       <div className="flow_input" key={index}>
         <Handle
           id={`input-${label}-${index}`}
           type="target"
           position={Position.Left}
-          className={`flow_handler left ${handle.edgeType}`}
+          className={`flow_handler left ${handle.type}`}
         />
-        <span className="flow_input_text">{label}</span>
+        <span className="flow_input_text">{handle.name}</span>
       </div>
     ));
 
     // Generate output handles
-    const outputHandles = Object.entries(data.outputEdges || []).map(([label, handle], index) => (
+    const outputHandles = Object.entries(data.outputs || []).map(([label, handle], index) => (
       <div className="flow_output" key={index}>
         <Handle
           id={`output-${label}`}
           type="source"
           position={Position.Right}
-          className={`flow_handler right ${handle.edgeType}`}
+          className={`flow_handler right ${handle.type}`}
         />
-        <span className="flow_output_text">{label}</span>
+        <span className="flow_output_text">{handle.name}</span>
       </div>
     ));
 
     // Generate widgets
-    const widgets = Object.entries(data.inputWidgets || []).map(([label, inputState], index) => {
-      const inputDef = def.inputs.find((input) => input.label === label);
+    const widgets = Object.entries(data.widgets || []).map(([name, inputState], index) => {
+      const inputDef = def.inputs.find((input) => input.name === name);
       if (!inputDef) return;
 
-      const update = (newState: Partial<WidgetState>) => updateWidgetState(id, label, newState);
+      const update = (newState: Partial<WidgetState>) =>
+        updateWidgetState({ nodeId: id, name, newState });
 
       return (
         <div key={index} className="widget_container">
-          {createWidgetFromSpec(inputDef, label, inputState, update)}
+          {createWidgetFromSpec(inputDef, name, inputState, update)}
         </div>
       );
     });
 
     return (
-      <div className="node">
+      <ResizableDiv
+        onClick={handleNodeClick}
+        defaultWidth={'100%'}
+        defaultHeight={'auto'}
+        className="node"
+      >
         <div className="node_container">
           <div className="node_label" onClick={onClick}>
             {def.display_name}
           </div>
+
           <div className="flow_input_output_container">
             <div className="flow_input_container">{inputHandles}</div>
             <div className="flow_output_container">{outputHandles}</div>
           </div>
           <div className="widgets_container">{widgets}</div>
         </div>
-      </div>
+      </ResizableDiv>
     );
   };
 
@@ -165,8 +166,8 @@ export const createNodeComponentFromDef = (
 //   return inputWidgetTypes.includes(type);
 // };
 
-// const edgeTypeToWidgetType = (edgeType: EdgeType): WidgetTypes | undefined => {
-//   switch (edgeType) {
+// const typeToWidgetType = (type: EdgeType): WidgetTypes | undefined => {
+//   switch (type) {
 //     case 'INT':
 //     case 'FLOAT':
 //       return 'number';
@@ -184,3 +185,4 @@ export const createNodeComponentFromDef = (
 //       return undefined;
 //   }
 // };
+

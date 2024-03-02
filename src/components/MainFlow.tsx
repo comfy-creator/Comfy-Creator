@@ -1,14 +1,17 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-import { useCallback, useEffect, useState, MouseEvent } from 'react';
+
+import { DragEvent, useCallback, useEffect, useState, MouseEvent } from 'react';
 import ReactFlow, {
   Background,
   BackgroundVariant,
   Connection,
   Controls,
+  getOutgoers,
   Node,
   NodeResizer,
   NodeToolbar,
+  OnConnectEnd,
   Panel,
   ReactFlowInstance,
   useReactFlow,
@@ -19,11 +22,12 @@ import ReactFlow, {
 } from 'reactflow';
 import { useContextMenu } from '../contexts/ContextMenu';
 import ControlPanel from './ControlPanel/ControlPanel';
-import { useStore, RFState } from '../store';
-import { NodeState } from '../types';
+import { RFState, useFlowStore } from '../store/flow';
+import { NodeDefinition, NodeState } from '../types';
 import { previewImage, previewVideo } from '../node_definitions/preview';
 import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../handlers/dragDrop';
+import nodeInfo from '../../node_info.json';
 
 const FLOW_KEY = 'flow';
 const PADDING = 5; // in pixels
@@ -61,10 +65,8 @@ export function MainFlow() {
     addNodeDefs,
     addNode,
     hotKeysShortcut,
-    hotKeysHandlers,
-    addHotKeysShortcut,
-    addHotKeysHandlers
-  } = useStore(selector);
+    hotKeysHandlers
+  } = useFlowStore(selector);
 
   const { getNodes, getEdges, getViewport, fitView } = useReactFlow<NodeState, string>();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
@@ -75,6 +77,72 @@ export function MainFlow() {
     // Register some node defs for testing
     addNodeDefs({ previewImage, previewVideo });
   }, [addNodeDefs]);
+
+  useEffect(() => {
+    const defs: Record<string, NodeDefinition> = {};
+
+    const buildInput = (type: string, name: string, options: any, optional: boolean) => {
+      let data;
+      if (Array.isArray(type)) {
+        data = {
+          type: 'ENUM',
+          multiSelect: false,
+          defaultValue: type[0],
+          options: type
+        };
+      } else {
+        data = {
+          type,
+          defaultValue: options?.default,
+          ...options
+        };
+      }
+
+      return { ...data, name, optional };
+    };
+
+    for (const name in nodeInfo) {
+      const node = nodeInfo[name as keyof typeof nodeInfo];
+
+      const def: NodeDefinition = {
+        inputs: [],
+        outputs: [],
+        category: node.category,
+        description: node.description,
+        output_node: node.output_node,
+        display_name: node.display_name
+      };
+
+      for (const name in node.input.required) {
+        const [type, options] = node.input.required[
+          name as keyof typeof node.input.required
+        ] as any;
+        const input = buildInput(type, name, options, false);
+        def.inputs.push(input);
+      }
+
+      // @ts-expect-error
+      for (const name in node.input.optional) {
+        // @ts-expect-error
+        const [type, options] = node.input.optional[
+          // @ts-expect-error
+          name as keyof typeof node.input.optional
+        ] as any;
+
+        const input = buildInput(type, name, options, true);
+        def.inputs.push(input);
+      }
+
+      for (const name in node.output) {
+        const output = node.output[name as keyof typeof node.output] as any;
+        def.outputs.push({ name: output, type: output });
+      }
+
+      defs[name] = def;
+    }
+
+    addNodeDefs(defs);
+  }, []);
 
   // Store graph state to local storage
   const serializeGraph = useCallback(() => {
@@ -137,9 +205,9 @@ export function MainFlow() {
       if (hasCycle(targetNode)) return false;
 
       // Ensure new connection connects compatible types
-      const sourceEdgeType = sourceNode.data.outputEdges[Number(sourceHandle)].edgeType;
-      const targetEdgeType = targetNode.data.inputEdges[Number(targetHandle)].edgeType;
-      return sourceEdgeType === targetEdgeType;
+      const { type: sourceType } = sourceNode.data.outputs[Number(sourceHandle)];
+      const { type: targetType } = targetNode.data.inputs[Number(targetHandle)];
+      return sourceType === targetType;
     },
     [getNodes, getEdges]
   );
@@ -147,7 +215,7 @@ export function MainFlow() {
   const onDragOver = useCallback(dragHandler, []);
 
   const onDrop = useCallback(
-    (event: React.DragEvent<HTMLDivElement>) =>
+    (event: DragEvent<HTMLDivElement>) =>
       dropHandler({ rfInstance, addNode, setNodes, setEdges })(event),
     [rfInstance, addNode, setNodes, setEdges]
   );
@@ -228,7 +296,8 @@ export function MainFlow() {
       zoomOnDoubleClick={false}
       style={{
         backgroundColor: 'var(--bg-color)',
-        color: 'var(--fg-color)'
+        color: 'var(--fg-color)',
+        cursor: 'crosshair'
       }}
       proOptions={{ account: '', hideAttribution: true }}
     >

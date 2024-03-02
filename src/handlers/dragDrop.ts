@@ -1,6 +1,6 @@
-import React from 'react';
+import { DragEvent } from 'react';
 import { getFileAsDataURL, getFileKind } from '../utils';
-import { Node, Edge, ReactFlowInstance } from 'reactflow';
+import { Edge, Node, ReactFlowInstance } from 'reactflow';
 import { AddNodeParams } from '../types';
 
 interface DropHandlerParams {
@@ -10,7 +10,7 @@ interface DropHandlerParams {
   addNode: (node: AddNodeParams) => void;
 }
 
-export function dragHandler(event: React.DragEvent<HTMLDivElement>) {
+export function dragHandler(event: DragEvent<HTMLDivElement>) {
   event.preventDefault();
   if (!event.dataTransfer) return;
 
@@ -18,7 +18,7 @@ export function dragHandler(event: React.DragEvent<HTMLDivElement>) {
 }
 
 export function dropHandler({ rfInstance, setNodes, setEdges, addNode }: DropHandlerParams) {
-  return async (event: React.DragEvent<HTMLDivElement>) => {
+  return async (event: DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     if (!event.dataTransfer || !rfInstance) return;
 

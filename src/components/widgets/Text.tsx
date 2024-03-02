@@ -1,21 +1,26 @@
-type TextWidgetProps = {
+import { useState } from 'react';
+
+type TextProps = {
   label: string;
   disabled?: boolean;
   value: string;
-  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  onChange?: (value: string) => void;
 };
 
-export function Text({ label, disabled, value, onChange }: TextWidgetProps) {
+export function TextWidget({ disabled, value, onChange }: TextProps) {
+  const [inputValue, setInputValue] = useState(value);
+
   return (
-    <>
-      <label>{label}</label>
-      <textarea
-        value={value}
-        disabled={disabled}
-        onChange={(e) => {
-          onChange?.(e);
-        }}
-      />
-    </>
+    <textarea
+      rows={4}
+      value={inputValue}
+      disabled={disabled}
+      className={'comfy-multiline-input'}
+      style={{ width: '100%', outline: 'none' }}
+      onChange={(e) => {
+        setInputValue(e.target.value);
+        onChange?.(e.target.value);
+      }}
+    />
   );
 }
