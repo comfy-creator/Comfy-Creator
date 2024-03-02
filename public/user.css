@@ -119,7 +119,7 @@
 
 .flow_input_output_container {
     display: flex;
-    align-items: center;
+    align-items: start;
     justify-content: space-between;
     margin: 5px 0px;
 }
@@ -135,7 +135,7 @@
 .flow_output_text {
     text-transform: uppercase;
     color: var(--drag-text);
-    margin-right: 7px;
+    margin-right: 8px;
     font-size: 0.4rem;
     font-weight: 600;
 }
@@ -144,7 +144,7 @@
     color: var(--drag-text);
     margin-left: 7px;
     font-size: 0.33rem;
-    font-weight: 500;
+    transform: none !important;
 }
 
 .react-flow__handle {
@@ -152,15 +152,14 @@
 }
 
 .flow_handler {
-    background: gray;
     top: unset !important;
-    width: 2px !important;
-    height: 2px !important;
-    min-width: 2px !important;
-    min-height: 2px !important;
+    width: 4px !important;
+    height: 4px !important;
+    min-width: 4px !important;
+    min-height: 4px !important;
+    transform: none !important;
     border-radius: 50% !important;
     border: 1px solid transparent !important;
-    transform: none !important;
 }
 
 .right {

@@ -1,24 +1,21 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-
-import { DragEvent, useCallback, useEffect, useState, MouseEvent } from 'react';
+import { DragEvent, MouseEvent, useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
   Background,
   BackgroundVariant,
   Connection,
   Controls,
+  getNodesBounds,
   getOutgoers,
+  getViewportForBounds,
   Node,
   NodeResizer,
   NodeToolbar,
   OnConnectEnd,
   Panel,
   ReactFlowInstance,
-  useReactFlow,
-  getOutgoers,
-  OnConnectEnd,
-  getNodesBounds,
-  getViewportForBounds
+  useReactFlow
 } from 'reactflow';
 import { useContextMenu } from '../contexts/ContextMenu';
 import ControlPanel from './ControlPanel/ControlPanel';
@@ -28,6 +25,8 @@ import { previewImage, previewVideo } from '../node_definitions/preview';
 import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../handlers/dragDrop';
 import nodeInfo from '../../node_info.json';
+import { HANDLE_TYPES } from '../constants.ts';
+import { createEdgeFromTemplate } from './template/EdgeTemplate.tsx';
 
 const FLOW_KEY = 'flow';
 const PADDING = 5; // in pixels
@@ -231,7 +230,8 @@ export function MainFlow() {
 
   // TO DO: this is aggressive; do not change zoom levels. We do not need to have
   // all nodes on screen at once; we merely do not want to leave too far out
-    const handleMoveEnd = useCallback((event: MouseEvent) => {
+  const handleMoveEnd = useCallback(
+    (event: MouseEvent) => {
       // console.log("event>>", event)
       const bounds = getNodesBounds(nodes);
       // console.log("bounds>", bounds)
@@ -243,27 +243,37 @@ export function MainFlow() {
         menuRef.current?.clientHeight || 800,
         0.7,
         viewPort.zoom
-      )
+      );
       // console.log("Bound view port>>", boundViewPort)
       // console.log("GET >View port>>", getViewport())
       //
-      if (viewPort.x > (menuRef.current?.clientWidth || 0) || viewPort.y > (menuRef.current?.clientHeight || 0)) {
+      if (
+        viewPort.x > (menuRef.current?.clientWidth || 0) ||
+        viewPort.y > (menuRef.current?.clientHeight || 0)
+      ) {
         fitView({
           minZoom: MIN_ZOOM,
           maxZoom: viewPort.zoom,
-          duration: 500,
-        })
+          duration: 500
+        });
       }
 
       if (viewPort.x < 0 && Math.abs(viewPort.x) > boundViewPort.x) {
         fitView({
           minZoom: MIN_ZOOM,
           maxZoom: viewPort.zoom,
-          duration: 500,
-        })
+          duration: 500
+        });
       }
-      // console.log("Client>>>", menuRef.current?.clientWidth, menuRef.current?.clientHeight)
-    }, [fitView, nodes]);
+    },
+    [fitView, nodes]
+  );
+
+  // Register Edge Types; TODO: Move to a separate file later
+  const defaultEdgeTypes: Record<string, any> = {};
+  for (const type in HANDLE_TYPES) {
+    defaultEdgeTypes[type] = createEdgeFromTemplate({ type });
+  }
 
   return (
     <ReactFlow
@@ -283,7 +293,6 @@ export function MainFlow() {
       onDrop={onDrop}
       onDragOver={onDragOver}
       onMoveEnd={handleMoveEnd}
-
       maxZoom={MAX_ZOOM}
       minZoom={MIN_ZOOM}
       fitView
@@ -300,11 +309,11 @@ export function MainFlow() {
         cursor: 'crosshair'
       }}
       proOptions={{ account: '', hideAttribution: true }}
+      edgeTypes={defaultEdgeTypes}
     >
       <ReactHotkeys keyName={hotKeysShortcut.join(',')} onKeyDown={handleKeyPress}>
         <Background variant={BackgroundVariant.Lines} />
         <Controls />
-        {/* <MiniMap /> */}
         <NodeResizer />
         <NodeToolbar />
         <Panel position="top-right">

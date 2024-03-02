@@ -61,7 +61,8 @@ export type EdgeType =
   | 'PHOTOMAKER'
   | 'MASK'
   | 'VIDEO'
-  | 'ENUM';
+  | 'ENUM'
+  | 'TAESD';
 
 // =========== Input Definitions ===========
 // Provides constraints on top of state

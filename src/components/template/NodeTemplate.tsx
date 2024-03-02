@@ -19,6 +19,7 @@ import { ImageWidget } from '../widgets/Image.tsx';
 import { VideoWidget } from '../widgets/Video.tsx';
 import { TextWidget } from '../widgets/Text.tsx';
 import ResizableDiv from '../ResizableDiv.tsx';
+import { themes } from '../../config/themes.ts';
 
 const createWidgetFromSpec = (
   def: InputDef,
@@ -95,30 +96,48 @@ export const createNodeComponentFromDef = (
     };
 
     // Generate input handles
-    const inputHandles = Object.entries(data.inputs || []).map(([label, handle], index) => (
-      <div className="flow_input" key={index}>
-        <Handle
-          id={`input-${label}-${index}`}
-          type="target"
-          position={Position.Left}
-          className={`flow_handler left ${handle.type}`}
-        />
-        <span className="flow_input_text">{handle.name}</span>
-      </div>
-    ));
+    const inputHandles = Object.entries(data.inputs || []).map(([label, handle], index) => {
+      const {
+        dark: {
+          colors: { node_slot }
+        }
+      } = themes;
+
+      return (
+        <div className="flow_input" key={index}>
+          <Handle
+            style={{ backgroundColor: node_slot[handle.type as keyof typeof node_slot] }}
+            id={`input-${label}-${index}`}
+            type="target"
+            position={Position.Left}
+            className={`flow_handler left ${handle.type}`}
+          />
+          <span className="flow_input_text">{handle.name}</span>
+        </div>
+      );
+    });
 
     // Generate output handles
-    const outputHandles = Object.entries(data.outputs || []).map(([label, handle], index) => (
-      <div className="flow_output" key={index}>
-        <Handle
-          id={`output-${label}`}
-          type="source"
-          position={Position.Right}
-          className={`flow_handler right ${handle.type}`}
-        />
-        <span className="flow_output_text">{handle.name}</span>
-      </div>
-    ));
+    const outputHandles = Object.entries(data.outputs || []).map(([label, handle], index) => {
+      const {
+        dark: {
+          colors: { node_slot }
+        }
+      } = themes;
+
+      return (
+        <div className="flow_output" key={index}>
+          <Handle
+            style={{ backgroundColor: node_slot[handle.type as keyof typeof node_slot] }}
+            id={`output-${label}`}
+            type="source"
+            position={Position.Right}
+            className={`flow_handler right ${handle.type}`}
+          />
+          <span className="flow_output_text">{handle.name}</span>
+        </div>
+      );
+    });
 
     // Generate widgets
     const widgets = Object.entries(data.widgets || []).map(([name, inputState], index) => {

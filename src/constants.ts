@@ -105,3 +105,18 @@ export const WIDGET_TYPES: EdgeType[] = [
   'IMAGE',
   'VIDEO'
 ];
+
+export const HANDLE_TYPES: EdgeType[] = [
+  'CLIP',
+  'CLIP_VISION',
+  'CLIP_VISION_OUTPUT',
+  'CONDITIONING',
+  'CONTROL_NET',
+  'IMAGE',
+  'LATENT',
+  'MASK',
+  'MODEL',
+  'STYLE_MODEL',
+  'VAE',
+  'TAESD'
+];
