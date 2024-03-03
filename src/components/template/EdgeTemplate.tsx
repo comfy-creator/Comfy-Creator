@@ -12,8 +12,14 @@ export interface GetBezierPathParams {
 }
 
 export function createEdgeFromTemplate({ type }: { type: string }) {
-  const strokeColor =
-    themes.dark.colors.node_slot[type as keyof typeof themes.dark.colors.node_slot];
+  const {
+    dark: {
+      colors: { node_slot }
+    }
+  } = themes;
+  const strokeColor = node_slot[type as keyof typeof node_slot];
+
+  console.log(type);
 
   return ({ sourceX, sourceY, targetX, targetY }: GetBezierPathParams) => {
     const params = { sourceX, sourceY, targetX, targetY };

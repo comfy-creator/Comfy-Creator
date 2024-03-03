@@ -1,12 +1,18 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-import { DragEvent, MouseEvent as ReactMouseEvent, TouchEvent, useCallback, useEffect, useState } from 'react';
+import {
+  DragEvent,
+  MouseEvent as ReactMouseEvent,
+  TouchEvent,
+  useCallback,
+  useEffect,
+  useState
+} from 'react';
 import ReactFlow, {
   Background,
   BackgroundVariant,
   Connection,
   ConnectionLineType,
-  OnConnectStartParams,
   Controls,
   getNodesBounds,
   getOutgoers,
@@ -14,11 +20,11 @@ import ReactFlow, {
   Node,
   NodeResizer,
   NodeToolbar,
-  OnConnectEnd,
+  OnConnectStart,
+  OnConnectStartParams,
   Panel,
   ReactFlowInstance,
-  useReactFlow,
-  OnConnectStart
+  useReactFlow
 } from 'reactflow';
 import { useContextMenu } from '../contexts/ContextMenu';
 import ControlPanel from './ControlPanel/ControlPanel';
@@ -28,9 +34,8 @@ import { previewImage, previewVideo } from '../node_definitions/preview';
 import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../handlers/dragDrop';
 import nodeInfo from '../../node_info.json';
-import { HANDLE_TYPES } from '../constants.ts';
-import { createEdgeFromTemplate } from './template/EdgeTemplate.tsx';
 import { ConnectionLine } from './ConnectionLIne.tsx';
+import { HANDLE_TYPES } from '../constants.ts';
 
 const FLOW_KEY = 'flow';
 const PADDING = 5; // in pixels
@@ -53,7 +58,9 @@ const selector = (state: RFState) => ({
   hotKeysHandlers: state.hotKeysHandlers,
   addHotKeysShortcut: state.addHotKeysShortcut,
   addHotKeysHandlers: state.addHotKeysHandlers,
-  setCurrentConnectionLineType: state.setCurrentConnectionLineType
+  setCurrentConnectionLineType: state.setCurrentConnectionLineType,
+  edgeComponents: state.edgeComponents,
+  registerEdgeType: state.registerEdgeType
 });
 
 export function MainFlow() {
@@ -70,7 +77,9 @@ export function MainFlow() {
     addNode,
     hotKeysShortcut,
     hotKeysHandlers,
-    setCurrentConnectionLineType
+    setCurrentConnectionLineType,
+    edgeComponents,
+    registerEdgeType
   } = useFlowStore(selector);
 
   const { getNodes, getEdges, getViewport, fitView } = useReactFlow<NodeState, string>();
@@ -147,6 +156,7 @@ export function MainFlow() {
     }
 
     addNodeDefs(defs);
+    registerEdgeType(HANDLE_TYPES);
   }, []);
 
   // Store graph state to local storage
@@ -175,80 +185,86 @@ export function MainFlow() {
 
   // TO DO: open the context menu if you dragged out an edge and didn't connect it,
   // so we can auto-spawn a compatible node for that edge
-  const onConnectEnd: (event: (ReactMouseEvent | TouchEvent)) => void = useCallback((event: (ReactMouseEvent | TouchEvent)) => {
-    console.log('onConnectEnd', event);
-    if (event.target && !(event.target.className === 'flow_input')) {
-      // onContextMenu(event)
-    }
-    const newNodes = nodes.map((node) => {
-      const outputs = Object.entries(node.data.outputs).map(([_, output]) => {
-        return {
-          ...output,
-          isHighlighted: false
-        }
-      })
-      const inputs = Object.entries(node.data.inputs).map(([_, input]) => {
-        return {
-          ...input,
-          isHighlighted: false
-        }
-      })
-      return {
-        ...node,
-        data: {
-          ...node.data,
-          outputs,
-          inputs
-        }
+  const onConnectEnd: (event: ReactMouseEvent | TouchEvent) => void = useCallback(
+    (event: ReactMouseEvent | TouchEvent) => {
+      console.log('onConnectEnd', event);
+      if (event.target && !(event.target.className === 'flow_input')) {
+        // onContextMenu(event)
       }
-    });
-    setNodes(newNodes)
-  }, [nodes]);
-
-  const onConnectStart: OnConnectStart = useCallback((event: ReactMouseEvent | TouchEvent, params: OnConnectStartParams) => {
-    if (!params.handleId) return;
-    const [_category, _index, type] = params.handleId.split('-');
-    if (type) {
-      setCurrentConnectionLineType(type);
-    }
-
-    let newNodes = nodes;
-
-    if (params.handleType === "target") {
-      newNodes = nodes.map((node) => {
+      const newNodes = nodes.map((node) => {
         const outputs = Object.entries(node.data.outputs).map(([_, output]) => {
           return {
             ...output,
-            isHighlighted: output.type !== type
-          }
-        })
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            outputs
-          }
-        }
-      });
-    } else if (params.handleType === "source") {
-      newNodes = nodes.map((node) => {
+            isHighlighted: false
+          };
+        });
         const inputs = Object.entries(node.data.inputs).map(([_, input]) => {
           return {
             ...input,
-            isHighlighted: input.type !== type
-          }
-        })
+            isHighlighted: false
+          };
+        });
         return {
           ...node,
           data: {
             ...node.data,
+            outputs,
             inputs
           }
-        }
+        };
       });
-    }
-    setNodes(newNodes)
-  }, [nodes]);
+      setNodes(newNodes);
+    },
+    [nodes]
+  );
+
+  const onConnectStart: OnConnectStart = useCallback(
+    (event: ReactMouseEvent | TouchEvent, params: OnConnectStartParams) => {
+      if (!params.handleId) return;
+      const [_category, _index, type] = params.handleId.split('-');
+      if (type) {
+        setCurrentConnectionLineType(type);
+      }
+
+      let newNodes = nodes;
+
+      if (params.handleType === 'target') {
+        newNodes = nodes.map((node) => {
+          const outputs = Object.entries(node.data.outputs).map(([_, output]) => {
+            return {
+              ...output,
+              isHighlighted: output.type !== type
+            };
+          });
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              outputs
+            }
+          };
+        });
+      } else if (params.handleType === 'source') {
+        newNodes = nodes.map((node) => {
+          const inputs = Object.entries(node.data.inputs).map(([_, input]) => {
+            return {
+              ...input,
+              isHighlighted: input.type !== type
+            };
+          });
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              inputs
+            }
+          };
+        });
+      }
+      setNodes(newNodes);
+    },
+    [nodes]
+  );
 
   // Validation connection for edge-compatability and circular loops
   const isValidConnection = useCallback(
@@ -280,8 +296,8 @@ export function MainFlow() {
 
       if (hasCycle(targetNode)) return false;
 
-      const splitOutputHandle = sourceHandle.split("-")?.slice(-1);
-      const splitInputHandle = targetHandle.split("-")?.slice(-1);
+      const splitOutputHandle = sourceHandle.split('-')?.slice(-1);
+      const splitInputHandle = targetHandle.split('-')?.slice(-1);
 
       // Ensure new connection connects compatible types
       return splitOutputHandle[0] === splitInputHandle[0];
@@ -347,12 +363,6 @@ export function MainFlow() {
     [fitView, nodes]
   );
 
-  // Register Edge Types; TODO: Move to a separate file later
-  const defaultEdgeTypes: Record<string, any> = {};
-  for (const type in HANDLE_TYPES) {
-    defaultEdgeTypes[type] = createEdgeFromTemplate({ type });
-  }
-
   return (
     <ReactFlow
       onContextMenu={onContextMenu}
@@ -388,7 +398,7 @@ export function MainFlow() {
         cursor: 'crosshair'
       }}
       proOptions={{ account: '', hideAttribution: true }}
-      edgeTypes={defaultEdgeTypes}
+      edgeTypes={edgeComponents}
       connectionLineComponent={ConnectionLine}
       connectionLineType={ConnectionLineType.Bezier}
     >

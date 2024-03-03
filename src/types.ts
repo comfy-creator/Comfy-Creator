@@ -1,6 +1,6 @@
 import { ComponentType, type MouseEvent as ReactMouseEvent } from 'react';
 import { IMenuType } from './components/template/menuData.ts';
-import { NodeProps, XYPosition } from 'reactflow';
+import { EdgeProps, NodeProps, XYPosition } from 'reactflow';
 
 // This type is outdated
 // export type NodeData = {
@@ -471,3 +471,5 @@ export interface ComfyError extends Error {
     [x: string]: any;
   };
 }
+
+export type EdgeComponents = Record<string, ComponentType<EdgeProps>>;

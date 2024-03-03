@@ -14,6 +14,8 @@ import {
 import { create } from 'zustand';
 import {
   AddNodeParams,
+  EdgeComponents,
+  EdgeType,
   NodeDefinitions,
   NodeState,
   NodeTypes as NodeComponents,
@@ -23,7 +25,8 @@ import {
 } from '../types';
 import { initialNodeState } from '../utils';
 import { createNodeComponentFromDef } from '../components/template/NodeTemplate';
-import { DEFAULT_HOTKEYS_HANDLERS, DEFAULT_SHORTCUT_KEYS } from '../constants';
+import { DEFAULT_HOTKEYS_HANDLERS, DEFAULT_SHORTCUT_KEYS, HANDLE_TYPES } from '../constants';
+import { createEdgeFromTemplate } from '../components/template/EdgeTemplate.tsx';
 
 export type RFState = {
   nodes: Node<NodeState>[];
@@ -54,6 +57,9 @@ export type RFState = {
   addHotKeysHandlers: (handler: Record<string, Function>) => void;
 
   setCurrentConnectionLineType: (type: string) => void;
+
+  edgeComponents: EdgeComponents;
+  registerEdgeType: (defs: EdgeType[]) => void;
 };
 
 export const useFlowStore = create<RFState>((set, get) => ({
@@ -79,16 +85,31 @@ export const useFlowStore = create<RFState>((set, get) => ({
 
   onConnect: (connection: Connection) => {
     const filterEdges = get().edges.filter(
-      (edge) => (edge.target !== connection.target) && (edge.targetHandle !== connection.targetHandle)
+      (edge) => edge.target !== connection.target && edge.targetHandle !== connection.targetHandle
     );
+
+    const sourceParts = connection.sourceHandle?.split('-') || [];
+    const targetParts = connection.targetHandle?.split('-') || [];
+
+    console.log({ type: sourceParts[2] === targetParts[2] ? sourceParts[2] : undefined });
     set({
-      edges: addEdge(connection, filterEdges)
+      edges: addEdge(
+        {
+          ...connection,
+          type: sourceParts[2] === targetParts[2] ? sourceParts[2] : undefined
+        },
+        filterEdges
+      )
     });
+
+    console.log({ edges: get().edges });
   },
 
   nodeDefs: {},
 
   nodeComponents: {},
+
+  edgeComponents: {},
 
   // This will overwrite old node-definitions of the same name
   addNodeDefs: (defs: NodeDefinitions) => {
@@ -216,6 +237,19 @@ export const useFlowStore = create<RFState>((set, get) => ({
 
   setCurrentConnectionLineType: (type) => {
     set({ currentConnectionLineType: type });
+  },
+
+  registerEdgeType: (edge: EdgeType[]) => {
+    set((state) => {
+      const edgeTypes: Record<string, any> = {};
+      for (const type of HANDLE_TYPES) {
+        edgeTypes[type] = createEdgeFromTemplate({ type });
+      }
+
+      return {
+        edgeComponents: { ...state.edgeComponents, ...edgeTypes }
+      };
+    });
   }
 }));
 
