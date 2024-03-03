@@ -104,7 +104,7 @@ export const createNodeComponentFromDef = (
       } = themes;
 
       return (
-        <div className="flow_input" key={index}>
+        <div className={`flow_input ${handle.isHighlighted ? "edge_opacity" : ""}`} key={index}>
           <Handle
             style={{ backgroundColor: node_slot[handle.type as keyof typeof node_slot] }}
             id={`input-${index}-${handle.type}`}
@@ -126,7 +126,7 @@ export const createNodeComponentFromDef = (
       } = themes;
 
       return (
-        <div className="flow_output" key={index}>
+        <div className={`flow_output ${handle.isHighlighted ? "edge_opacity" : ""}`} key={index}>
           <Handle
             style={{ backgroundColor: node_slot[handle.type as keyof typeof node_slot] }}
             id={`output-${label}-${handle.type}`}

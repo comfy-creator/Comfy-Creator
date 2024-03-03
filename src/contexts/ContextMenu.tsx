@@ -96,6 +96,7 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
   const onContextMenu = useCallback(
     (event: ReactMouseEvent) => {
       event.preventDefault();
+      console.log('event>', event)
       const menuData = getMenuData(event, categorizeObjects(NodeDefs));
       if (!menuData) return;
 
@@ -131,6 +132,7 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
 
   // Close the context menu if it's open whenever the window is clicked.
   const onPaneClick = useCallback(() => {
+    console.log("Clicking>>>")
     setMenuProps(null);
     setCurrentOpenedMenuIndex(0);
     setMenus([]);

@@ -1,11 +1,12 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-import { DragEvent, MouseEvent, useCallback, useEffect, useState } from 'react';
+import { DragEvent, MouseEvent as ReactMouseEvent, TouchEvent, useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
   Background,
   BackgroundVariant,
   Connection,
   ConnectionLineType,
+  OnConnectStartParams,
   Controls,
   getNodesBounds,
   getOutgoers,
@@ -16,7 +17,8 @@ import ReactFlow, {
   OnConnectEnd,
   Panel,
   ReactFlowInstance,
-  useReactFlow
+  useReactFlow,
+  OnConnectStart
 } from 'reactflow';
 import { useContextMenu } from '../contexts/ContextMenu';
 import ControlPanel from './ControlPanel/ControlPanel';
@@ -173,9 +175,75 @@ export function MainFlow() {
 
   // TO DO: open the context menu if you dragged out an edge and didn't connect it,
   // so we can auto-spawn a compatible node for that edge
-  const oncConnectEnd: OnConnectEnd = useCallback((event: MouseEvent | TouchEvent) => {
+  const onConnectEnd: (event: (ReactMouseEvent | TouchEvent)) => void = useCallback((event: (ReactMouseEvent | TouchEvent)) => {
     console.log('onConnectEnd', event);
-  }, []);
+    if (event.target && !(event.target.className === 'flow_input')) {
+      // onContextMenu(event)
+    }
+    const newNodes = nodes.map((node) => {
+      const outputs = Object.entries(node.data.outputs).map(([_, output]) => {
+        return {
+          ...output,
+          isHighlighted: false
+        }
+      })
+      const inputs = Object.entries(node.data.inputs).map(([_, input]) => {
+        return {
+          ...input,
+          isHighlighted: false
+        }
+      })
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          outputs,
+          inputs
+        }
+      }
+    });
+    setNodes(newNodes)
+  }, [nodes]);
+
+  const onConnectStart: OnConnectStart = useCallback((event: ReactMouseEvent | TouchEvent, connection: OnConnectStartParams) => {
+    let newNodes = nodes
+    const handleType = connection.handleId?.split("-")?.slice(-1)?.[0];
+
+    if (connection.handleType === "target") {
+      newNodes = nodes.map((node) => {
+        const outputs = Object.entries(node.data.outputs).map(([_, output]) => {
+          return {
+            ...output,
+            isHighlighted: output.type !== handleType
+          }
+        })
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            outputs
+          }
+        }
+      });
+    } else if (connection.handleType === "source") {
+      newNodes = nodes.map((node) => {
+        const inputs = Object.entries(node.data.inputs).map(([_, input]) => {
+          return {
+            ...input,
+            isHighlighted: input.type !== handleType
+          }
+        })
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            inputs
+          }
+        }
+      });
+    }
+    setNodes(newNodes)
+  }, [nodes]);
 
   // Validation connection for edge-compatability and circular loops
   const isValidConnection = useCallback(
@@ -207,10 +275,11 @@ export function MainFlow() {
 
       if (hasCycle(targetNode)) return false;
 
+      const splitOutputHandle = sourceHandle.split("-")?.slice(-1);
+      const splitInputHandle = targetHandle.split("-")?.slice(-1);
+
       // Ensure new connection connects compatible types
-      const { type: sourceType } = sourceNode.data.outputs[Number(sourceHandle)];
-      const { type: targetType } = targetNode.data.inputs[Number(targetHandle)];
-      return sourceType === targetType;
+      return splitOutputHandle[0] === splitInputHandle[0];
     },
     [getNodes, getEdges]
   );
@@ -235,7 +304,7 @@ export function MainFlow() {
   // TO DO: this is aggressive; do not change zoom levels. We do not need to have
   // all nodes on screen at once; we merely do not want to leave too far out
   const handleMoveEnd = useCallback(
-    (event: MouseEvent) => {
+    (event: ReactMouseEvent) => {
       // console.log("event>>", event)
       const bounds = getNodesBounds(nodes);
       // console.log("bounds>", bounds)
@@ -289,7 +358,8 @@ export function MainFlow() {
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       onConnect={onConnect}
-      onConnectEnd={oncConnectEnd}
+      onConnectStart={onConnectStart}
+      onConnectEnd={onConnectEnd}
       isValidConnection={isValidConnection}
       onInit={setRFInstance}
       nodeTypes={nodeComponents}

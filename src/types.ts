@@ -174,11 +174,13 @@ export interface BaseInputState {
   name: string;
   type: EdgeType;
   optional?: boolean;
+  isHighlighted?: boolean;
 }
 
 export interface OutputHandle {
   name: string;
   type: EdgeType;
+  isHighlighted?: boolean;
 }
 
 export interface InputHandle extends BaseInputState {}

@@ -17,7 +17,8 @@ export function initialNodeState(
       state.inputs[i] = {
         name: input.name,
         type: input.type,
-        optional: input.optional
+        optional: input.optional,
+        isHighlighted: false
       };
 
       i += 1;
@@ -28,7 +29,8 @@ export function initialNodeState(
   for (const output of nodeDef.outputs) {
     state.outputs[j] = {
       name: output.name,
-      type: output.type
+      type: output.type,
+      isHighlighted: false
     };
 
     j += 1;
