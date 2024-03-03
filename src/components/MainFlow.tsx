@@ -205,16 +205,21 @@ export function MainFlow() {
     setNodes(newNodes)
   }, [nodes]);
 
-  const onConnectStart: OnConnectStart = useCallback((event: ReactMouseEvent | TouchEvent, connection: OnConnectStartParams) => {
-    let newNodes = nodes
-    const handleType = connection.handleId?.split("-")?.slice(-1)?.[0];
+  const onConnectStart: OnConnectStart = useCallback((event: ReactMouseEvent | TouchEvent, params: OnConnectStartParams) => {
+    if (!params.handleId) return;
+    const [_category, _index, type] = params.handleId.split('-');
+    if (type) {
+      setCurrentConnectionLineType(type);
+    }
 
-    if (connection.handleType === "target") {
+    let newNodes = nodes;
+
+    if (params.handleType === "target") {
       newNodes = nodes.map((node) => {
         const outputs = Object.entries(node.data.outputs).map(([_, output]) => {
           return {
             ...output,
-            isHighlighted: output.type !== handleType
+            isHighlighted: output.type !== type
           }
         })
         return {
@@ -225,12 +230,12 @@ export function MainFlow() {
           }
         }
       });
-    } else if (connection.handleType === "source") {
+    } else if (params.handleType === "source") {
       newNodes = nodes.map((node) => {
         const inputs = Object.entries(node.data.inputs).map(([_, input]) => {
           return {
             ...input,
-            isHighlighted: input.type !== handleType
+            isHighlighted: input.type !== type
           }
         })
         return {
@@ -385,13 +390,6 @@ export function MainFlow() {
       proOptions={{ account: '', hideAttribution: true }}
       edgeTypes={defaultEdgeTypes}
       connectionLineComponent={ConnectionLine}
-      onConnectStart={(event, params) => {
-        if (!params.handleId) return;
-        const [_category, _index, type] = params.handleId.split('-');
-        if (type) {
-          setCurrentConnectionLineType(type);
-        }
-      }}
       connectionLineType={ConnectionLineType.Bezier}
     >
       <ReactHotkeys keyName={hotKeysShortcut.join(',')} onKeyDown={handleKeyPress}>
