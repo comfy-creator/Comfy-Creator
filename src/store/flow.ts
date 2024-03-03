@@ -78,8 +78,11 @@ export const useFlowStore = create<RFState>((set, get) => ({
   },
 
   onConnect: (connection: Connection) => {
+    const filterEdges = get().edges.filter(
+      (edge) => (edge.target !== connection.target) && (edge.targetHandle !== connection.targetHandle)
+    );
     set({
-      edges: addEdge(connection, get().edges)
+      edges: addEdge(connection, filterEdges)
     });
   },
 
