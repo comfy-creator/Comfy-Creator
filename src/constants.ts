@@ -102,7 +102,7 @@ export const WIDGET_TYPES: EdgeType[] = [
   'BOOLEAN',
   'FLOAT',
   'ENUM',
-  'IMAGE',
+  // 'IMAGE',
   'VIDEO'
 ];
 
