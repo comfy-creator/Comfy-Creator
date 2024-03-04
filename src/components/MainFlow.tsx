@@ -36,6 +36,7 @@ import { dragHandler, dropHandler } from '../handlers/dragDrop';
 import nodeInfo from '../../node_info.json';
 import { ConnectionLine } from './ConnectionLIne.tsx';
 import { HANDLE_TYPES } from '../constants.ts';
+import { defaultEdges, defaultNodes } from '../default-flow.ts';
 
 const FLOW_KEY = 'flow';
 const PADDING = 5; // in pixels
@@ -82,10 +83,13 @@ export function MainFlow() {
     registerEdgeType
   } = useFlowStore(selector);
 
-  const { getNodes, getEdges, getViewport, fitView } = useReactFlow<NodeState, string>();
+  const { getNodes, getEdges, getViewport, fitView, setViewport } = useReactFlow<NodeState, string>();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
 
   const [rfInstance, setRFInstance] = useState<ReactFlowInstance | null>(null);
+
+  // viewport from rfl
+  const viewport = getViewport();
 
   useEffect(() => {
     // Register some node defs for testing
@@ -159,6 +163,28 @@ export function MainFlow() {
     registerEdgeType(HANDLE_TYPES);
   }, []);
 
+  useEffect(() => {
+    // Load graph state from local storage
+    const flow = JSON.parse(localStorage.getItem(FLOW_KEY) as string);
+    if (flow) {
+      const { x = 0, y = 0, zoom = 1 } = flow.viewport;
+      setNodes(flow.nodes?.length > 0 ? flow.nodes : defaultNodes);
+      setEdges(flow.edges?.length > 0 ? flow.edges : defaultEdges);
+      setViewport({ x, y, zoom });
+    }
+  }, []);
+
+  // save to localStorage as nodes, edges and viewport changes
+  useEffect(() => {
+    const flow = {
+      nodes,
+      edges,
+      viewport
+    }
+
+    localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
+  }, [nodes, edges, viewport]);
+
   // Store graph state to local storage
   const serializeGraph = useCallback(() => {
     if (rfInstance) {
@@ -167,27 +193,10 @@ export function MainFlow() {
     }
   }, [rfInstance]);
 
-  // Load graph state from local storage
-  const loadGraph = useCallback(() => {
-    const restoreFlow = async () => {
-      const flow = JSON.parse(localStorage.getItem(FLOW_KEY) || '');
-
-      if (flow) {
-        // const { x = 0, y = 0, zoom = 1 } = flow.viewport;
-        setNodes(flow.nodes || []);
-        setEdges(flow.edges || []);
-        // setViewport({ x, y, zoom });
-      }
-    };
-
-    restoreFlow();
-  }, [setNodes, setEdges]);
-
   // TO DO: open the context menu if you dragged out an edge and didn't connect it,
   // so we can auto-spawn a compatible node for that edge
   const onConnectEnd: (event: ReactMouseEvent | TouchEvent) => void = useCallback(
     (event: ReactMouseEvent | TouchEvent) => {
-      console.log('onConnectEnd', event);
       if (event.target && !(event.target.className === 'flow_input')) {
         // onContextMenu(event)
       }
@@ -326,9 +335,7 @@ export function MainFlow() {
   // all nodes on screen at once; we merely do not want to leave too far out
   const handleMoveEnd = useCallback(
     (event: ReactMouseEvent) => {
-      // console.log("event>>", event)
       const bounds = getNodesBounds(nodes);
-      // console.log("bounds>", bounds)
       const viewPort = getViewport();
       //
       const boundViewPort = getViewportForBounds(
@@ -338,8 +345,6 @@ export function MainFlow() {
         0.7,
         viewPort.zoom
       );
-      // console.log("Bound view port>>", boundViewPort)
-      // console.log("GET >View port>>", getViewport())
       //
       if (
         viewPort.x > (menuRef.current?.clientWidth || 0) ||

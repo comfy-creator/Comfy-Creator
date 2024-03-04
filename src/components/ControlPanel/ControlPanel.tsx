@@ -11,6 +11,7 @@ import LoadDefaultButton from "./menu/LoadDefaultButton";
 import { ComfyPromptStatus } from "../../types/comfy";
 import { toggleSwitch } from "../../utils/ui";
 import { ComfyList } from "../ComfyList";
+import { RFState, useFlowStore } from '../../store/flow.ts';
 
 type AutoQueueMode =
   | {
@@ -21,7 +22,22 @@ type AutoQueueMode =
   | string
   | null;
 
+
+const selector = (state: RFState) => ({
+  nodes: state.nodes,
+  edges: state.edges,
+  setNodes: state.setNodes,
+  setEdges: state.setEdges,
+});
+
 const ControlPanel = () => {
+  const {
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+  } = useFlowStore(selector);
+
   const { addSetting, show: showSettings } = useSettings();
   const { queuePrompt, graphToPrompt } = usePrompt();
   // const { lastExecutionError } = useComfyApp();
@@ -34,9 +50,6 @@ const ControlPanel = () => {
   const [autoQueueMode, setAutoQueueMode] = useState<AutoQueueMode>(null);
   const [graphHasChanged, setGraphHasChanged] = useState(false);
   const [autoQueueEnabled, setAutoQueueEnabled] = useState(false);
-  const [confirmClear, setConfirmClear] = useState<{ value: boolean }>({
-    value: false,
-  });
   const [promptFilename, setPromptFilename] = useState<{ value: boolean }>({
     value: false,
   });
@@ -218,8 +231,8 @@ const ControlPanel = () => {
             Refresh
           </button>
 
-          <ClearButton confirmClear={confirmClear} />
-          <LoadDefaultButton confirmClear={confirmClear} />
+          <ClearButton />
+          <LoadDefaultButton />
         </div>
       </div>
     </Draggable>
