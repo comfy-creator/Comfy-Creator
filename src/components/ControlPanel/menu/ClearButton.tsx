@@ -1,19 +1,27 @@
-interface ClearButtonProps {
-  confirmClear: {
-    value: boolean;
-  };
-}
+import { RFState, useFlowStore } from '../../../store/flow.ts';
 
-const ClearButton = ({ confirmClear }: ClearButtonProps) => {
+const selector = (state: RFState) => ({
+  setNodes: state.setNodes,
+  setEdges: state.setEdges,
+});
+const ClearButton = () => {
+  const {
+    setNodes,
+    setEdges,
+  } = useFlowStore(selector);
+
+  const handleClick = () => {
+    const value = confirm("Clear workflow?");
+    if (value) {
+      setNodes([]);
+      setEdges([]);
+    }
+  }
+
   return (
     <button
       id="comfy-clear-button"
-      onClick={() => {
-        if (!confirmClear.value || confirm("Clear workflow?")) {
-          //   cleanApp();
-          //   graph.clear();
-        }
-      }}
+      onClick={handleClick}
     >
       Clear
     </button>
