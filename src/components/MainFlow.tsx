@@ -35,7 +35,7 @@ import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../handlers/dragDrop';
 import nodeInfo from '../../node_info.json';
 import { ConnectionLine } from './ConnectionLIne.tsx';
-import { HANDLE_TYPES } from '../constants.ts';
+import { HANDLE_ID_DELIMITER, HANDLE_TYPES } from '../constants.ts';
 import { defaultEdges, defaultNodes } from '../default-flow.ts';
 
 const FLOW_KEY = 'flow';
@@ -83,7 +83,10 @@ export function MainFlow() {
     registerEdgeType
   } = useFlowStore(selector);
 
-  const { getNodes, getEdges, getViewport, fitView, setViewport } = useReactFlow<NodeState, string>();
+  const { getNodes, getEdges, getViewport, fitView, setViewport } = useReactFlow<
+    NodeState,
+    string
+  >();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
 
   const [rfInstance, setRFInstance] = useState<ReactFlowInstance | null>(null);
@@ -92,8 +95,17 @@ export function MainFlow() {
   const viewport = getViewport();
 
   useEffect(() => {
+    const PrimitiveNode: NodeDefinition = {
+      inputs: [],
+      category: 'utils',
+      output_node: true,
+      display_name: 'Primitive',
+      description: 'Primitive Node',
+      outputs: [{ type: '*', name: 'connect widget to input' }]
+    };
+
     // Register some node defs for testing
-    addNodeDefs({ previewImage, previewVideo });
+    addNodeDefs({ previewImage, previewVideo, PrimitiveNode });
   }, [addNodeDefs]);
 
   useEffect(() => {
@@ -180,7 +192,7 @@ export function MainFlow() {
       nodes,
       edges,
       viewport
-    }
+    };
 
     localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
   }, [nodes, edges, viewport]);
@@ -230,7 +242,7 @@ export function MainFlow() {
   const onConnectStart: OnConnectStart = useCallback(
     (event: ReactMouseEvent | TouchEvent, params: OnConnectStartParams) => {
       if (!params.handleId) return;
-      const [_category, _index, type] = params.handleId.split('-');
+      const [_category, _index, type] = params.handleId.split(HANDLE_ID_DELIMITER);
       if (type) {
         setCurrentConnectionLineType(type);
       }
@@ -305,8 +317,8 @@ export function MainFlow() {
 
       if (hasCycle(targetNode)) return false;
 
-      const splitOutputHandle = sourceHandle.split('-')?.slice(-1);
-      const splitInputHandle = targetHandle.split('-')?.slice(-1);
+      const splitOutputHandle = sourceHandle.split(HANDLE_ID_DELIMITER).slice(-1);
+      const splitInputHandle = targetHandle.split(HANDLE_ID_DELIMITER).slice(-1);
 
       // Ensure new connection connects compatible types
       return splitOutputHandle[0] === splitInputHandle[0];

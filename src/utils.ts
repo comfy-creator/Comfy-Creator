@@ -3,6 +3,7 @@ import { SUPPORTED_IMAGE_TYPES, SUPPORTED_VIDEO_TYPES, WIDGET_TYPES } from './co
 
 // This returns the 'data' property of a React Flow Node
 export function initialNodeState(
+  nodeType: string,
   nodeDef: NodeDefinition,
   widgetValues: Record<string, any>
 ): NodeState {
@@ -12,7 +13,10 @@ export function initialNodeState(
   for (const input of nodeDef.inputs) {
     const isWidget = isWidgetInput(input.type);
     if (isWidget) {
-      state.widgets[input.name] = widgetStateFromDef(input, widgetValues);
+      state.widgets[input.name] = {
+        ...widgetStateFromDef(input, widgetValues),
+        nodeType
+      };
     } else {
       state.inputs[i] = {
         name: input.name,
@@ -24,6 +28,8 @@ export function initialNodeState(
       i += 1;
     }
   }
+
+  console.log(state.widgets);
 
   let j = 0;
   for (const output of nodeDef.outputs) {

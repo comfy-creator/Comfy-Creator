@@ -6,14 +6,17 @@ interface ResizableDivProps {
   defaultWidth: string | number;
   defaultHeight: string | number;
   onClick?: (e: MouseEvent<HTMLDivElement>) => void;
+
+  other?: Record<string, any>;
 }
 
-const ResizableDiv = ({
+export const ResizableDiv = ({
   defaultWidth,
   defaultHeight,
   className,
   children,
-  onClick
+  onClick,
+  ...other
 }: ResizableDivProps) => {
   const [width, setWidth] = useState(defaultWidth);
   const [height, setHeight] = useState(defaultHeight);
@@ -39,20 +42,20 @@ const ResizableDiv = ({
   }, []);
 
   useEffect(() => {
-    const debouncedHandleMouseMove = debounce(handleMouseMove, 10);
+    const handler = debounce(handleMouseMove, 10);
 
     if (isResizing) {
-      document.addEventListener('mousemove', debouncedHandleMouseMove);
+      document.addEventListener('mousemove', handler);
       document.addEventListener('mouseup', handleMouseUp);
     }
 
     return () => {
-      document.removeEventListener('mousemove', debouncedHandleMouseMove);
+      document.removeEventListener('mousemove', handler);
       document.addEventListener('mouseup', handleMouseUp);
     };
   }, [isResizing, initialX, initialY]);
 
-  const handleMouseDown = (_e: MouseEvent<HTMLDivElement>) => {
+  const handleMouseDown = () => {
     if (!resizableDivRef.current) return;
 
     setIsResizing(true);
@@ -70,13 +73,12 @@ const ResizableDiv = ({
     const minSize = 50;
     const maxSize = 500;
 
-    // if (newWidth < minSize) return;
-    // if (newHeight < minSize) return;
-    // if (newWidth > maxSize) return;
-    // if (newHeight > maxSize) return;
+    if (newWidth < minSize) return;
+    if (newHeight < minSize) return;
+    if (newWidth > maxSize) return;
+    if (newHeight > maxSize) return;
 
     requestAnimationFrame(() => {
-      console.log('sssssksk');
       setWidth(newWidth);
       setHeight(newHeight);
     });
@@ -88,6 +90,7 @@ const ResizableDiv = ({
 
   return (
     <div
+      {...other}
       onClick={onClick}
       className={className}
       ref={resizableDivRef}
@@ -122,5 +125,3 @@ const debounce = (func: Function, wait: number) => {
     }, wait);
   };
 };
-
-export default ResizableDiv;

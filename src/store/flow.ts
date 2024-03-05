@@ -25,8 +25,14 @@ import {
 } from '../types';
 import { initialNodeState } from '../utils';
 import { createNodeComponentFromDef } from '../components/template/NodeTemplate';
-import { DEFAULT_HOTKEYS_HANDLERS, DEFAULT_SHORTCUT_KEYS, HANDLE_TYPES } from '../constants';
+import {
+  DEFAULT_HOTKEYS_HANDLERS,
+  DEFAULT_SHORTCUT_KEYS,
+  HANDLE_ID_DELIMITER,
+  HANDLE_TYPES
+} from '../constants';
 import { createEdgeFromTemplate } from '../components/template/EdgeTemplate.tsx';
+import { addWidgetToNode } from '../components/template/PrimitiveNode.tsx';
 
 export type RFState = {
   nodes: Node<NodeState>[];
@@ -86,13 +92,24 @@ export const useFlowStore = create<RFState>((set, get) => ({
   onConnect: (connection: Connection) => {
     const filterEdges = get().edges.filter(
       (edge) =>
-        !((edge.target === connection.target) && (edge.targetHandle === connection.targetHandle))
+        !(edge.target === connection.target && edge.targetHandle === connection.targetHandle)
     );
 
-    const sourceParts = connection.sourceHandle?.split('-') || [];
-    const targetParts = connection.targetHandle?.split('-') || [];
+    const sourceParts = connection.sourceHandle?.split(HANDLE_ID_DELIMITER) || [];
+    const targetParts = connection.targetHandle?.split(HANDLE_ID_DELIMITER) || [];
 
-    console.log({ type: sourceParts[2] === targetParts[2] ? sourceParts[2] : undefined });
+    const sourceNode = get().nodes.find((node) => node.id == connection.source);
+    const targetNode = get().nodes.find((node) => node.id == connection.target);
+    if (!sourceNode || !targetNode) return;
+
+    if (sourceNode.type == 'PrimitiveNode') {
+      const slot = targetParts[1];
+      addWidgetToNode(slot, targetNode, sourceNode);
+    } else if (targetNode.type == 'PrimitiveNode') {
+      const slot = sourceParts[1];
+      addWidgetToNode(slot, sourceNode, targetNode);
+    }
+
     set({
       edges: addEdge(
         {
@@ -150,7 +167,7 @@ export const useFlowStore = create<RFState>((set, get) => ({
     }
 
     const id = crypto.randomUUID();
-    const data = initialNodeState(def, inputWidgetValues);
+    const data = initialNodeState(type, def, inputWidgetValues);
 
     const newNode = { id, type, position, data };
 

@@ -1,4 +1,5 @@
 import { EdgeType } from './types.ts';
+import { useFlowStore } from './store/flow.ts';
 
 export const SUPPORTED_IMAGE_TYPES = [
   'image/png',
@@ -44,7 +45,14 @@ export const DEFAULT_HOTKEYS_HANDLERS = {
     alert('Hey man, you clicked on ctrl+s');
   },
   'ctrl+o': () => {
-    alert('Hey man, you clicked on ctrl+o');
+    // alert('Hey man, you clicked on ctrl+o');
+
+    const { addNode } = useFlowStore.getState();
+    addNode({
+      position: { x: 200, y: 200 },
+      type: 'PrimitiveNode',
+      inputWidgetValues: {}
+    });
   },
   'ctrl+a': () => {
     alert('Hey man, you clicked on ctrl+a');
@@ -120,3 +128,5 @@ export const HANDLE_TYPES: EdgeType[] = [
   'VAE',
   'TAESD'
 ];
+
+export const HANDLE_ID_DELIMITER = '::';

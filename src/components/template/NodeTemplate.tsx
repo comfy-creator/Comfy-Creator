@@ -18,8 +18,9 @@ import { EnumWidget } from '../widgets/Enum.tsx';
 import { ImageWidget } from '../widgets/Image.tsx';
 import { VideoWidget } from '../widgets/Video.tsx';
 import { TextWidget } from '../widgets/Text.tsx';
-import ResizableDiv from '../ResizableDiv.tsx';
 import { themes } from '../../config/themes.ts';
+import { ResizableDiv } from '../ResizableDiv.tsx';
+import { useFlowStore } from '../../store/flow.ts';
 import IconPlayCircle from '../../assets/icons/PlayIcon.tsx';
 
 const createWidgetFromSpec = (
@@ -89,7 +90,7 @@ export const createNodeComponentFromDef = (
   def: NodeDefinition,
   updateWidgetState: UpdateWidgetState
 ): ComponentType<NodeProps<NodeState>> => {
-  const CustomNode = ({ id, data }: NodeProps<NodeState>) => {
+  const CustomNode = ({ type, id, data }: NodeProps<NodeState>) => {
     const onClick = () => toast.success('File uploaded successfully!');
 
     const handleNodeClick = () => {
@@ -105,10 +106,10 @@ export const createNodeComponentFromDef = (
       } = themes;
 
       return (
-        <div className={`flow_input ${handle.isHighlighted ? "edge_opacity" : ""}`} key={index}>
+        <div className={`flow_input ${handle.isHighlighted ? 'edge_opacity' : ''}`} key={index}>
           <Handle
             style={{ backgroundColor: node_slot[handle.type as keyof typeof node_slot] }}
-            id={`input-${index}-${handle.type}`}
+            id={`input::${index}::${handle.type}`}
             type="target"
             position={Position.Left}
             className={`flow_handler left ${handle.type}`}
@@ -127,10 +128,10 @@ export const createNodeComponentFromDef = (
       } = themes;
 
       return (
-        <div className={`flow_output ${handle.isHighlighted ? "edge_opacity" : ""}`} key={index}>
+        <div className={`flow_output ${handle.isHighlighted ? 'edge_opacity' : ''}`} key={index}>
           <Handle
             style={{ backgroundColor: node_slot[handle.type as keyof typeof node_slot] }}
-            id={`output-${label}-${handle.type}`}
+            id={`output::${label}::${handle.type}`}
             type="source"
             position={Position.Right}
             className={`flow_handler right ${handle.type}`}
@@ -142,7 +143,15 @@ export const createNodeComponentFromDef = (
 
     // Generate widgets
     const widgets = Object.entries(data.widgets || []).map(([name, inputState], index) => {
-      const inputDef = def.inputs.find((input) => input.name === name);
+      const { nodeDefs } = useFlowStore.getState();
+
+      let inputDef: InputDef | undefined;
+      if (inputState.config) {
+        inputDef = inputState.config;
+      } else {
+        inputDef = def.inputs.find((input) => input.name === name);
+      }
+
       if (!inputDef) return;
 
       const update = (newState: Partial<WidgetState>) => {
