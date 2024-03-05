@@ -20,6 +20,7 @@ import { VideoWidget } from '../widgets/Video.tsx';
 import { TextWidget } from '../widgets/Text.tsx';
 import ResizableDiv from '../ResizableDiv.tsx';
 import { themes } from '../../config/themes.ts';
+import IconPlayCircle from '../../assets/icons/PlayIcon.tsx';
 
 const createWidgetFromSpec = (
   def: InputDef,
@@ -162,13 +163,17 @@ export const createNodeComponentFromDef = (
         className="node"
       >
         <div className="node_container">
-          <div className="node_label" onClick={onClick}>
-            {def.display_name}
+          <div className="node_label_container">
+            <span className="node_label" onClick={onClick}>{def.display_name}</span>
+
+            <span className="run_icon"><IconPlayCircle /></span>
           </div>
 
           <div className="flow_input_output_container">
-            <div className="flow_input_container">{inputHandles}</div>
-            <div className="flow_output_container">{outputHandles}</div>
+          <div className="flow_input_container">{inputHandles}</div>
+            <div className="flow_output_container">
+              {outputHandles}
+            </div>
           </div>
           <div className="widgets_container">{widgets}</div>
         </div>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import NodeInfo from '../../node_info.json';
+import { useFlowStore } from '../store/flow.ts';
 
 const data = {
   slotInTypeFilter: [
@@ -102,6 +103,17 @@ const SearchWidget = ({ handleMouseLeave, handleMouseIn, show, widgetRef, props 
     setFilterCriteria((prev) => ({ ...prev, [type]: e.target.value }));
   };
 
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>, value: string) => {
+    const position = { x: e.clientX, y: e.clientY };
+
+    const { addNode } = useFlowStore.getState();
+    addNode({
+      position,
+      type: value,
+      inputWidgetValues: {}
+    });
+  }
+
   const style = {
     ...(props.top !== undefined ? { top: `${props.top}px` } : {}),
     ...(props.left !== undefined ? { left: `${props.left}px` } : {}),
@@ -142,6 +154,7 @@ const SearchWidget = ({ handleMouseLeave, handleMouseIn, show, widgetRef, props 
             key={index}
             data-type={item.value}
             className={`react-flow lite-search-item ${item.isGeneric ? 'generic_type' : ''}`}
+            onClick={(e) => handleClick(e, item.value)}
           >
             {item.label}
           </div>

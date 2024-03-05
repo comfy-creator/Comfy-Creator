@@ -82,12 +82,12 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
   };
 
   useEffect(() => {
-    document.addEventListener('dblclick', (event) => {
+    menuRef?.current?.addEventListener('dblclick', (event) => {
       handleDoubleClick(event);
       return;
     });
     return () => {
-      document.removeEventListener('dblclick', () => {
+      menuRef?.current?.removeEventListener('dblclick', () => {
         handleDoubleClick();
       });
     };

@@ -65,12 +65,24 @@
     background: #353535;
 }
 
-.node_label {
-    width: 100%;
+.node_label_container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgb(41, 41, 41);
     padding: 2px;
+}
+
+.run_icon {
+    cursor: pointer;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.node_label {
     color: #c9c8c8;
     font-size: 8px;
-    border-bottom: 1px solid rgb(41, 41, 41);
 }
 
 .clip {
@@ -216,4 +228,8 @@
 
 .react-flow__pane {
     cursor: default !important;
+}
+
+.edge_opacity {
+    opacity: 0.5;
 }

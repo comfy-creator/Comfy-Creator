@@ -176,6 +176,7 @@ export function MainFlow() {
 
   // save to localStorage as nodes, edges and viewport changes
   useEffect(() => {
+    console.log("Updated>>")
     const flow = {
       nodes,
       edges,
@@ -198,7 +199,7 @@ export function MainFlow() {
   const onConnectEnd: (event: ReactMouseEvent | TouchEvent) => void = useCallback(
     (event: ReactMouseEvent | TouchEvent) => {
       if (event.target && !(event.target.className === 'flow_input')) {
-        // onContextMenu(event)
+        onContextMenu(event)
       }
       const newNodes = nodes.map((node) => {
         const outputs = Object.entries(node.data.outputs).map(([_, output]) => {
