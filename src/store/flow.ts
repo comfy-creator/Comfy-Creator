@@ -103,10 +103,10 @@ export const useFlowStore = create<RFState>((set, get) => ({
     if (!sourceNode || !targetNode) return;
 
     if (sourceNode.type == 'PrimitiveNode') {
-      const slot = targetParts[1];
+      const slot = Number(targetParts[1]);
       addWidgetToNode(slot, targetNode, sourceNode);
     } else if (targetNode.type == 'PrimitiveNode') {
-      const slot = sourceParts[1];
+      const slot = Number(sourceParts[1]);
       addWidgetToNode(slot, sourceNode, targetNode);
     }
 

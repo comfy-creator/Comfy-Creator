@@ -108,7 +108,10 @@ export const createNodeComponentFromDef = (
       return (
         <div className={`flow_input ${handle.isHighlighted ? 'edge_opacity' : ''}`} key={index}>
           <Handle
-            style={{ backgroundColor: node_slot[handle.type as keyof typeof node_slot] }}
+            style={{
+              backgroundColor:
+                node_slot[handle.type as keyof typeof node_slot] ?? node_slot['DEFAULT']
+            }}
             id={`input::${index}::${handle.type}`}
             type="target"
             position={Position.Left}
@@ -130,7 +133,10 @@ export const createNodeComponentFromDef = (
       return (
         <div className={`flow_output ${handle.isHighlighted ? 'edge_opacity' : ''}`} key={index}>
           <Handle
-            style={{ backgroundColor: node_slot[handle.type as keyof typeof node_slot] }}
+            style={{
+              backgroundColor:
+                node_slot[handle.type as keyof typeof node_slot] ?? node_slot['DEFAULT']
+            }}
             id={`output::${label}::${handle.type}`}
             type="source"
             position={Position.Right}

@@ -46,29 +46,20 @@ export function convertInputToWidget(input: InputHandle, node: Node<NodeState>) 
   return widget ?? input.widget;
 }
 
-export function transfer(name: string, node: Node<NodeState>) {
+export function addWidgetToNode(slot: number, node: Node<NodeState>, primitive: Node<NodeState>) {
   const { updateNodeState } = useFlowStore.getState();
-
-  const input = convertWidgetToInput({ node, widgetName: name });
-  if (!input) return;
-
-  const inputSlot = Object.keys(node.data.inputs).length;
-  updateNodeState(node.id, { inputs: { [inputSlot]: input } });
-}
-
-export function receive(input: InputHandle, node: Node<NodeState>) {
-  const { updateNodeState } = useFlowStore.getState();
-
-  const widget = convertInputToWidget(input, node);
-  if (!widget) return;
-
-  updateNodeState(node.id, { widgets: { value: widget } });
-}
-
-export function addWidgetToNode(slot: string, node: Node<NodeState>, primitive: Node<NodeState>) {
-  const { updateNodeState } = useFlowStore.getState();
-  const input = node.data.inputs[Number(slot)];
+  const input = node.data.inputs[slot];
   if (!input.widget) return;
+
+  updateNodeState(node.id, {
+    inputs: {
+      ...node.data.inputs,
+      [slot]: {
+        ...input,
+        type: input.widget.type
+      }
+    }
+  });
 
   updateNodeState(primitive.id, {
     widgets: {

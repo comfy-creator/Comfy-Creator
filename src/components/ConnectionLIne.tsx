@@ -5,10 +5,9 @@ import { themes } from '../config/themes.ts';
 export function ConnectionLine({ fromX, fromY, toX, toY }: ConnectionLineComponentProps) {
   const { currentConnectionLineType } = useFlowStore();
 
+  const { node_slot } = themes.dark.colors;
   const strokeColor =
-    themes.dark.colors.node_slot[
-      currentConnectionLineType as keyof typeof themes.dark.colors.node_slot
-    ];
+    node_slot[currentConnectionLineType as keyof typeof node_slot] ?? node_slot['DEFAULT'];
 
   return (
     <g>
