@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { WidgetBackwardIcon, WidgetForwardIcon } from '../WidgetDirectionIcon.tsx';
-import { EnumDialog } from '../Dialogs/EnumDialog.tsx';
+import { EnumDialog } from '../dialogs/EnumDialog.tsx';
 
 type EnumProps = {
   label: string;

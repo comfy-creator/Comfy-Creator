@@ -1,4 +1,4 @@
-import { InputDialog } from '../Dialogs/InputDialog.tsx';
+import { InputDialog } from '../dialogs/InputDialog.tsx';
 import { ChangeEvent, useState } from 'react';
 
 type StringProps = {
@@ -14,7 +14,7 @@ export function StringWidget({ label, value, onChange }: StringProps) {
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
-    onChange?.(e.target.value)
+    onChange?.(e.target.value);
   };
 
   return (

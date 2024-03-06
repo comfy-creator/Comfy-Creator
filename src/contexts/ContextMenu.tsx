@@ -10,7 +10,7 @@ import {
   useState
 } from 'react';
 import { ContextMenuProps, IMenuType, NodeState } from '../types.ts';
-import { ContextMenu } from '../components/template/ContextMenuTemplate.tsx';
+import { ContextMenu } from '../components/templates/ContextMenuTemplate.tsx';
 import { Node } from 'reactflow';
 import SearchWidget from '../components/SearchWidget.tsx';
 import NodeDefs from '../../node_info.json';

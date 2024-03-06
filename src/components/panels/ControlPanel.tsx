@@ -1,17 +1,16 @@
-import { useRef, useState, ReactNode, useEffect } from "react";
-import Draggable from "react-draggable";
-import { useSettings } from "../../contexts/settingsContext";
-import { usePrompt } from "../../hooks/usePrompt";
-import Button from "../Button";
-import ExtraOptions from "./menu/ExtraOptions";
-import SaveButton from "./menu/SaveButton";
-import DevSaveButton from "./menu/DevSaveButton";
-import ClearButton from "./menu/ClearButton";
-import LoadDefaultButton from "./menu/LoadDefaultButton";
-import { ComfyPromptStatus } from "../../types/comfy";
-import { toggleSwitch } from "../../utils/ui";
-import { ComfyList } from "../ComfyList";
-import { RFState, useFlowStore } from '../../store/flow.ts';
+import { ReactNode, useEffect, useRef, useState } from 'react';
+import Draggable from 'react-draggable';
+import { useSettings } from '../../contexts/settingsContext';
+import { usePrompt } from '../../hooks/usePrompt';
+import ExtraOptions from './menu/ExtraOptions';
+import SaveButton from './menu/SaveButton';
+import DevSaveButton from './menu/DevSaveButton';
+import ClearButton from './menu/ClearButton';
+import LoadDefaultButton from './menu/LoadDefaultButton';
+import { ComfyPromptStatus } from '../../types/comfy';
+import { toggleSwitch } from '../../utils/ui';
+import { ComfyList } from '../ComfyList';
+import { RFState, useFlowStore } from '../../store/flow';
 
 type AutoQueueMode =
   | {
@@ -22,21 +21,15 @@ type AutoQueueMode =
   | string
   | null;
 
-
 const selector = (state: RFState) => ({
   nodes: state.nodes,
   edges: state.edges,
   setNodes: state.setNodes,
-  setEdges: state.setEdges,
+  setEdges: state.setEdges
 });
 
 const ControlPanel = () => {
-  const {
-    nodes,
-    edges,
-    setNodes,
-    setEdges,
-  } = useFlowStore(selector);
+  const { nodes, edges, setNodes, setEdges } = useFlowStore(selector);
 
   const { addSetting, show: showSettings } = useSettings();
   const { queuePrompt, graphToPrompt } = usePrompt();
@@ -51,7 +44,7 @@ const ControlPanel = () => {
   const [graphHasChanged, setGraphHasChanged] = useState(false);
   const [autoQueueEnabled, setAutoQueueEnabled] = useState(false);
   const [promptFilename, setPromptFilename] = useState<{ value: boolean }>({
-    value: false,
+    value: false
   });
 
   const [showQueue, setShowQueue] = useState(false);
@@ -67,14 +60,14 @@ const ControlPanel = () => {
   const setStatus = (status: ComfyPromptStatus) => {
     if (!queueSizeEl.current) return;
     queueSizeEl.current.textContent =
-      "Queue size: " + (status ? status.exec_info.queue_remaining : "ERR");
+      'Queue size: ' + (status ? status.exec_info.queue_remaining : 'ERR');
 
     if (status) {
       if (
         lastQueueSize != 0 &&
         status.exec_info.queue_remaining == 0 &&
         autoQueueEnabled &&
-        (autoQueueMode === "instant" || graphHasChanged) &&
+        (autoQueueMode === 'instant' || graphHasChanged) &&
         !lastExecutionError
       ) {
         queuePrompt(0);
@@ -86,7 +79,7 @@ const ControlPanel = () => {
   };
 
   useEffect(() => {
-    setStatus({ exec_info: { queue_remaining: "X" } });
+    setStatus({ exec_info: { queue_remaining: 'X' } });
   }, [queueSizeEl]);
 
   useEffect(() => {
@@ -96,28 +89,27 @@ const ControlPanel = () => {
   }, [menuContainerEl]);
 
   const autoQueueModeEl = toggleSwitch(
-    "autoQueueMode",
+    'autoQueueMode',
     [
       {
-        text: "instant",
-        tooltip: "A new prompt will be queued as soon as the queue reaches 0",
+        text: 'instant',
+        tooltip: 'A new prompt will be queued as soon as the queue reaches 0'
       },
       {
-        text: "change",
-        tooltip:
-          "A new prompt will be queued when the queue is at 0 and the graph is/has changed",
-      },
+        text: 'change',
+        tooltip: 'A new prompt will be queued when the queue is at 0 and the graph is/has changed'
+      }
     ],
     {
       ref: autoQueueModeElRef,
       onChange: (value: any) => {
         setAutoQueueMode(value.item.value);
-      },
+      }
     }
   );
 
   if (autoQueueModeElRef.current) {
-    autoQueueModeElRef.current.style.display = "none";
+    autoQueueModeElRef.current.style.display = 'none';
   }
 
   const fileInput = (
@@ -126,9 +118,9 @@ const ControlPanel = () => {
       type="file"
       ref={fileInputRef}
       accept=".json,image/png,.latent,.safetensors,image/webp"
-      style={{ display: "none" }}
+      style={{ display: 'none' }}
       onChange={() => {
-        if ("files" in fileInput && Array.isArray(fileInput.files)) {
+        if ('files' in fileInput && Array.isArray(fileInput.files)) {
           // app.handleFile(fileInput.files[0]);
         }
       }}
@@ -151,10 +143,10 @@ const ControlPanel = () => {
           <div
             className="drag-handle"
             style={{
-              overflow: "hidden",
-              position: "relative",
-              cursor: "default",
-              width: "100%",
+              overflow: 'hidden',
+              position: 'relative',
+              cursor: 'default',
+              width: '100%'
             }}
           >
             <span className="drag-handle" />
@@ -164,11 +156,7 @@ const ControlPanel = () => {
             </button>
           </div>
 
-          <button
-            id="queue-button"
-            className="comfy-queue-btn"
-            onClick={() => queuePrompt(0)}
-          >
+          <button id="queue-button" className="comfy-queue-btn" onClick={() => queuePrompt(0)}>
             Run All
           </button>
 
@@ -194,7 +182,7 @@ const ControlPanel = () => {
                 setShowQueue((i) => !i);
               }}
             >
-              {showQueue ? "Close" : "View Queue"}
+              {showQueue ? 'Close' : 'View Queue'}
             </button>
 
             <button
@@ -205,17 +193,14 @@ const ControlPanel = () => {
                 setShowHistory((i) => !i);
               }}
             >
-              {showHistory ? "Close" : "View History"}
+              {showHistory ? 'Close' : 'View History'}
             </button>
           </div>
 
           <ComfyList text="Queue" show={showQueue} />
           <ComfyList text="History" show={showHistory} reverse={true} />
 
-          <button
-            id="comfy-load-button"
-            onClick={() => fileInputRef?.current?.click?.()}
-          >
+          <button id="comfy-load-button" onClick={() => fileInputRef?.current?.click?.()}>
             Load
           </button>
 

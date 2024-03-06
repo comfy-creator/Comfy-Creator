@@ -27,7 +27,7 @@ import ReactFlow, {
   useReactFlow
 } from 'reactflow';
 import { useContextMenu } from '../contexts/ContextMenu';
-import ControlPanel from './ControlPanel/ControlPanel';
+import ControlPanel from './panels/ControlPanel';
 import { RFState, useFlowStore } from '../store/flow';
 import { NodeDefinition, NodeState } from '../types';
 import { previewImage, previewVideo } from '../node_definitions/preview';

@@ -4,7 +4,7 @@ import { useFlowStore } from './store/flow.ts';
 import {
   convertInputToWidget,
   convertWidgetToInput
-} from './components/template/PrimitiveNode.tsx';
+} from './components/templates/PrimitiveNode.tsx';
 
 export function getNodeMenuItems(node: Node<NodeState>) {
   const { nodeDefs } = useFlowStore.getState();

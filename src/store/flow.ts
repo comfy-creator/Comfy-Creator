@@ -24,19 +24,19 @@ import {
   WidgetState
 } from '../types';
 import { computeInitialNodeState } from '../utils/node';
-import { createNodeComponentFromDef } from '../components/template/NodeTemplate';
+import { createNodeComponentFromDef } from '../components/templates/NodeTemplate';
 import {
   DEFAULT_HOTKEYS_HANDLERS,
   DEFAULT_SHORTCUT_KEYS,
   HANDLE_ID_DELIMITER,
   HANDLE_TYPES
 } from '../constants';
-import { createEdgeFromTemplate } from '../components/template/EdgeTemplate.tsx';
+import { createEdgeFromTemplate } from '../components/templates/EdgeTemplate';
 import {
   addInputTypeToNode,
   addOutputTypeToNode,
   addWidgetToNode
-} from '../components/template/PrimitiveNode.tsx';
+} from '../components/templates/PrimitiveNode';
 
 export type RFState = {
   nodes: Node<NodeState>[];

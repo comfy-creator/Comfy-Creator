@@ -1,6 +1,6 @@
 import React, { ReactNode, useState } from 'react';
 import { createUseContextHook } from './hookCreator';
-import { MainDialog } from '../components/Dialogs/MainDialog';
+import { MainDialog } from '../components/dialogs/MainDialog';
 
 interface DialogContextType {
   showDialog: (content: ReactNode) => void;
