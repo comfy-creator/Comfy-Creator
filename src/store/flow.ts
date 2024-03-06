@@ -23,7 +23,7 @@ import {
   UpdateWidgetStateParams,
   WidgetState
 } from '../types';
-import { initialNodeState } from '../utils';
+import { computeInitialNodeState } from '../utils/node';
 import { createNodeComponentFromDef } from '../components/template/NodeTemplate';
 import {
   DEFAULT_HOTKEYS_HANDLERS,
@@ -172,14 +172,14 @@ export const useFlowStore = create<RFState>((set, get) => ({
     });
   },
 
-  addNode: ({ hideLabel, hideType, type, position, inputWidgetValues = {} }: AddNodeParams) => {
+  addNode: ({ config = {}, type, position, inputWidgetValues = {} }: AddNodeParams) => {
     const def = get().nodeDefs[type];
     if (!def) {
       throw new Error(`Node type ${type} does not exist`);
     }
 
     const id = crypto.randomUUID();
-    const data = initialNodeState(def, inputWidgetValues, hideType, hideLabel);
+    const data = computeInitialNodeState(def, inputWidgetValues, config);
 
     const newNode = { id, type, position, data };
 

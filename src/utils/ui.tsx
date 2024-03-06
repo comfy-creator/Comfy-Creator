@@ -1,5 +1,5 @@
 import { RefObject, useEffect, useState } from 'react';
-import { IMenuType } from '../components/template/menuData';
+import { IMenuType } from '../types';
 
 type RawInput = {
   text: string;
@@ -210,7 +210,6 @@ export function dragElement(dragEl: HTMLDivElement, addSetting: any) {
   }
 }
 
-
 export function categorizeObjects(data: Record<string, Record<string, any>>) {
   const categorizedArray: IMenuType[] = [];
 
@@ -221,12 +220,12 @@ export function categorizeObjects(data: Record<string, Record<string, any>>) {
 
     const stillHasSub = (name: string) => {
       const found = Object.values(data).filter((value) => value.category.includes(`${name}/`));
-      return found.length > 0
-    }
+      return found.length > 0;
+    };
 
     categories.forEach((category: string, index: number) => {
-      const foundCategory = currentCategory.find(item => item.label === category);
-      const currentCat = categories.slice(0, index).join("/");
+      const foundCategory = currentCategory.find((item) => item.label === category);
+      const currentCat = categories.slice(0, index).join('/');
 
       if (index === categories.length - 1) {
         if (!foundCategory) {
@@ -241,22 +240,22 @@ export function categorizeObjects(data: Record<string, Record<string, any>>) {
             hasSubMenu: false,
             subMenu: null,
             node: object
-          })
-          currentCategory.push(newCategory)
+          });
+          currentCategory.push(newCategory);
         } else {
           foundCategory.subMenu!.push({
             label: object.name,
             hasSubMenu: false,
             subMenu: null,
             node: object
-          })
+          });
         }
       } else if (!foundCategory) {
         const newCategory = {
           label: stillHasSub(currentCat) ? category : object.name,
           hasSubMenu: stillHasSub(currentCat),
           subMenu: stillHasSub(currentCat) ? [] : null,
-          node: stillHasSub(currentCat) ? null : object,
+          node: stillHasSub(currentCat) ? null : object
         };
 
         currentCategory.push(newCategory);
@@ -269,8 +268,7 @@ export function categorizeObjects(data: Record<string, Record<string, any>>) {
     });
   }
 
-
-  const sort = (arr: IMenuType[]): IMenuType[] =>  {
+  const sort = (arr: IMenuType[]): IMenuType[] => {
     const hasSubMenus = arr.filter((item) => item.hasSubMenu);
     const noSubMenu = arr.filter((item) => !item.hasSubMenu);
     const newArr = [...hasSubMenus, ...noSubMenu];
@@ -279,10 +277,10 @@ export function categorizeObjects(data: Record<string, Record<string, any>>) {
         label: item.label,
         hasSubMenu: item.hasSubMenu,
         subMenu: item.subMenu ? sort(item.subMenu) : item.subMenu,
-        node: item.node,
-      }
-    })
-  }
+        node: item.node
+      };
+    });
+  };
 
   return sort(categorizedArray);
 }

@@ -216,9 +216,10 @@ export function MainFlow() {
 
   // TO DO: open the context menu if you dragged out an edge and didn't connect it,
   // so we can auto-spawn a compatible node for that edge
-  const onConnectEnd: (event: ReactMouseEvent | TouchEvent) => void = useCallback(
-    (event: ReactMouseEvent | TouchEvent) => {
+  const onConnectEnd: (event: MouseEvent | TouchEvent) => void = useCallback(
+    (event: MouseEvent | TouchEvent) => {
       if (event.target && !(event.target.className === 'flow_input')) {
+        // @ts-expect-error
         onContextMenu(event);
       }
       const newNodes = nodes.map((node) => {

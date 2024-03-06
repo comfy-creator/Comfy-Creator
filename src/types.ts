@@ -1,19 +1,6 @@
 import { ComponentType, type MouseEvent as ReactMouseEvent } from 'react';
 import { EdgeProps, NodeProps, XYPosition } from 'reactflow';
 
-export type InputSpec = {
-  default?: number | string;
-  min?: number;
-  max?: number;
-  step?: number;
-  round?: number | boolean;
-  display?: 'color'; // what is this?
-  multiline?: boolean;
-  image_upload?: boolean; // dumb
-};
-
-type EdgeValueSpec = undefined | string[] | InputSpec;
-
 export type EdgeType =
   | 'BOOLEAN'
   | 'INT'
@@ -86,6 +73,7 @@ export interface EnumInputDef extends BaseInputDef {
 
 export interface ImageInputDef extends BaseInputDef {
   readonly type: 'IMAGE';
+  image_upload?: boolean;
   readonly defaultValue?: string;
 }
 
@@ -144,9 +132,8 @@ export type NodeDefinitions = Record<string, NodeDefinition>;
 
 export interface AddNodeParams {
   type: string;
-  hideType?: boolean;
-  hideLabel?: boolean;
   position: XYPosition;
+  config?: NodeStateConfig;
   inputWidgetValues?: Record<string, any>;
 }
 
@@ -155,6 +142,7 @@ export interface AddNodeParams {
 export interface BaseInputState {
   name: string;
   type: EdgeType;
+  hidden?: boolean;
   config?: InputDef;
   optional?: boolean;
   isHighlighted?: boolean;
@@ -163,6 +151,7 @@ export interface BaseInputState {
 export interface OutputHandle {
   name: string;
   type: EdgeType;
+  hidden?: boolean;
   isHighlighted?: boolean;
 }
 
@@ -225,11 +214,16 @@ export type WidgetState =
 
 export type NodeState = {
   readonly name: string;
+  config: NodeStateConfig;
+  inputs: InputHandle[];
+  outputs: OutputHandle[];
+  widgets: Record<string, WidgetState>;
+};
+
+export type NodeStateConfig = {
   hideType?: boolean;
   hideLabel?: boolean;
-  inputs: Record<number, InputHandle>;
-  outputs: Record<number, OutputHandle>;
-  widgets: Record<string, WidgetState>;
+  isVirtual?: boolean;
 };
 
 // =========== Node Types ===========

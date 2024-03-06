@@ -1,5 +1,5 @@
 import { DragEvent } from 'react';
-import { getFileAsDataURL, getFileKind } from '../utils';
+import { getFileAsDataURL, getFileKind } from '../utils/file';
 import { Edge, Node, ReactFlowInstance } from 'reactflow';
 import { AddNodeParams } from '../types';
 

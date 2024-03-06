@@ -1,55 +1,45 @@
-import { EdgeType, InputDef, NodeDefinition, NodeState, WidgetState } from './types';
-import { SUPPORTED_IMAGE_TYPES, SUPPORTED_VIDEO_TYPES, WIDGET_TYPES } from './constants.ts'; // This returns the 'data' property of a React Flow Node
+import {
+  EdgeType,
+  InputDef,
+  NodeDefinition,
+  NodeState,
+  NodeStateConfig,
+  WidgetState
+} from '../types.ts';
+import { WIDGET_TYPES } from '../constants.ts';
 
-// This returns the 'data' property of a React Flow Node
-export function initialNodeState(
-  nodeDef: NodeDefinition,
+export function computeInitialNodeState(
+  def: NodeDefinition,
   widgetValues: Record<string, any>,
-  hideType = false,
-  hideLabel = false
-): NodeState {
-  const state: NodeState = {
-    hideLabel,
-    hideType,
-    name: nodeDef.display_name,
-    inputs: {},
-    outputs: {},
-    widgets: {}
-  };
+  config: NodeStateConfig
+) {
+  const { display_name: name, inputs, outputs } = def;
+  const state: NodeState = { name, config, inputs: [], outputs: [], widgets: {} };
 
-  let i = 0;
-  for (const input of nodeDef.inputs) {
+  inputs.forEach((input) => {
     const isWidget = isWidgetInput(input.type);
     if (isWidget) {
       state.widgets[input.name] = {
         ...widgetStateFromDef(input, widgetValues)
       };
     } else {
-      state.inputs[i] = {
+      state.inputs.push({
         name: input.name,
         type: input.type,
-        optional: input.optional,
-        isHighlighted: false
-      };
-
-      i += 1;
+        isHighlighted: false,
+        optional: input.optional
+      });
     }
-  }
+  });
 
-  console.log(state.widgets);
-
-  let j = 0;
-  for (const output of nodeDef.outputs) {
-    state.outputs[j] = {
+  outputs.forEach((output) => {
+    state.outputs.push({
       name: output.name,
       type: output.type,
       isHighlighted: false
-    };
+    });
+  });
 
-    j += 1;
-  }
-
-  console.log(state);
   return state;
 }
 
@@ -119,31 +109,3 @@ export function widgetStateFromDef(def: InputDef, values: Record<string, any>): 
 }
 
 const isWidgetInput = (type: EdgeType) => WIDGET_TYPES.includes(type);
-
-export function getFileKind(file: File) {
-  if (file.type === 'application/json') {
-    return 'json';
-  } else if (SUPPORTED_IMAGE_TYPES.includes(file.type)) {
-    return 'image';
-  } else if (SUPPORTED_VIDEO_TYPES.includes(file.type)) {
-    return 'video';
-  }
-
-  throw new Error(`Unsupported file type ${file.type}`);
-}
-
-export function getFileAsDataURL(file: File) {
-  return new Promise<string | ArrayBuffer>((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = function (e) {
-      if (!e.target?.result) {
-        reject('Failed to load file data');
-      } else {
-        resolve(e.target.result);
-      }
-    };
-
-    reader.readAsDataURL(file);
-  });
-}
