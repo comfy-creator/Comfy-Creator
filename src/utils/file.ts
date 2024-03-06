@@ -1,4 +1,4 @@
-import { SUPPORTED_IMAGE_TYPES, SUPPORTED_VIDEO_TYPES } from '../constants.ts';
+import { SUPPORTED_IMAGE_TYPES, SUPPORTED_VIDEO_TYPES } from '../config/constants.ts';
 
 export function getFileKind(file: File) {
   if (file.type === 'application/json') {

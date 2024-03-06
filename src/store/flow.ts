@@ -30,7 +30,7 @@ import {
   DEFAULT_SHORTCUT_KEYS,
   HANDLE_ID_DELIMITER,
   HANDLE_TYPES
-} from '../constants';
+} from '../config/constants.ts';
 import { createEdgeFromTemplate } from '../components/templates/EdgeTemplate';
 import {
   addInputTypeToNode,

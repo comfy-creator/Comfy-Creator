@@ -1,5 +1,5 @@
-import { EdgeType } from './types.ts';
-import { useFlowStore } from './store/flow.ts';
+import { EdgeType } from '../types.ts';
+import { useFlowStore } from '../store/flow.ts';
 
 export const SUPPORTED_IMAGE_TYPES = [
   'image/png',
@@ -64,9 +64,10 @@ export const DEFAULT_HOTKEYS_HANDLERS = {
     addNode({
       position: { x: 200, y: 200 },
       type: 'RerouteNode',
-
-      hideType: true,
-      hideLabel: true
+      config: {
+        hideType: true,
+        hideLabel: true
+      }
     });
   },
   del: () => {

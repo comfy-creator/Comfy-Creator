@@ -35,7 +35,7 @@ import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../handlers/dragDrop';
 import nodeInfo from '../../node_info.json';
 import { ConnectionLine } from './ConnectionLIne.tsx';
-import { HANDLE_ID_DELIMITER, HANDLE_TYPES } from '../constants.ts';
+import { HANDLE_ID_DELIMITER, HANDLE_TYPES } from '../config/constants.ts';
 import { defaultEdges, defaultNodes } from '../default-flow.ts';
 
 const FLOW_KEY = 'flow';

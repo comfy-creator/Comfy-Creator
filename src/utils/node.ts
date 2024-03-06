@@ -6,7 +6,7 @@ import {
   NodeStateConfig,
   WidgetState
 } from '../types.ts';
-import { WIDGET_TYPES } from '../constants.ts';
+import { WIDGET_TYPES } from '../config/constants.ts';
 
 export function computeInitialNodeState(
   def: NodeDefinition,
