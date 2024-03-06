@@ -12,6 +12,7 @@ export const ToggleWidget: FC<ToggleProps> = ({ label, disabled, checked, onChan
 
   useEffect(() => {
     setInput(input);
+    onChange?.(input);
   }, [input]);
 
   const handleToggle = () => {

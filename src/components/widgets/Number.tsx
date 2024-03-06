@@ -15,6 +15,7 @@ export const NumberWidget: FC<NumberWidgetProps> = ({ label, value, onChange }) 
 
   useEffect(() => {
     setInputValue(inputValue);
+    onChange?.(inputValue);
   }, [inputValue]);
 
   const handleClickForward = () => {

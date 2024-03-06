@@ -169,7 +169,7 @@ const ControlPanel = () => {
             className="comfy-queue-btn"
             onClick={() => queuePrompt(0)}
           >
-            Queue Prompt
+            Run All
           </button>
 
           <ExtraOptions

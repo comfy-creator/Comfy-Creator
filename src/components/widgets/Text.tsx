@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type TextProps = {
   label: string;
@@ -9,7 +9,6 @@ type TextProps = {
 
 export function TextWidget({ disabled, value, onChange }: TextProps) {
   const [inputValue, setInputValue] = useState(value);
-
   return (
     <textarea
       rows={4}

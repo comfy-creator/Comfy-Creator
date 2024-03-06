@@ -20,12 +20,13 @@ import { VideoWidget } from '../widgets/Video.tsx';
 import { TextWidget } from '../widgets/Text.tsx';
 import ResizableDiv from '../ResizableDiv.tsx';
 import { themes } from '../../config/themes.ts';
+import IconPlayCircle from '../../assets/icons/PlayIcon.tsx';
 
 const createWidgetFromSpec = (
   def: InputDef,
   label: string,
   state: WidgetState,
-  updateNodeState: (newState: Partial<WidgetState>) => void
+  updateWidgetState: (newState: Partial<WidgetState>) => void
 ) => {
   const commonProps = { label };
   if (state.type !== def.type) return;
@@ -36,7 +37,7 @@ const createWidgetFromSpec = (
         <ToggleWidget
           {...commonProps}
           checked={(state as BoolInputState).value || false}
-          onChange={(checked: boolean) => updateNodeState({ value: checked })}
+          onChange={(checked: boolean) => updateWidgetState({ value: checked })}
         />
       );
 
@@ -46,19 +47,19 @@ const createWidgetFromSpec = (
         <NumberWidget
           {...commonProps}
           value={state.value}
-          onChange={(value: number) => updateNodeState({ value })}
+          onChange={(value: number) => updateWidgetState({ value })}
         />
       );
 
     case 'STRING':
       if ((def as StringInputDef).multiline) {
-        return <TextWidget {...commonProps} value={state.value} />;
+        return <TextWidget {...commonProps} value={state.value} onChange={(value: string) => updateWidgetState({ value })} />;
       }
       return (
         <StringWidget
           {...commonProps}
           value={state.value}
-          onChange={(value: string) => updateNodeState({ value })}
+          onChange={(value: string) => updateWidgetState({ value })}
         />
       );
 
@@ -67,7 +68,7 @@ const createWidgetFromSpec = (
         <EnumWidget
           {...commonProps}
           value={state.value}
-          onChange={(value: string | string[]) => updateNodeState({ value })}
+          onChange={(value: string | string[]) => updateWidgetState({ value })}
           options={{ values: (def as EnumInputDef).options }}
           multiSelect={(def as EnumInputDef).multiSelect}
         />
@@ -144,8 +145,13 @@ export const createNodeComponentFromDef = (
       const inputDef = def.inputs.find((input) => input.name === name);
       if (!inputDef) return;
 
-      const update = (newState: Partial<WidgetState>) =>
-        updateWidgetState({ nodeId: id, name, newState });
+      const update = (newState: Partial<WidgetState>) => {
+        console.log("New state>>", newState)
+
+        if (!inputState.type) return;
+
+        updateWidgetState({ nodeId: id, name, newState: { ...newState, type: inputState.type } });
+      }
 
       return (
         <div key={index} className="widget_container">
@@ -162,13 +168,17 @@ export const createNodeComponentFromDef = (
         className="node"
       >
         <div className="node_container">
-          <div className="node_label" onClick={onClick}>
-            {def.display_name}
+          <div className="node_label_container">
+            <span className="node_label" onClick={onClick}>{def.display_name}</span>
+
+            <span className="run_icon"><IconPlayCircle /></span>
           </div>
 
           <div className="flow_input_output_container">
-            <div className="flow_input_container">{inputHandles}</div>
-            <div className="flow_output_container">{outputHandles}</div>
+          <div className="flow_input_container">{inputHandles}</div>
+            <div className="flow_output_container">
+              {outputHandles}
+            </div>
           </div>
           <div className="widgets_container">{widgets}</div>
         </div>

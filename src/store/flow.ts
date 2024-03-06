@@ -190,6 +190,8 @@ export const useFlowStore = create<RFState>((set, get) => ({
         return state;
       }
 
+      console.log("Types>>", widgetState.type, newState.type)
+
       if (widgetState.type !== newState.type) {
         console.error(`Mismatched type. ${widgetState.type} cannot merge with ${newState.type}`);
         return state;
