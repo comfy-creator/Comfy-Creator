@@ -23,7 +23,7 @@ import {
   UpdateWidgetStateParams,
   WidgetState
 } from '../types';
-import { computeInitialNodeState } from '../utils/node';
+import { computeInitialNodeState, exchangeInputForWidget } from '../utils/node';
 import { createNodeComponentFromDef } from '../components/templates/NodeTemplate';
 import {
   DEFAULT_HOTKEYS_HANDLERS,
@@ -32,11 +32,6 @@ import {
   HANDLE_TYPES
 } from '../config/constants.ts';
 import { createEdgeFromTemplate } from '../components/templates/EdgeTemplate';
-import {
-  addInputTypeToNode,
-  addOutputTypeToNode,
-  addWidgetToNode
-} from '../components/templates/PrimitiveNode';
 
 export type RFState = {
   nodes: Node<NodeState>[];
@@ -107,20 +102,20 @@ export const useFlowStore = create<RFState>((set, get) => ({
     if (!sourceNode || !targetNode) return;
 
     if (sourceNode.type == 'PrimitiveNode') {
-      const slot = Number(targetParts[1]);
-      addWidgetToNode(slot, targetNode, sourceNode);
+      const inputSlot = Number(targetParts[1]);
+      exchangeInputForWidget({ inputSlot, sourceNode: targetNode, targetNode: sourceNode });
     } else if (targetNode.type == 'PrimitiveNode') {
-      const slot = Number(sourceParts[1]);
-      addWidgetToNode(slot, sourceNode, targetNode);
+      const inputSlot = Number(sourceParts[1]);
+      exchangeInputForWidget({ inputSlot, sourceNode, targetNode });
     }
 
-    if (sourceNode.type == 'RerouteNode') {
-      const slot = Number(targetParts[1]);
-      addOutputTypeToNode(slot, targetNode, sourceNode);
-    } else if (targetNode.type == 'RerouteNode') {
-      const slot = Number(sourceParts[1]);
-      addInputTypeToNode(slot, sourceNode, targetNode);
-    }
+    // if (sourceNode.type == 'RerouteNode') {
+    //   const slot = Number(targetParts[1]);
+    //   addOutputTypeToNode(slot, targetNode, sourceNode);
+    // } else if (targetNode.type == 'RerouteNode') {
+    //   const slot = Number(sourceParts[1]);
+    //   addInputTypeToNode(slot, sourceNode, targetNode);
+    // }
 
     set({
       edges: addEdge(

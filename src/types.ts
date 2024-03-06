@@ -143,8 +143,8 @@ export interface BaseInputState {
   name: string;
   type: EdgeType;
   hidden?: boolean;
-  config?: InputDef;
   optional?: boolean;
+  definition?: InputDef;
   isHighlighted?: boolean;
 }
 
@@ -157,7 +157,7 @@ export interface OutputHandle {
 
 export interface InputHandle extends BaseInputState {
   widget?: WidgetState;
-  primitive?: string;
+  primitiveNodeId?: string;
 }
 
 export interface BoolInputState extends BaseInputState {

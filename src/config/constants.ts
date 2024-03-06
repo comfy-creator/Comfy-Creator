@@ -140,3 +140,5 @@ export const HANDLE_TYPES: EdgeType[] = [
 ];
 
 export const HANDLE_ID_DELIMITER = '::';
+
+export const CONVERTABLE_WIDGET_TYPES: EdgeType[] = ['STRING', 'ENUM', 'INT', 'FLOAT', 'BOOLEAN'];

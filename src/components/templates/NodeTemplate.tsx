@@ -158,8 +158,8 @@ export const createNodeComponentFromDef = (
       if (inputState.hidden) return null;
 
       let inputDef: InputDef | undefined;
-      if (inputState.config) {
-        inputDef = inputState.config;
+      if (inputState.definition) {
+        inputDef = inputState.definition;
       } else {
         inputDef = def.inputs.find((input) => input.name === name);
       }
