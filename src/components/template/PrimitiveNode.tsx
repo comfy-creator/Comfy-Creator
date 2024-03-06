@@ -1,17 +1,6 @@
-import { EdgeType, InputHandle, NodeDefinition, NodeState, WidgetState } from '../../types.ts';
+import { EdgeType, InputHandle, NodeState, WidgetState } from '../../types.ts';
 import { Node } from 'reactflow';
 import { useFlowStore } from '../../store/flow.ts';
-
-interface PrimitiveNodeProps {}
-
-const primitive: NodeDefinition = {
-  inputs: [],
-  category: 'utils',
-  output_node: true,
-  display_name: 'Primitive',
-  description: 'Primitive Node',
-  outputs: [{ type: '*', name: 'connect widget to input' }]
-};
 
 const CONVERTABLE_TYPES: EdgeType[] = ['STRING', 'ENUM', 'INT', 'FLOAT', 'BOOLEAN'];
 
@@ -42,7 +31,16 @@ export function convertWidgetToInput({ node, widgetName }: ConvertWidgetToInputP
 export function convertInputToWidget(input: InputHandle, node: Node<NodeState>) {
   if (!input.widget) return;
 
-  const widget = node.data.widgets[input.widget.name];
+  let widget = node.data.widgets[input.widget.name];
+  if (input.primitive) {
+    const primitive = useFlowStore.getState().nodes.find((node) => node.id == input.primitive);
+    if (primitive) {
+      widget = primitive.data.widgets[input.widget.name];
+      delete primitive.data.widgets[input.widget.name];
+      useFlowStore.getState().updateNodeState(primitive.id, primitive.data);
+    }
+  }
+
   return widget ?? input.widget;
 }
 
@@ -56,7 +54,8 @@ export function addWidgetToNode(slot: number, node: Node<NodeState>, primitive: 
       ...node.data.inputs,
       [slot]: {
         ...input,
-        type: input.widget.type
+        type: input.widget.type,
+        primitive: primitive.id
       }
     }
   });

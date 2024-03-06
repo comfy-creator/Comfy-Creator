@@ -161,6 +161,7 @@ export interface OutputHandle {
 
 export interface InputHandle extends BaseInputState {
   widget?: WidgetState;
+  primitive?: string;
 }
 
 export interface BoolInputState extends BaseInputState {

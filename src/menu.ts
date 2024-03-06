@@ -30,7 +30,7 @@ export function getNodeMenuItems(node: Node<NodeState>) {
 
   const to_widgets = Object.entries(node.data.inputs)
     .map(([key, value]) =>
-      value.type === '*'
+      value.primitive
         ? {
             label: `Convert ${value.name} to widget`,
             onClick: () => {
