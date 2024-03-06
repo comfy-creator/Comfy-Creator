@@ -10,7 +10,7 @@ import {
   WidgetState
 } from '../../types';
 import { toast } from 'react-toastify';
-import { Handle, NodeProps, Position } from 'reactflow';
+import { Handle, NodeProps, NodeResizeControl, Position } from 'reactflow';
 import { NumberWidget } from '../widgets/Number';
 import { StringWidget } from '../widgets/String';
 import { ToggleWidget } from '../widgets/Toggle';
@@ -19,7 +19,6 @@ import { ImageWidget } from '../widgets/Image';
 import { VideoWidget } from '../widgets/Video';
 import { TextWidget } from '../widgets/Text';
 import { themes } from '../../config/themes';
-import { ResizableDiv } from '../ResizableDiv';
 import { IconPlayCircle } from '../icons/PlayIcon.tsx';
 
 const createWidgetFromSpec = (
@@ -190,12 +189,17 @@ export const createNodeComponentFromDef = (
     });
 
     return (
-      <ResizableDiv
-        onClick={handleNodeClick}
-        defaultWidth={'100%'}
-        defaultHeight={'auto'}
-        className="node"
-      >
+      <>
+        <NodeResizeControl
+          style={{
+            background: 'transparent',
+            cursor: 'se-resize',
+            border: 'none'
+          }}
+          minWidth={100}
+          minHeight={50}
+        />
+
         <div className="node_container">
           {!data.config?.hideLabel && (
             <div className="node_label_container">
@@ -215,34 +219,7 @@ export const createNodeComponentFromDef = (
           </div>
           <div className="widgets_container">{widgets}</div>
         </div>
-      </ResizableDiv>
+      </>
     );
   };
 };
-
-// If true, this will return a widget, otherwise it will return a target-handle for an
-// edge to connect into
-// const isWidgetInput = (type: string) => {
-//   return inputWidgetTypes.includes(type);
-// };
-
-// const typeToWidgetType = (type: EdgeType): WidgetTypes | undefined => {
-//   switch (type) {
-//     case 'INT':
-//     case 'FLOAT':
-//       return 'number';
-
-//     case 'STRING':
-//       return 'string';
-
-//     case 'BOOLEAN':
-//       return 'toggle';
-
-//     // case 'IMAGEUPLOAD':
-//     //   return 'button';
-
-//     default:
-//       return undefined;
-//   }
-// };
-
