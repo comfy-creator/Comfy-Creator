@@ -10,17 +10,16 @@ import {
   WidgetState
 } from '../../types';
 import { toast } from 'react-toastify';
-import { Handle, NodeProps, Position } from 'reactflow';
+import { Handle, NodeProps, NodeResizeControl, Position } from 'reactflow';
 import { NumberWidget } from '../widgets/Number';
 import { StringWidget } from '../widgets/String';
 import { ToggleWidget } from '../widgets/Toggle';
-import { EnumWidget } from '../widgets/Enum.tsx';
-import { ImageWidget } from '../widgets/Image.tsx';
-import { VideoWidget } from '../widgets/Video.tsx';
-import { TextWidget } from '../widgets/Text.tsx';
-import ResizableDiv from '../ResizableDiv.tsx';
-import { themes } from '../../config/themes.ts';
-import IconPlayCircle from '../../assets/icons/PlayIcon.tsx';
+import { EnumWidget } from '../widgets/Enum';
+import { ImageWidget } from '../widgets/Image';
+import { VideoWidget } from '../widgets/Video';
+import { TextWidget } from '../widgets/Text';
+import { themes } from '../../config/themes';
+import { IconPlayCircle } from '../icons/PlayIcon.tsx';
 
 const createWidgetFromSpec = (
   def: InputDef,
@@ -53,7 +52,13 @@ const createWidgetFromSpec = (
 
     case 'STRING':
       if ((def as StringInputDef).multiline) {
-        return <TextWidget {...commonProps} value={state.value} onChange={(value: string) => updateWidgetState({ value })} />;
+        return (
+          <TextWidget
+            {...commonProps}
+            value={state.value}
+            onChange={(value: string) => updateWidgetState({ value })}
+          />
+        );
       }
       return (
         <StringWidget
@@ -89,7 +94,7 @@ export const createNodeComponentFromDef = (
   def: NodeDefinition,
   updateWidgetState: UpdateWidgetState
 ): ComponentType<NodeProps<NodeState>> => {
-  const CustomNode = ({ id, data }: NodeProps<NodeState>) => {
+  return ({ id, data }: NodeProps<NodeState>) => {
     const onClick = () => toast.success('File uploaded successfully!');
 
     const handleNodeClick = () => {
@@ -98,6 +103,7 @@ export const createNodeComponentFromDef = (
 
     // Generate input handles
     const inputHandles = Object.entries(data.inputs || []).map(([label, handle], index) => {
+      if (handle.hidden) return null;
       const {
         dark: {
           colors: { node_slot }
@@ -105,10 +111,13 @@ export const createNodeComponentFromDef = (
       } = themes;
 
       return (
-        <div className={`flow_input ${handle.isHighlighted ? "edge_opacity" : ""}`} key={index}>
+        <div className={`flow_input ${handle.isHighlighted ? 'edge_opacity' : ''}`} key={index}>
           <Handle
-            style={{ backgroundColor: node_slot[handle.type as keyof typeof node_slot] }}
-            id={`input-${index}-${handle.type}`}
+            style={{
+              backgroundColor:
+                node_slot[handle.type as keyof typeof node_slot] ?? node_slot['DEFAULT']
+            }}
+            id={`input::${index}::${handle.type}`}
             type="target"
             position={Position.Left}
             className={`flow_handler left ${handle.type}`}
@@ -120,6 +129,7 @@ export const createNodeComponentFromDef = (
 
     // Generate output handles
     const outputHandles = Object.entries(data.outputs || []).map(([label, handle], index) => {
+      if (handle.hidden) return null;
       const {
         dark: {
           colors: { node_slot }
@@ -127,10 +137,13 @@ export const createNodeComponentFromDef = (
       } = themes;
 
       return (
-        <div className={`flow_output ${handle.isHighlighted ? "edge_opacity" : ""}`} key={index}>
+        <div className={`flow_output ${handle.isHighlighted ? 'edge_opacity' : ''}`} key={index}>
           <Handle
-            style={{ backgroundColor: node_slot[handle.type as keyof typeof node_slot] }}
-            id={`output-${label}-${handle.type}`}
+            style={{
+              backgroundColor:
+                node_slot[handle.type as keyof typeof node_slot] ?? node_slot['DEFAULT']
+            }}
+            id={`output::${label}::${handle.type}`}
             type="source"
             position={Position.Right}
             className={`flow_handler right ${handle.type}`}
@@ -142,16 +155,31 @@ export const createNodeComponentFromDef = (
 
     // Generate widgets
     const widgets = Object.entries(data.widgets || []).map(([name, inputState], index) => {
-      const inputDef = def.inputs.find((input) => input.name === name);
-      if (!inputDef) return;
+      if (inputState.hidden) return null;
+
+      let inputDef: InputDef | undefined;
+      if (inputState.definition) {
+        inputDef = inputState.definition;
+      } else {
+        inputDef = def.inputs.find((input) => input.name === name);
+      }
+
+      if (!inputDef) return null;
 
       const update = (newState: Partial<WidgetState>) => {
-        console.log("New state>>", newState)
+        console.log('New state>>', newState);
 
         if (!inputState.type) return;
 
-        updateWidgetState({ nodeId: id, name, newState: { ...newState, type: inputState.type } });
-      }
+        updateWidgetState({
+          nodeId: id,
+          name,
+          newState: {
+            ...newState,
+            type: inputState.type
+          } as WidgetState
+        });
+      };
 
       return (
         <div key={index} className="widget_container">
@@ -161,57 +189,37 @@ export const createNodeComponentFromDef = (
     });
 
     return (
-      <ResizableDiv
-        onClick={handleNodeClick}
-        defaultWidth={'100%'}
-        defaultHeight={'auto'}
-        className="node"
-      >
-        <div className="node_container">
-          <div className="node_label_container">
-            <span className="node_label" onClick={onClick}>{def.display_name}</span>
+      <>
+        <NodeResizeControl
+          style={{
+            background: 'transparent',
+            cursor: 'se-resize',
+            border: 'none'
+          }}
+          minWidth={100}
+          minHeight={50}
+        />
 
-            <span className="run_icon"><IconPlayCircle /></span>
-          </div>
+        <div className="node_container">
+          {!data.config?.hideLabel && (
+            <div className="node_label_container">
+              <span className="node_label" onClick={onClick}>
+                {def.display_name}
+              </span>
+
+              <span className="run_icon">
+                <IconPlayCircle />
+              </span>
+            </div>
+          )}
 
           <div className="flow_input_output_container">
-          <div className="flow_input_container">{inputHandles}</div>
-            <div className="flow_output_container">
-              {outputHandles}
-            </div>
+            <div className="flow_input_container">{inputHandles}</div>
+            <div className="flow_output_container">{outputHandles}</div>
           </div>
           <div className="widgets_container">{widgets}</div>
         </div>
-      </ResizableDiv>
+      </>
     );
   };
-
-  return CustomNode;
 };
-
-// If true, this will return a widget, otherwise it will return a target-handle for an
-// edge to connect into
-// const isWidgetInput = (type: string) => {
-//   return inputWidgetTypes.includes(type);
-// };
-
-// const typeToWidgetType = (type: EdgeType): WidgetTypes | undefined => {
-//   switch (type) {
-//     case 'INT':
-//     case 'FLOAT':
-//       return 'number';
-
-//     case 'STRING':
-//       return 'string';
-
-//     case 'BOOLEAN':
-//       return 'toggle';
-
-//     // case 'IMAGEUPLOAD':
-//     //   return 'button';
-
-//     default:
-//       return undefined;
-//   }
-// };
-

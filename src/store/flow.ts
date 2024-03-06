@@ -23,10 +23,15 @@ import {
   UpdateWidgetStateParams,
   WidgetState
 } from '../types';
-import { initialNodeState } from '../utils';
-import { createNodeComponentFromDef } from '../components/template/NodeTemplate';
-import { DEFAULT_HOTKEYS_HANDLERS, DEFAULT_SHORTCUT_KEYS, HANDLE_TYPES } from '../constants';
-import { createEdgeFromTemplate } from '../components/template/EdgeTemplate.tsx';
+import { computeInitialNodeState, exchangeInputForWidget } from '../utils/node';
+import { createNodeComponentFromDef } from '../components/templates/NodeTemplate';
+import {
+  DEFAULT_HOTKEYS_HANDLERS,
+  DEFAULT_SHORTCUT_KEYS,
+  HANDLE_ID_DELIMITER,
+  HANDLE_TYPES
+} from '../config/constants.ts';
+import { createEdgeFromTemplate } from '../components/templates/EdgeTemplate';
 
 export type RFState = {
   nodes: Node<NodeState>[];
@@ -86,13 +91,32 @@ export const useFlowStore = create<RFState>((set, get) => ({
   onConnect: (connection: Connection) => {
     const filterEdges = get().edges.filter(
       (edge) =>
-        !((edge.target === connection.target) && (edge.targetHandle === connection.targetHandle))
+        !(edge.target === connection.target && edge.targetHandle === connection.targetHandle)
     );
 
-    const sourceParts = connection.sourceHandle?.split('-') || [];
-    const targetParts = connection.targetHandle?.split('-') || [];
+    const sourceParts = connection.sourceHandle?.split(HANDLE_ID_DELIMITER) || [];
+    const targetParts = connection.targetHandle?.split(HANDLE_ID_DELIMITER) || [];
 
-    console.log({ type: sourceParts[2] === targetParts[2] ? sourceParts[2] : undefined });
+    const sourceNode = get().nodes.find((node) => node.id == connection.source);
+    const targetNode = get().nodes.find((node) => node.id == connection.target);
+    if (!sourceNode || !targetNode) return;
+
+    if (sourceNode.type == 'PrimitiveNode') {
+      const inputSlot = Number(targetParts[1]);
+      exchangeInputForWidget({ inputSlot, sourceNode: targetNode, targetNode: sourceNode });
+    } else if (targetNode.type == 'PrimitiveNode') {
+      const inputSlot = Number(sourceParts[1]);
+      exchangeInputForWidget({ inputSlot, sourceNode, targetNode });
+    }
+
+    // if (sourceNode.type == 'RerouteNode') {
+    //   const slot = Number(targetParts[1]);
+    //   addOutputTypeToNode(slot, targetNode, sourceNode);
+    // } else if (targetNode.type == 'RerouteNode') {
+    //   const slot = Number(sourceParts[1]);
+    //   addInputTypeToNode(slot, sourceNode, targetNode);
+    // }
+
     set({
       edges: addEdge(
         {
@@ -143,14 +167,14 @@ export const useFlowStore = create<RFState>((set, get) => ({
     });
   },
 
-  addNode: ({ type, position, inputWidgetValues }: AddNodeParams) => {
+  addNode: ({ config = {}, type, position, inputWidgetValues = {} }: AddNodeParams) => {
     const def = get().nodeDefs[type];
     if (!def) {
       throw new Error(`Node type ${type} does not exist`);
     }
 
     const id = crypto.randomUUID();
-    const data = initialNodeState(def, inputWidgetValues);
+    const data = computeInitialNodeState(def, inputWidgetValues, config);
 
     const newNode = { id, type, position, data };
 
@@ -190,7 +214,7 @@ export const useFlowStore = create<RFState>((set, get) => ({
         return state;
       }
 
-      console.log("Types>>", widgetState.type, newState.type)
+      console.log('Types>>', widgetState.type, newState.type);
 
       if (widgetState.type !== newState.type) {
         console.error(`Mismatched type. ${widgetState.type} cannot merge with ${newState.type}`);
@@ -255,7 +279,3 @@ export const useFlowStore = create<RFState>((set, get) => ({
     });
   }
 }));
-
-// function isSameEdgeType(stateA: WidgetState, stateB: Partial<WidgetState>): boolean {
-//   return stateA.edgeType === stateB.edgeType;
-// }

@@ -1,4 +1,4 @@
-import { BaseEdge, getSimpleBezierPath, Position } from 'reactflow';
+import { BaseEdge, getBezierPath, Position } from 'reactflow';
 import { themes } from '../../config/themes.ts';
 
 export interface GetBezierPathParams {
@@ -17,13 +17,11 @@ export function createEdgeFromTemplate({ type }: { type: string }) {
       colors: { node_slot }
     }
   } = themes;
-  const strokeColor = node_slot[type as keyof typeof node_slot];
-
-  console.log(type);
+  const strokeColor = node_slot[type as keyof typeof node_slot] ?? node_slot['DEFAULT'];
 
   return ({ sourceX, sourceY, targetX, targetY }: GetBezierPathParams) => {
     const params = { sourceX, sourceY, targetX, targetY };
-    const [edgePath] = getSimpleBezierPath(params);
+    const [edgePath] = getBezierPath(params);
 
     return (
       <BaseEdge

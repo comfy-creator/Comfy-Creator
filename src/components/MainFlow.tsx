@@ -27,7 +27,7 @@ import ReactFlow, {
   useReactFlow
 } from 'reactflow';
 import { useContextMenu } from '../contexts/ContextMenu';
-import ControlPanel from './ControlPanel/ControlPanel';
+import ControlPanel from './panels/ControlPanel';
 import { RFState, useFlowStore } from '../store/flow';
 import { NodeDefinition, NodeState } from '../types';
 import { previewImage, previewVideo } from '../node_definitions/preview';
@@ -35,7 +35,7 @@ import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../handlers/dragDrop';
 import nodeInfo from '../../node_info.json';
 import { ConnectionLine } from './ConnectionLIne.tsx';
-import { HANDLE_TYPES } from '../constants.ts';
+import { HANDLE_ID_DELIMITER, HANDLE_TYPES } from '../config/constants.ts';
 import { defaultEdges, defaultNodes } from '../default-flow.ts';
 
 const FLOW_KEY = 'flow';
@@ -83,7 +83,10 @@ export function MainFlow() {
     registerEdgeType
   } = useFlowStore(selector);
 
-  const { getNodes, getEdges, getViewport, fitView, setViewport } = useReactFlow<NodeState, string>();
+  const { getNodes, getEdges, getViewport, fitView, setViewport } = useReactFlow<
+    NodeState,
+    string
+  >();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
 
   const [rfInstance, setRFInstance] = useState<ReactFlowInstance | null>(null);
@@ -92,8 +95,26 @@ export function MainFlow() {
   const viewport = getViewport();
 
   useEffect(() => {
+    const PrimitiveNode: NodeDefinition = {
+      inputs: [],
+      category: 'utils',
+      output_node: true,
+      display_name: 'Primitive',
+      description: 'Primitive Node',
+      outputs: [{ type: '*', name: 'connect widget to input' }]
+    };
+
+    const RerouteNode: NodeDefinition = {
+      category: 'utils',
+      output_node: true,
+      display_name: 'Reroute',
+      description: 'Reroute Node',
+      inputs: [{ type: '*', name: '' }],
+      outputs: [{ type: '*', name: '' }]
+    };
+
     // Register some node defs for testing
-    addNodeDefs({ previewImage, previewVideo });
+    addNodeDefs({ previewImage, previewVideo, RerouteNode, PrimitiveNode });
   }, [addNodeDefs]);
 
   useEffect(() => {
@@ -180,7 +201,7 @@ export function MainFlow() {
       nodes,
       edges,
       viewport
-    }
+    };
 
     localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
   }, [nodes, edges, viewport]);
@@ -195,10 +216,11 @@ export function MainFlow() {
 
   // TO DO: open the context menu if you dragged out an edge and didn't connect it,
   // so we can auto-spawn a compatible node for that edge
-  const onConnectEnd: (event: ReactMouseEvent | TouchEvent) => void = useCallback(
-    (event: ReactMouseEvent | TouchEvent) => {
+  const onConnectEnd: (event: MouseEvent | TouchEvent) => void = useCallback(
+    (event: MouseEvent | TouchEvent) => {
       if (event.target && !(event.target.className === 'flow_input')) {
-        onContextMenu(event)
+        // @ts-expect-error
+        onContextMenu(event);
       }
       const newNodes = nodes.map((node) => {
         const outputs = Object.entries(node.data.outputs).map(([_, output]) => {
@@ -230,7 +252,7 @@ export function MainFlow() {
   const onConnectStart: OnConnectStart = useCallback(
     (event: ReactMouseEvent | TouchEvent, params: OnConnectStartParams) => {
       if (!params.handleId) return;
-      const [_category, _index, type] = params.handleId.split('-');
+      const [_category, _index, type] = params.handleId.split(HANDLE_ID_DELIMITER);
       if (type) {
         setCurrentConnectionLineType(type);
       }
@@ -305,8 +327,12 @@ export function MainFlow() {
 
       if (hasCycle(targetNode)) return false;
 
-      const splitOutputHandle = sourceHandle.split('-')?.slice(-1);
-      const splitInputHandle = targetHandle.split('-')?.slice(-1);
+      const splitOutputHandle = sourceHandle.split(HANDLE_ID_DELIMITER).slice(-1);
+      const splitInputHandle = targetHandle.split(HANDLE_ID_DELIMITER).slice(-1);
+
+      if (sourceNode.type === 'RerouteNode' || targetNode.type === 'RerouteNode') {
+        return splitOutputHandle[0] != splitInputHandle[0];
+      }
 
       // Ensure new connection connects compatible types
       return splitOutputHandle[0] === splitInputHandle[0];

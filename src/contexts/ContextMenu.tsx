@@ -9,13 +9,13 @@ import {
   useRef,
   useState
 } from 'react';
-import { ContextMenuProps } from '../types.ts';
-import { ContextMenu } from '../components/template/ContextMenuTemplate.tsx';
+import { ContextMenuProps, IMenuType, NodeState } from '../types.ts';
+import { ContextMenu } from '../components/templates/ContextMenuTemplate.tsx';
 import { Node } from 'reactflow';
-import { IMenuType } from '../components/template/menuData.ts';
 import SearchWidget from '../components/SearchWidget.tsx';
 import NodeDefs from '../../node_info.json';
 import { categorizeObjects } from '../utils/ui.tsx';
+import { getNodeMenuItems } from '../menu.ts';
 
 interface IContextMenu {
   onNodeContextMenu: (event: ReactMouseEvent, node: Node) => void;
@@ -96,28 +96,32 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
   const onContextMenu = useCallback(
     (event: ReactMouseEvent) => {
       event.preventDefault();
-      console.log('event>', event)
       const menuData = getMenuData(event, categorizeObjects(NodeDefs));
       if (!menuData) return;
 
-      setMenuProps(menuData);
+      // console.log('event>', evewnt);
+
+      console.log('from pane context menu');
+      // setMenuProps(menuData);
     },
-    [setMenuProps]
+    [nodeId, setMenuProps, setNodeId]
   );
 
   const onNodeContextMenu = useCallback(
-    (event: ReactMouseEvent, node: Node) => {
+    (event: ReactMouseEvent, node: Node<NodeState>) => {
       event.preventDefault();
-      const menuData = getMenuData(event);
+
+      const menuData = getMenuData(event, getNodeMenuItems(node));
       if (!menuData) return;
 
+      console.log('from node context menu');
       setMenuProps(menuData);
       setNodeId(node.id);
     },
-    [setMenuProps]
+    [setMenuProps, setNodeId]
   );
 
-  const getMenuData = (event: ReactMouseEvent, items?: IMenuType[]) => {
+  const getMenuData = (event: ReactMouseEvent, items?: (IMenuType | null)[]) => {
     const pane = menuRef.current?.getBoundingClientRect();
     if (!pane) return;
 
@@ -132,7 +136,7 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
 
   // Close the context menu if it's open whenever the window is clicked.
   const onPaneClick = useCallback(() => {
-    console.log("Clicking>>>")
+    console.log('Clicking>>>');
     setMenuProps(null);
     setCurrentOpenedMenuIndex(0);
     setMenus([]);

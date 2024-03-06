@@ -42,27 +42,20 @@
     color: #2e2e2e;
 }
 
-/* Node */
-.node {
-    padding: 1px;
-    width: 100%;
-    cursor: crosshair;
-    border-radius: 5px;
+.react-flow__node {
+    cursor: crosshair !important;
+    border-radius: 5px !important;
+    background: #353535 !important;
 }
 
-.node:focus {
-    padding: 3px;
+.react-flow__node:focus {
     border: 1px solid #ddd;
 }
 
-/* .node:hover {
-} */
-
 .node_container {
+    padding: 5px;
     font-size: 12px;
-    padding: 3px;
     border-radius: 5px;
-    background: #353535;
 }
 
 .node_label_container {

@@ -1,8 +1,8 @@
 // The container is used to provider dependency resolution for plugins
 
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useState } from 'react';
 import { createUseContextHook } from './hookCreator';
-import { ComfySettingsDialog } from '../components/Dialogs/ComfySettingsDialog';
+import { ComfySettingsDialog } from '../components/dialogs/ComfySettingsDialog';
 import {
   BooleanInput,
   ComboInput,

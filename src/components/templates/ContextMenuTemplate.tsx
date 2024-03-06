@@ -1,6 +1,5 @@
-import { ContextMenuProps } from '../../types';
+import { ContextMenuProps, IMenuType } from '../../types';
 import { MouseEvent, useEffect, useRef } from 'react';
-import { IMenuType } from './menuData';
 import { useFlowStore } from '../../store/flow.ts';
 
 export function ContextMenu(prps: ContextMenuProps) {
@@ -35,6 +34,10 @@ export function ContextMenu(prps: ContextMenuProps) {
     if (value.hasSubMenu && value.subMenu) {
       onSubmenuClick?.(e, prps, menuRef, menuIndex, value.subMenu);
     } else {
+      if (value.onClick) {
+        return value.onClick(e);
+      }
+
       const position = { x: e.clientX, y: e.clientY };
 
       const { addNode } = useFlowStore.getState();
@@ -70,10 +73,10 @@ export function ContextMenu(prps: ContextMenuProps) {
           return (
             <div
               key={index}
-              onClick={(e) => onItemClick(e, index, item)}
-              className={`rflmenu-entry submenu ${item === null ? 'separator' : (item.subMenu || item.hasSubMenu) && 'has_submenu'} ${item.disabled && 'disabled'}`}
+              onClick={(e) => (item ? onItemClick(e, index, item) : undefined)}
+              className={`rflmenu-entry submenu ${item === null ? 'separator' : (item.subMenu || item.hasSubMenu) && 'has_submenu'} ${item?.disabled && 'disabled'}`}
             >
-              {item.label}
+              {item?.label}
             </div>
           );
         })}

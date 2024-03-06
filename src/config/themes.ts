@@ -15,7 +15,9 @@ export const themes = {
         MODEL: '#B39DDB', // light lavender-purple
         STYLE_MODEL: '#C2FFAE', // light green-yellow
         VAE: '#FF6E6E', // bright red
-        TAESD: '#DCC274' // cheesecake
+        TAESD: '#DCC274', // cheesecake
+        '*': '#999',
+        DEFAULT: '#66BB6A'
       },
       litegraph_base: {
         BACKGROUND_IMAGE:

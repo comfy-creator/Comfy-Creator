@@ -1,4 +1,5 @@
-import { EdgeType } from './types.ts';
+import { EdgeType } from '../types.ts';
+import { useFlowStore } from '../store/flow.ts';
 
 export const SUPPORTED_IMAGE_TYPES = [
   'image/png',
@@ -44,13 +45,30 @@ export const DEFAULT_HOTKEYS_HANDLERS = {
     alert('Hey man, you clicked on ctrl+s');
   },
   'ctrl+o': () => {
-    alert('Hey man, you clicked on ctrl+o');
+    // alert('Hey man, you clicked on ctrl+o');
+
+    const { addNode } = useFlowStore.getState();
+    addNode({
+      position: { x: 200, y: 200 },
+      type: 'PrimitiveNode'
+    });
   },
   'ctrl+a': () => {
     alert('Hey man, you clicked on ctrl+a');
   },
   'ctrl+m': () => {
-    alert('Hey man, you clicked on ctrl+m');
+    // alert('Hey man, you clicked on ctrl+m');
+
+    // console.log('ddss');
+    const { addNode } = useFlowStore.getState();
+    addNode({
+      position: { x: 200, y: 200 },
+      type: 'RerouteNode',
+      config: {
+        hideType: true,
+        hideLabel: true
+      }
+    });
   },
   del: () => {
     alert('Hey man, you clicked on del');
@@ -102,7 +120,7 @@ export const WIDGET_TYPES: EdgeType[] = [
   'BOOLEAN',
   'FLOAT',
   'ENUM',
-  'IMAGE',
+  // 'IMAGE',
   'VIDEO'
 ];
 
@@ -120,3 +138,7 @@ export const HANDLE_TYPES: EdgeType[] = [
   'VAE',
   'TAESD'
 ];
+
+export const HANDLE_ID_DELIMITER = '::';
+
+export const CONVERTABLE_WIDGET_TYPES: EdgeType[] = ['STRING', 'ENUM', 'INT', 'FLOAT', 'BOOLEAN'];
