@@ -176,7 +176,6 @@ export function MainFlow() {
 
   // save to localStorage as nodes, edges and viewport changes
   useEffect(() => {
-    console.log("Updated>>")
     const flow = {
       nodes,
       edges,

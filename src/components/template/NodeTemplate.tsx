@@ -26,7 +26,7 @@ const createWidgetFromSpec = (
   def: InputDef,
   label: string,
   state: WidgetState,
-  updateNodeState: (newState: Partial<WidgetState>) => void
+  updateWidgetState: (newState: Partial<WidgetState>) => void
 ) => {
   const commonProps = { label };
   if (state.type !== def.type) return;
@@ -37,7 +37,7 @@ const createWidgetFromSpec = (
         <ToggleWidget
           {...commonProps}
           checked={(state as BoolInputState).value || false}
-          onChange={(checked: boolean) => updateNodeState({ value: checked })}
+          onChange={(checked: boolean) => updateWidgetState({ value: checked })}
         />
       );
 
@@ -47,19 +47,19 @@ const createWidgetFromSpec = (
         <NumberWidget
           {...commonProps}
           value={state.value}
-          onChange={(value: number) => updateNodeState({ value })}
+          onChange={(value: number) => updateWidgetState({ value })}
         />
       );
 
     case 'STRING':
       if ((def as StringInputDef).multiline) {
-        return <TextWidget {...commonProps} value={state.value} />;
+        return <TextWidget {...commonProps} value={state.value} onChange={(value: string) => updateWidgetState({ value })} />;
       }
       return (
         <StringWidget
           {...commonProps}
           value={state.value}
-          onChange={(value: string) => updateNodeState({ value })}
+          onChange={(value: string) => updateWidgetState({ value })}
         />
       );
 
@@ -68,7 +68,7 @@ const createWidgetFromSpec = (
         <EnumWidget
           {...commonProps}
           value={state.value}
-          onChange={(value: string | string[]) => updateNodeState({ value })}
+          onChange={(value: string | string[]) => updateWidgetState({ value })}
           options={{ values: (def as EnumInputDef).options }}
           multiSelect={(def as EnumInputDef).multiSelect}
         />
@@ -145,8 +145,13 @@ export const createNodeComponentFromDef = (
       const inputDef = def.inputs.find((input) => input.name === name);
       if (!inputDef) return;
 
-      const update = (newState: Partial<WidgetState>) =>
-        updateWidgetState({ nodeId: id, name, newState });
+      const update = (newState: Partial<WidgetState>) => {
+        console.log("New state>>", newState)
+
+        if (!inputState.type) return;
+
+        updateWidgetState({ nodeId: id, name, newState: { ...newState, type: inputState.type } });
+      }
 
       return (
         <div key={index} className="widget_container">

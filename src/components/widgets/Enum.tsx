@@ -25,6 +25,7 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
 
   useEffect(() => {
     setInput(input);
+    onChange?.(values[input]);
   }, [input]);
 
   const handleInputIncrement = () => {

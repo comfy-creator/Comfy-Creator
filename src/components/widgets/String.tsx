@@ -8,12 +8,13 @@ type StringProps = {
   onChange?: (value: string) => void;
 };
 
-export function StringWidget({ label, value }: StringProps) {
+export function StringWidget({ label, value, onChange }: StringProps) {
   const [showDialog, setShowDialog] = useState(false);
   const [inputValue, setInputValue] = useState(value);
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
+    onChange?.(e.target.value)
   };
 
   return (
