@@ -54,7 +54,13 @@ const createWidgetFromSpec = (
 
     case 'STRING':
       if ((def as StringInputDef).multiline) {
-        return <TextWidget {...commonProps} value={state.value} onChange={(value: string) => updateWidgetState({ value })} />;
+        return (
+          <TextWidget
+            {...commonProps}
+            value={state.value}
+            onChange={(value: string) => updateWidgetState({ value })}
+          />
+        );
       }
       return (
         <StringWidget
@@ -161,12 +167,19 @@ export const createNodeComponentFromDef = (
       if (!inputDef) return;
 
       const update = (newState: Partial<WidgetState>) => {
-        console.log("New state>>", newState)
+        console.log('New state>>', newState);
 
         if (!inputState.type) return;
 
-        updateWidgetState({ nodeId: id, name, newState: { ...newState, type: inputState.type } });
-      }
+        updateWidgetState({
+          nodeId: id,
+          name,
+          newState: {
+            ...newState,
+            type: inputState.type
+          } as WidgetState
+        });
+      };
 
       return (
         <div key={index} className="widget_container">
@@ -183,17 +196,21 @@ export const createNodeComponentFromDef = (
         className="node"
       >
         <div className="node_container">
-          <div className="node_label_container">
-            <span className="node_label" onClick={onClick}>{def.display_name}</span>
+          {!data.hideLabel && (
+            <div className="node_label_container">
+              <span className="node_label" onClick={onClick}>
+                {def.display_name}
+              </span>
 
-            <span className="run_icon"><IconPlayCircle /></span>
-          </div>
+              <span className="run_icon">
+                <IconPlayCircle />
+              </span>
+            </div>
+          )}
 
           <div className="flow_input_output_container">
-          <div className="flow_input_container">{inputHandles}</div>
-            <div className="flow_output_container">
-              {outputHandles}
-            </div>
+            <div className="flow_input_container">{inputHandles}</div>
+            <div className="flow_output_container">{outputHandles}</div>
           </div>
           <div className="widgets_container">{widgets}</div>
         </div>

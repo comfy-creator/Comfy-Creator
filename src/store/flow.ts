@@ -32,7 +32,11 @@ import {
   HANDLE_TYPES
 } from '../constants';
 import { createEdgeFromTemplate } from '../components/template/EdgeTemplate.tsx';
-import { addWidgetToNode } from '../components/template/PrimitiveNode.tsx';
+import {
+  addInputTypeToNode,
+  addOutputTypeToNode,
+  addWidgetToNode
+} from '../components/template/PrimitiveNode.tsx';
 
 export type RFState = {
   nodes: Node<NodeState>[];
@@ -110,6 +114,14 @@ export const useFlowStore = create<RFState>((set, get) => ({
       addWidgetToNode(slot, sourceNode, targetNode);
     }
 
+    if (sourceNode.type == 'RerouteNode') {
+      const slot = Number(targetParts[1]);
+      addOutputTypeToNode(slot, targetNode, sourceNode);
+    } else if (targetNode.type == 'RerouteNode') {
+      const slot = Number(sourceParts[1]);
+      addInputTypeToNode(slot, sourceNode, targetNode);
+    }
+
     set({
       edges: addEdge(
         {
@@ -160,14 +172,14 @@ export const useFlowStore = create<RFState>((set, get) => ({
     });
   },
 
-  addNode: ({ type, position, inputWidgetValues }: AddNodeParams) => {
+  addNode: ({ hideLabel, hideType, type, position, inputWidgetValues = {} }: AddNodeParams) => {
     const def = get().nodeDefs[type];
     if (!def) {
       throw new Error(`Node type ${type} does not exist`);
     }
 
     const id = crypto.randomUUID();
-    const data = initialNodeState(type, def, inputWidgetValues);
+    const data = initialNodeState(def, inputWidgetValues, hideType, hideLabel);
 
     const newNode = { id, type, position, data };
 
@@ -207,7 +219,7 @@ export const useFlowStore = create<RFState>((set, get) => ({
         return state;
       }
 
-      console.log("Types>>", widgetState.type, newState.type)
+      console.log('Types>>', widgetState.type, newState.type);
 
       if (widgetState.type !== newState.type) {
         console.error(`Mismatched type. ${widgetState.type} cannot merge with ${newState.type}`);
@@ -272,7 +284,3 @@ export const useFlowStore = create<RFState>((set, get) => ({
     });
   }
 }));
-
-// function isSameEdgeType(stateA: WidgetState, stateB: Partial<WidgetState>): boolean {
-//   return stateA.edgeType === stateB.edgeType;
-// }

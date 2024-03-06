@@ -3,19 +3,26 @@ import { SUPPORTED_IMAGE_TYPES, SUPPORTED_VIDEO_TYPES, WIDGET_TYPES } from './co
 
 // This returns the 'data' property of a React Flow Node
 export function initialNodeState(
-  nodeType: string,
   nodeDef: NodeDefinition,
-  widgetValues: Record<string, any>
+  widgetValues: Record<string, any>,
+  hideType = false,
+  hideLabel = false
 ): NodeState {
-  const state: NodeState = { name: nodeDef.display_name, inputs: {}, outputs: {}, widgets: {} };
+  const state: NodeState = {
+    hideLabel,
+    hideType,
+    name: nodeDef.display_name,
+    inputs: {},
+    outputs: {},
+    widgets: {}
+  };
 
   let i = 0;
   for (const input of nodeDef.inputs) {
     const isWidget = isWidgetInput(input.type);
     if (isWidget) {
       state.widgets[input.name] = {
-        ...widgetStateFromDef(input, widgetValues),
-        nodeType
+        ...widgetStateFromDef(input, widgetValues)
       };
     } else {
       state.inputs[i] = {

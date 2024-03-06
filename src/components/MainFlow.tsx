@@ -104,8 +104,17 @@ export function MainFlow() {
       outputs: [{ type: '*', name: 'connect widget to input' }]
     };
 
+    const RerouteNode: NodeDefinition = {
+      category: 'utils',
+      output_node: true,
+      display_name: 'Reroute',
+      description: 'Reroute Node',
+      inputs: [{ type: '*', name: '' }],
+      outputs: [{ type: '*', name: '' }]
+    };
+
     // Register some node defs for testing
-    addNodeDefs({ previewImage, previewVideo, PrimitiveNode });
+    addNodeDefs({ previewImage, previewVideo, RerouteNode, PrimitiveNode });
   }, [addNodeDefs]);
 
   useEffect(() => {
@@ -210,7 +219,7 @@ export function MainFlow() {
   const onConnectEnd: (event: ReactMouseEvent | TouchEvent) => void = useCallback(
     (event: ReactMouseEvent | TouchEvent) => {
       if (event.target && !(event.target.className === 'flow_input')) {
-        onContextMenu(event)
+        onContextMenu(event);
       }
       const newNodes = nodes.map((node) => {
         const outputs = Object.entries(node.data.outputs).map(([_, output]) => {
@@ -319,6 +328,10 @@ export function MainFlow() {
 
       const splitOutputHandle = sourceHandle.split(HANDLE_ID_DELIMITER).slice(-1);
       const splitInputHandle = targetHandle.split(HANDLE_ID_DELIMITER).slice(-1);
+
+      if (sourceNode.type === 'RerouteNode' || targetNode.type === 'RerouteNode') {
+        return splitOutputHandle[0] != splitInputHandle[0];
+      }
 
       // Ensure new connection connects compatible types
       return splitOutputHandle[0] === splitInputHandle[0];

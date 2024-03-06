@@ -44,7 +44,6 @@
 
 /* Node */
 .node {
-    padding: 1px;
     width: 100%;
     cursor: crosshair;
     border-radius: 5px;
@@ -59,8 +58,8 @@
 } */
 
 .node_container {
+    padding: 5px;
     font-size: 12px;
-    padding: 3px;
     border-radius: 5px;
     background: #353535;
 }

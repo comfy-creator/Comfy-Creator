@@ -73,6 +73,44 @@ export function addWidgetToNode(slot: number, node: Node<NodeState>, primitive: 
   });
 }
 
+export function addOutputTypeToNode(
+  slot: number,
+  node: Node<NodeState>,
+  primitive: Node<NodeState>
+) {
+  const { updateNodeState } = useFlowStore.getState();
+  const input = node.data.inputs[slot];
+  if (!input.widget) return;
+
+  updateNodeState(primitive.id, {
+    outputs: {
+      1: {
+        name: '',
+        type: input.widget.type
+      }
+    }
+  });
+}
+
+export function addInputTypeToNode(
+  slot: number,
+  node: Node<NodeState>,
+  primitive: Node<NodeState>
+) {
+  const { updateNodeState } = useFlowStore.getState();
+  const input = node.data.inputs[slot];
+  if (!input.widget) return;
+
+  updateNodeState(primitive.id, {
+    inputs: {
+      1: {
+        name: '',
+        type: input.widget.type
+      }
+    }
+  });
+}
+
 function isConvertableWidget(widget: WidgetState) {
   return CONVERTABLE_TYPES.includes(widget.type);
 }

@@ -50,15 +50,24 @@ export const DEFAULT_HOTKEYS_HANDLERS = {
     const { addNode } = useFlowStore.getState();
     addNode({
       position: { x: 200, y: 200 },
-      type: 'PrimitiveNode',
-      inputWidgetValues: {}
+      type: 'PrimitiveNode'
     });
   },
   'ctrl+a': () => {
     alert('Hey man, you clicked on ctrl+a');
   },
   'ctrl+m': () => {
-    alert('Hey man, you clicked on ctrl+m');
+    // alert('Hey man, you clicked on ctrl+m');
+
+    // console.log('ddss');
+    const { addNode } = useFlowStore.getState();
+    addNode({
+      position: { x: 200, y: 200 },
+      type: 'RerouteNode',
+
+      hideType: true,
+      hideLabel: true
+    });
   },
   del: () => {
     alert('Hey man, you clicked on del');

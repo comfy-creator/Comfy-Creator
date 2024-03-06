@@ -94,6 +94,10 @@ export interface VideoInputDef extends BaseInputDef {
   readonly defaultValue?: { src: string; type: string };
 }
 
+export interface AnyInputDef extends BaseInputDef {
+  readonly type: '*';
+}
+
 export type InputDef =
   | BoolInputDef
   | IntInputDef
@@ -101,7 +105,8 @@ export type InputDef =
   | StringInputDef
   | EnumInputDef
   | ImageInputDef
-  | VideoInputDef;
+  | VideoInputDef
+  | AnyInputDef;
 
 // =========== Output Definition ===========
 // Note that outputs do not hold any state; on the client we either
@@ -139,8 +144,10 @@ export type NodeDefinitions = Record<string, NodeDefinition>;
 
 export interface AddNodeParams {
   type: string;
+  hideType?: boolean;
+  hideLabel?: boolean;
   position: XYPosition;
-  inputWidgetValues: Record<string, any>;
+  inputWidgetValues?: Record<string, any>;
 }
 
 // =========== Input States ===========
@@ -218,6 +225,8 @@ export type WidgetState =
 
 export type NodeState = {
   readonly name: string;
+  hideType?: boolean;
+  hideLabel?: boolean;
   inputs: Record<number, InputHandle>;
   outputs: Record<number, OutputHandle>;
   widgets: Record<string, WidgetState>;
