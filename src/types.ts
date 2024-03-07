@@ -1,6 +1,6 @@
 import { type MouseEvent as ReactMouseEvent, ComponentType } from 'react';
 import { IMenuType } from './components/template/menuData.ts';
-import { NodeProps, XYPosition } from 'reactflow';
+import { NodeProps, XYPosition, type Node, type Edge } from 'reactflow';
 
 // This type is outdated
 // export type NodeData = {
@@ -473,3 +473,5 @@ export interface ComfyError extends Error {
     [x: string]: any;
   };
 }
+
+export type HistoryMap = Record<string, { nodes: Node<NodeState>[]; edges: Edge[] }>;

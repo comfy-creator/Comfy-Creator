@@ -14,20 +14,26 @@ import {
   isNode
 } from 'reactflow';
 import { create } from 'zustand';
-import {
+import type {
   NodeDefinitions,
   NodeState,
   NodeTypes as NodeComponents,
   WidgetState,
   EdgeType,
   UpdateWidgetState,
-  AddNodeParams
+  AddNodeParams,
+  HistoryMap
 } from './types';
 import { initialNodeState } from './utils';
 import { createNodeComponentFromDef } from './components/template/NodeTemplate';
 import { DEFAULT_HOTKEYS_HANDLERS, DEFAULT_SHORTCUT_KEYS } from './constants';
+import { yDoc } from './yjs';
+
+type Handler = (event: KeyboardEvent) => void;
 
 export type RFState = {
+  graphHistory: HistoryMap;
+
   nodes: Node<NodeState>[];
   edges: Edge[];
   setNodes: (nodes: Node[]) => void;
@@ -51,11 +57,13 @@ export type RFState = {
   hotKeysShortcut: string[];
   addHotKeysShortcut: (keys: string[]) => void;
 
-  hotKeysHandlers: Record<string, Function>;
-  addHotKeysHandlers: (handler: Record<string, Function>) => void;
+  hotKeysHandlers: Record<string, Handler>;
+  addHotKeysHandlers: (handler: Record<string, Handler>) => void;
 };
 
 export const useStore = create<RFState>((set, get) => ({
+  graphHistory: {},
+
   nodes: [],
 
   edges: [],
@@ -200,8 +208,8 @@ export const useStore = create<RFState>((set, get) => ({
 
   addHotKeysShortcut: (hotKeys) => {
     set((state) => {
-      return { hotKeysShortcut: [...state.hotKeysShortcut, ...hotKeys] }
-    })
+      return { hotKeysShortcut: [...state.hotKeysShortcut, ...hotKeys] };
+    });
   },
 
   hotKeysHandlers: DEFAULT_HOTKEYS_HANDLERS,
@@ -211,10 +219,9 @@ export const useStore = create<RFState>((set, get) => ({
       return {
         hotKeysHandlers: { ...state.hotKeysHandlers, ...handler },
         hotKeysShortcut: Array.from(new Set([...state.hotKeysShortcut, Object.keys(handler)[0]]))
-      }
-    })
+      };
+    });
   }
-
 }));
 
 // function isSameEdgeType(stateA: WidgetState, stateB: Partial<WidgetState>): boolean {
