@@ -1,4 +1,4 @@
-import { ContextMenuProps, IMenuType } from '../../types';
+import { ContextMenuProps, IMenuType } from '../../types.ts';
 import { MouseEvent, useEffect, useRef } from 'react';
 import { useFlowStore } from '../../store/flow.ts';
 

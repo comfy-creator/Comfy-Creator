@@ -152,6 +152,9 @@ export function MainFlow() {
         display_name: node.display_name
       };
 
+      // TO DO: we should change the server's return value for node-definitions such
+      // that it conforms to the NodeDefinition type. We do not need to support ComfyUI's
+      // old legacy poorly thought-out system.
       for (const name in node.input.required) {
         const [type, options] = node.input.required[
           name as keyof typeof node.input.required
@@ -160,17 +163,14 @@ export function MainFlow() {
         def.inputs.push(input);
       }
 
-      // @ts-expect-error
-      for (const name in node.input.optional) {
-        // @ts-expect-error
-        const [type, options] = node.input.optional[
-          // @ts-expect-error
-          name as keyof typeof node.input.optional
-        ] as any;
+      // for (const name in node.input.optional) {
+      //   const [type, options] = node.input.optional[
+      //     name as keyof typeof node.input.optional
+      //   ] as any;
 
-        const input = buildInput(type, name, options, true);
-        def.inputs.push(input);
-      }
+      //   const input = buildInput(type, name, options, true);
+      //   def.inputs.push(input);
+      // }
 
       for (const name in node.output) {
         const output = node.output[name as keyof typeof node.output] as any;
@@ -193,7 +193,7 @@ export function MainFlow() {
       setEdges(flow.edges?.length > 0 ? flow.edges : defaultEdges);
       setViewport({ x, y, zoom });
     }
-  }, []);
+  }, [setEdges, setNodes, setViewport]);
 
   // save to localStorage as nodes, edges and viewport changes
   useEffect(() => {
@@ -216,10 +216,11 @@ export function MainFlow() {
 
   // TO DO: open the context menu if you dragged out an edge and didn't connect it,
   // so we can auto-spawn a compatible node for that edge
-  const onConnectEnd: (event: MouseEvent | TouchEvent) => void = useCallback(
-    (event: MouseEvent | TouchEvent) => {
+  const onConnectEnd = useCallback(
+    // ReactMouseEvent | TouchEvent instead ?
+    (event: MouseEvent | globalThis.TouchEvent) => {
       if (event.target && !(event.target.className === 'flow_input')) {
-        // @ts-expect-error
+        // TO DO: this logic may be wrong here? We're mixing react-events with native-events!
         onContextMenu(event);
       }
       const newNodes = nodes.map((node) => {
@@ -246,7 +247,7 @@ export function MainFlow() {
       });
       setNodes(newNodes);
     },
-    [nodes]
+    [nodes, setNodes, onContextMenu]
   );
 
   const onConnectStart: OnConnectStart = useCallback(
@@ -294,7 +295,7 @@ export function MainFlow() {
       }
       setNodes(newNodes);
     },
-    [nodes]
+    [nodes, setCurrentConnectionLineType, setNodes]
   );
 
   // Validation connection for edge-compatability and circular loops
@@ -360,7 +361,7 @@ export function MainFlow() {
   // TO DO: this is aggressive; do not change zoom levels. We do not need to have
   // all nodes on screen at once; we merely do not want to leave too far out
   const handleMoveEnd = useCallback(
-    (event: ReactMouseEvent) => {
+    (event: MouseEvent | globalThis.TouchEvent) => {
       const bounds = getNodesBounds(nodes);
       const viewPort = getViewport();
       //
@@ -391,7 +392,7 @@ export function MainFlow() {
         });
       }
     },
-    [fitView, nodes]
+    [fitView, nodes, getViewport, menuRef]
   );
 
   return (

@@ -24,14 +24,14 @@ import {
   WidgetState
 } from '../types';
 import { computeInitialNodeState, exchangeInputForWidget } from '../utils/node';
-import { createNodeComponentFromDef } from '../components/templates/NodeTemplate';
+import { createNodeComponentFromDef } from '../components/prototypes/NodeTemplate.tsx';
 import {
   DEFAULT_HOTKEYS_HANDLERS,
   DEFAULT_SHORTCUT_KEYS,
   HANDLE_ID_DELIMITER,
   HANDLE_TYPES
 } from '../config/constants.ts';
-import { createEdgeFromTemplate } from '../components/templates/EdgeTemplate';
+import { createEdgeFromTemplate } from '../components/prototypes/EdgeTemplate.tsx';
 
 export type RFState = {
   nodes: Node<NodeState>[];
