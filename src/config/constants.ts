@@ -18,8 +18,6 @@ export const DEFAULT_SHORTCUT_KEYS = [
   'ctrl+o',
   'ctrl+a',
   'ctrl+m',
-  'del',
-  'backspace',
   'ctrl+del',
   'ctrl+backspace',
   'space',
@@ -69,12 +67,6 @@ export const DEFAULT_HOTKEYS_HANDLERS = {
         hideLabel: true
       }
     });
-  },
-  del: () => {
-    alert('Hey man, you clicked on del');
-  },
-  backspace: () => {
-    alert('Hey man, you clicked on backspace');
   },
   'ctrl+del': () => {
     alert('Hey man, you clicked on ctrl+del');

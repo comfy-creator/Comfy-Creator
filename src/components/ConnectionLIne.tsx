@@ -1,9 +1,18 @@
-import { ConnectionLineComponentProps } from 'reactflow';
+import { ConnectionLineComponentProps, getBezierPath } from 'reactflow';
 import { useFlowStore } from '../store/flow.ts';
 import { themes } from '../config/themes.ts';
 
-export function ConnectionLine({ fromX, fromY, toX, toY }: ConnectionLineComponentProps) {
+export function ConnectionLine({ fromX, fromY, toX, toY, fromPosition, toPosition }: ConnectionLineComponentProps) {
   const { currentConnectionLineType } = useFlowStore();
+
+  const [path] = getBezierPath({
+    sourceX: fromX,
+    sourceY: fromY,
+    sourcePosition: fromPosition,
+    targetX: toX,
+    targetY: toY,
+    targetPosition: toPosition,
+  });
 
   const { node_slot } = themes.dark.colors;
   const strokeColor =
@@ -15,9 +24,9 @@ export function ConnectionLine({ fromX, fromY, toX, toY }: ConnectionLineCompone
         fill="none"
         stroke={strokeColor}
         strokeWidth={1.5}
-        d={`M${fromX},${fromY} C ${fromX} ${toY} ${fromX} ${toY} ${toX},${toY}`}
+        d={path}
       />
-      <circle cx={toX} cy={toY} fill="#fff" r={3} stroke={'#FFD500'} strokeWidth={1.5} />
+      <circle cx={toX} cy={toY} fill="#fff" r={3} stroke={strokeColor} strokeWidth={3} />
     </g>
   );
 }
