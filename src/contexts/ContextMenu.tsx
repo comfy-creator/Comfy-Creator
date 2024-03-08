@@ -99,10 +99,10 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
       const menuData = getMenuData(event, categorizeObjects(NodeDefs));
       if (!menuData) return;
 
-      // console.log('event>', evewnt);
+      // console.log('event>', event);
 
       console.log('from pane context menu');
-      // setMenuProps(menuData);
+      setMenuProps(menuData);
     },
     [nodeId, setMenuProps, setNodeId]
   );

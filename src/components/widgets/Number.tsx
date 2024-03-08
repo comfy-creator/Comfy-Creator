@@ -50,7 +50,7 @@ export const NumberWidget: FC<NumberWidgetProps> = ({ label, value, onChange }) 
           </span>
         </div>
 
-        <div className={'widget_input_item'} style={{ gap: '5px' }}>
+        <div className={'widget_input_item'}>
           <span className={'widget_input_item_text'} onClick={handleShowDialog}>
             {inputValue}
           </span>

@@ -1,13 +1,6 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-import {
-  DragEvent,
-  MouseEvent as ReactMouseEvent,
-  TouchEvent,
-  useCallback,
-  useEffect,
-  useState
-} from 'react';
+import { DragEvent, MouseEvent as ReactMouseEvent, TouchEvent, useCallback, useEffect, useState } from 'react';
 import ReactFlow, {
   Background,
   BackgroundVariant,
@@ -24,6 +17,8 @@ import ReactFlow, {
   OnConnectStartParams,
   Panel,
   ReactFlowInstance,
+  useKeyPress,
+  useOnSelectionChange,
   useReactFlow
 } from 'reactflow';
 import { useContextMenu } from '../contexts/ContextMenu';
@@ -90,6 +85,9 @@ export function MainFlow() {
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
 
   const [rfInstance, setRFInstance] = useState<ReactFlowInstance | null>(null);
+
+  // keep an eye on shift key
+  const shiftPressed = useKeyPress('Shift');
 
   // viewport from rfl
   const viewport = getViewport();
@@ -193,17 +191,19 @@ export function MainFlow() {
       setEdges(flow.edges?.length > 0 ? flow.edges : defaultEdges);
       setViewport({ x, y, zoom });
     }
-  }, [setEdges, setNodes, setViewport]);
+  }, []);
 
   // save to localStorage as nodes, edges and viewport changes
   useEffect(() => {
-    const flow = {
-      nodes,
-      edges,
-      viewport
-    };
-
+    if (nodes.length > 0 || edges.length > 0) {
+      const flow = {
+        nodes,
+        edges,
+        viewport
+      };
     localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
+    }
+
   }, [nodes, edges, viewport]);
 
   // Store graph state to local storage
@@ -416,6 +416,8 @@ export function MainFlow() {
       onMoveEnd={handleMoveEnd}
       maxZoom={MAX_ZOOM}
       minZoom={MIN_ZOOM}
+      deleteKeyCode={["Delete", "Backspace"]}
+      multiSelectionKeyCode={"Shift"}
       fitView
       fitViewOptions={{
         padding: 2,

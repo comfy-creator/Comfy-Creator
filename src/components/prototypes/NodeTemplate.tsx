@@ -1,4 +1,4 @@
-import React, { ComponentType } from 'react';
+import React, { ComponentType, useEffect, useRef, useState } from 'react';
 import {
   BoolInputState,
   EnumInputDef,
@@ -94,7 +94,24 @@ export const createNodeComponentFromDef = (
   def: NodeDefinition,
   updateWidgetState: UpdateWidgetState
 ): ComponentType<NodeProps<NodeState>> => {
-  return ({ id, data }: NodeProps<NodeState>) => {
+  return ({ id, data, selected }: NodeProps<NodeState>) => {
+    const divRef = useRef<HTMLDivElement>(null);
+    const [minWidth, setMinWidth] = useState(0);
+    const [minHeight, setMinHeight] = useState(0);
+
+    useEffect(() => {
+      if (divRef.current) {
+        // Get the width of the div
+        // Set the minWidth style based on the div width
+
+        const divWidth = divRef?.current?.offsetWidth;
+        const divHeight = divRef?.current?.offsetHeight;
+
+        setMinWidth(divWidth || 0);
+        setMinHeight(divHeight || 0);
+      }
+    }, []);
+
     const onClick = () => toast.success('File uploaded successfully!');
 
     const handleNodeClick = () => {
@@ -167,7 +184,6 @@ export const createNodeComponentFromDef = (
       if (!inputDef) return null;
 
       const update = (newState: Partial<WidgetState>) => {
-        console.log('New state>>', newState);
 
         if (!inputState.type) return;
 
@@ -196,11 +212,11 @@ export const createNodeComponentFromDef = (
             cursor: 'se-resize',
             border: 'none'
           }}
-          minWidth={100}
-          minHeight={50}
+          minWidth={minWidth}
+          minHeight={minHeight}
+          maxHeight={minHeight}
         />
-
-        <div className="node_container">
+        <div className={`node_container ${selected ? 'selected' : ''}`} ref={divRef}>
           {!data.config?.hideLabel && (
             <div className="node_label_container">
               <span className="node_label" onClick={onClick}>

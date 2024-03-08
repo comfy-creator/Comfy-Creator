@@ -126,8 +126,6 @@ export const useFlowStore = create<RFState>((set, get) => ({
         filterEdges
       )
     });
-
-    console.log({ edges: get().edges });
   },
 
   nodeDefs: {},
@@ -213,8 +211,6 @@ export const useFlowStore = create<RFState>((set, get) => ({
         console.error(`Widget '${name}' not found in node '${nodeId}'.`);
         return state;
       }
-
-      console.log('Types>>', widgetState.type, newState.type);
 
       if (widgetState.type !== newState.type) {
         console.error(`Mismatched type. ${widgetState.type} cannot merge with ${newState.type}`);
