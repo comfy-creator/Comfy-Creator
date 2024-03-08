@@ -3,8 +3,8 @@ export const defaultNodes = [
     id: 'f8503d74-b2c1-4970-8ee7-ae64862ccf8a',
     type: 'KSampler',
     position: {
-      x: 361.4275766016714,
-      y: 193.6573816155989
+      x: 379.4275766016714,
+      y: 221.6573816155989
     },
     data: {
       name: 'KSampler',
@@ -80,12 +80,12 @@ export const defaultNodes = [
         }
       }
     },
-    width: 100,
-    height: 163,
+    width: 152,
+    height: 209,
     selected: false,
     positionAbsolute: {
-      x: 361.4275766016714,
-      y: 193.6573816155989
+      x: 379.4275766016714,
+      y: 221.6573816155989
     },
     dragging: false
   },
@@ -93,8 +93,8 @@ export const defaultNodes = [
     id: '6e068e95-86af-4d77-9846-c6e204a10c67',
     type: 'CheckpointLoaderSimple',
     position: {
-      x: -50.509749303621156,
-      y: 238.98885793871867
+      x: -177.50974930362116,
+      y: 222.98885793871867
     },
     data: {
       name: 'Load Checkpoint',
@@ -125,12 +125,12 @@ export const defaultNodes = [
         }
       }
     },
-    width: 175,
-    height: 84,
+    width: 268,
+    height: 109,
     selected: false,
     positionAbsolute: {
-      x: -50.509749303621156,
-      y: 238.98885793871867
+      x: -177.50974930362116,
+      y: 222.98885793871867
     },
     dragging: false
   },
@@ -138,8 +138,8 @@ export const defaultNodes = [
     id: 'f4977578-c8c1-48f1-a63d-cd8bb2d69d08',
     type: 'CLIPTextEncode',
     position: {
-      x: 148.02367688022284,
-      y: 239.03621169916434
+      x: 143.02367688022284,
+      y: 260.03621169916437
     },
     data: {
       name: 'CLIP Text Encode (Prompt)',
@@ -166,12 +166,12 @@ export const defaultNodes = [
         }
       }
     },
-    width: 149,
-    height: 97,
+    width: 183,
+    height: 108,
     selected: false,
     positionAbsolute: {
-      x: 148.02367688022284,
-      y: 239.03621169916434
+      x: 143.02367688022284,
+      y: 260.03621169916437
     },
     dragging: false
   },
@@ -179,8 +179,8 @@ export const defaultNodes = [
     id: '99a9bcd1-b8bf-4505-b013-e6797e6d3b7a',
     type: 'CLIPTextEncode',
     position: {
-      x: 147.47910863509748,
-      y: 138.15320334261838
+      x: 142.47910863509748,
+      y: 120.15320334261838
     },
     data: {
       name: 'CLIP Text Encode (Prompt)',
@@ -207,12 +207,12 @@ export const defaultNodes = [
         }
       }
     },
-    width: 149,
-    height: 97,
+    width: 183,
+    height: 108,
     selected: false,
     positionAbsolute: {
-      x: 147.47910863509748,
-      y: 138.15320334261838
+      x: 142.47910863509748,
+      y: 120.15320334261838
     },
     dragging: false
   },
@@ -220,8 +220,8 @@ export const defaultNodes = [
     id: '69e82279-b806-4d09-ae24-a608faec978c',
     type: 'EmptyLatentImage',
     position: {
-      x: 156.066852367688,
-      y: 349.1782729805014
+      x: 158.066852367688,
+      y: 387.1782729805014
     },
     data: {
       name: 'Empty Latent Image',
@@ -254,12 +254,12 @@ export const defaultNodes = [
         }
       }
     },
-    width: 91,
-    height: 88,
+    width: 145,
+    height: 111,
     selected: false,
     positionAbsolute: {
-      x: 156.066852367688,
-      y: 349.1782729805014
+      x: 158.066852367688,
+      y: 387.1782729805014
     },
     dragging: false
   },
@@ -267,8 +267,8 @@ export const defaultNodes = [
     id: 'ef9bd0b8-1078-4459-913d-9272e2385bc4',
     type: 'VAEDecode',
     position: {
-      x: 518.8395220289808,
-      y: 180.64641397917882
+      x: 585.8395220289808,
+      y: 192.64641397917882
     },
     data: {
       name: 'VAE Decode',
@@ -295,32 +295,35 @@ export const defaultNodes = [
       ],
       widgets: {}
     },
-    width: 71,
-    height: 54,
+    width: 105,
+    height: 69,
     selected: false,
     positionAbsolute: {
-      x: 518.8395220289808,
-      y: 180.64641397917882
+      x: 585.8395220289808,
+      y: 192.64641397917882
     },
     dragging: false
   },
   {
-    id: 'ff7da4d0-4154-4f59-8a5a-7befe248121d',
+    id: '9f5fc182-f311-4796-846e-5e0f0e3477ec',
     type: 'SaveImage',
     position: {
-      x: 495.08978149326373,
-      y: 77.17426308157641
+      x: 735,
+      y: 191
     },
     data: {
       name: 'Save Image',
-      inputs: [],
+      config: {},
+      inputs: [
+        {
+          name: 'images',
+          type: 'IMAGE',
+          isHighlighted: false,
+          optional: false
+        }
+      ],
       outputs: [],
       widgets: {
-        images: {
-          name: 'images',
-          optional: false,
-          type: 'IMAGE'
-        },
         filename_prefix: {
           name: 'filename_prefix',
           optional: false,
@@ -329,14 +332,14 @@ export const defaultNodes = [
         }
       }
     },
-    width: 84,
-    height: 47,
-    selected: true,
+    width: 101,
+    height: 66,
+    selected: false,
     positionAbsolute: {
-      x: 495.08978149326373,
-      y: 77.17426308157641
+      x: 735,
+      y: 191
     },
-    dragging: true
+    dragging: false
   }
 ];
 
@@ -404,5 +407,13 @@ export const defaultEdges = [
     targetHandle: 'input::0::LATENT',
     type: 'LATENT',
     id: 'reactflow__edge-f8503d74-b2c1-4970-8ee7-ae64862ccf8aoutput::0::LATENT-ef9bd0b8-1078-4459-913d-9272e2385bc4input::0::LATENT'
+  },
+  {
+    source: 'ef9bd0b8-1078-4459-913d-9272e2385bc4',
+    sourceHandle: 'output::0::IMAGE',
+    target: '9f5fc182-f311-4796-846e-5e0f0e3477ec',
+    targetHandle: 'input::0::IMAGE',
+    type: 'IMAGE',
+    id: 'reactflow__edge-ef9bd0b8-1078-4459-913d-9272e2385bc4output::0::IMAGE-9f5fc182-f311-4796-846e-5e0f0e3477ecinput::0::IMAGE'
   }
 ];
