@@ -11,15 +11,15 @@ import {
 } from '../../types.ts';
 import { toast } from 'react-toastify';
 import { Handle, NodeProps, NodeResizeControl, Position } from 'reactflow';
-import { NumberWidget } from '../widgets/Number.tsx';
-import { StringWidget } from '../widgets/String.tsx';
-import { ToggleWidget } from '../widgets/Toggle.tsx';
-import { EnumWidget } from '../widgets/Enum.tsx';
-import { ImageWidget } from '../widgets/Image.tsx';
-import { VideoWidget } from '../widgets/Video.tsx';
-import { TextWidget } from '../widgets/Text.tsx';
-import { themes } from '../../config/themes.ts';
-import { IconPlayCircle } from '../icons/PlayIcon.tsx';
+import { NumberWidget } from '../widgets/Number';
+import { StringWidget } from '../widgets/String';
+import { ToggleWidget } from '../widgets/Toggle';
+import { EnumWidget } from '../widgets/Enum';
+import { ImageWidget } from '../widgets/Image';
+import { VideoWidget } from '../widgets/Video';
+import { TextWidget } from '../widgets/Text';
+import { themes } from '../../config/themes';
+import { IconPlayCircle } from '../icons/PlayIcon';
 
 const createWidgetFromSpec = (
   def: InputDef,
@@ -184,7 +184,6 @@ export const createNodeComponentFromDef = (
       if (!inputDef) return null;
 
       const update = (newState: Partial<WidgetState>) => {
-
         if (!inputState.type) return;
 
         updateWidgetState({

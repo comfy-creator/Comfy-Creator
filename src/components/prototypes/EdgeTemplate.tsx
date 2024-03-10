@@ -1,5 +1,5 @@
 import { BaseEdge, getBezierPath, Position } from 'reactflow';
-import { themes } from '../../config/themes.ts';
+import { themes } from '../../config/themes';
 
 export interface GetBezierPathParams {
   sourceX: number;

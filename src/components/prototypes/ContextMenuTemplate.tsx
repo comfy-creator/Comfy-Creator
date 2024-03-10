@@ -1,6 +1,6 @@
-import { ContextMenuProps, IMenuType } from '../../types.ts';
+import { ContextMenuProps, IMenuType } from '../../types';
 import { MouseEvent, useEffect, useRef } from 'react';
-import { useFlowStore } from '../../store/flow.ts';
+import { useFlowStore } from '../../store/flow';
 
 export function ContextMenu(prps: ContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
