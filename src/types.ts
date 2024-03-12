@@ -336,3 +336,5 @@ export interface IMenuType {
   onClick?: (event: ReactMouseEvent) => void;
 }
 export type HistoryMap = Record<string, { nodes: Node<NodeState>[]; edges: Edge[] }>;
+
+export type KeyboardHandler = (event?: KeyboardEvent) => void;
