@@ -217,8 +217,8 @@ export const createNodeComponentFromDef = (
         />
         <div
           style={{
-            backgroundColor: data.config.bgColor ? data.config.bgColor : undefined,
-            color: data.config.textColor ? data.config.textColor : undefined
+            backgroundColor: data.config?.bgColor ? data.config.bgColor : undefined,
+            color: data.config?.textColor ? data.config.textColor : undefined
           }}
           className={`node_container ${selected ? 'selected' : ''}`}
           ref={divRef}

@@ -214,7 +214,7 @@ export type WidgetState =
 
 export type NodeState = {
   readonly name: string;
-  config: NodeStateConfig;
+  config?: NodeStateConfig;
   inputs: InputHandle[];
   outputs: OutputHandle[];
   widgets: Record<string, WidgetState>;

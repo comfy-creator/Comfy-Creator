@@ -1,5 +1,5 @@
 import { useFlowStore } from '../store/flow.ts';
-import { InputHandle, NodeState, OutputHandle, WidgetState } from '../types.ts';
+import { EdgeType, InputDef, InputHandle, NodeState, OutputHandle, WidgetState } from '../types.ts';
 import { Edge, Node } from 'reactflow';
 import { isWidgetInput } from '../utils/node.ts';
 
@@ -51,115 +51,143 @@ interface LegacyNodeOutput {
 // [link_id, origin_id, origin_slot, target_id, target_slot, link_type]
 type LegacyLink = [number, number, number, number, number, string];
 
+function isValidDefinition(definition: any) {
+  return !!definition;
+}
+
+function isValidWidgetDef(def: any, i: number, widgets_values: any[]) {
+  return !!def && !!widgets_values[i];
+}
+
+function getWidgets(node: LegacyNode, nodeDefs: any) {
+  const definition = nodeDefs[node.type];
+  const widgetDefs = definition.inputs.filter((input: InputDef | { type: 'COMBO' }) =>
+    isWidgetInput(input.type === 'COMBO' ? 'ENUM' : input.type)
+  );
+
+  const widgets: Record<string, WidgetState> = {};
+  node.widgets_values?.forEach((value, i) => {
+    const def = widgetDefs[i];
+    if (isValidWidgetDef(def, i, node.widgets_values)) {
+      widgets[def.name] = {
+        value,
+        ...def,
+        name: def.name,
+        type: def.type === 'COMBO' ? 'ENUM' : def.type
+      };
+    }
+  });
+
+  return widgets;
+}
+
+function getInputs(node: LegacyNode, widgets: Record<string, WidgetState>) {
+  const inputs: InputHandle[] = [];
+  if (node.inputs) {
+    node.inputs.forEach((input) => {
+      const type = (input.type === 'COMBO' ? 'ENUM' : input.type) as EdgeType;
+
+      if (!isWidgetInput(type)) {
+        inputs.push({
+          type,
+          name: input.name,
+          widget: input.widget ? widgets[input.widget.name] : undefined
+        });
+      }
+    });
+  }
+
+  return inputs;
+}
+
+function getOutputs(node: LegacyNode) {
+  const outputs: OutputHandle[] = [];
+  if (node.outputs) {
+    node.outputs.forEach((output) => {
+      const type = (output.type === 'COMBO' ? 'ENUM' : output.type) as EdgeType;
+      outputs.push({ type: type, name: output.name });
+    });
+  }
+
+  return outputs;
+}
+
+function getNodeState(node: LegacyNode, widgets: Record<string, WidgetState>) {
+  const config: NodeState['config'] = {
+    bgColor: node.bgcolor,
+    textColor: node.color
+  };
+
+  const nodeState = {
+    config,
+    outputs: getOutputs(node),
+    inputs: getInputs(node, widgets),
+    widgets,
+    name: node.type
+  };
+
+  return nodeState;
+}
+
+function getNode(node: LegacyNode, nodeDefs: any) {
+  const widgets = getWidgets(node, nodeDefs);
+  const nodeState = getNodeState(node, widgets);
+
+  const nodeElement: Node<NodeState> = {
+    id: node.id.toString(),
+    type: node.type,
+    position: {
+      x: node.pos[0],
+      y: node.pos[1]
+    },
+    data: nodeState,
+    width: node.size['0'],
+    height: node.size['1']
+  };
+
+  return nodeElement;
+}
+
+function getEdge(link: LegacyLink) {
+  let targetHandle = '';
+  let sourceHandle = '';
+
+  if (!link[2].toString().includes('::')) {
+    sourceHandle = `output::${link[2]}::${link[5]}`;
+  }
+
+  if (!link[4].toString().includes('::')) {
+    targetHandle = `input::${link[4]}::${link[5]}`;
+  }
+
+  const edge: Edge = {
+    type: link[5],
+    id: link[0].toString(),
+    source: link[1].toString(),
+    target: link[3].toString(),
+    sourceHandle,
+    targetHandle
+  };
+
+  return edge;
+}
+
 export function loadLegacyWorkflow(workflow: LegacyWorkflow) {
   const { nodeDefs } = useFlowStore.getState();
 
   const nodes: Node<NodeState>[] = [];
-
-  for (const node of workflow.nodes) {
-    const definition = nodeDefs[node.type];
-    if (!definition) continue;
-
-    const widgetDefs = definition.inputs.filter((input) =>
-      isWidgetInput(input.type === 'COMBO' ? 'ENUM' : input.type)
-    );
-
-    const widgets: Record<string, WidgetState> = {};
-    for (let i = 0; i < node.widgets_values?.length; i++) {
-      const value = node.widgets_values[i];
-
-      const def = widgetDefs[i];
-      if (!def) continue;
-
-      widgets[def.name] = {
-        // @ts-expect-error
-        value,
-        ...def,
-        type: def.type,
-        name: def.name
-      };
-    }
-
-    const inputs: InputHandle[] = [];
-    if (node.inputs) {
-      for (let i = 0; i < node.inputs.length; i++) {
-        const input = node.inputs[i];
-        if (!isWidgetInput(input.type === 'COMBO' ? 'ENUM' : input.type)) {
-          const handle = {
-            name: input.name,
-            type: input.type,
-            widget: input.widget ? widgets[input.widget.name] : undefined
-          };
-
-          inputs.push(handle);
-        }
-      }
-    }
-
-    const outputs: OutputHandle[] = [];
-    if (node.outputs) {
-      for (const output of node.outputs) {
-        outputs.push({ type: output.type, name: output.name });
-      }
-    }
-
-    const config: NodeState['config'] = {};
-    if (node.bgcolor) {
-      config.bgColor = node.bgcolor;
-    }
-
-    if (node.color) {
-      config.textColor = node.color;
-    }
-
-    const nodeState = {
-      config,
-      outputs,
-      inputs,
-      widgets,
-      name: node.type
-    };
-
-    nodes.push({
-      id: node.id.toString(),
-      type: node.type,
-      position: {
-        x: node.pos[0],
-        y: node.pos[1]
-      },
-      data: nodeState,
-      width: node.size['0'],
-      height: node.size['1']
-    } as Node<NodeState>);
-  }
-
   const edges: Edge[] = [];
 
-  for (const link of workflow.links) {
-    let targetHandle = '';
-    let sourceHandle = '';
-
-    if (!link[2].toString().includes('::')) {
-      sourceHandle = `output::${link[2]}::${link[5]}`;
+  workflow.nodes.forEach((node) => {
+    const definition = nodeDefs[node.type];
+    if (isValidDefinition(definition)) {
+      nodes.push(getNode(node, nodeDefs));
     }
+  });
 
-    if (!link[4].toString().includes('::')) {
-      targetHandle = `input::${link[4]}::${link[5]}`;
-    }
-
-    const edge: Edge = {
-      type: link[5],
-      id: link[0].toString(),
-      source: link[1].toString(),
-      target: link[3].toString(),
-      sourceHandle,
-      targetHandle
-    };
-
-    edges.push(edge);
-  }
-
-  console.log({ edges, nodes });
+  workflow.links.forEach((link) => {
+    edges.push(getEdge(link));
+  });
 
   return { edges, nodes };
 }
