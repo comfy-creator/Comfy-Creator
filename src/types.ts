@@ -252,7 +252,7 @@ export type WidgetState =
 
 export type NodeState = {
   readonly name: string;
-  config: NodeStateConfig;
+  config?: NodeStateConfig;
   inputs: InputHandle[];
   outputs: OutputHandle[];
   widgets: Record<string, WidgetState>;
@@ -335,6 +335,5 @@ export interface IMenuType {
   isOpen?: boolean;
   onClick?: (event: ReactMouseEvent) => void;
 }
-export type HistoryMap = Record<string, { nodes: Node<NodeState>[]; edges: Edge[] }>;
 
 export type KeyboardHandler = (event?: KeyboardEvent) => void;

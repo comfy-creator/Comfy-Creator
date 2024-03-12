@@ -43,8 +43,7 @@ export function ContextMenu(prps: ContextMenuProps) {
       const { addNode } = useFlowStore.getState();
       addNode({
         position,
-        type: value.node?.name,
-        inputWidgetValues: {}
+        type: value.node?.name ? inputWidgetValues : {}
       });
     }
 
