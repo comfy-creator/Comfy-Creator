@@ -34,6 +34,8 @@ import {
 import { createEdgeFromTemplate } from '../components/prototypes/EdgeTemplate.tsx';
 
 export type RFState = {
+  panOnDrag: boolean;
+  setPanOnDrag: (panOnDrag: boolean) => void;
   nodes: Node<NodeState>[];
   edges: Edge[];
   setNodes: (nodes: Node[]) => void;
@@ -68,6 +70,9 @@ export type RFState = {
 };
 
 export const useFlowStore = create<RFState>((set, get) => ({
+  panOnDrag: true,
+  setPanOnDrag: (panOnDrag) => set({ panOnDrag }),
+
   nodes: [],
 
   edges: [],
