@@ -39,6 +39,7 @@ const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2;
 
 const selector = (state: RFState) => ({
+  panOnDrag: state.panOnDrag,
   nodes: state.nodes,
   edges: state.edges,
   onNodesChange: state.onNodesChange,
@@ -61,6 +62,7 @@ const selector = (state: RFState) => ({
 
 export function MainFlow() {
   const {
+    panOnDrag,
     nodes,
     edges,
     onNodesChange,
@@ -397,6 +399,7 @@ export function MainFlow() {
 
   return (
     <ReactFlow
+      panOnDrag={panOnDrag}
       onContextMenu={onContextMenu}
       onNodeContextMenu={onNodeContextMenu}
       onPaneClick={onPaneClick}
