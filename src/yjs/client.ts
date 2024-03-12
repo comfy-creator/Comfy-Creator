@@ -9,7 +9,7 @@ import {
   applyAwarenessUpdate,
   removeAwarenessStates
 } from 'y-protocols/awareness';
-import Y from 'yjs';
+import * as Y from 'yjs';
 
 // These are message types, specified in the `y-protocols` package
 export enum MsgType {
@@ -40,9 +40,12 @@ export class YjsProvider extends EventTarget {
 
     this._doc = doc ?? new Y.Doc();
     this._awareness = awareness ?? new Awareness(this._doc);
+    this.handleNewDoc();
+  }
 
+  private handleNewDoc = () => {
     // Cleanup handler for node.js
-    if (process.env.isNode && typeof process !== 'undefined') {
+    if (typeof process !== 'undefined' && process.env.isNode) {
       process.on('exit', this.exitHandler);
     }
 
@@ -50,8 +53,10 @@ export class YjsProvider extends EventTarget {
     this.addListeners();
 
     // automatically attempt to connect
-    this.connect(serverUrl);
-  }
+    this.connect(this.serverUrl);
+
+    this.dispatchEvent(new CustomEvent('new_doc', { detail: { guid: this._doc.guid } }));
+  };
 
   // External getters
   public get doc(): Y.Doc {
@@ -62,19 +67,16 @@ export class YjsProvider extends EventTarget {
     return this._awareness;
   }
 
-  changeDoc(doc: Y.Doc, awareness?: Awareness) {
-    this.removeListeners();
-    this._doc = doc;
-    this._awareness = awareness ?? new Awareness(doc);
-    this.addListeners();
+  // This disconnects from the server and then reconnects with a new doc-id
+  changeDoc = (doc?: Y.Doc, awareness?: Awareness) => {
+    this.destroy();
 
-    // Begin watching the graph immediately
-    if (this.socket && this.socket.connected) {
-      this.connectHandler();
-    }
-  }
+    this._doc = doc ?? new Y.Doc();
+    this._awareness = awareness ?? new Awareness(this._doc);
+    this.handleNewDoc();
+  };
 
-  connect(serverUrl?: string, token?: string | null) {
+  connect = (serverUrl?: string, token?: string | null) => {
     if (
       this.socket &&
       this.socket.connected &&
@@ -172,9 +174,9 @@ export class YjsProvider extends EventTarget {
       // Stop sending updates to the server
       if (this.updateTimer) clearInterval(this.updateTimer);
     });
-  }
+  };
 
-  disconnect() {
+  disconnect = () => {
     if (this.socket === null) return; // No need to do anything
 
     // Send message with local awareness state set to null (indicating disconnect)
@@ -191,31 +193,33 @@ export class YjsProvider extends EventTarget {
     this.socket = null;
 
     this.dispatchEvent(new CustomEvent('status', { detail: { status: 'disconnected' } }));
-  }
+  };
 
-  destroy() {
-    this.disconnect();
+  destroy = () => {
+    this._doc.destroy();
+    this._awareness.destroy();
 
-    if (process.env.isNode && typeof process !== 'undefined') {
+    if (typeof process !== 'undefined' && process.env.isNode) {
       process.off('exit', this.exitHandler);
     }
 
     this.removeListeners();
-  }
+    this.disconnect();
+  };
 
-  private addListeners() {
+  private addListeners = () => {
     this._doc.on('update', this.localUpdateHandler);
     this._awareness.on('update', this.awarenessUpdateHandler);
-  }
+  };
 
   // Remove update listeners
-  private removeListeners() {
+  private removeListeners = () => {
     this._doc.off('update', this.localUpdateHandler);
     this._awareness.off('update', this.awarenessUpdateHandler);
-  }
+  };
 
   // Fires whenever we first connect or change graphs
-  private connectHandler() {
+  private connectHandler = () => {
     // Specify which graph we are syncing
     this.socket!.emit('watchGraph', this._doc.guid);
 
@@ -237,10 +241,10 @@ export class YjsProvider extends EventTarget {
     this.updateTimer = setInterval(() => {
       this.sendUpdates();
     }, 50); // Debounce interval of 50ms
-  }
+  };
 
   // Accumulates updates, sending them periodically
-  private localUpdateHandler(update: Uint8Array, origin: YjsProvider | string) {
+  private localUpdateHandler = (update: Uint8Array, origin: YjsProvider | string) => {
     if (origin === this) {
       // aggregate our our local updates to be sent up to the websocket-server
       this.aggregatedUpdate = this.aggregatedUpdate
@@ -250,10 +254,10 @@ export class YjsProvider extends EventTarget {
       // dispatch an event locally for updates not caused by us
       this.dispatchEvent(new CustomEvent('update', { detail: { update } }));
     }
-  }
+  };
 
   // Sends updates to our local-doc to the remote server, if we're connected
-  private sendUpdates() {
+  private sendUpdates = () => {
     if (this.aggregatedUpdate === null) return; // no updates to send
     if (!this.socket || !this.socket.connected) return; // no connection to use
 
@@ -264,23 +268,23 @@ export class YjsProvider extends EventTarget {
     this.socket.emit('message', encoding.toUint8Array(encoder));
 
     this.aggregatedUpdate = null; // clear aggregated update
-  }
+  };
 
   // Sends updates to our awareness information to the server, if we're connected
-  private awarenessUpdateHandler(
+  private awarenessUpdateHandler = (
     { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
     _origin: string | YjsProvider
-  ) {
+  ) => {
     const changedClients = added.concat(updated).concat(removed);
     const encoder = encoding.createEncoder();
     encoding.writeVarUint(encoder, MsgType.Awareness);
     encoding.writeVarUint8Array(encoder, encodeAwarenessUpdate(this._awareness, changedClients));
     this.socket?.emit('message', encoding.toUint8Array(encoder));
-  }
+  };
 
-  private exitHandler() {
+  private exitHandler = () => {
     removeAwarenessStates(this._awareness, [this._doc.clientID], 'app closed');
-  }
+  };
 }
 
 // ===== Example usage =====

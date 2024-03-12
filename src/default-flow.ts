@@ -1,4 +1,7 @@
-export const defaultNodes = [
+import { Node } from 'reactflow';
+import { NodeState } from './types';
+
+export const defaultNodes: Node<NodeState>[] = [
   {
     id: 'f8503d74-b2c1-4970-8ee7-ae64862ccf8a',
     type: 'KSampler',
@@ -162,7 +165,8 @@ export const defaultNodes = [
         text: {
           name: 'text',
           optional: false,
-          type: 'STRING'
+          type: 'STRING',
+          value: ''
         }
       }
     },
@@ -203,7 +207,8 @@ export const defaultNodes = [
         text: {
           name: 'text',
           optional: false,
-          type: 'STRING'
+          type: 'STRING',
+          value: ''
         }
       }
     },
