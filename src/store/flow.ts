@@ -60,8 +60,8 @@ export type RFState = {
   hotKeysShortcut: string[];
   addHotKeysShortcut: (keys: string[]) => void;
 
-  hotKeysHandlers: Record<string, Function>;
-  addHotKeysHandlers: (handler: Record<string, Function>) => void;
+  hotKeysHandlers: Record<string, (event?: KeyboardEvent) => void>;
+  addHotKeysHandlers: (handler: Record<string, (event?: KeyboardEvent) => void>) => void;
 
   setCurrentConnectionLineType: (type: string) => void;
 

@@ -104,7 +104,7 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
       console.log('from pane context menu');
       setMenuProps(menuData);
     },
-    [nodeId, setMenuProps, setNodeId]
+    [setMenuProps]
   );
 
   const onNodeContextMenu = useCallback(

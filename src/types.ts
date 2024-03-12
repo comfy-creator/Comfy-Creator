@@ -1,5 +1,43 @@
-import { ComponentType, type MouseEvent as ReactMouseEvent } from 'react';
-import { EdgeProps, NodeProps, XYPosition } from 'reactflow';
+import { type MouseEvent as ReactMouseEvent, ComponentType } from 'react';
+import { NodeProps, XYPosition, type Node, type Edge, EdgeProps } from 'reactflow';
+
+// This type is outdated
+// export type NodeData = {
+//   label: string;
+//   function: string;
+//   category: string;
+//   inputs: {
+//     required: Record<string, InputDef>;
+//     optional?: Record<string, InputDef>;
+//   };
+//   outputs: string[];
+// };
+
+export type InputSpec = {
+  default?: number | string;
+  min?: number;
+  max?: number;
+  step?: number;
+  round?: number | boolean;
+  display?: 'color'; // what is this?
+  multiline?: boolean;
+  image_upload?: boolean; // dumb
+};
+
+type EdgeValueSpec = undefined | string[] | InputSpec;
+
+// TO DO: when the fuck is this a 'string[]' and why? Combo type?
+// I removed 'string[]' for now
+// export type InputDef = {
+//   defaultValue?: number | string;
+//   min?: number;
+//   max?: number;
+//   step?: number;
+//   round?: number | boolean;
+//   display?: 'color'; // what is this?
+//   multiline?: boolean;
+//   image_upload?: boolean; // dumb
+// };
 
 export type EdgeType =
   | 'BOOLEAN'
@@ -292,8 +330,9 @@ export interface IMenuType {
   disabled?: boolean;
   label: string;
   hasSubMenu: boolean;
-  node: Record<string, Object> | string | null;
+  node: Record<string, object> | string | null;
   subMenu: IMenuType[] | null;
   isOpen?: boolean;
   onClick?: (event: ReactMouseEvent) => void;
 }
+export type HistoryMap = Record<string, { nodes: Node<NodeState>[]; edges: Edge[] }>;
