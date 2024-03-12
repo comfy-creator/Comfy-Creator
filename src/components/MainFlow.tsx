@@ -439,7 +439,7 @@ export function MainFlow() {
         color: 'var(--fg-color)',
         cursor: 'crosshair'
       }}
-      proOptions={{ account: '', hideAttribution: true }}
+      proOptions={{ account: 'paid-pro', hideAttribution: true }}
       edgeTypes={edgeComponents}
       connectionLineComponent={ConnectionLine}
       connectionLineType={ConnectionLineType.Bezier}
