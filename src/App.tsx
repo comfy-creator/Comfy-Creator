@@ -9,8 +9,8 @@ import { ContextMenuProvider } from './contexts/ContextMenu';
 import { ApiContextProvider } from './contexts/apiContext';
 import { SettingsContextProvider } from './contexts/settingsContext';
 import { ReactFlowProvider } from 'reactflow';
-import { DialogContextProvider } from './contexts/dialog.tsx';
-import { ErrorProvider } from './contexts/error.tsx';
+import { DialogContextProvider } from './contexts/dialog';
+import { ErrorProvider } from './contexts/error';
 
 function App() {
   return (

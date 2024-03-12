@@ -11,7 +11,7 @@ import { ComfyPromptStatus } from '../../types/comfy';
 import { toggleSwitch } from '../../utils/ui';
 import { ComfyList } from '../ComfyList';
 import { RFState, useFlowStore } from '../../store/flow';
-import { loadLegacyWorkflow } from '../../handlers/loadLegacy.ts';
+import { loadLegacyWorkflow } from '../../handlers/loadLegacy';
 
 type AutoQueueMode =
   | {

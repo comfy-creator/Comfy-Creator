@@ -35,9 +35,9 @@ import { previewImage, previewVideo } from '../node_definitions/preview';
 import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../handlers/dragDrop';
 import nodeInfo from '../../node_info.json';
-import { ConnectionLine } from './ConnectionLIne.tsx';
-import { HANDLE_ID_DELIMITER, HANDLE_TYPES } from '../config/constants.ts';
-import { defaultEdges, defaultNodes } from '../default-flow.ts';
+import { ConnectionLine } from './ConnectionLIne';
+import { HANDLE_ID_DELIMITER, HANDLE_TYPES } from '../config/constants';
+import { defaultEdges, defaultNodes } from '../default-flow';
 
 const FLOW_KEY = 'flow';
 const PADDING = 5; // in pixels
