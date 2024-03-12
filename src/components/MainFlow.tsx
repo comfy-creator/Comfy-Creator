@@ -1,6 +1,13 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-import { DragEvent, MouseEvent as ReactMouseEvent, TouchEvent, useCallback, useEffect, useState } from 'react';
+import {
+  DragEvent,
+  MouseEvent as ReactMouseEvent,
+  TouchEvent,
+  useCallback,
+  useEffect,
+  useState
+} from 'react';
 import ReactFlow, {
   Background,
   BackgroundVariant,
@@ -18,7 +25,6 @@ import ReactFlow, {
   Panel,
   ReactFlowInstance,
   useKeyPress,
-  useOnSelectionChange,
   useReactFlow
 } from 'reactflow';
 import { useContextMenu } from '../contexts/ContextMenu';
@@ -201,9 +207,8 @@ export function MainFlow() {
         edges,
         viewport
       };
-    localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
+      localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
     }
-
   }, [nodes, edges, viewport]);
 
   // Store graph state to local storage
@@ -416,8 +421,8 @@ export function MainFlow() {
       onMoveEnd={handleMoveEnd}
       maxZoom={MAX_ZOOM}
       minZoom={MIN_ZOOM}
-      deleteKeyCode={["Delete", "Backspace"]}
-      multiSelectionKeyCode={"Shift"}
+      deleteKeyCode={['Delete', 'Backspace']}
+      multiSelectionKeyCode={'Shift'}
       fitView
       fitViewOptions={{
         padding: 2,
