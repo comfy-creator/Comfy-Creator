@@ -4,7 +4,7 @@ import { NodeState } from '../types';
 import type { Edge, Node } from 'reactflow';
 
 // TO DO: load this from .env
-const CONNECT_URL = 'ws://localhost:1234/';
+const CONNECT_URL = 'http://localhost:8000';
 
 // TO DO: fetch a local graphId from local storage, if it exists
 const graphId: string | undefined = '1234';
