@@ -1,6 +1,13 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-import { DragEvent, MouseEvent as ReactMouseEvent, TouchEvent, useCallback, useEffect, useState } from 'react';
+import {
+  DragEvent,
+  MouseEvent as ReactMouseEvent,
+  TouchEvent,
+  useCallback,
+  useEffect,
+  useState
+} from 'react';
 import ReactFlow, {
   Background,
   BackgroundVariant,
@@ -18,7 +25,6 @@ import ReactFlow, {
   Panel,
   ReactFlowInstance,
   useKeyPress,
-  useOnSelectionChange,
   useReactFlow
 } from 'reactflow';
 import { useContextMenu } from '../contexts/ContextMenu';
@@ -29,9 +35,9 @@ import { previewImage, previewVideo } from '../node_definitions/preview';
 import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../handlers/dragDrop';
 import nodeInfo from '../../node_info.json';
-import { ConnectionLine } from './ConnectionLIne.tsx';
-import { HANDLE_ID_DELIMITER, HANDLE_TYPES } from '../config/constants.ts';
-import { defaultEdges, defaultNodes } from '../default-flow.ts';
+import { ConnectionLine } from './ConnectionLIne';
+import { HANDLE_ID_DELIMITER, HANDLE_TYPES } from '../config/constants';
+import { defaultEdges, defaultNodes } from '../default-flow';
 
 const FLOW_KEY = 'flow';
 const PADDING = 5; // in pixels
@@ -203,9 +209,8 @@ export function MainFlow() {
         edges,
         viewport
       };
-    localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
+      localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
     }
-
   }, [nodes, edges, viewport]);
 
   // Store graph state to local storage
@@ -419,8 +424,8 @@ export function MainFlow() {
       onMoveEnd={handleMoveEnd}
       maxZoom={MAX_ZOOM}
       minZoom={MIN_ZOOM}
-      deleteKeyCode={["Delete", "Backspace"]}
-      multiSelectionKeyCode={"Shift"}
+      deleteKeyCode={['Delete', 'Backspace']}
+      multiSelectionKeyCode={'Shift'}
       fitView
       fitViewOptions={{
         padding: 2,

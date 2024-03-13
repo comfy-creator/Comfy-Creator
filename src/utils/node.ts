@@ -111,7 +111,7 @@ export function widgetStateFromDef(def: InputDef, values: Record<string, any>): 
   }
 }
 
-const isWidgetInput = (type: EdgeType) => WIDGET_TYPES.includes(type);
+export const isWidgetInput = (type: EdgeType) => WIDGET_TYPES.includes(type);
 
 const isConvertableWidget = (widget: WidgetState) => CONVERTABLE_WIDGET_TYPES.includes(widget.type);
 

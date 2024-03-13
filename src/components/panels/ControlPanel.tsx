@@ -11,6 +11,7 @@ import { ComfyPromptStatus } from '../../types/comfy';
 import { toggleSwitch } from '../../utils/ui';
 import { ComfyList } from '../ComfyList';
 import { RFState, useFlowStore } from '../../store/flow';
+import { loadLegacyWorkflow } from '../../handlers/loadLegacy';
 
 type AutoQueueMode =
   | {
@@ -119,9 +120,22 @@ const ControlPanel = () => {
       ref={fileInputRef}
       accept=".json,image/png,.latent,.safetensors,image/webp"
       style={{ display: 'none' }}
-      onChange={() => {
-        if ('files' in fileInput && Array.isArray(fileInput.files)) {
-          // app.handleFile(fileInput.files[0]);
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const contents = e.target?.result;
+            if (typeof contents === 'string') {
+              const graph = JSON.parse(contents);
+              const { edges, nodes } = loadLegacyWorkflow(graph);
+
+              setNodes(nodes);
+              setEdges(edges);
+            }
+          };
+          reader.readAsText(file);
         }
       }}
     />

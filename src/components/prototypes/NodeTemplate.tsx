@@ -215,7 +215,14 @@ export const createNodeComponentFromDef = (
           minHeight={minHeight}
           maxHeight={minHeight}
         />
-        <div className={`node_container ${selected ? 'selected' : ''}`} ref={divRef}>
+        <div
+          style={{
+            backgroundColor: data.config?.bgColor ? data.config.bgColor : undefined,
+            color: data.config?.textColor ? data.config.textColor : undefined
+          }}
+          className={`node_container ${selected ? 'selected' : ''}`}
+          ref={divRef}
+        >
           {!data.config?.hideLabel && (
             <div className="node_label_container">
               <span className="node_label" onClick={onClick}>
