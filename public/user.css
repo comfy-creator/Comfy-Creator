@@ -233,3 +233,20 @@
 .edge_opacity {
     opacity: 0.5;
 }
+
+button.comfy-settings-btn {
+    background-color: rgba(0, 0, 0, 0);
+    font-size: 12px;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+}
+
+#comfy-settings-dialog button {
+    background-color: var(--bg-color);
+    border: 1px var(--border-color) solid;
+    border-radius: 0;
+    color: var(--input-text);
+    font-size: 1rem;
+    padding: 0.5rem;
+}

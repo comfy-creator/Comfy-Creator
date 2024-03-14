@@ -1,4 +1,4 @@
-import { ComponentType, type MouseEvent as ReactMouseEvent } from 'react';
+import { ComponentType, type MouseEvent as ReactMouseEvent, ReactNode } from 'react';
 import { EdgeProps, NodeProps, XYPosition } from 'reactflow';
 
 export type EdgeType =
@@ -300,4 +300,51 @@ export interface IMenuType {
   subMenu: IMenuType[] | null;
   isOpen?: boolean;
   onClick?: (event: ReactMouseEvent) => void;
+}
+
+export interface SettingsLookup {
+  id: string;
+  name: string;
+  render: (i: number) => ReactNode;
+  onChange?: (...arg: any[]) => void;
+}
+
+export interface ThemeConfig {
+  id: string;
+  name: string;
+  colors: {
+    types: {
+      VAE: string;
+      CLIP: string;
+      MASK: string;
+      MODEL: string;
+      IMAGE: string;
+      LATENT: string;
+      DEFAULT: string;
+      CLIP_VISION: string;
+      CONTROL_NET: string;
+      STYLE_MODEL: string;
+      CONDITIONING: string;
+      CLIP_VISION_OUTPUT: string;
+      [x: string]: string;
+    };
+    appearance: {
+      NODE_BG_COLOR: string;
+      NODE_TEXT_SIZE: number;
+      NODE_TEXT_COLOR: string;
+      NODE_TITLE_COLOR: string;
+      NODE_SELECTED_TITLE_COLOR: string;
+      NODE_DEFAULT_BOX_COLOR: string;
+      NODE_BOX_OUTLINE_COLOR: string;
+
+      WIDGET_BG_COLOR: string;
+      WIDGET_TEXT_COLOR: string;
+      WIDGET_OUTLINE_COLOR: string;
+      WIDGET_SECONDARY_TEXT_COLOR: string;
+
+      EDGE_COLOR: string;
+      CONNECTING_EDGE_COLOR: string;
+    };
+    CSSVariables: { [x: string]: string };
+  };
 }

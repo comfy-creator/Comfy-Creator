@@ -38,6 +38,10 @@ import nodeInfo from '../../node_info.json';
 import { ConnectionLine } from './ConnectionLIne';
 import { HANDLE_ID_DELIMITER, HANDLE_TYPES } from '../config/constants';
 import { defaultEdges, defaultNodes } from '../default-flow';
+import { useSettings } from '../contexts/settingsContext.tsx';
+import { useSettingsStore } from '../store/settings.ts';
+import { defaultThemeConfig } from '../config/themes.ts';
+import { Theme } from './Theme.tsx';
 
 const FLOW_KEY = 'flow';
 const PADDING = 5; // in pixels
@@ -91,6 +95,7 @@ export function MainFlow() {
     string
   >();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
+  const { load: loadSettings, addSetting } = useSettings();
 
   const [rfInstance, setRFInstance] = useState<ReactFlowInstance | null>(null);
 
@@ -99,6 +104,35 @@ export function MainFlow() {
 
   // viewport from rfl
   const viewport = getViewport();
+
+  useEffect(() => {
+    const { addThemes, setActiveTheme, getActiveTheme } = useSettingsStore.getState();
+
+    loadSettings();
+    addThemes(defaultThemeConfig);
+
+    addSetting({
+      id: 'theme',
+      name: 'Theme',
+      defaultValue: 'dark',
+      type: (_name: string, setter: (value: string) => void, value: string) => (
+        <Theme value={value} onChange={setter} />
+      ),
+      async onChange(value: string) {
+        if (!value) {
+          return;
+        }
+
+        setActiveTheme(value);
+        const theme = getActiveTheme();
+        for (const key in theme.colors.CSSVariables) {
+          const value = theme.colors.CSSVariables[key];
+
+          document.documentElement.style.setProperty(`--${key}`, value);
+        }
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const PrimitiveNode: NodeDefinition = {
@@ -445,7 +479,8 @@ export function MainFlow() {
       connectionLineType={ConnectionLineType.Bezier}
     >
       <ReactHotkeys keyName={hotKeysShortcut.join(',')} onKeyDown={handleKeyPress}>
-        <Background variant={BackgroundVariant.Lines} />
+        <Background color={'var(--tr-odd-bg-color)'} variant={BackgroundVariant.Lines} />
+
         <Controls />
         <NodeResizer />
         <NodeToolbar />

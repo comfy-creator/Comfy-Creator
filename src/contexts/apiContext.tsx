@@ -1,35 +1,28 @@
-import React from "react";
-import {
-  createContext,
-  useState,
-  useEffect,
-  ReactNode,
-  useCallback,
-} from "react";
-import ReconnectingWebSocket from "reconnecting-websocket";
-import { createUseContextHook } from "./hookCreator";
-import { createChannel, createClient, Metadata } from "nice-grpc-web";
+import React, { createContext, ReactNode, useCallback, useEffect, useState } from 'react';
+import ReconnectingWebSocket from 'reconnecting-websocket';
+import { createUseContextHook } from './hookCreator';
+import { createChannel, createClient, Metadata } from 'nice-grpc-web';
 import {
   ComfyClient,
   ComfyDefinition,
   ComfyMessage,
   JobCreated,
-} from "../autogen_web_ts/comfy_request.v1";
-import { WorkflowStep } from "../autogen_web_ts/comfy_request.v1";
+  WorkflowStep
+} from '../autogen_web_ts/comfy_request.v1';
 import {
-  IComfyApi,
+  ComfyHistoryItems,
   ComfyItemURLType,
   EmbeddingsResponse,
   HistoryResponse,
-  UserConfigResponse,
-  SystemStatsResponse,
+  IComfyApi,
+  QueueResponse,
   SettingsResponse,
   storeUserDataOptions,
-  ComfyHistoryItems,
-  QueueResponse
-} from "../types/api";
-import API_URL from "./ApiUrl";
-import { ComfyObjectInfo } from "../types/comfy";
+  SystemStatsResponse,
+  UserConfigResponse
+} from '../types/api';
+import API_URL from './ApiUrl';
+import { ComfyObjectInfo } from '../types/comfy';
 
 // This is injected into index.html by `start.py`
 declare global {
@@ -40,7 +33,7 @@ declare global {
   }
 }
 
-type ProtocolType = "grpc" | "ws";
+type ProtocolType = 'grpc' | 'ws';
 
 interface IApiContext extends IComfyApi {
   sessionId?: string;
@@ -54,10 +47,10 @@ interface IApiContext extends IComfyApi {
 }
 
 enum ApiStatus {
-  CONNECTING = "connecting",
-  OPEN = "open",
-  CLOSING = "closing",
-  CLOSED = "closed",
+  CONNECTING = 'connecting',
+  OPEN = 'open',
+  CLOSING = 'closing',
+  CLOSED = 'closed'
 }
 
 // Non-react component
@@ -65,7 +58,7 @@ export const ApiEventEmitter = new EventTarget();
 
 // TO DO: implement this
 const handleComfyMessage = (message: ComfyMessage) => {
-  ApiEventEmitter.dispatchEvent(new CustomEvent("room", { detail: message }));
+  ApiEventEmitter.dispatchEvent(new CustomEvent('room', { detail: message }));
 };
 
 // Use polling as a backup strategy incase the websocket fails to connect
@@ -74,14 +67,10 @@ const pollingFallback = () => {
     try {
       // const resp = await api.fetchApi('/prompt');
       // const status = await resp.json();
-      const status = "";
-      ApiEventEmitter.dispatchEvent(
-        new CustomEvent("status", { detail: status })
-      );
+      const status = '';
+      ApiEventEmitter.dispatchEvent(new CustomEvent('status', { detail: status }));
     } catch (error) {
-      ApiEventEmitter.dispatchEvent(
-        new CustomEvent("status", { detail: null })
-      );
+      ApiEventEmitter.dispatchEvent(new CustomEvent('status', { detail: null }));
     }
   }, 1000);
 
@@ -89,22 +78,14 @@ const pollingFallback = () => {
   return () => clearInterval(intervalId);
 };
 
-export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // TO DO: add possible auth in here as well?
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   // const [socket, setSocket] = useState<ReconnectingWebSocket | null>(null);
   const [serverUrl, setServerUrl] = useState<string>(window.SERVER_URL);
-  const [connectionStatus, setConnectionStatus] = useState<string>(
-    ApiStatus.CLOSED
-  );
-  const [serverProtocol, setServerProtocol] = useState<ProtocolType>(
-    window.SERVER_PROTOCOL
-  );
-  const [requestMetadata, setRequestMetadata] = useState<Metadata | undefined>(
-    undefined
-  );
+  const [connectionStatus, setConnectionStatus] = useState<string>(ApiStatus.CLOSED);
+  const [serverProtocol, setServerProtocol] = useState<ProtocolType>(window.SERVER_PROTOCOL);
+  const [requestMetadata, setRequestMetadata] = useState<Metadata | undefined>(undefined);
 
   // Only used for when serverProtocol is grpc. Used to both send messages and stream results
   const [comfyClient, setComfyClient] = useState<ComfyClient>(
@@ -113,7 +94,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
 
   // Recreate ComfyClient as needed
   useEffect(() => {
-    if (serverProtocol === "grpc") {
+    if (serverProtocol === 'grpc') {
       const channel = createChannel(serverUrl);
       const newComfyClient = createClient(ComfyDefinition, channel);
       setComfyClient(newComfyClient);
@@ -123,18 +104,18 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
 
   // Establish a connection to local-server if we're using websockets
   useEffect(() => {
-    if (serverProtocol === "ws") {
+    if (serverProtocol === 'ws') {
       const socket = new ReconnectingWebSocket(serverUrl, undefined, {
-        maxReconnectionDelay: 300,
+        maxReconnectionDelay: 300
       });
-      socket.binaryType = "arraybuffer";
+      socket.binaryType = 'arraybuffer';
       let cleanupPolling = () => {};
 
-      socket.addEventListener("open", () => {
+      socket.addEventListener('open', () => {
         setConnectionStatus(ApiStatus.OPEN);
       });
 
-      socket.addEventListener("error", () => {
+      socket.addEventListener('error', () => {
         if (!(socket.readyState === socket.OPEN)) {
           // The websocket failed to open; use a fallback instead
           socket.close();
@@ -143,7 +124,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
         setConnectionStatus(ApiStatus.CLOSED);
       });
 
-      socket.addEventListener("close", () => {
+      socket.addEventListener('close', () => {
         setConnectionStatus(ApiStatus.CONNECTING);
       });
 
@@ -159,7 +140,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
   // Once we have a session-id, subscribe to the stream of results using grpc
   useEffect(() => {
     if (sessionId === undefined) return;
-    if (serverProtocol !== "grpc") return;
+    if (serverProtocol !== 'grpc') return;
 
     const abortController = new AbortController();
 
@@ -197,7 +178,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
   // Update metadata based on api-key / login status
   useEffect(() => {
     const metadata = new Metadata();
-    if (window.API_KEY) metadata.set("api-key", window.API_KEY);
+    if (window.API_KEY) metadata.set('api-key', window.API_KEY);
     setRequestMetadata(metadata);
   }, []);
 
@@ -208,7 +189,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
       workflow: Record<string, WorkflowStep>,
       serializedGraph?: unknown
     ): Promise<JobCreated> => {
-      if (serverProtocol === "grpc" && comfyClient) {
+      if (serverProtocol === 'grpc' && comfyClient) {
         // Use gRPC server
         const request = {
           workflow,
@@ -216,11 +197,11 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
           inputFiles: [],
           output_config: undefined,
           worker_wait_duration: undefined,
-          session_id: sessionId,
+          session_id: sessionId
         };
 
         const res = await comfyClient.runWorkflow(request, {
-          metadata: requestMetadata,
+          metadata: requestMetadata
         });
 
         // Update the assigned sessionId
@@ -232,29 +213,29 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
       } else {
         // Use REST server
         const headers: Record<string, string> = {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json'
         };
 
         // Convert Metadata to headers
         if (requestMetadata) {
           for (const [key, values] of requestMetadata) {
             // Since values is an array, join them with a comma.
-            headers[key] = values.join(", ");
+            headers[key] = values.join(', ');
           }
         }
 
         const res = await fetch(`${serverUrl}/prompt`, {
-          method: "POST",
+          method: 'POST',
           headers,
           body: JSON.stringify({
             workflow,
-            serializedGraph,
-          }),
+            serializedGraph
+          })
         });
 
         if (res.status !== 200) {
           throw {
-            response: await res.json(),
+            response: await res.json()
           };
         }
 
@@ -285,7 +266,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
    * @returns An array of script urls to import
    */
   const getExtensions = async (): Promise<string[]> => {
-    const resp = await fetchApi("/extensions", { cache: "no-store" });
+    const resp = await fetchApi('/extensions', { cache: 'no-store' });
     return (await resp.json()).map((route: string) => generateURL(route));
   };
 
@@ -294,7 +275,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
    * @returns An array of script urls to import
    */
   const getEmbeddings = async (): Promise<EmbeddingsResponse> => {
-    const resp = await fetchApi(API_URL.GET_EMBEDDINGS, { cache: "no-store" });
+    const resp = await fetchApi(API_URL.GET_EMBEDDINGS, { cache: 'no-store' });
     return await resp.json();
   };
 
@@ -303,7 +284,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
    * @returns The node definitions
    */
   const getNodeDefs = async (): Promise<Record<string, ComfyObjectInfo>> => {
-    const resp = await fetchApi(API_URL.GET_NODE_DEFS, { cache: "no-store" });
+    const resp = await fetchApi(API_URL.GET_NODE_DEFS, { cache: 'no-store' });
     return await resp.json();
   };
 
@@ -313,7 +294,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
    * @returns The items of the specified type grouped by their status
    */
   const getItems = async (type: string) => {
-    if (type === "queue") {
+    if (type === 'queue') {
       return getQueue();
     }
     return getHistory();
@@ -325,15 +306,15 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
    */
   const getQueue = async () => {
     try {
-      const res = await fetchApi("/queue");
+      const res = await fetchApi('/queue');
       const data = (await res.json()) as QueueResponse;
       return {
         // Running action uses a different endpoint for cancelling
         Running: data.queue_running.map((prompt: any) => ({
           prompt,
-          remove: { name: "Cancel", cb: () => interrupt() },
+          remove: { name: 'Cancel', cb: () => interrupt() }
         })),
-        Pending: data.queue_pending.map((prompt: any) => ({ prompt })),
+        Pending: data.queue_pending.map((prompt: any) => ({ prompt }))
       };
     } catch (error) {
       console.error(error);
@@ -345,15 +326,11 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
    * Gets the prompt execution history
    * @returns Prompt history including node outputs
    */
-  const getHistory = async (
-    max_items: number = 200
-  ): Promise<ComfyHistoryItems> => {
+  const getHistory = async (max_items: number = 200): Promise<ComfyHistoryItems> => {
     try {
       const res = await fetchApi(API_URL.GET_HISTORY(max_items));
       if (!res.ok) {
-        throw new Error(
-          `Error fetching history: ${res.status} ${res.statusText}`
-        );
+        throw new Error(`Error fetching history: ${res.status} ${res.statusText}`);
       }
 
       const history = (await res.json()) as HistoryResponse;
@@ -371,9 +348,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
   const getSystemStats = async (): Promise<SystemStatsResponse> => {
     const res = await fetchApi(API_URL.GET_SYSTEM_STATS);
     if (!res.ok) {
-      throw new Error(
-        `Error fetching system stats: ${res.status} ${res.statusText}`
-      );
+      throw new Error(`Error fetching system stats: ${res.status} ${res.statusText}`);
     }
 
     return await res.json();
@@ -384,17 +359,14 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
    * @param {*} type The endpoint to post to: queue or history
    * @param {*} body Optional POST data
    */
-  const postItem = async (
-    type: ComfyItemURLType,
-    body?: object
-  ): Promise<void> => {
+  const postItem = async (type: ComfyItemURLType, body?: object): Promise<void> => {
     try {
-      await fetchApi("/" + type, {
-        method: "POST",
+      await fetchApi('/' + type, {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json'
         },
-        body: body ? JSON.stringify(body) : undefined,
+        body: body ? JSON.stringify(body) : undefined
       });
     } catch (error) {
       console.error(error);
@@ -422,12 +394,12 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
    * Interrupts the execution of the running prompt
    */
   const interrupt = async (): Promise<void> => {
-    await postItem("interrupt");
+    await postItem('interrupt');
   };
 
   /**
    * Gets user configuration data and where data should be stored
-   * @returns { Promise<{ storage: "server" | "browser", users?: Promise<string, unknown>, migrated?: boolean }> }
+   * @returns { Promise<{ storage: 'server' | 'browser', users?: Promise<string, unknown>, migrated?: boolean }> }
    */
   const getUserConfig = async (): Promise<UserConfigResponse> => {
     const response = await fetchApi(API_URL.GET_USER_CONFIG);
@@ -441,11 +413,11 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
    */
   const createUser = (username: string) => {
     return fetchApi(API_URL.CREATE_USER, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ username }),
+      body: JSON.stringify({ username })
     });
   };
 
@@ -475,8 +447,8 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
    */
   const storeSettings = (settings: Record<string, unknown>) => {
     return fetchApi(API_URL.STORE_SETTINGS, {
-      method: "POST",
-      body: JSON.stringify(settings),
+      method: 'POST',
+      body: JSON.stringify(settings)
     });
   };
 
@@ -488,8 +460,8 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
    */
   const storeSetting = (id: string, value: Record<string, any>) => {
     return fetchApi(`/settings/${encodeURIComponent(id)}`, {
-      method: "POST",
-      body: JSON.stringify(value),
+      method: 'POST',
+      body: JSON.stringify(value)
     });
   };
 
@@ -516,14 +488,12 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
     options: storeUserDataOptions = { stringify: true, throwOnError: true }
   ) => {
     const resp = await fetchApi(API_URL.STORE_USER_DATA_FILE(file), {
-      method: "POST",
+      method: 'POST',
       body: options?.stringify ? JSON.stringify(data) : data,
-      ...options,
+      ...options
     });
     if (resp.status !== 200) {
-      throw new Error(
-        `Error storing user data file '${file}': ${resp.status} ${resp.statusText}`
-      );
+      throw new Error(`Error storing user data file '${file}': ${resp.status} ${resp.statusText}`);
     }
   };
 
@@ -555,7 +525,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({
         storeSettings,
         storeSetting,
         getUserData,
-        storeUserData,
+        storeUserData
       }}
     >
       {children}
@@ -567,5 +537,5 @@ const ApiContext = createContext<IApiContext | undefined>(undefined);
 
 export const useApiContext = createUseContextHook(
   ApiContext,
-  "useApiContext must be used within a ApiContextProvider"
+  'useApiContext must be used within a ApiContextProvider'
 );
