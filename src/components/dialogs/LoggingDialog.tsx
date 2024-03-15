@@ -62,19 +62,19 @@ export function LoggingDialog() {
 
   useEffect(() => {
     const clearButton = (
-      <button type="button" onClick={() => clear()}>
+      <button key={'clearButton'} type="button" onClick={() => clear()}>
         Clear
       </button>
     );
 
     const exportButton = (
-      <button type="button" onClick={() => exportLogs()}>
+      <button key={'importButton'} type="button" onClick={() => exportLogs()}>
         Export logs...
       </button>
     );
 
     const importButton = (
-      <button type="button" onClick={() => importLogs()}>
+      <button key={'exportButton'} type="button" onClick={() => importLogs()}>
         View exported logs...
       </button>
     );
@@ -201,20 +201,24 @@ export function LoggingDialog() {
 
     const grid = (
       <div
+        key={'grid'}
         className=" comfy-logging-logs"
         style={{
           gridTemplateColumns: `repeat(${headers.length}, 1fr)`
         }}
       >
-        {[...headers, ...rows]}
+        {headers}
+        {rows}
       </div>
     );
 
-    const elements = [grid];
-    if (!enabled) {
-      elements.unshift(<h3 style={{ textAlign: 'center' }}>Logging is disabled</h3>);
-    }
-    showDialog(<div>{elements}</div>);
+    const disabled = (
+      <h3 key={'msg'} style={{ textAlign: 'center' }}>
+        Logging is disabled
+      </h3>
+    );
+
+    showDialog(enabled ? grid : disabled);
   };
 
   return (

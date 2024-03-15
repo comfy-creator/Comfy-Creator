@@ -16,8 +16,8 @@ export const useDialog = createUseContextHook(
 
 export const DialogContextProvider = ({ children }: { children: ReactNode }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [dialogContent, setDialogContent] = useState<ReactNode>(null);
   const [actionButtons, setActionButtons] = useState<ReactNode>([]);
+  const [dialogContent, setDialogContent] = useState<ReactNode>(null);
 
   const ref = useRef<HTMLDivElement>(null);
 
@@ -41,7 +41,7 @@ export const DialogContextProvider = ({ children }: { children: ReactNode }) => 
       {children}
 
       <MainDialog
-        ref={ref}
+        modalRef={ref}
         isOpen={isOpen}
         setIsOpen={setIsOpen}
         content={dialogContent}

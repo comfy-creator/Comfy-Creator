@@ -48,8 +48,6 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
     getSettingsLookup
   } = useSettingsStore();
 
-  const ssss = useSettingsStore((s) => s.settingsValues);
-
   const { getSettings, storeSetting } = useApiContext();
   const [content, setContent] = useState<ReactNode>([]);
   const [openDialog, setOpenDialog] = useState<boolean>(false);
@@ -132,7 +130,7 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
   const show = () => {
     setContent(() => {
       return [
-        <tr key={0} style={{ display: 'nones' }}>
+        <tr key={0} style={{ display: 'none' }}>
           <th />
           <th style={{ width: '33%' }} />
         </tr>,
@@ -144,7 +142,6 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
 
     setOpenDialog(true);
   };
-  const settingsStore = useSettingsStore((s) => s.settingsValues);
 
   const addSetting = ({
     id,

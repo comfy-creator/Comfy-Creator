@@ -4,13 +4,19 @@ interface MainDialogProps {
   isOpen: boolean;
   content: ReactNode;
   actionButtons: ReactNode;
-  ref?: RefObject<HTMLDivElement>;
+  modalRef: RefObject<HTMLDivElement>;
   setIsOpen: (isOpen: boolean) => void;
 }
 
-export function MainDialog({ ref, isOpen, setIsOpen, content, actionButtons }: MainDialogProps) {
+export function MainDialog({
+  modalRef,
+  isOpen,
+  setIsOpen,
+  content,
+  actionButtons
+}: MainDialogProps) {
   return (
-    <div ref={ref} className="comfy-modal" style={{ display: isOpen ? 'flex' : 'none' }}>
+    <div ref={modalRef} className="comfy-modal" style={{ display: isOpen ? 'flex' : 'none' }}>
       <div className="comfy-modal-content">
         {content}
 
