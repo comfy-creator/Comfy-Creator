@@ -348,3 +348,10 @@ export interface ThemeConfig {
     CSSVariables: { [x: string]: string };
   };
 }
+
+export interface LogEntry {
+  type: string;
+  source: string;
+  message: any[];
+  timestamp: Date;
+}

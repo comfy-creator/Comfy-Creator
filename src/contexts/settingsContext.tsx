@@ -16,6 +16,7 @@ import { useSettingsStore } from '../store/settings.ts';
 
 interface ISettingsContext {
   show: () => void;
+  close: () => void;
   load: () => Promise<void>;
   getId: (id: string) => string;
   addSetting: (setting: IAddSetting) => any;
@@ -268,23 +269,24 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
     };
   };
 
+  const close = () => {
+    setOpenDialog(false);
+  };
+
   return (
     <SettingsContext.Provider
       value={{
         load,
         getId,
         show,
+        close,
         addSetting,
         setSettingValue,
         getSettingValue
       }}
     >
       {children}
-      <ComfySettingsDialog
-        closeDialog={() => setOpenDialog(false)}
-        open={openDialog}
-        content={content}
-      />
+      <ComfySettingsDialog closeDialog={close} open={openDialog} content={content} />
     </SettingsContext.Provider>
   );
 };

@@ -8,7 +8,7 @@ interface ThemeProps {
 export function Theme({ value, onChange }: ThemeProps) {
   const { themes } = useSettingsStore();
   const options = Object.values(themes).map((c) => (
-    <option value={c.id} selected={c.id === value}>
+    <option key={c.id} value={c.id} selected={c.id === value}>
       {c.name}
     </option>
   ));
