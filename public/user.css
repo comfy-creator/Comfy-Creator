@@ -233,3 +233,42 @@
 .edge_opacity {
     opacity: 0.5;
 }
+
+button.comfy-settings-btn {
+    background-color: rgba(0, 0, 0, 0);
+    font-size: 12px;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+}
+
+#comfy-settings-dialog button {
+    background-color: var(--bg-color);
+    border: 1px var(--border-color) solid;
+    border-radius: 0;
+    color: var(--input-text);
+    font-size: 1rem;
+    padding: 0.5rem;
+}
+
+.comfy-logging-logs {
+    display: grid;
+    color: var(--fg-color);
+    white-space: pre-wrap;
+}
+
+.comfy-logging-log {
+    display: contents;
+}
+
+.comfy-logging-title {
+    background: var(--tr-even-bg-color);
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+.comfy-logging-log div {
+    background: var(--row-bg);
+    padding: 5px;
+}

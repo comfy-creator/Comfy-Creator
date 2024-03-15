@@ -110,6 +110,7 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
   const onNodeContextMenu = useCallback(
     (event: ReactMouseEvent, node: Node<NodeState>) => {
       event.preventDefault();
+      event.stopPropagation();
 
       const menuData = getMenuData(event, getNodeMenuItems(node));
       if (!menuData) return;

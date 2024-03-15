@@ -1,4 +1,4 @@
-import { type MouseEvent as ReactMouseEvent, ComponentType } from 'react';
+import { type MouseEvent as ReactMouseEvent, ComponentType, ReactNode } from 'react';
 import { NodeProps, XYPosition, type Node, type Edge, EdgeProps } from 'reactflow';
 
 // This type is outdated
@@ -341,3 +341,56 @@ export interface IMenuType {
 }
 
 export type KeyboardHandler = (event?: KeyboardEvent) => void;
+export interface SettingsLookup {
+  id: string;
+  name: string;
+  render: (i: number) => ReactNode;
+  onChange?: (...arg: any[]) => void;
+}
+
+export interface ThemeConfig {
+  id: string;
+  name: string;
+  colors: {
+    types: {
+      VAE: string;
+      CLIP: string;
+      MASK: string;
+      MODEL: string;
+      IMAGE: string;
+      LATENT: string;
+      DEFAULT: string;
+      CLIP_VISION: string;
+      CONTROL_NET: string;
+      STYLE_MODEL: string;
+      CONDITIONING: string;
+      CLIP_VISION_OUTPUT: string;
+      [x: string]: string;
+    };
+    appearance: {
+      NODE_BG_COLOR: string;
+      NODE_TEXT_SIZE: number;
+      NODE_TEXT_COLOR: string;
+      NODE_TITLE_COLOR: string;
+      NODE_SELECTED_TITLE_COLOR: string;
+      NODE_DEFAULT_BOX_COLOR: string;
+      NODE_BOX_OUTLINE_COLOR: string;
+
+      WIDGET_BG_COLOR: string;
+      WIDGET_TEXT_COLOR: string;
+      WIDGET_OUTLINE_COLOR: string;
+      WIDGET_SECONDARY_TEXT_COLOR: string;
+
+      EDGE_COLOR: string;
+      CONNECTING_EDGE_COLOR: string;
+    };
+    CSSVariables: { [x: string]: string };
+  };
+}
+
+export interface LogEntry {
+  type: string;
+  source: string;
+  message: any[];
+  timestamp: Date;
+}
