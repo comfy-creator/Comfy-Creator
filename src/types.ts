@@ -230,7 +230,7 @@ export interface ImageInputState extends BaseInputState {
 
 export interface VideoInputState extends BaseInputState {
   type: 'VIDEO';
-  // value: { src: string; type: string };
+  value: { src: string; type: string };
 }
 
 export interface PrimitiveInputState extends BaseInputState {

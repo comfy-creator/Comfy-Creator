@@ -7,7 +7,7 @@ import type { Edge, Node } from 'reactflow';
 const CONNECT_URL = 'http://localhost:8000';
 
 // TO DO: fetch a local graphId from local storage, if it exists
-const graphId: string | undefined = '1234';
+const graphId: string | undefined = 'xyz-123';
 
 const firebaseAuthToken = localStorage.getItem('firebaseAuthToken');
 

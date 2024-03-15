@@ -266,7 +266,6 @@ export class YjsProvider extends EventTarget {
     syncProtocol.writeUpdate(encoder, this.aggregatedUpdate);
 
     this.socket.emit('message', encoding.toUint8Array(encoder));
-
     this.aggregatedUpdate = null; // clear aggregated update
   };
 
@@ -275,11 +274,13 @@ export class YjsProvider extends EventTarget {
     { added, updated, removed }: { added: number[]; updated: number[]; removed: number[] },
     _origin: string | YjsProvider
   ) => {
+    if (!this.socket || !this.socket.connected) return; // no connection to use
+
     const changedClients = added.concat(updated).concat(removed);
     const encoder = encoding.createEncoder();
     encoding.writeVarUint(encoder, MsgType.Awareness);
     encoding.writeVarUint8Array(encoder, encodeAwarenessUpdate(this._awareness, changedClients));
-    this.socket?.emit('message', encoding.toUint8Array(encoder));
+    this.socket.emit('message', encoding.toUint8Array(encoder));
   };
 
   private exitHandler = () => {
