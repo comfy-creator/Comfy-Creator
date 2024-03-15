@@ -266,6 +266,7 @@ export class YjsProvider extends EventTarget {
     syncProtocol.writeUpdate(encoder, this.aggregatedUpdate);
 
     this.socket.emit('message', encoding.toUint8Array(encoder));
+
     this.aggregatedUpdate = null; // clear aggregated update
   };
 
