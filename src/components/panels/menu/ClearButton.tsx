@@ -3,19 +3,16 @@ import { RFState, useFlowStore } from '../../../store/flow.ts';
 const selector = (state: RFState) => ({
   setNodes: state.setNodes,
   setEdges: state.setEdges,
+  addNewGraph: state.addGraph
 });
 const ClearButton = () => {
   const {
-    setNodes,
-    setEdges,
+    addNewGraph
   } = useFlowStore(selector);
 
   const handleClick = () => {
-    const value = confirm("Clear workflow?");
-    if (value) {
-      setNodes([]);
-      setEdges([]);
-    }
+    const value = prompt("Name of the graph: ");
+    addNewGraph(value)
   }
 
   return (
@@ -23,7 +20,7 @@ const ClearButton = () => {
       id="comfy-clear-button"
       onClick={handleClick}
     >
-      Clear
+      New
     </button>
   );
 }

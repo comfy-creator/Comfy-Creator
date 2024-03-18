@@ -33,11 +33,26 @@ import {
 } from '../config/constants.ts';
 import { createEdgeFromTemplate } from '../components/prototypes/EdgeTemplate.tsx';
 
+export interface IGraphData {
+  index: number,
+  label: string;
+  nodes: Node<NodeState>[];
+  edges: Edge[];
+}
+
 export type RFState = {
+  currentGraphIndex: number;
+  graphs: IGraphData[];
   nodes: Node<NodeState>[];
   edges: Edge[];
   setNodes: (nodes: Node[]) => void;
   setEdges: (edges: Edge[]) => void;
+
+  addGraph: (label: string | null) => void;
+  removeGraph: (index: number) => void;
+  renameGraph: (index: number, label: string) => void;
+  selectGraph: (index: number) => void;
+
   currentConnectionLineType?: string;
 
   onNodesChange: OnNodesChange;
@@ -68,17 +83,118 @@ export type RFState = {
 };
 
 export const useFlowStore = create<RFState>((set, get) => ({
+  currentGraphIndex: 0,
+  graphs: [],
   nodes: [],
 
   edges: [],
 
-  setNodes: (nodes) => set(() => ({ nodes })),
+  setNodes: (nodes) => {
+    set((state) => {
+      let currentGraph = state.graphs.find(graph => graph.index === state.currentGraphIndex);
+      let newGraphs = state.graphs;
+      if (currentGraph) {
+        currentGraph = { ...currentGraph, nodes };
+        newGraphs = newGraphs.filter(graph => graph.index !== state.currentGraphIndex);
+        newGraphs = [...newGraphs, currentGraph];
+      }
+      return {
+        nodes,
+        graphs: Array.from(new Set(newGraphs))
+      }
+    });
+  },
 
-  setEdges: (edges) => set(() => ({ edges })),
+  setEdges: (edges) => {
+    set((state) => {
+      let currentGraph = state.graphs.find(graph => graph.index === state.currentGraphIndex);
+      let newGraphs = state.graphs;
+      if (currentGraph) {
+        currentGraph = { ...currentGraph, edges };
+        newGraphs = newGraphs.filter(graph => graph.index !== state.currentGraphIndex);
+        newGraphs = [...newGraphs, currentGraph];
+      }
+      return {
+        edges,
+        graphs: Array.from(new Set(newGraphs))
+      }
+    });
+  },
 
   onNodesChange: (changes: NodeChange[]) => {
-    set({
-      nodes: applyNodeChanges(changes, get().nodes)
+    set((state) => {
+      let currentGraph = state.graphs.find(graph => graph.index === state.currentGraphIndex);
+      let newGraphs = state.graphs;
+      if (currentGraph) {
+        currentGraph = { ...currentGraph, nodes: applyNodeChanges(changes, get().nodes) };
+        newGraphs = newGraphs.filter(graph => graph.index !== state.currentGraphIndex);
+        newGraphs = [...newGraphs, currentGraph];
+      }
+      return {
+        nodes: applyNodeChanges(changes, get().nodes),
+        graphs: Array.from(new Set(newGraphs))
+      }
+    });
+  },
+
+  addGraph: (label) => {
+    set((state) => {
+      const newGraph: IGraphData = {
+        index: state.graphs.length + 1,
+        label: label ? label : `Graph - ${state.graphs.length + 1}`,
+        nodes: [],
+        edges: []
+      }
+      return {
+        currentGraphIndex: newGraph.index,
+        nodes: newGraph.nodes,
+        edges: newGraph.edges,
+        graphs: Array.from(new Set([...state.graphs, newGraph]))
+      }
+    });
+  },
+
+  removeGraph: (index) => {
+    set((state) => {
+      const newGraphs = state.graphs.filter(graph => graph.index !== index);
+      const lastGraph = newGraphs[newGraphs.length - 1];
+      return {
+        graphs: newGraphs,
+        currentGraphIndex: lastGraph ? lastGraph.index : 0,
+        nodes: lastGraph ? lastGraph.nodes : [],
+        edges: lastGraph ? lastGraph.edges : []
+      }
+    });
+  },
+
+  renameGraph: (index, label) => {
+    set((state) => {
+      let currentGraph = state.graphs.find(graph => graph.index === index);
+      let newGraphs = state.graphs;
+      if (currentGraph) {
+        currentGraph = { ...currentGraph, label };
+        newGraphs = newGraphs.filter(graph => graph.index !== index);
+        newGraphs = [...newGraphs, currentGraph];
+      }
+      return {
+        graphs: Array.from(new Set(newGraphs))
+      }
+    });
+  },
+
+  selectGraph: (index) => {
+    set((state) => {
+      const currentGraph = state.graphs.find(graph => graph.index === index);
+
+      if (currentGraph) {
+        return {
+          currentGraphIndex: currentGraph.index,
+          nodes: currentGraph.nodes,
+          edges: currentGraph.edges
+        }
+      } else {
+        return state;
+      }
     });
   },
 

@@ -11,6 +11,7 @@ import { ComfyPromptStatus } from '../../types/comfy';
 import { toggleSwitch } from '../../utils/ui';
 import { ComfyList } from '../ComfyList';
 import { RFState, useFlowStore } from '../../store/flow';
+import Graphs from './menu/Graphs';
 
 type AutoQueueMode =
   | {
@@ -25,11 +26,12 @@ const selector = (state: RFState) => ({
   nodes: state.nodes,
   edges: state.edges,
   setNodes: state.setNodes,
-  setEdges: state.setEdges
+  setEdges: state.setEdges,
+  graphs: state.graphs
 });
 
 const ControlPanel = () => {
-  const { nodes, edges, setNodes, setEdges } = useFlowStore(selector);
+  const { nodes, edges, setNodes, setEdges, graphs } = useFlowStore(selector);
 
   const { addSetting, show: showSettings } = useSettings();
   const { queuePrompt, graphToPrompt } = usePrompt();
@@ -218,6 +220,8 @@ const ControlPanel = () => {
 
           <ClearButton />
           <LoadDefaultButton />
+
+          <Graphs />
         </div>
       </div>
     </Draggable>

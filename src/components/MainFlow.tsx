@@ -41,6 +41,7 @@ const MAX_ZOOM = 2;
 const selector = (state: RFState) => ({
   nodes: state.nodes,
   edges: state.edges,
+  graphs: state.graphs,
   onNodesChange: state.onNodesChange,
   onEdgesChange: state.onEdgesChange,
   onConnect: state.onConnect,
@@ -63,6 +64,7 @@ export function MainFlow() {
   const {
     nodes,
     edges,
+    graphs,
     onNodesChange,
     onEdgesChange,
     onConnect,
@@ -91,6 +93,8 @@ export function MainFlow() {
 
   // viewport from rfl
   const viewport = getViewport();
+
+  console.log("Graphs>>", graphs)
 
   useEffect(() => {
     const PrimitiveNode: NodeDefinition = {
