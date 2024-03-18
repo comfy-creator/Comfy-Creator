@@ -1,6 +1,6 @@
-import { ContextMenuProps, IMenuType } from '../../types.ts';
+import { ContextMenuProps, IMenuType } from '../../types';
 import { MouseEvent, useEffect, useRef } from 'react';
-import { useFlowStore } from '../../store/flow.ts';
+import { useFlowStore } from '../../store/flow';
 
 export function ContextMenu(prps: ContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -43,8 +43,7 @@ export function ContextMenu(prps: ContextMenuProps) {
       const { addNode } = useFlowStore.getState();
       addNode({
         position,
-        type: value.node?.name,
-        inputWidgetValues: {}
+        type: value.node?.name ? inputWidgetValues : {}
       });
     }
 

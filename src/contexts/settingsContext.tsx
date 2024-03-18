@@ -1,6 +1,6 @@
 // The container is used to provider dependency resolution for plugins
 
-import React, { ReactNode, useState } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { createUseContextHook } from './hookCreator';
 import { ComfySettingsDialog } from '../components/dialogs/ComfySettingsDialog';
 import {
@@ -12,9 +12,11 @@ import {
 } from '../components/SettingInputs';
 import { ComboOption } from '../types/many';
 import { useApiContext } from './apiContext';
+import { useSettingsStore } from '../store/settings.ts';
 
 interface ISettingsContext {
   show: () => void;
+  close: () => void;
   load: () => Promise<void>;
   getId: (id: string) => string;
   addSetting: (setting: IAddSetting) => any;
@@ -36,23 +38,53 @@ interface IAddSetting {
 const SettingsContext = React.createContext<ISettingsContext | null>(null);
 
 export const SettingsContextProvider = ({ children }: { children: ReactNode }) => {
+  const {
+    settingsValues,
+    settingsLookup,
+    addSettingsLookup,
+    addSettingsValue,
+    setSettingsValues,
+    getSettingsValue,
+    getSettingsLookup
+  } = useSettingsStore();
+
   const { getSettings, storeSetting } = useApiContext();
-  const [settingsValues, setSettingsValues] = useState<Record<string, any>>({});
-  const [settingsLookup, setSettingsLookup] = useState<Record<string, any>>({});
   const [content, setContent] = useState<ReactNode>([]);
   const [openDialog, setOpenDialog] = useState<boolean>(false);
 
-  // const { storageLocation, isNewUserSession } = useComfyApp();
   const storageLocation = 'browser',
-    isNewUserSession = false;
+    isNewUserSession = true;
+
+  useEffect(() => {
+    console.log(settingsValues);
+  }, [settingsValues]);
+
+  const getLocalSettings = () => {
+    var values: Record<string, any> = {},
+      keys = Object.keys(localStorage),
+      i = keys.length;
+
+    while (i--) {
+      if (keys[i].startsWith('Comfy.Settings.')) {
+        const item = localStorage.getItem(keys[i]) as string;
+        try {
+          values[keys[i]] = JSON.parse(item);
+        } catch (e) {
+          values[keys[i]] = item;
+        }
+      }
+    }
+
+    return values;
+  };
 
   const load = async () => {
-    const settingsVal = storageLocation === 'browser' ? localStorage : await getSettings();
+    const settingsVal = storageLocation === 'browser' ? getLocalSettings() : await getSettings();
     setSettingsValues(settingsVal);
 
     // Trigger onChange for any settings added before load
     for (const id in settingsLookup) {
-      settingsLookup[id].onChange?.(settingsValues[getId(id)]);
+      getSettingsLookup(id)?.onChange?.(getSettingValue(id));
     }
   };
 
@@ -65,38 +97,24 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
   };
 
   const getSettingValue = (id: string, defaultValue?: any) => {
-    let value = settingsValues[getId(id)];
-    if (!value) {
-      setSettingsValues((prev) => ({
-        ...prev,
-        [getId(id)]: defaultValue
-      }));
+    const lookupId = getId(id);
+    let value = getSettingsValue(lookupId);
+    if (value === undefined || value === null) {
+      addSettingsValue(lookupId, defaultValue);
+      value = defaultValue;
     }
 
-    if (value) {
-      if (storageLocation === 'browser') {
-        try {
-          value = JSON.parse(value);
-        } catch (error) {
-          console.error('Error parsing setting value', error);
-        }
-      }
-    }
-
-    return value ?? defaultValue;
+    return value;
   };
 
   const setSettingValueAsync = async (id: string, value: any) => {
     localStorage['Comfy.Settings.' + id] = JSON.stringify(value); // backwards compatibility for extensions keep setting in storage
 
-    const oldValue = getSettingValue(id, undefined);
-    setSettingsValues((prev) => ({
-      ...prev,
-      [getId(id)]: value
-    }));
+    const oldValue = getSettingValue(id);
+    addSettingsValue(getId(id), value);
 
     if (id in settingsLookup) {
-      settingsLookup[id].onChange?.(value, oldValue);
+      getSettingsLookup(id)?.onChange?.(value, oldValue);
     }
 
     await storeSetting(id, value);
@@ -110,27 +128,19 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
   };
 
   const show = () => {
-    // TODO: 👇
-    // for some weird reasons, reading `settingsLookup` directly in the `show` function doesn't work,
-    // it keeps returning empty object, so I'm using this hack to get around it for now.
-    // We should properly look into this later
-
-    setSettingsLookup((settings) => {
-      setContent(() => {
-        return [
-          <tr key={0} style={{ display: 'nones' }}>
-            <th />
-            <th style={{ width: '33%' }} />
-          </tr>,
-          ...Object.values(settings)
-            .sort((a, b) => a.name.localeCompare(b.name))
-            .map((s, i) => s.render(i + 1))
-        ];
-      });
-
-      setOpenDialog(true);
-      return settings;
+    setContent(() => {
+      return [
+        <tr key={0} style={{ display: 'none' }}>
+          <th />
+          <th style={{ width: '33%' }} />
+        </tr>,
+        ...Object.values(settingsLookup)
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((s, i) => s.render(i + 1))
+      ];
     });
+
+    setOpenDialog(true);
   };
 
   const addSetting = ({
@@ -153,7 +163,8 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
 
     const skipOnChange = false;
     let value = getSettingValue(id);
-    if (value == null) {
+
+    if (!value) {
       if (isNewUserSession) {
         // Check if we have a localStorage value but not a setting value and we are a new user
         const localValue = localStorage['Comfy.Settings.' + id];
@@ -178,9 +189,7 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
       name,
       render: (i: any) => {
         const setter = (v: any) => {
-          if (onChange) {
-            onChange(v, value);
-          }
+          onChange?.(v, value);
 
           setSettingValue(id, v);
           value = v;
@@ -188,13 +197,12 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
         value = getSettingValue(id, defaultValue);
 
         let element: ReactNode;
-        const htmlID = id.replaceAll('.', '-');
 
         function buildSettingInput(element: ReactNode) {
           return (
             <tr key={i}>
               <td>
-                <label htmlFor={htmlID} className={tooltip !== '' ? 'comfy-tooltip-indicator' : ''}>
+                <label htmlFor={id} className={tooltip !== '' ? 'comfy-tooltip-indicator' : ''}>
                   {name}
                 </label>
               </td>
@@ -210,37 +218,18 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
           switch (type) {
             case 'boolean':
               element = buildSettingInput(
-                <BooleanInput
-                  id={htmlID}
-                  onChange={onChange}
-                  setSettingValue={setSettingValue}
-                  value={getSettingValue(htmlID)}
-                />
+                <BooleanInput id={id} onChange={onChange} setSettingValue={setSettingValue} />
               );
               break;
             case 'number':
-              element = buildSettingInput(
-                <NumberInput
-                  id={htmlID}
-                  attrs={attrs}
-                  setter={setter}
-                  value={getSettingValue(htmlID)}
-                />
-              );
+              element = buildSettingInput(<NumberInput id={id} attrs={attrs} setter={setter} />);
               break;
             case 'slider':
-              element = buildSettingInput(
-                <SliderInput
-                  id={htmlID}
-                  attrs={attrs}
-                  setter={setter}
-                  value={getSettingValue(htmlID)}
-                />
-              );
+              element = buildSettingInput(<SliderInput id={id} attrs={attrs} setter={setter} />);
               break;
             case 'combo':
               element = buildSettingInput(
-                <ComboInput setter={setter} options={options} value={getSettingValue(htmlID)} />
+                <ComboInput setter={setter} options={options} value={getSettingValue(id)} />
               );
               break;
             case 'text':
@@ -249,14 +238,7 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
                 console.warn(`Unsupported setting type '${type}, defaulting to text`);
               }
 
-              element = buildSettingInput(
-                <TextInput
-                  id={htmlID}
-                  setter={setter}
-                  attrs={attrs}
-                  value={getSettingValue(htmlID)}
-                />
-              );
+              element = buildSettingInput(<TextInput id={id} setter={setter} attrs={attrs} />);
               break;
           }
         }
@@ -272,17 +254,7 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
       }
     };
 
-    setSettingsLookup((prev) => {
-      const updated = {
-        ...prev,
-        [id]: setting
-      };
-
-      console.log('Updated settingsLookup:', updated); // Log the updated settingsLookup
-      return updated;
-    });
-
-    console.log('Added settings...');
+    addSettingsLookup(id, setting);
 
     return {
       get value() {
@@ -294,23 +266,24 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
     };
   };
 
+  const close = () => {
+    setOpenDialog(false);
+  };
+
   return (
     <SettingsContext.Provider
       value={{
         load,
         getId,
         show,
+        close,
         addSetting,
         setSettingValue,
         getSettingValue
       }}
     >
-      <ComfySettingsDialog
-        closeDialog={() => setOpenDialog(false)}
-        open={openDialog}
-        content={content}
-      />
       {children}
+      <ComfySettingsDialog closeDialog={close} open={openDialog} content={content} />
     </SettingsContext.Provider>
   );
 };

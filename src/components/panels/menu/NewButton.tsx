@@ -23,6 +23,6 @@ const ClearButton = () => {
       New
     </button>
   );
-}
+};
 
 export default ClearButton;

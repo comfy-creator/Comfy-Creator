@@ -5,13 +5,15 @@ import { usePrompt } from '../../hooks/usePrompt';
 import ExtraOptions from './menu/ExtraOptions';
 import SaveButton from './menu/SaveButton';
 import DevSaveButton from './menu/DevSaveButton';
-import ClearButton from './menu/ClearButton';
+import NewButton from './menu/NewButton';
 import LoadDefaultButton from './menu/LoadDefaultButton';
 import { ComfyPromptStatus } from '../../types/comfy';
 import { toggleSwitch } from '../../utils/ui';
 import { ComfyList } from '../ComfyList';
 import { RFState, useFlowStore } from '../../store/flow';
 import Graphs from './menu/Graphs';
+import { loadLegacyWorkflow } from '../../handlers/loadLegacy.ts';
+import { useSettingsStore } from '../../store/settings.ts';
 
 type AutoQueueMode =
   | {
@@ -48,6 +50,9 @@ const ControlPanel = () => {
   const [promptFilename, setPromptFilename] = useState<{ value: boolean }>({
     value: false
   });
+  const [confirmClear, setConfirmClear] = useState<{ value: boolean }>({
+    value: false
+  });
 
   const [showQueue, setShowQueue] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -58,6 +63,102 @@ const ControlPanel = () => {
   const queueSizeEl = useRef<HTMLSpanElement>(null);
   const autoQueueModeElRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const legacyFileLoadRef = useRef<HTMLInputElement>(null);
+
+  const { addSettingsValue } = useSettingsStore();
+
+  useEffect(() => {
+    const confirmClear = addSetting({
+      id: 'Comfy.ConfirmClear',
+      name: 'Require confirmation when clearing workflow',
+      type: 'boolean',
+      defaultValue: true,
+      onChange: () => undefined
+    });
+    setConfirmClear(() => confirmClear);
+
+    const promptFilename = addSetting({
+      id: 'Comfy.PromptFilename',
+      name: 'Prompt for filename when saving workflow',
+      type: 'boolean',
+      defaultValue: false,
+      onChange: () => undefined
+    });
+    setPromptFilename(() => promptFilename);
+
+    /* file format for preview
+     *
+     * format;quality
+     *
+     * ex)
+     * webp;50 -> webp, quality 50
+     * jpeg;80 -> rgb, jpeg, quality 80
+     *
+     * @type {string}
+     */
+
+    addSetting({
+      id: 'Comfy.PreviewFormat',
+      name: 'When displaying a preview in the image widget, convert it to a lightweight image, e.g. webp, jpeg, webp;50, etc.',
+      type: 'text',
+      defaultValue: '',
+      onChange: () => {}
+    });
+
+    addSetting({
+      id: 'Comfy.DisableSliders',
+      name: 'Disable sliders.',
+      type: 'boolean',
+      defaultValue: false,
+      onChange: () => undefined
+    });
+
+    addSetting({
+      id: 'Comfy.DisableFloatRounding',
+      name: 'Disable rounding floats (requires page reload).',
+      type: 'boolean',
+      defaultValue: false,
+      onChange: () => undefined
+    });
+
+    addSetting({
+      id: 'Comfy.FloatRoundingPrecision',
+      name: 'Decimal places [0 = auto] (requires page reload).',
+      type: 'slider',
+      attrs: {
+        min: 0,
+        max: 6,
+        step: 1
+      },
+      defaultValue: 0,
+      onChange: () => undefined
+    });
+
+    // api.addEventListener('graphChanged', () => {
+    //   if (autoQueueMode === 'change' && autoQueueEnabled) {
+    //     if (lastQueueSize === 0) {
+    //       setGraphHasChanged(false);
+    //       queuePrompt(0);
+    //     } else {
+    //       setGraphHasChanged(true);
+    //     }
+    //   }
+    // });
+
+    addSetting({
+      id: 'Comfy.DevMode',
+      name: 'Enable Dev mode Options',
+      type: 'boolean',
+      defaultValue: false,
+      onChange: function (value: string) {
+        const devSaveApiButton = document.getElementById('comfy-dev-save-api-button');
+        if (devSaveApiButton) {
+          devSaveApiButton.style.display = value ? 'block' : 'none';
+        }
+      }
+    });
+  }, []);
 
   const setStatus = (status: ComfyPromptStatus) => {
     if (!queueSizeEl.current) return;
@@ -121,9 +222,33 @@ const ControlPanel = () => {
       ref={fileInputRef}
       accept=".json,image/png,.latent,.safetensors,image/webp"
       style={{ display: 'none' }}
-      onChange={() => {
-        if ('files' in fileInput && Array.isArray(fileInput.files)) {
-          // app.handleFile(fileInput.files[0]);
+      onChange={(e) => {}}
+    />
+  );
+
+  const legacyFIleLoad = (
+    <input
+      id="comfy-file-input"
+      type="file"
+      ref={legacyFileLoadRef}
+      accept=".json"
+      style={{ display: 'none' }}
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const contents = e.target?.result;
+            if (typeof contents === 'string') {
+              const graph = JSON.parse(contents);
+              const { edges, nodes } = loadLegacyWorkflow(graph);
+
+              setNodes(nodes);
+              setEdges(edges);
+            }
+          };
+          reader.readAsText(file);
         }
       }}
     />
@@ -142,13 +267,18 @@ const ControlPanel = () => {
       <div className="control-panel">
         <div className="comfy-menu" ref={menuContainerEl}>
           {fileInput}
+          {legacyFIleLoad}
+
           <div
             className="drag-handle"
             style={{
               overflow: 'hidden',
               position: 'relative',
               cursor: 'default',
-              width: '100%'
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
             }}
           >
             <span className="drag-handle" />
@@ -206,6 +336,10 @@ const ControlPanel = () => {
             Load
           </button>
 
+          <button id="comfy-load-button" onClick={() => legacyFileLoadRef?.current?.click?.()}>
+            Load (Legacy)
+          </button>
+
           <SaveButton promptFilename={promptFilename} />
           <DevSaveButton promptFilename={promptFilename} />
 
@@ -218,7 +352,7 @@ const ControlPanel = () => {
             Refresh
           </button>
 
-          <ClearButton />
+          <NewButton />
           <LoadDefaultButton />
 
           <Graphs />

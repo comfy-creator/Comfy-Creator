@@ -104,12 +104,13 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
       console.log('from pane context menu');
       setMenuProps(menuData);
     },
-    [nodeId, setMenuProps, setNodeId]
+    [setMenuProps]
   );
 
   const onNodeContextMenu = useCallback(
     (event: ReactMouseEvent, node: Node<NodeState>) => {
       event.preventDefault();
+      event.stopPropagation();
 
       const menuData = getMenuData(event, getNodeMenuItems(node));
       if (!menuData) return;

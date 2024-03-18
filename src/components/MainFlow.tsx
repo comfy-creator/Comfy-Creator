@@ -1,6 +1,13 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-import { DragEvent, MouseEvent as ReactMouseEvent, TouchEvent, useCallback, useEffect, useState } from 'react';
+import {
+  DragEvent,
+  MouseEvent as ReactMouseEvent,
+  TouchEvent,
+  useCallback,
+  useEffect,
+  useState
+} from 'react';
 import ReactFlow, {
   Background,
   BackgroundVariant,
@@ -18,7 +25,6 @@ import ReactFlow, {
   Panel,
   ReactFlowInstance,
   useKeyPress,
-  useOnSelectionChange,
   useReactFlow
 } from 'reactflow';
 import { useContextMenu } from '../contexts/ContextMenu';
@@ -29,9 +35,13 @@ import { previewImage, previewVideo } from '../node_definitions/preview';
 import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../handlers/dragDrop';
 import nodeInfo from '../../node_info.json';
-import { ConnectionLine } from './ConnectionLIne.tsx';
-import { HANDLE_ID_DELIMITER, HANDLE_TYPES } from '../config/constants.ts';
-import { defaultEdges, defaultNodes } from '../default-flow.ts';
+import { ConnectionLine } from './ConnectionLIne';
+import { HANDLE_ID_DELIMITER, HANDLE_TYPES } from '../config/constants';
+import { defaultEdges, defaultNodes } from '../default-flow';
+import { useSettings } from '../contexts/settingsContext.tsx';
+import { useSettingsStore } from '../store/settings.ts';
+import { defaultThemeConfig } from '../config/themes.ts';
+import { Theme } from './Theme.tsx';
 
 const FLOW_KEY = 'flow';
 const PADDING = 5; // in pixels
@@ -39,6 +49,7 @@ const MIN_ZOOM = 0.5;
 const MAX_ZOOM = 2;
 
 const selector = (state: RFState) => ({
+  panOnDrag: state.panOnDrag,
   nodes: state.nodes,
   edges: state.edges,
   graphs: state.graphs,
@@ -62,6 +73,7 @@ const selector = (state: RFState) => ({
 
 export function MainFlow() {
   const {
+    panOnDrag,
     nodes,
     edges,
     graphs,
@@ -85,6 +97,7 @@ export function MainFlow() {
     string
   >();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
+  const { load: loadSettings, addSetting } = useSettings();
 
   const [rfInstance, setRFInstance] = useState<ReactFlowInstance | null>(null);
 
@@ -95,6 +108,35 @@ export function MainFlow() {
   const viewport = getViewport();
 
   console.log("Graphs>>", graphs)
+
+  useEffect(() => {
+    const { addThemes, setActiveTheme, getActiveTheme } = useSettingsStore.getState();
+
+    loadSettings();
+    addThemes(defaultThemeConfig);
+
+    addSetting({
+      id: 'theme',
+      name: 'Theme',
+      defaultValue: 'dark',
+      type: (_name: string, setter: (value: string) => void, value: string) => (
+        <Theme value={value} onChange={setter} />
+      ),
+      async onChange(value: string) {
+        if (!value) {
+          return;
+        }
+
+        setActiveTheme(value);
+        const theme = getActiveTheme();
+        for (const key in theme.colors.CSSVariables) {
+          const value = theme.colors.CSSVariables[key];
+
+          document.documentElement.style.setProperty(`--${key}`, value);
+        }
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const PrimitiveNode: NodeDefinition = {
@@ -205,9 +247,8 @@ export function MainFlow() {
         edges,
         viewport
       };
-    localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
+      localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
     }
-
   }, [nodes, edges, viewport]);
 
   // Store graph state to local storage
@@ -401,6 +442,7 @@ export function MainFlow() {
 
   return (
     <ReactFlow
+      panOnDrag={panOnDrag}
       onContextMenu={onContextMenu}
       onNodeContextMenu={onNodeContextMenu}
       onPaneClick={onPaneClick}
@@ -420,8 +462,8 @@ export function MainFlow() {
       onMoveEnd={handleMoveEnd}
       maxZoom={MAX_ZOOM}
       minZoom={MIN_ZOOM}
-      deleteKeyCode={["Delete", "Backspace"]}
-      multiSelectionKeyCode={"Shift"}
+      deleteKeyCode={['Delete', 'Backspace']}
+      multiSelectionKeyCode={'Shift'}
       fitView
       fitViewOptions={{
         padding: 2,
@@ -435,13 +477,14 @@ export function MainFlow() {
         color: 'var(--fg-color)',
         cursor: 'crosshair'
       }}
-      proOptions={{ account: '', hideAttribution: true }}
+      proOptions={{ account: 'paid-pro', hideAttribution: true }}
       edgeTypes={edgeComponents}
       connectionLineComponent={ConnectionLine}
       connectionLineType={ConnectionLineType.Bezier}
     >
       <ReactHotkeys keyName={hotKeysShortcut.join(',')} onKeyDown={handleKeyPress}>
-        <Background variant={BackgroundVariant.Lines} />
+        <Background color={'var(--tr-odd-bg-color)'} variant={BackgroundVariant.Lines} />
+
         <Controls />
         <NodeResizer />
         <NodeToolbar />

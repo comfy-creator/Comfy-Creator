@@ -1,5 +1,43 @@
-import { ComponentType, type MouseEvent as ReactMouseEvent } from 'react';
-import { EdgeProps, NodeProps, XYPosition } from 'reactflow';
+import { type MouseEvent as ReactMouseEvent, ComponentType, ReactNode } from 'react';
+import { NodeProps, XYPosition, type Node, type Edge, EdgeProps } from 'reactflow';
+
+// This type is outdated
+// export type NodeData = {
+//   label: string;
+//   function: string;
+//   category: string;
+//   inputs: {
+//     required: Record<string, InputDef>;
+//     optional?: Record<string, InputDef>;
+//   };
+//   outputs: string[];
+// };
+
+export type InputSpec = {
+  default?: number | string;
+  min?: number;
+  max?: number;
+  step?: number;
+  round?: number | boolean;
+  display?: 'color'; // what is this?
+  multiline?: boolean;
+  image_upload?: boolean; // dumb
+};
+
+type EdgeValueSpec = undefined | string[] | InputSpec;
+
+// TO DO: when the fuck is this a 'string[]' and why? Combo type?
+// I removed 'string[]' for now
+// export type InputDef = {
+//   defaultValue?: number | string;
+//   min?: number;
+//   max?: number;
+//   step?: number;
+//   round?: number | boolean;
+//   display?: 'color'; // what is this?
+//   multiline?: boolean;
+//   image_upload?: boolean; // dumb
+// };
 
 export type EdgeType =
   | 'BOOLEAN'
@@ -214,7 +252,7 @@ export type WidgetState =
 
 export type NodeState = {
   readonly name: string;
-  config: NodeStateConfig;
+  config?: NodeStateConfig;
   inputs: InputHandle[];
   outputs: OutputHandle[];
   widgets: Record<string, WidgetState>;
@@ -224,6 +262,10 @@ export type NodeStateConfig = {
   hideType?: boolean;
   hideLabel?: boolean;
   isVirtual?: boolean;
+
+  // Node custom display colors
+  bgColor?: string;
+  textColor?: string;
 };
 
 // =========== Node Types ===========
@@ -292,8 +334,63 @@ export interface IMenuType {
   disabled?: boolean;
   label: string;
   hasSubMenu: boolean;
-  node: Record<string, Object> | string | null;
+  node: Record<string, object> | string | null;
   subMenu: IMenuType[] | null;
   isOpen?: boolean;
   onClick?: (event: ReactMouseEvent) => void;
+}
+
+export type KeyboardHandler = (event?: KeyboardEvent) => void;
+export interface SettingsLookup {
+  id: string;
+  name: string;
+  render: (i: number) => ReactNode;
+  onChange?: (...arg: any[]) => void;
+}
+
+export interface ThemeConfig {
+  id: string;
+  name: string;
+  colors: {
+    types: {
+      VAE: string;
+      CLIP: string;
+      MASK: string;
+      MODEL: string;
+      IMAGE: string;
+      LATENT: string;
+      DEFAULT: string;
+      CLIP_VISION: string;
+      CONTROL_NET: string;
+      STYLE_MODEL: string;
+      CONDITIONING: string;
+      CLIP_VISION_OUTPUT: string;
+      [x: string]: string;
+    };
+    appearance: {
+      NODE_BG_COLOR: string;
+      NODE_TEXT_SIZE: number;
+      NODE_TEXT_COLOR: string;
+      NODE_TITLE_COLOR: string;
+      NODE_SELECTED_TITLE_COLOR: string;
+      NODE_DEFAULT_BOX_COLOR: string;
+      NODE_BOX_OUTLINE_COLOR: string;
+
+      WIDGET_BG_COLOR: string;
+      WIDGET_TEXT_COLOR: string;
+      WIDGET_OUTLINE_COLOR: string;
+      WIDGET_SECONDARY_TEXT_COLOR: string;
+
+      EDGE_COLOR: string;
+      CONNECTING_EDGE_COLOR: string;
+    };
+    CSSVariables: { [x: string]: string };
+  };
+}
+
+export interface LogEntry {
+  type: string;
+  source: string;
+  message: any[];
+  timestamp: Date;
 }

@@ -9,8 +9,9 @@ import { ContextMenuProvider } from './contexts/ContextMenu';
 import { ApiContextProvider } from './contexts/apiContext';
 import { SettingsContextProvider } from './contexts/settingsContext';
 import { ReactFlowProvider } from 'reactflow';
-import { DialogContextProvider } from './contexts/dialog.tsx';
-import { ErrorProvider } from './contexts/error.tsx';
+import { DialogContextProvider } from './contexts/dialog';
+import { ErrorProvider } from './contexts/error';
+import { LoggingContextProvider } from './contexts/logging.tsx';
 
 function App() {
   return (
@@ -33,7 +34,9 @@ function App() {
           <ContextMenuProvider>
             <ApiContextProvider>
               <SettingsContextProvider>
-                <MainFlow />
+                <LoggingContextProvider>
+                  <MainFlow />
+                </LoggingContextProvider>
               </SettingsContextProvider>
             </ApiContextProvider>
           </ContextMenuProvider>
