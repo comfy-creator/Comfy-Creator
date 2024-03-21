@@ -45,7 +45,6 @@
 .react-flow__node {
     cursor: crosshair !important;
     border-radius: 5px !important;
-    background: #353535 !important;
     margin: 1px;
 }
 

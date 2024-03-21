@@ -18,7 +18,6 @@ import { EnumWidget } from '../widgets/Enum';
 import { ImageWidget } from '../widgets/Image';
 import { TextWidget } from '../widgets/Text';
 import { useSettingsStore } from '../../store/settings.ts';
-import { useFlowStore } from '../../store/flow.ts';
 
 const createWidgetFromSpec = (
   def: InputDef,
@@ -98,8 +97,7 @@ export const createNodeComponentFromDef = (
     const [minWidth, setMinWidth] = useState(0);
     const [minHeight, setMinHeight] = useState(0);
 
-    const nodeStyle = useFlowStore((state) => state.nodeStyle);
-    const { getActiveTheme } = useSettingsStore();
+    const { getActiveTheme, activeTheme } = useSettingsStore();
     const theme = getActiveTheme();
 
     const appearance = theme.colors.appearance;
@@ -116,6 +114,33 @@ export const createNodeComponentFromDef = (
         setMinHeight(divHeight || 0);
       }
     }, []);
+
+    useEffect(() => {
+      const node = document.querySelector(`[data-id="${id}"]`) as HTMLDivElement;
+      if (!node) return;
+
+      const { getActiveTheme } = useSettingsStore.getState();
+      const appearance = getActiveTheme().colors.appearance;
+
+      node.style.backgroundColor = data.config?.bgColor
+        ? data.config.bgColor
+        : appearance.NODE_BG_COLOR;
+
+      node.style.color = data.config?.textColor
+        ? data.config.textColor
+        : appearance.NODE_TEXT_COLOR;
+    }, [activeTheme]);
+
+    useEffect(() => {
+      const node = document.querySelector(`[data-id="${id}"]`) as HTMLDivElement;
+      if (!node) return;
+
+      if (selected) {
+        node.classList.add('selected');
+      } else {
+        node.classList.remove('selected');
+      }
+    }, [selected]);
 
     const onClick = () => toast.success('File uploaded successfully!');
 
@@ -215,8 +240,8 @@ export const createNodeComponentFromDef = (
           minHeight={minHeight}
         />
         <div
-          style={{ ...nodeStyle, fontSize: appearance.NODE_TEXT_SIZE }}
-          className={`node_container ${selected ? 'selected' : ''}`}
+          style={{ fontSize: appearance.NODE_TEXT_SIZE }}
+          className={`node_container`}
           ref={divRef}
         >
           {!data.config?.hideLabel && (

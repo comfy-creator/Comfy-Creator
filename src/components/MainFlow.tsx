@@ -147,20 +147,6 @@ export function MainFlow() {
     // document.documentElement.style
   }, []);
 
-  const { activeTheme } = useSettingsStore.getState();
-
-  useEffect(() => {
-    const { getActiveTheme } = useSettingsStore.getState();
-    const appearance = getActiveTheme().colors.appearance;
-
-    const nodeStyle = {
-      backgroundColor: appearance.NODE_BG_COLOR,
-      color: appearance.NODE_TEXT_COLOR
-    };
-
-    setNodeStyle(nodeStyle);
-  }, [activeTheme]);
-
   useEffect(() => {
     const PrimitiveNode: NodeDefinition = {
       inputs: [],
