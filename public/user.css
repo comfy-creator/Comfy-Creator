@@ -81,6 +81,15 @@
     font-size: 0.7rem;
 }
 
+.node_footer {
+    margin-top: 3px;
+    margin-bottom: 3px;
+}
+
+.node_footer .comfy-btn {
+    width: 100%;
+}
+
 .clip {
     background-color: #ffd500 !important;
 }

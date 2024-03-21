@@ -2,10 +2,10 @@ import {
   addEdge,
   applyEdgeChanges,
   applyNodeChanges,
-  getConnectedEdges,
   Connection,
   Edge,
   EdgeChange,
+  getConnectedEdges,
   Node,
   NodeChange,
   OnConnect,
@@ -35,6 +35,7 @@ import {
 } from '../config/constants.ts';
 import { createEdgeFromTemplate } from '../components/prototypes/EdgeTemplate.tsx';
 import { yjsProvider } from '../yjs/index.ts';
+import { CSSProperties } from 'react';
 
 const nodesMap = yjsProvider.doc.getMap<Node<NodeState>>('nodes');
 const edgesMap = yjsProvider.doc.getMap<Edge>('edges');
@@ -77,6 +78,9 @@ export type RFState = {
   registerEdgeType: (defs: EdgeType[]) => void;
 
   destroy: () => void;
+
+  nodeStyle: CSSProperties;
+  setNodeStyle: (style: CSSProperties) => void;
 };
 
 export const useFlowStore = create<RFState>((set, get) => {
@@ -97,6 +101,8 @@ export const useFlowStore = create<RFState>((set, get) => {
 
   // === Return the store object ===
   return {
+    nodeStyle: {},
+
     panOnDrag: true,
     setPanOnDrag: (panOnDrag) => set({ panOnDrag }),
 
@@ -208,14 +214,6 @@ export const useFlowStore = create<RFState>((set, get) => {
         exchangeInputForWidget({ inputSlot, sourceNode, targetNode });
       }
 
-      // if (sourceNode.type == 'RerouteNode') {
-      //   const slot = Number(targetParts[1]);
-      //   addOutputTypeToNode(slot, targetNode, sourceNode);
-      // } else if (targetNode.type == 'RerouteNode') {
-      //   const slot = Number(sourceParts[1]);
-      //   addInputTypeToNode(slot, sourceNode, targetNode);
-      // }
-
       set({
         edges: addEdge(
           {
@@ -272,7 +270,6 @@ export const useFlowStore = create<RFState>((set, get) => {
 
       const id = crypto.randomUUID();
       const data = computeInitialNodeState(def, inputWidgetValues, config);
-
       const newNode = { id, type, position, data };
 
       set((state) => ({
@@ -378,6 +375,17 @@ export const useFlowStore = create<RFState>((set, get) => {
     destroy: () => {
       nodesMap.unobserve(yjsNodesObserver);
       edgesMap.unobserve(yjsEdgesObserver);
+    },
+
+    setNodeStyle: (style) => {
+      set((state) => {
+        return {
+          nodeStyle: {
+            ...state.nodeStyle,
+            ...style
+          }
+        };
+      });
     }
   };
 });

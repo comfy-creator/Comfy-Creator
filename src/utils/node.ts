@@ -17,7 +17,16 @@ export function computeInitialNodeState(
   config: NodeStateConfig
 ) {
   const { display_name: name, inputs, outputs } = def;
-  const state: NodeState = { name, config, inputs: [], outputs: [], widgets: {} };
+  const state: NodeState = {
+    name,
+    config: {
+      ...config,
+      isOutputNode: def.output_node
+    },
+    inputs: [],
+    outputs: [],
+    widgets: {}
+  };
 
   inputs.forEach((input) => {
     const isWidget = isWidgetInput(input.type);

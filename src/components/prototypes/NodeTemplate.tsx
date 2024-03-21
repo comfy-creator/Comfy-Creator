@@ -17,8 +17,8 @@ import { ToggleWidget } from '../widgets/Toggle';
 import { EnumWidget } from '../widgets/Enum';
 import { ImageWidget } from '../widgets/Image';
 import { TextWidget } from '../widgets/Text';
-import { IconPlayCircle } from '../icons/PlayIcon';
 import { useSettingsStore } from '../../store/settings.ts';
+import { useFlowStore } from '../../store/flow.ts';
 
 const createWidgetFromSpec = (
   def: InputDef,
@@ -98,6 +98,7 @@ export const createNodeComponentFromDef = (
     const [minWidth, setMinWidth] = useState(0);
     const [minHeight, setMinHeight] = useState(0);
 
+    const nodeStyle = useFlowStore((state) => state.nodeStyle);
     const { getActiveTheme } = useSettingsStore();
     const theme = getActiveTheme();
 
@@ -203,19 +204,18 @@ export const createNodeComponentFromDef = (
       <>
         <NodeResizeControl
           style={{
-            background: data.config?.bgColor ? data.config.bgColor : appearance.NODE_BG_COLOR,
             cursor: 'se-resize',
-            border: 'none'
+            border: 'none',
+            width: '12px',
+            height: '12px'
           }}
+          color="transparent"
+          position="bottom-right"
           minWidth={minWidth}
           minHeight={minHeight}
         />
         <div
-          style={{
-            fontSize: appearance.NODE_TEXT_SIZE,
-            backgroundColor: data.config?.bgColor ? data.config.bgColor : appearance.NODE_BG_COLOR,
-            color: data.config?.textColor ? data.config.textColor : appearance.NODE_TEXT_COLOR
-          }}
+          style={{ ...nodeStyle, fontSize: appearance.NODE_TEXT_SIZE }}
           className={`node_container ${selected ? 'selected' : ''}`}
           ref={divRef}
         >
@@ -228,10 +228,6 @@ export const createNodeComponentFromDef = (
               >
                 {def.display_name}
               </span>
-
-              <span className="run_icon">
-                <IconPlayCircle />
-              </span>
             </div>
           )}
 
@@ -240,6 +236,12 @@ export const createNodeComponentFromDef = (
             <div className="flow_output_container">{outputHandles}</div>
           </div>
           <div className="widgets_container">{widgets}</div>
+
+          <div className="node_footer">
+            {(def.output_node || data.config?.isOutputNode) && (
+              <button className="comfy-btn">Run</button>
+            )}
+          </div>
         </div>
       </>
     );

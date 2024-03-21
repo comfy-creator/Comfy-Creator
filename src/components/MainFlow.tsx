@@ -67,7 +67,9 @@ const selector = (state: RFState) => ({
   addHotKeysHandlers: state.addHotKeysHandlers,
   setCurrentConnectionLineType: state.setCurrentConnectionLineType,
   edgeComponents: state.edgeComponents,
-  registerEdgeType: state.registerEdgeType
+  registerEdgeType: state.registerEdgeType,
+  nodeStyle: state.nodeStyle,
+  setNodeStyle: state.setNodeStyle
 });
 
 export function MainFlow() {
@@ -87,7 +89,9 @@ export function MainFlow() {
     hotKeysHandlers,
     setCurrentConnectionLineType,
     edgeComponents,
-    registerEdgeType
+    registerEdgeType,
+    nodeStyle,
+    setNodeStyle
   } = useFlowStore(selector);
 
   const { getNodes, getEdges, getViewport, fitView, setViewport } = useReactFlow<
@@ -132,7 +136,30 @@ export function MainFlow() {
         }
       }
     });
+
+    // const nodeTextcolor = data.config?.textColor
+    //   ? data.config.textColor
+    //   : appearance.NODE_TEXT_COLOR;
+    // const nodeBackgroundColor = data.config?.bgColor
+    //   ? data.config.bgColor
+    //   : appearance.NODE_BG_COLOR;
+
+    // document.documentElement.style
   }, []);
+
+  const { activeTheme } = useSettingsStore.getState();
+
+  useEffect(() => {
+    const { getActiveTheme } = useSettingsStore.getState();
+    const appearance = getActiveTheme().colors.appearance;
+
+    const nodeStyle = {
+      backgroundColor: appearance.NODE_BG_COLOR,
+      color: appearance.NODE_TEXT_COLOR
+    };
+
+    setNodeStyle(nodeStyle);
+  }, [activeTheme]);
 
   useEffect(() => {
     const PrimitiveNode: NodeDefinition = {

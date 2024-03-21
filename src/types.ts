@@ -1,5 +1,5 @@
-import { type MouseEvent as ReactMouseEvent, ComponentType, ReactNode } from 'react';
-import { NodeProps, XYPosition, type Node, type Edge, EdgeProps } from 'reactflow';
+import { ComponentType, type MouseEvent as ReactMouseEvent, ReactNode } from 'react';
+import { EdgeProps, NodeProps, XYPosition } from 'reactflow';
 
 // This type is outdated
 // export type NodeData = {
@@ -262,6 +262,7 @@ export type NodeStateConfig = {
   hideType?: boolean;
   hideLabel?: boolean;
   isVirtual?: boolean;
+  isOutputNode?: boolean;
 
   // Node custom display colors
   bgColor?: string;
@@ -341,6 +342,7 @@ export interface IMenuType {
 }
 
 export type KeyboardHandler = (event?: KeyboardEvent) => void;
+
 export interface SettingsLookup {
   id: string;
   name: string;
