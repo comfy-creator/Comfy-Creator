@@ -67,9 +67,7 @@ const selector = (state: RFState) => ({
   addHotKeysHandlers: state.addHotKeysHandlers,
   setCurrentConnectionLineType: state.setCurrentConnectionLineType,
   edgeComponents: state.edgeComponents,
-  registerEdgeType: state.registerEdgeType,
-  nodeStyle: state.nodeStyle,
-  setNodeStyle: state.setNodeStyle
+  registerEdgeType: state.registerEdgeType
 });
 
 export function MainFlow() {
@@ -89,9 +87,7 @@ export function MainFlow() {
     hotKeysHandlers,
     setCurrentConnectionLineType,
     edgeComponents,
-    registerEdgeType,
-    nodeStyle,
-    setNodeStyle
+    registerEdgeType
   } = useFlowStore(selector);
 
   const { getNodes, getEdges, getViewport, fitView, setViewport } = useReactFlow<
@@ -108,6 +104,10 @@ export function MainFlow() {
 
   // viewport from rfl
   const viewport = getViewport();
+
+  useEffect(() => {
+    console.log(rfInstance);
+  }, [rfInstance]);
 
   useEffect(() => {
     const { addThemes, setActiveTheme, getActiveTheme } = useSettingsStore.getState();

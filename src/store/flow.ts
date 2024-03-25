@@ -35,11 +35,12 @@ import {
 } from '../config/constants.ts';
 import { createEdgeFromTemplate } from '../components/prototypes/EdgeTemplate.tsx';
 import { yjsProvider } from '../yjs/index.ts';
-import { CSSProperties } from 'react';
 
 const nodesMap = yjsProvider.doc.getMap<Node<NodeState>>('nodes');
 const edgesMap = yjsProvider.doc.getMap<Edge>('edges');
 const awareness = yjsProvider.awareness; // TO DO: use for cusor location
+
+type NodeCallbackType = 'afterQueued';
 
 export type RFState = {
   panOnDrag: boolean;
@@ -79,8 +80,13 @@ export type RFState = {
 
   destroy: () => void;
 
-  nodeStyle: CSSProperties;
-  setNodeStyle: (style: CSSProperties) => void;
+  nodeCallbacks: {
+    [key in NodeCallbackType]?: (node: Node<NodeState>, ...v: any[]) => any;
+  };
+  registerNodeCallback: (
+    type: NodeCallbackType,
+    value: (node: Node<NodeState>, ...v: any[]) => any
+  ) => void;
 };
 
 export const useFlowStore = create<RFState>((set, get) => {
@@ -101,8 +107,6 @@ export const useFlowStore = create<RFState>((set, get) => {
 
   // === Return the store object ===
   return {
-    nodeStyle: {},
-
     panOnDrag: true,
     setPanOnDrag: (panOnDrag) => set({ panOnDrag }),
 
@@ -231,6 +235,8 @@ export const useFlowStore = create<RFState>((set, get) => {
 
     edgeComponents: {},
 
+    nodeCallbacks: {},
+
     // This will overwrite old node-definitions of the same name
     addNodeDefs: (defs: NodeDefinitions) => {
       const { updateWidgetState } = get();
@@ -270,7 +276,7 @@ export const useFlowStore = create<RFState>((set, get) => {
 
       const id = crypto.randomUUID();
       const data = computeInitialNodeState(def, inputWidgetValues, config);
-      const newNode = { id, type, position, data };
+      const newNode: Node<NodeState> = { id, type, position, data };
 
       set((state) => ({
         nodes: [...state.nodes, newNode]
@@ -377,12 +383,12 @@ export const useFlowStore = create<RFState>((set, get) => {
       edgesMap.unobserve(yjsEdgesObserver);
     },
 
-    setNodeStyle: (style) => {
+    registerNodeCallback: (type, value) => {
       set((state) => {
         return {
-          nodeStyle: {
-            ...state.nodeStyle,
-            ...style
+          nodeCallbacks: {
+            ...state.nodeCallbacks,
+            [type]: value
           }
         };
       });

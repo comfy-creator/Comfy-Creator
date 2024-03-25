@@ -182,8 +182,11 @@ export interface BaseInputState {
   type: EdgeType;
   hidden?: boolean;
   optional?: boolean;
+  serialize?: boolean;
   definition?: InputDef;
   isHighlighted?: boolean;
+  isValueControl?: boolean;
+  linkedWidgets?: WidgetState[];
 }
 
 export interface OutputHandle {
