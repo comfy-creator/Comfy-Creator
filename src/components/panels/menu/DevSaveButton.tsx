@@ -1,4 +1,4 @@
-import { usePrompt } from '../../../hooks/usePrompt.tsx';
+import { usePrompt } from '../../../lib/hooks/usePrompt.tsx';
 
 interface DevSaveButtonProps {
   promptFilename: {

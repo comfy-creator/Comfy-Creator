@@ -9,13 +9,13 @@ import {
   useRef,
   useState
 } from 'react';
-import { ContextMenuProps, IMenuType, NodeState } from '../types.ts';
+import { ContextMenuProps, IMenuType, NodeState } from '../lib/types.ts';
 import { ContextMenu } from '../components/prototypes/ContextMenuTemplate.tsx';
 import { Node } from 'reactflow';
 import SearchWidget from '../components/SearchWidget.tsx';
 import NodeDefs from '../../node_info.json';
-import { categorizeObjects } from '../utils/ui.tsx';
-import { getNodeMenuItems } from '../menu.ts';
+import { categorizeObjects } from '../lib/utils/ui.tsx';
+import { getNodeMenuItems } from '../lib/menu.ts';
 
 interface IContextMenu {
   onNodeContextMenu: (event: ReactMouseEvent, node: Node) => void;

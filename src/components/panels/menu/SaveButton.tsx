@@ -1,5 +1,4 @@
-import { useEffect, useRef } from 'react';
-import { usePrompt } from '../../../hooks/usePrompt.tsx';
+import { usePrompt } from '../../../lib/hooks/usePrompt.tsx';
 
 interface SaveButtonProps {
   promptFilename: {

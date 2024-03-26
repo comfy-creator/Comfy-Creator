@@ -1,5 +1,5 @@
 import { Node } from 'reactflow';
-import { NodeState } from './types';
+import { NodeState } from './lib/types.ts';
 
 export const defaultNodes: Node<NodeState>[] = [
   {

@@ -1,4 +1,4 @@
-import { EdgeType } from '../types.ts';
+import { EdgeType } from '../lib/types.ts';
 import { useFlowStore } from '../store/flow.ts';
 
 export const SUPPORTED_IMAGE_TYPES = [

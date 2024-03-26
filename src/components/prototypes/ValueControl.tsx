@@ -8,7 +8,7 @@ import {
   NodeState,
   StringInputState,
   WidgetState
-} from '../../types.ts';
+} from '../../lib/types.ts';
 
 const { registerNodeCallback, updateWidgetState } = useFlowStore.getState();
 

@@ -1,6 +1,6 @@
 import { IMenuType, NodeState } from './types.ts';
 import { Node } from 'reactflow';
-import { useFlowStore } from './store/flow.ts';
+import { useFlowStore } from '../store/flow.ts';
 import {
   convertNodeInputToWidget,
   convertNodeWidgetToInput,

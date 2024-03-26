@@ -7,9 +7,9 @@ import {
   NodeStateConfig,
   WidgetState
 } from '../types.ts';
-import { CONVERTABLE_WIDGET_TYPES, WIDGET_TYPES } from '../config/constants.ts';
+import { CONVERTABLE_WIDGET_TYPES, WIDGET_TYPES } from '../../config/constants.ts';
 import { Node } from 'reactflow';
-import { useFlowStore } from '../store/flow.ts';
+import { useFlowStore } from '../../store/flow.ts';
 
 export function computeInitialNodeState(
   def: NodeDefinition,

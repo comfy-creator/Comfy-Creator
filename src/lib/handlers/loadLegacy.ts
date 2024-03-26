@@ -1,7 +1,7 @@
-import { useFlowStore } from '../store/flow';
-import { EdgeType, InputDef, InputHandle, NodeState, OutputHandle, WidgetState } from '../types';
+import { useFlowStore } from '../../store/flow.ts';
+import { EdgeType, InputDef, InputHandle, NodeState, OutputHandle, WidgetState } from '../types.ts';
 import { Edge, Node } from 'reactflow';
-import { isWidgetInput } from '../utils/node';
+import { isWidgetInput } from '../utils/node.ts';
 
 interface LegacyWorkflow {
   groups: any[];

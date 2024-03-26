@@ -28,16 +28,16 @@ import ReactFlow, {
 import { useContextMenu } from '../contexts/contextmenu';
 import ControlPanel from './panels/ControlPanel';
 import { RFState, useFlowStore } from '../store/flow';
-import { NodeState } from '../types';
+import { NodeState } from '../lib/types';
 import {
   PreviewImage,
   PreviewVideo,
   PrimitiveNode,
   RerouteNode,
   transformNodeDefs
-} from '../nodedefs';
+} from '../lib/nodedefs';
 import ReactHotkeys from 'react-hot-keys';
-import { dragHandler, dropHandler } from '../handlers/dragDrop';
+import { dragHandler, dropHandler } from '../lib/handlers/dragDrop';
 import { ConnectionLine } from './ConnectionLIne';
 import {
   FLOW_KEY,
@@ -50,7 +50,7 @@ import { defaultEdges, defaultNodes } from '../default-flow';
 import { useSettings } from '../contexts/settings';
 import { useSettingsStore } from '../store/settings';
 import { defaultThemeConfig } from '../config/themes';
-import { colorSchemeSettings } from '../settings';
+import { colorSchemeSettings } from '../lib/settings';
 import nodeInfo from '../../node_info.json';
 
 const selector = (state: RFState) => ({

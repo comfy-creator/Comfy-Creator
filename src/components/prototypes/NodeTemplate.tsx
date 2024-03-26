@@ -8,7 +8,7 @@ import {
   StringInputDef,
   UpdateWidgetState,
   WidgetState
-} from '../../types.ts';
+} from '../../lib/types.ts';
 import { toast } from 'react-toastify';
 import { Handle, NodeProps, NodeResizeControl, Position } from 'reactflow';
 import { NumberWidget } from '../widgets/Number';

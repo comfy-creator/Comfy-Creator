@@ -25,8 +25,8 @@ import {
   UpdateWidgetState,
   UpdateWidgetStateParams,
   WidgetState
-} from '../types';
-import { computeInitialNodeState, exchangeInputForWidget } from '../utils/node';
+} from '../lib/types.ts';
+import { computeInitialNodeState, exchangeInputForWidget } from '../lib/utils/node';
 import { createNodeComponentFromDef } from '../components/prototypes/NodeTemplate.tsx';
 import {
   DEFAULT_HOTKEYS_HANDLERS,

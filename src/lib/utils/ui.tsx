@@ -1,5 +1,5 @@
 import { RefObject, useEffect, useState } from 'react';
-import { IMenuType } from '../types';
+import { IMenuType } from '../types.ts';
 
 type RawInput = {
   text: string;

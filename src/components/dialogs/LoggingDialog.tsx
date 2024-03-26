@@ -1,6 +1,6 @@
 import { useLogging } from '../../contexts/logging.tsx';
 import { useEffect, useRef } from 'react';
-import { LogEntry } from '../../types.ts';
+import { LogEntry } from '../../lib/types.ts';
 import { useDialog } from '../../contexts/dialog.tsx';
 
 function stringify(val: any, depth: number, replacer?: any, space?: any, onGetObjID?: any) {

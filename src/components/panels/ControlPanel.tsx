@@ -1,17 +1,17 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import Draggable from 'react-draggable';
 import { useSettings } from '../../contexts/settings.tsx';
-import { usePrompt } from '../../hooks/usePrompt';
+import { usePrompt } from '../../lib/hooks/usePrompt';
 import ExtraOptions from './menu/ExtraOptions';
 import SaveButton from './menu/SaveButton';
 import DevSaveButton from './menu/DevSaveButton';
 import ClearButton from './menu/ClearButton';
 import LoadDefaultButton from './menu/LoadDefaultButton';
 import { ComfyPromptStatus } from '../../types/comfy';
-import { toggleSwitch } from '../../utils/ui';
+import { toggleSwitch } from '../../lib/utils/ui';
 import { ComfyList } from '../ComfyList';
 import { RFState, useFlowStore } from '../../store/flow';
-import { loadLegacyWorkflow } from '../../handlers/loadLegacy.ts';
+import { loadLegacyWorkflow } from '../../lib/handlers/loadLegacy.ts';
 import { useSettingsStore } from '../../store/settings.ts';
 
 type AutoQueueMode =
