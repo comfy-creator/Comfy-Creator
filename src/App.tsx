@@ -5,13 +5,13 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import 'reactflow/dist/style.css';
-import { ContextMenuProvider } from './contexts/ContextMenu';
-import { ApiContextProvider } from './contexts/apiContext';
-import { SettingsContextProvider } from './contexts/settingsContext';
+import { ContextMenuProvider } from './contexts/contextmenu';
+import { ApiContextProvider } from './contexts/api';
+import { SettingsContextProvider } from './contexts/settings';
 import { ReactFlowProvider } from 'reactflow';
 import { DialogContextProvider } from './contexts/dialog';
 import { ErrorProvider } from './contexts/error';
-import { LoggingContextProvider } from './contexts/logging.tsx';
+import { LoggingContextProvider } from './contexts/logging';
 
 function App() {
   return (

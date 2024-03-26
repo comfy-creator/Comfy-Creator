@@ -1,6 +1,6 @@
 // The container is used to provider dependency resolution for plugins
 
-import React, { ReactNode, useEffect, useState } from 'react';
+import React, { ReactNode, useState } from 'react';
 import { createUseContextHook } from './hookCreator';
 import { ComfySettingsDialog } from '../components/dialogs/ComfySettingsDialog';
 import {
@@ -11,7 +11,7 @@ import {
   TextInput
 } from '../components/SettingInputs';
 import { ComboOption } from '../types/many';
-import { useApiContext } from './apiContext';
+import { useApiContext } from './api.tsx';
 import { useSettingsStore } from '../store/settings.ts';
 
 interface ISettingsContext {
@@ -35,11 +35,10 @@ interface IAddSetting {
   options?: ComboOption[] | ((value: string) => (ComboOption | string)[]);
 }
 
-const SettingsContext = React.createContext<ISettingsContext | null>(null);
+const Settings = React.createContext<ISettingsContext | null>(null);
 
 export const SettingsContextProvider = ({ children }: { children: ReactNode }) => {
   const {
-    settingsValues,
     settingsLookup,
     addSettingsLookup,
     addSettingsValue,
@@ -54,10 +53,6 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
 
   const storageLocation = 'browser',
     isNewUserSession = true;
-
-  useEffect(() => {
-    console.log(settingsValues);
-  }, [settingsValues]);
 
   const getLocalSettings = () => {
     var values: Record<string, any> = {},
@@ -271,7 +266,7 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
   };
 
   return (
-    <SettingsContext.Provider
+    <Settings.Provider
       value={{
         load,
         getId,
@@ -284,11 +279,11 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
     >
       {children}
       <ComfySettingsDialog closeDialog={close} open={openDialog} content={content} />
-    </SettingsContext.Provider>
+    </Settings.Provider>
   );
 };
 
 export const useSettings = createUseContextHook(
-  SettingsContext,
+  Settings,
   'useSettings must be used within a SettingsContextProvider'
 );

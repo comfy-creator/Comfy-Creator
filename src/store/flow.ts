@@ -10,7 +10,8 @@ import {
   NodeChange,
   OnConnect,
   OnEdgesChange,
-  OnNodesChange
+  OnNodesChange,
+  ReactFlowInstance
 } from 'reactflow';
 import { create } from 'zustand';
 import {
@@ -43,6 +44,8 @@ const awareness = yjsProvider.awareness; // TO DO: use for cusor location
 type NodeCallbackType = 'afterQueued';
 
 export type RFState = {
+  instance: ReactFlowInstance | null;
+
   panOnDrag: boolean;
   setPanOnDrag: (panOnDrag: boolean) => void;
 
@@ -87,6 +90,8 @@ export type RFState = {
     type: NodeCallbackType,
     value: (node: Node<NodeState>, ...v: any[]) => any
   ) => void;
+
+  setInstance: (instance: ReactFlowInstance) => void;
 };
 
 export const useFlowStore = create<RFState>((set, get) => {
@@ -107,6 +112,7 @@ export const useFlowStore = create<RFState>((set, get) => {
 
   // === Return the store object ===
   return {
+    instance: null,
     panOnDrag: true,
     setPanOnDrag: (panOnDrag) => set({ panOnDrag }),
 
@@ -392,6 +398,10 @@ export const useFlowStore = create<RFState>((set, get) => {
           }
         };
       });
+    },
+
+    setInstance: (instance) => {
+      set({ instance });
     }
   };
 });

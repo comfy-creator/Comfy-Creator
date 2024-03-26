@@ -1,7 +1,7 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { createUseContextHook } from './hookCreator';
 import { LogEntry } from '../types.ts';
-import { useSettings } from './settingsContext.tsx';
+import { useSettings } from './settings.tsx';
 import { LoggingDialog } from '../components/dialogs/LoggingDialog.tsx';
 
 interface LoggingContextType {

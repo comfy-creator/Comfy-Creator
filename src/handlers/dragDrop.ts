@@ -35,7 +35,7 @@ export function dropHandler({ rfInstance, setNodes, setEdges, addNode }: DropHan
           const imageData = await getFileAsDataURL(file);
           addNode({
             position,
-            type: 'previewImage',
+            type: 'PreviewImage',
             inputWidgetValues: { image: imageData }
           });
 
@@ -44,7 +44,7 @@ export function dropHandler({ rfInstance, setNodes, setEdges, addNode }: DropHan
           const videoData = await getFileAsDataURL(file);
           addNode({
             position,
-            type: 'previewVideo',
+            type: 'PreviewVideo',
             inputWidgetValues: {
               video: {
                 src: videoData,

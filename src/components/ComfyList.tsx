@@ -1,6 +1,7 @@
-import { RefObject, useEffect, useState } from "react";
-import { ComfyItems } from "../types/api.ts";
-import { useApiContext } from "../contexts/apiContext";
+import { useState } from 'react';
+import { ComfyItems } from '../types/api.ts';
+import { useApiContext } from '../contexts/api.tsx';
+
 // import { useLoadGraphData } from '../hooks/useLoadGraphData';
 
 interface ComfyListProps {
@@ -10,12 +11,7 @@ interface ComfyListProps {
   show: boolean;
 }
 
-export const ComfyList = ({
-  show,
-  text,
-  type,
-  reverse = false,
-}: ComfyListProps) => {
+export const ComfyList = ({ show, text, type, reverse = false }: ComfyListProps) => {
   const [items, setItems] = useState({});
   const { getItems, clearItems, deleteItem } = useApiContext();
 
@@ -27,19 +23,17 @@ export const ComfyList = ({
   };
 
   return (
-    <div className="comfy-list" style={{ display: show ? "block" : "none" }}>
+    <div className="comfy-list" style={{ display: show ? 'block' : 'none' }}>
       {Object.keys(items).flatMap((section) => [
         <h4 key={section}>{section}</h4>,
         <div className="comfy-list-items" key={`${section}-items`}>
           {(reverse
-            ? Object.values(
-                (items as ComfyItems[])[section as keyof typeof items]
-              ).reverse()
+            ? Object.values((items as ComfyItems[])[section as keyof typeof items]).reverse()
             : Object.values(items[section as keyof typeof items])
           ).map((item, index) => {
             const removeAction = item.remove || {
-              name: "Delete",
-              cb: () => deleteItem(type || text.toLowerCase(), item.prompt[1]),
+              name: 'Delete',
+              cb: () => deleteItem(type || text.toLowerCase(), item.prompt[1])
             };
 
             return (
@@ -66,7 +60,7 @@ export const ComfyList = ({
               </div>
             );
           })}
-        </div>,
+        </div>
       ])}
 
       <div className="comfy-list-actions">

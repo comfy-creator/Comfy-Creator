@@ -498,7 +498,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
   };
 
   return (
-    <ApiContext.Provider
+    <Api.Provider
       value={{
         sessionId,
         connectionStatus,
@@ -529,13 +529,13 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
       }}
     >
       {children}
-    </ApiContext.Provider>
+    </Api.Provider>
   );
 };
 
-const ApiContext = createContext<IApiContext | undefined>(undefined);
+const Api = createContext<IApiContext | undefined>(undefined);
 
 export const useApiContext = createUseContextHook(
-  ApiContext,
+  Api,
   'useApiContext must be used within a ApiContextProvider'
 );

@@ -134,3 +134,8 @@ export const HANDLE_TYPES: EdgeType[] = [
 export const HANDLE_ID_DELIMITER = '::';
 
 export const CONVERTABLE_WIDGET_TYPES: EdgeType[] = ['STRING', 'ENUM', 'INT', 'FLOAT', 'BOOLEAN'];
+
+export const FLOW_KEY = 'flow';
+export const FLOW_PADDING = 5; // in pixels
+export const FLOW_MIN_ZOOM = 0.5;
+export const FLOW_MAX_ZOOM = 2;

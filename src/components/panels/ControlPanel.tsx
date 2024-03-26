@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import Draggable from 'react-draggable';
-import { useSettings } from '../../contexts/settingsContext';
+import { useSettings } from '../../contexts/settings.tsx';
 import { usePrompt } from '../../hooks/usePrompt';
 import ExtraOptions from './menu/ExtraOptions';
 import SaveButton from './menu/SaveButton';

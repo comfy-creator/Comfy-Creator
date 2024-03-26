@@ -5,8 +5,7 @@ import {
   MouseEvent as ReactMouseEvent,
   TouchEvent,
   useCallback,
-  useEffect,
-  useState
+  useEffect
 } from 'react';
 import ReactFlow, {
   Background,
@@ -23,30 +22,36 @@ import ReactFlow, {
   OnConnectStart,
   OnConnectStartParams,
   Panel,
-  ReactFlowInstance,
-  useKeyPress,
+  ReactFlowJsonObject,
   useReactFlow
 } from 'reactflow';
-import { useContextMenu } from '../contexts/ContextMenu';
+import { useContextMenu } from '../contexts/contextmenu';
 import ControlPanel from './panels/ControlPanel';
 import { RFState, useFlowStore } from '../store/flow';
-import { NodeDefinition, NodeState } from '../types';
-import { previewImage, previewVideo } from '../node_definitions/preview';
+import { NodeState } from '../types';
+import {
+  PreviewImage,
+  PreviewVideo,
+  PrimitiveNode,
+  RerouteNode,
+  transformNodeDefs
+} from '../nodedefs';
 import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../handlers/dragDrop';
-import nodeInfo from '../../node_info.json';
 import { ConnectionLine } from './ConnectionLIne';
-import { HANDLE_ID_DELIMITER, HANDLE_TYPES } from '../config/constants';
+import {
+  FLOW_KEY,
+  FLOW_MAX_ZOOM,
+  FLOW_MIN_ZOOM,
+  HANDLE_ID_DELIMITER,
+  HANDLE_TYPES
+} from '../config/constants';
 import { defaultEdges, defaultNodes } from '../default-flow';
-import { useSettings } from '../contexts/settingsContext.tsx';
-import { useSettingsStore } from '../store/settings.ts';
-import { defaultThemeConfig } from '../config/themes.ts';
-import { Theme } from './Theme.tsx';
-
-const FLOW_KEY = 'flow';
-const PADDING = 5; // in pixels
-const MIN_ZOOM = 0.5;
-const MAX_ZOOM = 2;
+import { useSettings } from '../contexts/settings';
+import { useSettingsStore } from '../store/settings';
+import { defaultThemeConfig } from '../config/themes';
+import { colorSchemeSettings } from '../settings';
+import nodeInfo from '../../node_info.json';
 
 const selector = (state: RFState) => ({
   panOnDrag: state.panOnDrag,
@@ -67,7 +72,9 @@ const selector = (state: RFState) => ({
   addHotKeysHandlers: state.addHotKeysHandlers,
   setCurrentConnectionLineType: state.setCurrentConnectionLineType,
   edgeComponents: state.edgeComponents,
-  registerEdgeType: state.registerEdgeType
+  registerEdgeType: state.registerEdgeType,
+  instance: state.instance,
+  setInstance: state.setInstance
 });
 
 export function MainFlow() {
@@ -87,7 +94,9 @@ export function MainFlow() {
     hotKeysHandlers,
     setCurrentConnectionLineType,
     edgeComponents,
-    registerEdgeType
+    registerEdgeType,
+    instance,
+    setInstance
   } = useFlowStore(selector);
 
   const { getNodes, getEdges, getViewport, fitView, setViewport } = useReactFlow<
@@ -96,177 +105,34 @@ export function MainFlow() {
   >();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
   const { load: loadSettings, addSetting } = useSettings();
-
-  const [rfInstance, setRFInstance] = useState<ReactFlowInstance | null>(null);
-
-  // keep an eye on shift key
-  const shiftPressed = useKeyPress('Shift');
-
-  // viewport from rfl
   const viewport = getViewport();
 
   useEffect(() => {
-    console.log(rfInstance);
-  }, [rfInstance]);
+    const { addThemes } = useSettingsStore.getState();
 
-  useEffect(() => {
-    const { addThemes, setActiveTheme, getActiveTheme } = useSettingsStore.getState();
-
+    // Load existing settings
     loadSettings();
+
+    // Register default color schemes
     addThemes(defaultThemeConfig);
+    addSetting(colorSchemeSettings);
 
-    addSetting({
-      id: 'theme',
-      name: 'Theme',
-      defaultValue: 'dark',
-      type: (_name: string, setter: (value: string) => void, value: string) => (
-        <Theme value={value} onChange={setter} />
-      ),
-      async onChange(value: string) {
-        if (!value) {
-          return;
-        }
-
-        setActiveTheme(value);
-        const theme = getActiveTheme();
-        for (const key in theme.colors.CSSVariables) {
-          const value = theme.colors.CSSVariables[key];
-
-          document.documentElement.style.setProperty(`--${key}`, value);
-        }
-      }
-    });
-
-    // const nodeTextcolor = data.config?.textColor
-    //   ? data.config.textColor
-    //   : appearance.NODE_TEXT_COLOR;
-    // const nodeBackgroundColor = data.config?.bgColor
-    //   ? data.config.bgColor
-    //   : appearance.NODE_BG_COLOR;
-
-    // document.documentElement.style
-  }, []);
-
-  useEffect(() => {
-    const PrimitiveNode: NodeDefinition = {
-      inputs: [],
-      category: 'utils',
-      output_node: true,
-      display_name: 'Primitive',
-      description: 'Primitive Node',
-      outputs: [{ type: '*', name: 'connect widget to input' }]
-    };
-
-    const RerouteNode: NodeDefinition = {
-      category: 'utils',
-      output_node: true,
-      display_name: 'Reroute',
-      description: 'Reroute Node',
-      inputs: [{ type: '*', name: '' }],
-      outputs: [{ type: '*', name: '' }]
-    };
-
-    // Register some node defs for testing
-    addNodeDefs({ previewImage, previewVideo, RerouteNode, PrimitiveNode });
-  }, [addNodeDefs]);
-
-  useEffect(() => {
-    const defs: Record<string, NodeDefinition> = {};
-
-    const buildInput = (type: string, name: string, options: any, optional: boolean) => {
-      let data;
-      if (Array.isArray(type)) {
-        data = {
-          type: 'ENUM',
-          multiSelect: false,
-          defaultValue: type[0],
-          options: type
-        };
-      } else {
-        data = {
-          type,
-          defaultValue: options?.default,
-          ...options
-        };
-      }
-
-      return { ...data, name, optional };
-    };
-
-    for (const name in nodeInfo) {
-      const node = nodeInfo[name as keyof typeof nodeInfo];
-
-      const def: NodeDefinition = {
-        inputs: [],
-        outputs: [],
-        category: node.category,
-        description: node.description,
-        output_node: node.output_node,
-        display_name: node.display_name
-      };
-
-      // TO DO: we should change the server's return value for node-definitions such
-      // that it conforms to the NodeDefinition type. We do not need to support ComfyUI's
-      // old legacy poorly thought-out system.
-      for (const name in node.input.required) {
-        const [type, options] = node.input.required[
-          name as keyof typeof node.input.required
-        ] as any;
-        const input = buildInput(type, name, options, false);
-        def.inputs.push(input);
-      }
-
-      // for (const name in node.input.optional) {
-      //   const [type, options] = node.input.optional[
-      //     name as keyof typeof node.input.optional
-      //   ] as any;
-
-      //   const input = buildInput(type, name, options, true);
-      //   def.inputs.push(input);
-      // }
-
-      for (const name in node.output) {
-        const output = node.output[name as keyof typeof node.output] as any;
-        def.outputs.push({ name: output, type: output });
-      }
-
-      defs[name] = def;
-    }
-
-    addNodeDefs(defs);
+    // Register Node definitions and edge types
+    addNodeDefs({ PreviewImage, PreviewVideo, RerouteNode, PrimitiveNode });
+    addNodeDefs(transformNodeDefs(nodeInfo));
     registerEdgeType(HANDLE_TYPES);
-  }, []);
 
-  useEffect(() => {
-    // Load graph state from local storage
-    const flow = JSON.parse(localStorage.getItem(FLOW_KEY) as string);
-    if (flow) {
-      const { x = 0, y = 0, zoom = 1 } = flow.viewport;
-      setNodes(flow.nodes?.length > 0 ? flow.nodes : defaultNodes);
-      setEdges(flow.edges?.length > 0 ? flow.edges : defaultEdges);
-      setViewport({ x, y, zoom });
-    }
+    // Load existing flow from local storage
+    loadFlow();
   }, []);
 
   // save to localStorage as nodes, edges and viewport changes
   useEffect(() => {
     if (nodes.length > 0 || edges.length > 0) {
-      const flow = {
-        nodes,
-        edges,
-        viewport
-      };
-      localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
+      const flow = { nodes, edges, viewport };
+      saveFlow(flow);
     }
   }, [nodes, edges, viewport]);
-
-  // Store graph state to local storage
-  const serializeGraph = useCallback(() => {
-    if (rfInstance) {
-      const flow = rfInstance.toObject();
-      localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
-    }
-  }, [rfInstance]);
 
   // TO DO: open the context menu if you dragged out an edge and didn't connect it,
   // so we can auto-spawn a compatible node for that edge
@@ -277,26 +143,21 @@ export function MainFlow() {
         // TO DO: this logic may be wrong here? We're mixing react-events with native-events!
         onContextMenu(event);
       }
+
       const newNodes = nodes.map((node) => {
-        const outputs = Object.entries(node.data.outputs).map(([_, output]) => {
-          return {
-            ...output,
-            isHighlighted: false
-          };
-        });
-        const inputs = Object.entries(node.data.inputs).map(([_, input]) => {
-          return {
-            ...input,
-            isHighlighted: false
-          };
-        });
+        const outputs = Object.entries(node.data.outputs).map(([_, output]) => ({
+          ...output,
+          isHighlighted: false
+        }));
+
+        const inputs = Object.entries(node.data.inputs).map(([_, input]) => ({
+          ...input,
+          isHighlighted: false
+        }));
+
         return {
           ...node,
-          data: {
-            ...node.data,
-            outputs,
-            inputs
-          }
+          data: { ...node.data, outputs, inputs }
         };
       });
       setNodes(newNodes);
@@ -352,6 +213,30 @@ export function MainFlow() {
     [nodes, setCurrentConnectionLineType, setNodes]
   );
 
+  // Store graph state to local storage
+  const serializeFlow = useCallback(() => {
+    if (instance) saveFlow();
+  }, [instance]);
+
+  const saveFlow = (flow?: ReactFlowJsonObject) => {
+    if (!flow) {
+      flow = instance?.toObject();
+    }
+
+    localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
+  };
+
+  const loadFlow = () => {
+    const flow = JSON.parse(localStorage.getItem(FLOW_KEY) as string);
+
+    if (flow) {
+      const { x = 0, y = 0, zoom = 1 } = flow.viewport;
+      setNodes(flow.nodes?.length > 0 ? flow.nodes : defaultNodes);
+      setEdges(flow.edges?.length > 0 ? flow.edges : defaultEdges);
+      setViewport({ x, y, zoom });
+    }
+  };
+
   // Validation connection for edge-compatability and circular loops
   const isValidConnection = useCallback(
     (connection: Connection): boolean => {
@@ -399,8 +284,8 @@ export function MainFlow() {
 
   const onDrop = useCallback(
     (event: DragEvent<HTMLDivElement>) =>
-      dropHandler({ rfInstance, addNode, setNodes, setEdges })(event),
-    [rfInstance, addNode, setNodes, setEdges]
+      dropHandler({ rfInstance: instance, addNode, setNodes, setEdges })(event),
+    [instance, addNode, setNodes, setEdges]
   );
 
   const handleKeyPress = useCallback(
@@ -432,7 +317,7 @@ export function MainFlow() {
         viewPort.y > (menuRef.current?.clientHeight || 0)
       ) {
         fitView({
-          minZoom: MIN_ZOOM,
+          minZoom: FLOW_MIN_ZOOM,
           maxZoom: viewPort.zoom,
           duration: 500
         });
@@ -440,7 +325,7 @@ export function MainFlow() {
 
       if (viewPort.x < 0 && Math.abs(viewPort.x) > boundViewPort.x) {
         fitView({
-          minZoom: MIN_ZOOM,
+          minZoom: FLOW_MIN_ZOOM,
           maxZoom: viewPort.zoom,
           duration: 500
         });
@@ -463,21 +348,21 @@ export function MainFlow() {
       onConnectStart={onConnectStart}
       onConnectEnd={onConnectEnd}
       isValidConnection={isValidConnection}
-      onInit={setRFInstance}
+      onInit={setInstance}
       nodeTypes={nodeComponents}
       ref={menuRef}
       onDrop={onDrop}
       onDragOver={onDragOver}
       onMoveEnd={handleMoveEnd}
-      maxZoom={MAX_ZOOM}
-      minZoom={MIN_ZOOM}
+      maxZoom={FLOW_MAX_ZOOM}
+      minZoom={FLOW_MIN_ZOOM}
       deleteKeyCode={['Delete', 'Backspace']}
       multiSelectionKeyCode={'Shift'}
       fitView
       fitViewOptions={{
         padding: 2,
         minZoom: 1,
-        maxZoom: MAX_ZOOM,
+        maxZoom: FLOW_MAX_ZOOM,
         duration: 500
       }}
       zoomOnDoubleClick={false}
