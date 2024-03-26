@@ -74,7 +74,8 @@ const selector = (state: RFState) => ({
   edgeComponents: state.edgeComponents,
   registerEdgeType: state.registerEdgeType,
   instance: state.instance,
-  setInstance: state.setInstance
+  setInstance: state.setInstance,
+  addRawNode: state.addRawNode
 });
 
 export function MainFlow() {
@@ -96,7 +97,8 @@ export function MainFlow() {
     edgeComponents,
     registerEdgeType,
     instance,
-    setInstance
+    setInstance,
+    addRawNode
   } = useFlowStore(selector);
 
   const { getNodes, getEdges, getViewport, fitView, setViewport } = useReactFlow<
@@ -104,14 +106,14 @@ export function MainFlow() {
     string
   >();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
-  const { load: loadSettings, addSetting } = useSettings();
+  const { loadCurrentSettings, addSetting } = useSettings();
   const viewport = getViewport();
 
   useEffect(() => {
     const { addThemes } = useSettingsStore.getState();
 
-    // Load existing settings
-    loadSettings();
+    // Load current settings
+    loadCurrentSettings();
 
     // Register default color schemes
     addThemes(defaultThemeConfig);
@@ -129,7 +131,12 @@ export function MainFlow() {
   // save to localStorage as nodes, edges and viewport changes
   useEffect(() => {
     if (nodes.length > 0 || edges.length > 0) {
-      const flow = { nodes, edges, viewport };
+      const flow = {
+        viewport,
+        nodes: nodes.filter(Boolean),
+        edges: edges.filter(Boolean)
+      };
+      
       saveFlow(flow);
     }
   }, [nodes, edges, viewport]);
@@ -222,7 +229,7 @@ export function MainFlow() {
     if (!flow) {
       flow = instance?.toObject();
     }
-
+    console.log('Saving...');
     localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
   };
 

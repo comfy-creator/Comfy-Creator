@@ -1,6 +1,6 @@
 // The container is used to provider dependency resolution for plugins
 
-import React, { ReactNode, useState } from 'react';
+import React, { createContext, ReactNode, useState } from 'react';
 import { createUseContextHook } from './hookCreator';
 import { ComfySettingsDialog } from '../components/dialogs/ComfySettingsDialog';
 import {
@@ -17,8 +17,8 @@ import { useSettingsStore } from '../store/settings.ts';
 interface ISettingsContext {
   show: () => void;
   close: () => void;
-  load: () => Promise<void>;
   getId: (id: string) => string;
+  loadCurrentSettings: () => Promise<void>;
   addSetting: (setting: IAddSetting) => any;
   setSettingValue: (id: string, value: any) => void;
   getSettingValue: (id: string, defaultValue?: any) => any;
@@ -35,7 +35,7 @@ interface IAddSetting {
   options?: ComboOption[] | ((value: string) => (ComboOption | string)[]);
 }
 
-const Settings = React.createContext<ISettingsContext | null>(null);
+const Settings = createContext<ISettingsContext | null>(null);
 
 export const SettingsContextProvider = ({ children }: { children: ReactNode }) => {
   const {
@@ -73,7 +73,7 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
     return values;
   };
 
-  const load = async () => {
+  const loadCurrentSettings = async () => {
     const settingsVal = storageLocation === 'browser' ? getLocalSettings() : await getSettings();
     setSettingsValues(settingsVal);
 
@@ -268,13 +268,13 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
   return (
     <Settings.Provider
       value={{
-        load,
         getId,
         show,
         close,
         addSetting,
         setSettingValue,
-        getSettingValue
+        getSettingValue,
+        loadCurrentSettings
       }}
     >
       {children}

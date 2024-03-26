@@ -10,9 +10,8 @@ import {
 } from './utils/node.ts';
 
 export function getNodeMenuItems(node: Node<NodeState>) {
-  const { nodeDefs } = useFlowStore.getState();
-
   const rest = { hasSubMenu: false, disabled: false, subMenu: null, node: null };
+
   const to_inputs = Object.values(node.data.widgets)
     .map((widget) =>
       !widget.hidden
@@ -99,12 +98,44 @@ export function getNodeMenuItems(node: Node<NodeState>) {
 
     ...(to_widgets.length > 0 ? [...to_widgets, null] : to_widgets),
 
-    { label: 'Clone', hasSubMenu: false, disabled: false, subMenu: null, node: null },
+    {
+      label: 'Clone',
+      hasSubMenu: false,
+      disabled: false,
+      subMenu: null,
+      node: node.id,
+      onClick: () => cloneNode(node.id)
+    },
 
     null,
 
-    { label: 'Remove', hasSubMenu: false, disabled: false, subMenu: null, node: null }
+    {
+      label: 'Remove',
+      hasSubMenu: false,
+      disabled: false,
+      subMenu: null,
+      node: node.id,
+      onClick: () => removeNode(node.id)
+    }
   ];
 
   return items;
+}
+
+function removeNode(id: string) {
+  const { removeNode } = useFlowStore.getState();
+  removeNode(id);
+}
+
+function cloneNode(id: string) {
+  const { nodes, addRawNode } = useFlowStore.getState();
+  const node = nodes.find((node) => node.id == id);
+  if (!node) return;
+
+  const newNode = {
+    ...structuredClone(node),
+    id: crypto.randomUUID()
+  };
+
+  addRawNode(newNode);
 }

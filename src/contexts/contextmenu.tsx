@@ -99,8 +99,6 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
       const menuData = getMenuData(event, categorizeObjects(NodeDefs));
       if (!menuData) return;
 
-      // console.log('event>', event);
-
       console.log('from pane context menu');
       setMenuProps(menuData);
     },
@@ -112,10 +110,11 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
       event.preventDefault();
       event.stopPropagation();
 
+      console.log('Dddd', node);
+
       const menuData = getMenuData(event, getNodeMenuItems(node));
       if (!menuData) return;
 
-      console.log('from node context menu');
       setMenuProps(menuData);
       setNodeId(node.id);
     },
@@ -160,9 +159,6 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
     event.preventDefault();
     const submenuData = getMenuData(event, items);
     if (!submenuData) return;
-
-    // console.log(parentMenuIndex, parentMenu);
-    // console.log({ parentMenuIndex, currentOpenedMenuIndex });
 
     if (currentOpenedMenuIndex > parentMenuIndex) {
       setMenus((menus) => {

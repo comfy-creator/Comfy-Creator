@@ -65,6 +65,7 @@ export type RFState = {
 
   addNode: (params: AddNodeParams) => void;
   removeNode: (nodeId: string) => void;
+  addRawNode: (node: Node) => void;
 
   updateNodeState: (nodeId: string, newState: Partial<NodeState>) => void;
   updateWidgetState: UpdateWidgetState;
@@ -284,28 +285,33 @@ export const useFlowStore = create<RFState>((set, get) => {
       const data = computeInitialNodeState(def, inputWidgetValues, config);
       const newNode: Node<NodeState> = { id, type, position, data };
 
-      set((state) => ({
-        nodes: [...state.nodes, newNode]
-      }));
+      nodesMap.set(id, newNode);
     },
 
+    addRawNode: (node: Node<NodeState>) => nodesMap.set(node.id, node),
     removeNode: (nodeId: string) => {
-      set((state) => ({
-        nodes: state.nodes.filter((node) => node.id !== nodeId),
-        edges: state.edges.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
-      }));
+      nodesMap.delete(nodeId);
+      const edges = edgesMap.values();
+      for (const edge of edges) {
+        if (edge.source === nodeId || edge.target === nodeId) {
+          edgesMap.delete(edge.id);
+        }
+      }
     },
 
     updateNodeState: (nodeId: string, newState: Partial<NodeState>) => {
-      set({
-        nodes: get().nodes.map((node) => {
-          if (node.id === nodeId) {
-            node.data = { ...node.data, ...newState };
-          }
-
-          return node;
-        })
-      });
+      // if (nodesMap.has(nodeId)) {
+      //   const node = nodesMap.get();
+      // }
+      // set({
+      //   nodes: get().nodes.map((node) => {
+      //     if (node.id === nodeId) {
+      //       node.data = { ...node.data, ...newState };
+      //     }
+      //
+      //     return node;
+      //   })
+      // });
     },
 
     updateWidgetState: ({ nodeId, name, newState }: UpdateWidgetStateParams) =>
