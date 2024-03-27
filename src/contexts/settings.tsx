@@ -152,7 +152,7 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
       throw new Error('Settings must have an ID');
     }
 
-    if (id in settingsLookup) {
+    if (id in settingsLookup && import.meta.env.PROD) {
       throw new Error(`Setting ${id} of type ${type} must have a unique ID.`);
     }
 

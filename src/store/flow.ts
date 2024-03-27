@@ -225,15 +225,11 @@ export const useFlowStore = create<RFState>((set, get) => {
         exchangeInputForWidget({ inputSlot, sourceNode, targetNode });
       }
 
-      set({
-        edges: addEdge(
-          {
-            ...connection,
-            type: sourceParts[2] === targetParts[2] ? sourceParts[2] : undefined
-          },
-          filterEdges
-        )
-      });
+      const newEdge = {
+        ...connection,
+        type: sourceParts[2] === targetParts[2] ? sourceParts[2] : undefined
+      };
+      get().setEdges(addEdge(newEdge, filterEdges));
     },
 
     nodeDefs: {},
@@ -300,18 +296,13 @@ export const useFlowStore = create<RFState>((set, get) => {
     },
 
     updateNodeState: (nodeId: string, newState: Partial<NodeState>) => {
-      // if (nodesMap.has(nodeId)) {
-      //   const node = nodesMap.get();
-      // }
-      // set({
-      //   nodes: get().nodes.map((node) => {
-      //     if (node.id === nodeId) {
-      //       node.data = { ...node.data, ...newState };
-      //     }
-      //
-      //     return node;
-      //   })
-      // });
+      const node = nodesMap.get(nodeId);
+      if (!node) return;
+
+      nodesMap.set(nodeId, {
+        ...node,
+        data: { ...node.data, ...newState }
+      });
     },
 
     updateWidgetState: ({ nodeId, name, newState }: UpdateWidgetStateParams) =>

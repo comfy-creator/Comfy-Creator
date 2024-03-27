@@ -97,8 +97,7 @@ export function MainFlow() {
     edgeComponents,
     registerEdgeType,
     instance,
-    setInstance,
-    addRawNode
+    setInstance
   } = useFlowStore(selector);
 
   const { getNodes, getEdges, getViewport, fitView, setViewport } = useReactFlow<
@@ -136,7 +135,7 @@ export function MainFlow() {
         nodes: nodes.filter(Boolean),
         edges: edges.filter(Boolean)
       };
-      
+
       saveFlow(flow);
     }
   }, [nodes, edges, viewport]);
@@ -146,7 +145,8 @@ export function MainFlow() {
   const onConnectEnd = useCallback(
     // ReactMouseEvent | TouchEvent instead ?
     (event: MouseEvent | globalThis.TouchEvent) => {
-      if (event.target && !(event.target.className === 'flow_input')) {
+      console.log(event);
+      if (event.target && event.target.className !== 'flow_input') {
         // TO DO: this logic may be wrong here? We're mixing react-events with native-events!
         onContextMenu(event);
       }
@@ -229,7 +229,7 @@ export function MainFlow() {
     if (!flow) {
       flow = instance?.toObject();
     }
-    console.log('Saving...');
+
     localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
   };
 
