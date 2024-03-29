@@ -283,7 +283,7 @@ export type NodeTypes = Record<string, NodeType>;
 export interface UpdateWidgetStateParams {
   name: string;
   nodeId: string;
-  newState: Partial<WidgetState>;
+  data: Partial<WidgetState>;
 }
 
 export type UpdateWidgetState = (params: UpdateWidgetStateParams) => void;

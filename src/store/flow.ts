@@ -305,43 +305,37 @@ export const useFlowStore = create<RFState>((set, get) => {
       });
     },
 
-    updateWidgetState: ({ nodeId, name, newState }: UpdateWidgetStateParams) =>
-      set((state) => {
-        const nodeIndex = state.nodes.findIndex((n) => n.id === nodeId);
-        if (nodeIndex === -1) return state; // Early return if node not found.
+    updateWidgetState: ({ nodeId, name, data }: UpdateWidgetStateParams) => {
+      const node = nodesMap.get(nodeId);
+      if (!node) {
+        console.error(`Node ${nodeId} not found`);
+        return;
+      }
 
-        const node = state.nodes[nodeIndex];
-        const widgetState = node.data.widgets[name];
-        if (!widgetState) {
-          console.error(`Widget '${name}' not found in node '${nodeId}'.`);
-          return state;
+      const widget = node.data.widgets[name];
+      if (!widget) {
+        console.error(`Widget '${name}' not found in node '${nodeId}'.`);
+        return;
+      }
+
+      // Update the widgets, but keep the widget type the same
+      const updatedWidgets = {
+        ...node.data.widgets,
+        [name]: {
+          ...widget,
+          ...(data as WidgetState),
+          type: widget.type
         }
+      } as Record<string, WidgetState>;
 
-        if (widgetState.type !== newState.type) {
-          console.error(`Mismatched type. ${widgetState.type} cannot merge with ${newState.type}`);
-          return state;
+      nodesMap.set(nodeId, {
+        ...node,
+        data: {
+          ...node.data,
+          widgets: updatedWidgets
         }
-
-        // Update the widget state only if types match.
-        const updatedWidgets = {
-          ...node.data.widgets,
-          [name]: { ...widgetState, ...(newState as WidgetState) }
-        };
-
-        const updatedNodes = state.nodes.map((n, i) =>
-          i === nodeIndex
-            ? {
-                ...n,
-                data: {
-                  ...n.data,
-                  widgets: updatedWidgets
-                }
-              }
-            : n
-        );
-
-        return { ...state, nodes: updatedNodes };
-      }),
+      });
+    },
 
     // hot keys state
     hotKeysShortcut: DEFAULT_SHORTCUT_KEYS,

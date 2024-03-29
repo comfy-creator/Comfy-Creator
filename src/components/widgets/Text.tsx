@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { RFState, useFlowStore } from '../../store/flow.ts';
 
 type TextProps = {
@@ -9,18 +9,13 @@ type TextProps = {
 };
 
 const selector = (state: RFState) => ({
-  setNodes: state.setNodes,
   nodes: state.nodes,
-  setPanOnDrag: state.setPanOnDrag,
+  setNodes: state.setNodes,
+  setPanOnDrag: state.setPanOnDrag
 });
 
 export function TextWidget({ disabled, value, onChange }: TextProps) {
-
-  const {
-    setPanOnDrag,
-    setNodes,
-    nodes,
-  } = useFlowStore(selector);
+  const { setPanOnDrag, setNodes, nodes } = useFlowStore(selector);
 
   const [inputValue, setInputValue] = useState(value);
   return (
@@ -40,19 +35,19 @@ export function TextWidget({ disabled, value, onChange }: TextProps) {
           return {
             ...node,
             draggable: false
-          }
-        })
+          };
+        });
         setNodes(newNodes);
         setPanOnDrag(false);
       }}
       onMouseLeave={(e) => {
-        e.stopPropagation()
+        e.stopPropagation();
         const newNodes = nodes.map((node) => {
           return {
             ...node,
             draggable: true
-          }
-        })
+          };
+        });
         setNodes(newNodes);
         setPanOnDrag(true);
       }}

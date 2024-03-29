@@ -107,8 +107,7 @@
       "required": {
         "ckpt_name": [
           [
-            "meinamix_meina_v11.safetensors",
-            "protovision_xl_high_fidelity_3d_0620_baked_vae.safetensors"
+            "v2-1_768-nonema-pruned.safetensors"
           ]
         ]
       }
@@ -2061,7 +2060,7 @@
       "required": {
         "ckpt_name": [
           [
-            "meinamix_meina_v11.safetensors",
+            "v2-1_768-nonema-pruned.safetensors",
             "protovision_xl_high_fidelity_3d_0620_baked_vae.safetensors"
           ]
         ]
@@ -2246,7 +2245,7 @@
         ],
         "ckpt_name": [
           [
-            "meinamix_meina_v11.safetensors",
+            "v2-1_768-nonema-pruned.safetensors",
             "protovision_xl_high_fidelity_3d_0620_baked_vae.safetensors"
           ]
         ]
@@ -5259,7 +5258,7 @@
       "required": {
         "ckpt_name": [
           [
-            "meinamix_meina_v11.safetensors",
+            "v2-1_768-nonema-pruned.safetensors",
             "protovision_xl_high_fidelity_3d_0620_baked_vae.safetensors"
           ]
         ]

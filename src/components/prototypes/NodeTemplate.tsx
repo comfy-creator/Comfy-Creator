@@ -205,17 +205,9 @@ export const createNodeComponentFromDef = (
 
       if (!inputDef) return null;
 
-      const update = (newState: Partial<WidgetState>) => {
+      const update = (data: Partial<WidgetState>) => {
         if (!inputState.type) return;
-
-        updateWidgetState({
-          nodeId: id,
-          name,
-          newState: {
-            ...newState,
-            type: inputState.type
-          } as WidgetState
-        });
+        updateWidgetState({ nodeId: id, name, data });
       };
 
       return (
