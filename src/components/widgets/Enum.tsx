@@ -1,40 +1,56 @@
 import { useEffect, useState } from 'react';
 import { WidgetBackwardIcon, WidgetForwardIcon } from '../icons/WidgetDirectionIcon.tsx';
-import { EnumDialog } from '../dialogs/EnumDialog.tsx';
 
 type EnumProps = {
   label: string;
+  value: string;
   disabled?: boolean;
-  value: string | string[];
   options: { values: string[] | (() => string[]) };
-  onChange?: (value: string | string[]) => void;
+  onChange?: (value: string) => void;
   multiSelect?: boolean;
 };
 
 export function EnumWidget({ label, disabled, value, options, onChange, multiSelect }: EnumProps) {
-  const values = options
-    ? Array.isArray(options.values)
-      ? options.values
-      : options.values()
-    : typeof value === 'string'
-      ? [value]
-      : value;
+  const [valueIndex, setValueIndex] = useState<number | null>(null);
+  const [enumOptions, setEnumOptions] = useState<string[]>([]);
 
-  const [input, setInput] = useState(0);
-  const [showDialog, setShowDialog] = useState(false);
+  const getEnumOptions = () => {
+    const values: string[] = [];
+
+    if (Array.isArray(options.values)) {
+      values.push(...options.values);
+    } else {
+      const result = options.values();
+      Array.isArray(result) ? values.push(...result) : values.push(result);
+    }
+
+    return values;
+  };
 
   useEffect(() => {
-    setInput(input);
-    onChange?.(values[input]);
-  }, [input]);
+    const opts = getEnumOptions();
+    const valueIndex = opts.indexOf(value);
 
-  const handleInputIncrement = () => {
-    setInput((i) => (i === values.length - 1 ? 0 : i + 1));
-  };
+    if (valueIndex !== -1) {
+      setValueIndex(valueIndex);
+    } else {
+      console.warn(`EnumWidget: value "${value}" is not in the list of options`);
+    }
 
-  const handleBackward = () => {
-    setInput((i) => (i === 0 ? values.length - 1 : i - 1));
-  };
+    setEnumOptions(opts);
+  }, []);
+
+  useEffect(() => {
+    if (valueIndex == undefined) return;
+    const value = enumOptions[valueIndex];
+
+    setValueIndex(valueIndex);
+    onChange?.(value);
+  }, [valueIndex]);
+
+  const handleInputIncrement = () => setValueIndex((i) => (!i ? 0 : i + 1));
+
+  const handleBackward = () => setValueIndex((i) => (!i ? enumOptions.length - 1 : i - 1));
 
   return (
     <div className={'widget_box'}>
@@ -45,12 +61,12 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
         </div>
 
         <div className={'widget_input_item'} style={{ gap: '5px' }}>
-          <span className={'widget_input_item_text'}>{values[input]}</span>
+          <span className={'widget_input_item_text'}>
+            {valueIndex != undefined ? enumOptions[valueIndex] : 'undefined'}
+          </span>
           <WidgetForwardIcon onClick={handleInputIncrement} />
         </div>
       </div>
-
-      {showDialog && <EnumDialog />}
     </div>
   );
 }

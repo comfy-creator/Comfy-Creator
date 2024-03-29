@@ -18,18 +18,16 @@ export function usePrompt() {
   const queuePrompt = (number: number) => {
     const prompt = flowToPrompt();
 
-    // fetch('http://localhost:8188/prompt', {
-    //   method: 'POST',
-    //   body: JSON.stringify({
-    //     client_id: crypto.randomUUID(),
-    //     extra_info: {},
-    //     prompt
-    //   })
-    // })
-    //   .then((res) => res.json().then((res) => console.log({ res })))
-    //   .catch(console.log);
-
-    console.log({ prompt });
+    fetch('http://localhost:8188/prompt', {
+      method: 'POST',
+      body: JSON.stringify({
+        client_id: crypto.randomUUID(),
+        extra_info: {},
+        prompt
+      })
+    })
+      .then((res) => res.json().then((res) => console.log({ res })))
+      .catch(console.log);
   };
 
   const flowToPrompt = () => {

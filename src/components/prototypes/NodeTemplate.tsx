@@ -71,7 +71,7 @@ const createWidgetFromSpec = (
         <EnumWidget
           {...commonProps}
           value={state.value}
-          onChange={(value: string | string[]) => updateWidgetState({ value })}
+          onChange={(value: string) => updateWidgetState({ value })}
           options={{ values: (def as EnumInputDef).options }}
           multiSelect={(def as EnumInputDef).multiSelect}
         />

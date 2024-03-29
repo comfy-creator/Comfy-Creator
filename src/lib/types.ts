@@ -223,7 +223,7 @@ export interface StringInputState extends BaseInputState {
 
 export interface EnumInputState extends BaseInputState {
   type: 'ENUM';
-  value: string | string[];
+  value: string;
 }
 
 export interface ImageInputState extends BaseInputState {
