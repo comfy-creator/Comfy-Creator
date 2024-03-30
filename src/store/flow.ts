@@ -25,17 +25,17 @@ import {
   UpdateWidgetState,
   UpdateWidgetStateParams,
   WidgetState
-} from '../lib/types.ts';
+} from '../lib/types';
 import { computeInitialNodeState, exchangeInputForWidget } from '../lib/utils/node';
-import { createNodeComponentFromDef } from '../components/prototypes/NodeTemplate.tsx';
+import { createNodeComponentFromDef } from '../components/prototypes/NodeTemplate';
 import {
   DEFAULT_HOTKEYS_HANDLERS,
   DEFAULT_SHORTCUT_KEYS,
   HANDLE_ID_DELIMITER,
   HANDLE_TYPES
-} from '../config/constants.ts';
-import { createEdgeFromTemplate } from '../components/prototypes/EdgeTemplate.tsx';
-import { yjsProvider } from '../yjs/index.ts';
+} from '../lib/config/constants';
+import { createEdgeFromTemplate } from '../components/prototypes/EdgeTemplate';
+import { yjsProvider } from '../yjs';
 
 const nodesMap = yjsProvider.doc.getMap<Node<NodeState>>('nodes');
 const edgesMap = yjsProvider.doc.getMap<Edge>('edges');

@@ -1,4 +1,4 @@
-import { ThemeConfig } from '../lib/types.ts';
+import { ThemeConfig } from '../types.ts';
 
 const themes = ['dark', 'light', 'solarized', 'arc', 'nord', 'github'];
 

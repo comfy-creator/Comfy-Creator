@@ -1,6 +1,6 @@
-import { useFlowStore } from '../../store/flow.ts';
+import { useFlowStore } from '../../store/flow';
 import { ReactFlowJsonObject } from 'reactflow';
-import { NodeState } from '../types.ts';
+import { NodeState } from '../types';
 
 interface APIWorkflow {
   [key: string]: {
@@ -63,6 +63,8 @@ export function usePrompt() {
 
       for (const name in widgets) {
         const widget = widgets[name];
+        if (widget.serialize === false) continue;
+        
         if ('value' in widget) {
           const value =
             widget.type === 'VIDEO'

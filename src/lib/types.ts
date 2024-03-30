@@ -72,6 +72,8 @@ export interface BaseInputDef {
   readonly name: string;
   readonly type: EdgeType;
   readonly optional?: boolean; // assumed false if undefined
+  readonly serialize?: boolean; // assumed true if undefined
+  readonly valueControl?: boolean; // assumed false if undefined
 }
 
 export interface BoolInputDef extends BaseInputDef {
@@ -184,9 +186,9 @@ export interface BaseInputState {
   optional?: boolean;
   serialize?: boolean;
   definition?: InputDef;
+  valueControl?: boolean;
   isHighlighted?: boolean;
-  isValueControl?: boolean;
-  linkedWidgets?: WidgetState[];
+  linkedWidgets?: string[]; // array of widget names
 }
 
 export interface OutputHandle {
@@ -398,4 +400,14 @@ export interface LogEntry {
   source: string;
   message: any[];
   timestamp: Date;
+}
+
+export interface AddValueControlWidget {
+  inputDef: InputDef;
+  widget: WidgetState;
+  defaultValue?: string;
+  options?: {
+    addFilterList?: boolean;
+    controlAfterGenerateName?: string;
+  };
 }

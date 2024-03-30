@@ -1,5 +1,5 @@
-import { EdgeType } from '../lib/types.ts';
-import { useFlowStore } from '../store/flow.ts';
+import { EdgeType, InputDef } from '../types.ts';
+import { useFlowStore } from '../../store/flow.ts';
 
 export const SUPPORTED_IMAGE_TYPES = [
   'image/png',
@@ -139,3 +139,12 @@ export const FLOW_KEY = 'flow';
 export const FLOW_PADDING = 5; // in pixels
 export const FLOW_MIN_ZOOM = 0.5;
 export const FLOW_MAX_ZOOM = 2;
+
+export const controlAfterGenerateDef: InputDef = {
+  type: 'ENUM',
+  serialize: false,
+  valueControl: true,
+  defaultValue: 'randomize',
+  name: 'control_after_generate',
+  options: ['fixed', 'increment', 'decrement', 'randomize']
+};

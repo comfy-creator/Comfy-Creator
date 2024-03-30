@@ -7,9 +7,14 @@ import {
   NodeStateConfig,
   WidgetState
 } from '../types.ts';
-import { CONVERTABLE_WIDGET_TYPES, WIDGET_TYPES } from '../../config/constants.ts';
+import {
+  controlAfterGenerateDef,
+  CONVERTABLE_WIDGET_TYPES,
+  WIDGET_TYPES
+} from '../config/constants.ts';
 import { Node } from 'reactflow';
 import { useFlowStore } from '../../store/flow.ts';
+import { createValueControlWidget, isSeedWidget } from './widgets.ts';
 
 export function computeInitialNodeState(
   def: NodeDefinition,
@@ -31,9 +36,18 @@ export function computeInitialNodeState(
   inputs.forEach((input) => {
     const isWidget = isWidgetInput(input.type);
     if (isWidget) {
-      state.widgets[input.name] = {
-        ...widgetStateFromDef(input, widgetValues)
-      };
+      const widget = { ...widgetStateFromDef(input, widgetValues) };
+      state.widgets[input.name] = widget;
+
+      if (isSeedWidget(input)) {
+        const afterGenWidget = createValueControlWidget({
+          widget,
+          inputDef: controlAfterGenerateDef
+        });
+
+        widget.linkedWidgets = [afterGenWidget.name];
+        state.widgets[afterGenWidget.name] = afterGenWidget;
+      }
     } else {
       state.inputs.push({
         name: input.name,
@@ -137,7 +151,7 @@ export function hideNodeWidget(node: Node<NodeState>, name: string) {
   updateWidgetState({
     name,
     nodeId: node.id,
-    newState: { type: widget.type, hidden: true }
+    data: { hidden: true }
   });
 
   console.log(useFlowStore.getState().nodes);
@@ -156,7 +170,7 @@ export function showNodeWidget(node: Node<NodeState>, name: string) {
   updateWidgetState({
     name,
     nodeId: node.id,
-    newState: { type: widget.type, hidden: false }
+    data: { hidden: false }
   });
 }
 

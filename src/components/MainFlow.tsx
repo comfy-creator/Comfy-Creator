@@ -45,11 +45,11 @@ import {
   FLOW_MIN_ZOOM,
   HANDLE_ID_DELIMITER,
   HANDLE_TYPES
-} from '../config/constants';
+} from '../lib/config/constants';
 import { defaultEdges, defaultNodes } from '../default-flow';
 import { useSettings } from '../contexts/settings';
 import { useSettingsStore } from '../store/settings';
-import { defaultThemeConfig } from '../config/themes';
+import { defaultThemeConfig } from '../lib/config/themes';
 import { colorSchemeSettings } from '../lib/settings';
 import nodeInfo from '../../node_info.json';
 
