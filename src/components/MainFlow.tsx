@@ -52,6 +52,7 @@ import { useSettingsStore } from '../store/settings';
 import { defaultThemeConfig } from '../lib/config/themes';
 import { colorSchemeSettings } from '../lib/settings';
 import nodeInfo from '../../node_info.json';
+import { subscribe as subscribeEvent } from '../lib/event';
 
 const selector = (state: RFState) => ({
   panOnDrag: state.panOnDrag,
@@ -122,6 +123,8 @@ export function MainFlow() {
     addNodeDefs({ PreviewImage, PreviewVideo, RerouteNode, PrimitiveNode });
     addNodeDefs(transformNodeDefs(nodeInfo));
     registerEdgeType(HANDLE_TYPES);
+
+    subscribeEvent('afterQueue', (event) => console.log({ event }));
 
     // Load existing flow from local storage
     loadFlow();

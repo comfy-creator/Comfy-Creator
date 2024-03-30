@@ -1,6 +1,7 @@
 import { useFlowStore } from '../../store/flow';
 import { ReactFlowJsonObject } from 'reactflow';
 import { NodeState } from '../types';
+import { publish as publishEvent } from '../event.ts';
 
 interface APIWorkflow {
   [key: string]: {
@@ -16,24 +17,35 @@ export function usePrompt() {
   const { instance } = useFlowStore();
 
   const queuePrompt = (number: number) => {
+    if (!instance) {
+      throw new Error('Flow instance not found');
+    }
+    const flow: ReactFlowJsonObject<NodeState> = instance.toObject();
+
     const prompt = flowToPrompt();
 
-    fetch('http://localhost:8188/prompt', {
-      method: 'POST',
-      body: JSON.stringify({
-        client_id: crypto.randomUUID(),
-        extra_info: {},
-        prompt
-      })
-    })
-      .then((res) => res.json().then((res) => console.log({ res })))
-      .catch(console.log);
+    // fetch('http://localhost:8188/prompt', {
+    //   method: 'POST',
+    //   body: JSON.stringify({
+    //     client_id: crypto.randomUUID(),
+    //     extra_info: {},
+    //     prompt
+    //   })
+    // })
+    //   .then((res) => res.json().then((res) => console.log({ res })))
+    //   .catch(console.log);
+
+    for (const node of flow.nodes) {
+      publishEvent<{ nodeId: string }>('afterQueue', { nodeId: node.id });
+    }
   };
 
   const flowToPrompt = () => {
-    if (!instance) return;
-
+    if (!instance) {
+      throw new Error('Flow instance not found');
+    }
     const flow: ReactFlowJsonObject<NodeState> = instance.toObject();
+
     const prompt: APIWorkflow = {};
 
     for (const node of flow.nodes) {
@@ -64,7 +76,7 @@ export function usePrompt() {
       for (const name in widgets) {
         const widget = widgets[name];
         if (widget.serialize === false) continue;
-        
+
         if ('value' in widget) {
           const value =
             widget.type === 'VIDEO'

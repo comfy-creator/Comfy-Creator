@@ -1,35 +1,3 @@
-// Heavy WIP
-
-import { useFlowStore } from '../../store/flow.ts';
-import { Node } from 'reactflow';
-import { IntInputState, NodeState } from '../../lib/types.ts';
-
-const { registerNodeCallback, updateWidgetState } = useFlowStore.getState();
-
-/*
- - add the widget to the node
- - add "control_after_generate" after the seed widget
-*/
-
-
-function seedWidget(
-  node: Node<NodeState>,
-  inputName: string,
-  inputData: any[],
-  widgetName: string
-) {
-  const seed: IntInputState = {
-    value: 0,
-    type: 'INT',
-    name: inputName
-  };
-
-  const seedControl = addValueControlWidget(node, widgetName, seed, inputData, 'randomize');
-  seed.linkedWidgets = [seedControl];
-  return seed;
-}
-
-
 const applyWidgetControl = () => {
   // var v = ctrl.value;
   //

@@ -34,7 +34,7 @@ const ControlPanel = () => {
   const { nodes, edges, setNodes, setEdges } = useFlowStore(selector);
 
   const { addSetting, show: showSettings } = useSettings();
-  const { queuePrompt, flowToPrompt } = usePrompt();
+  const { queuePrompt } = usePrompt();
   // const { lastExecutionError } = useComfyApp();
   const lastExecutionError = false;
 
