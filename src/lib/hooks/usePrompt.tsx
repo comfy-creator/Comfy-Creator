@@ -17,9 +17,7 @@ export function usePrompt() {
   const { instance } = useFlowStore();
 
   const queuePrompt = (number: number) => {
-    if (!instance) {
-      throw new Error('Flow instance not found');
-    }
+    if (!instance) throw new Error('Flow instance not found');
     const flow: ReactFlowJsonObject<NodeState> = instance.toObject();
 
     const prompt = flowToPrompt();
@@ -41,9 +39,7 @@ export function usePrompt() {
   };
 
   const flowToPrompt = () => {
-    if (!instance) {
-      throw new Error('Flow instance not found');
-    }
+    if (!instance) throw new Error('Flow instance not found');
     const flow: ReactFlowJsonObject<NodeState> = instance.toObject();
 
     const prompt: APIWorkflow = {};
