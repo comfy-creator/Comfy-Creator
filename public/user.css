@@ -43,36 +43,30 @@
 }
 
 .react-flow__node {
+    padding: 5px !important;
     cursor: crosshair !important;
-    border-radius: 5px !important;
-    margin: 1px;
+    border-radius: 8px !important;
 }
 
 .selected {
     margin: 0 !important;
-    border: 1px solid #ddd;
+    border: 2px solid #ddd;
 }
 
 .node_container {
-    padding: 5px;
+    height: 100%;
     font-size: 12px;
-    border-radius: 5px;
+    border-radius: 8px !important;
 }
 
 .node_label_container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
     gap: 15px;
-    border-bottom: 1px solid rgb(41, 41, 41);
-    padding: 2px;
-}
-
-.run_icon {
-    cursor: pointer;
-    font-size: 10px;
     display: flex;
+    padding: 5px 8px;
+    margin-bottom: 10px;
     align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid rgb(41, 41, 41);
 }
 
 .node_label {
@@ -136,15 +130,14 @@
 .flow_input_output_container {
     display: flex;
     align-items: start;
+    margin-bottom: 10px;
     justify-content: space-between;
-    gap: 0.7rem;
-    margin: 5px 0px;
 }
 
 .flow_output,
 .flow_input {
-    display: flex;
     margin: 0;
+    display: flex;
     flex-direction: row;
     align-items: center;
 }
@@ -178,26 +171,32 @@
     border: 1px solid transparent !important;
 }
 
-.right {
+.flow_handler.right {
+    margin-right: 8px;
     right: 5px !important;
 }
 
-.left {
+.flow_handler.left {
+    margin-left: 8px;
     left: 5px !important;
 }
 
 /* widgets */
+.flow_content {
+    padding: 8px;
+}
+
 .widgets_container {
-    margin-top: 3px;
     width: 100%;
 }
 
 .widget_container {
-    display: flex;
-    align-items: center;
     width: 100%;
-    font-weight: normal;
+    display: flex;
     font-size: 0.5em;
+    margin-bottom: 2px;
+    align-items: center;
+    font-weight: normal;
 }
 
 .widget_box {
@@ -211,10 +210,10 @@
 .widget_input {
     display: flex;
     width: 100%;
+    gap: 15px;
     border-radius: 8px;
     align-items: center;
     justify-content: space-between;
-    gap: 15px;
     border: 1px solid var(--border-color);
     background: var(--comfy-input-bg);
     color: var(--input-text);
@@ -279,4 +278,22 @@ button.comfy-settings-btn {
 .comfy-logging-log div {
     background: var(--row-bg);
     padding: 5px;
+}
+
+.executing {
+    border: 2px solid #0e8c00 !important;
+}
+
+.flow-progress_container {
+    width: 100%;
+    height: 5px;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.flow-progress_bar {
+    height: 100%;
+    border-radius: 1px;
+    background-color: #0e8c00;
+    transition: width 0.3s ease-in-out;
 }

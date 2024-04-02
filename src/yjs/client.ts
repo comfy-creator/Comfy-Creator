@@ -4,9 +4,9 @@ import * as decoding from 'lib0/decoding';
 import * as syncProtocol from 'y-protocols/sync';
 import * as authProtocol from 'y-protocols/auth';
 import {
+  applyAwarenessUpdate,
   Awareness,
   encodeAwarenessUpdate,
-  applyAwarenessUpdate,
   removeAwarenessStates
 } from 'y-protocols/awareness';
 import * as Y from 'yjs';
@@ -90,20 +90,22 @@ export class YjsProvider extends EventTarget {
     if (serverUrl) this.serverUrl = serverUrl.replace(/\/+$/, '');
     if (token) this.token = token;
 
-    this.socket = io(this.serverUrl, {
-      ...(this.token ? { query: { token: this.token } } : {}),
-      autoConnect: true,
-      reconnection: true
-    });
+    try {
+      this.socket = io(this.serverUrl, {
+        ...(this.token ? { query: { token: this.token } } : {}),
+        autoConnect: true,
+        reconnection: true
+      });
+    } catch (e) {}
 
     // Connect handler
-    this.socket.on('connect', () => {
+    this.socket?.on('connect', () => {
       this.dispatchEvent(new CustomEvent('status', { detail: { status: 'connected' } }));
       this.connectHandler();
     });
 
     // Message handler
-    this.socket.on('message', (data: ArrayBuffer) => {
+    this.socket?.on('message', (data: ArrayBuffer) => {
       const message = new Uint8Array(data);
       const encoder = encoding.createEncoder();
       const decoder = decoding.createDecoder(message);
@@ -154,21 +156,21 @@ export class YjsProvider extends EventTarget {
     });
 
     // Logs errors from socket.io
-    this.socket.on('error', (error: unknown) => {
-      console.error('Socket.IO error: ', error);
+    this.socket?.on('error', (error: unknown) => {
+      // console.error('Socket.IO error: ', error);
       this.dispatchEvent(new CustomEvent('connection-error', { detail: { error } }));
     });
-    this.socket.on('connect_error', (error: unknown) => {
-      console.error('Socket.IO connection error: ', error);
+    this.socket?.on('connect_error', (error: unknown) => {
+      // console.error('Socket.IO connection error: ', error);
       this.dispatchEvent(new CustomEvent('connection-error', { detail: { error } }));
     });
-    this.socket.on('reconnect_error', (error: unknown) => {
-      console.error('Socket.IO reconnection error: ', error);
+    this.socket?.on('reconnect_error', (error: unknown) => {
+      // console.error('Socket.IO reconnection error: ', error);
       this.dispatchEvent(new CustomEvent('reconnection-error', { detail: { error } }));
     });
 
     // The reconnect-websocket library will try to reconnect automatially after this
-    this.socket.on('disconnect', () => {
+    this.socket?.on('disconnect', () => {
       this.dispatchEvent(new CustomEvent('connection-close'));
 
       // Stop sending updates to the server

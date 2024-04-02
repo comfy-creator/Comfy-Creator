@@ -18,6 +18,8 @@ import { EnumWidget } from '../widgets/Enum';
 import { ImageWidget } from '../widgets/Image';
 import { TextWidget } from '../widgets/Text';
 import { useSettingsStore } from '../../store/settings.ts';
+import { useFlowStore } from '../../store/flow.ts';
+import ProgressBar from '../ProgressBar.tsx';
 
 const createWidgetFromSpec = (
   def: InputDef,
@@ -98,38 +100,50 @@ export const createNodeComponentFromDef = (
     const [minHeight, setMinHeight] = useState(0);
 
     const { getActiveTheme, activeTheme } = useSettingsStore();
+    const { execution } = useFlowStore();
     const theme = getActiveTheme();
 
     const appearance = theme.colors.appearance;
 
     useEffect(() => {
-      if (divRef.current) {
-        // Get the width of the div
-        // Set the minWidth style based on the div width
+      const node = document.querySelector(`[data-id="${id}"]`);
+      if (!node) return;
 
-        const divWidth = divRef?.current?.offsetWidth;
-        const divHeight = divRef?.current?.offsetHeight;
-
-        setMinWidth(divWidth || 0);
-        setMinHeight(divHeight || 0);
-      }
+      setMinWidth(node.clientWidth);
+      setMinHeight(node.clientHeight);
     }, []);
+
+    useEffect(() => {
+      const node = document.querySelector(`[data-id="${id}"]`);
+      const container = node?.querySelector('.node_container') as HTMLDivElement;
+      if (!container) return;
+
+      const { getActiveTheme } = useSettingsStore.getState();
+      const appearance = getActiveTheme().colors.appearance;
+
+      container.style.backgroundColor = data.config?.bgColor
+        ? data.config.bgColor
+        : appearance.NODE_BG_COLOR;
+
+      container.style.color = data.config?.textColor
+        ? data.config.textColor
+        : appearance.NODE_TEXT_COLOR;
+    }, [activeTheme]);
 
     useEffect(() => {
       const node = document.querySelector(`[data-id="${id}"]`) as HTMLDivElement;
       if (!node) return;
 
-      const { getActiveTheme } = useSettingsStore.getState();
-      const appearance = getActiveTheme().colors.appearance;
+      const { currentNodeId } = execution;
 
-      node.style.backgroundColor = data.config?.bgColor
-        ? data.config.bgColor
-        : appearance.NODE_BG_COLOR;
-
-      node.style.color = data.config?.textColor
-        ? data.config.textColor
-        : appearance.NODE_TEXT_COLOR;
-    }, [activeTheme]);
+      if (currentNodeId === id) {
+        node.classList.add('executing');
+      } else {
+        if (node.classList.contains('executing')) {
+          node.classList.remove('executing');
+        }
+      }
+    }, [execution]);
 
     useEffect(() => {
       const node = document.querySelector(`[data-id="${id}"]`) as HTMLDivElement;
@@ -248,16 +262,21 @@ export const createNodeComponentFromDef = (
             </div>
           )}
 
-          <div className="flow_input_output_container">
-            <div className="flow_input_container">{inputHandles}</div>
-            <div className="flow_output_container">{outputHandles}</div>
-          </div>
-          <div className="widgets_container">{widgets}</div>
+          {execution.currentNodeId === id && <ProgressBar />}
 
-          <div className="node_footer">
-            {(def.output_node || data.config?.isOutputNode) && (
-              <button className="comfy-btn">Run</button>
-            )}
+          <div className="flow_content">
+            <div className="flow_input_output_container">
+              <div className="flow_input_container">{inputHandles}</div>
+              <div className="flow_output_container">{outputHandles}</div>
+            </div>
+
+            <div className="widgets_container">{widgets}</div>
+
+            <div className="node_footer">
+              {(def.output_node || data.config?.isOutputNode) && (
+                <button className="comfy-btn">Run</button>
+              )}
+            </div>
           </div>
         </div>
       </>

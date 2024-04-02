@@ -44,6 +44,16 @@ const awareness = yjsProvider.awareness; // TO DO: use for cusor location
 type NodeCallbackType = 'afterQueued';
 
 export type RFState = {
+  execution: {
+    currentNodeId: string | null;
+    progress: { value: number; max: number } | null;
+    output: Record<string, any>;
+  };
+
+  setExecutionOutput: (output: Record<string, any>) => void;
+  setCurrentExecutionNodeId: (nodeId: string | null) => void;
+  setExecutionProgress: (value: number | null, max?: number) => void;
+
   instance: ReactFlowInstance | null;
 
   panOnDrag: boolean;
@@ -120,6 +130,12 @@ export const useFlowStore = create<RFState>((set, get) => {
     nodes: [],
 
     edges: [],
+
+    execution: {
+      currentNodeId: null,
+      progress: null,
+      output: {}
+    },
 
     // This updates y.Doc state, rather than Zustand state directly
     // The yjsObserver will propagate the y.Doc update -> Zustand store
@@ -393,6 +409,39 @@ export const useFlowStore = create<RFState>((set, get) => {
 
     setInstance: (instance) => {
       set({ instance });
+    },
+
+    setCurrentExecutionNodeId: (nodeId) => {
+      set((state) => ({
+        execution: {
+          ...state.execution,
+          currentNodeId: nodeId
+        }
+      }));
+    },
+
+    setExecutionProgress(value, max) {
+      set((state) => ({
+        execution: {
+          ...state.execution,
+          progress:
+            value === null
+              ? null
+              : {
+                  value,
+                  max: max ?? 0
+                }
+        }
+      }));
+    },
+
+    setExecutionOutput: (output) => {
+      set((state) => ({
+        execution: {
+          ...state.execution,
+          output
+        }
+      }));
     }
   };
 });

@@ -1,4 +1,4 @@
-import { EdgeType, InputDef } from '../types.ts';
+import { EdgeType, InputDef, ViewFileArgs } from '../types.ts';
 import { useFlowStore } from '../../store/flow.ts';
 
 export const SUPPORTED_IMAGE_TYPES = [
@@ -147,4 +147,24 @@ export const controlAfterGenerateDef: InputDef = {
   defaultValue: 'randomize',
   name: 'control_after_generate',
   options: ['fixed', 'increment', 'decrement', 'randomize']
+};
+
+export const DEFAULT_SERVER_URL = 'http://localhost:8188';
+export const DEFAULT_SERVER_PROTOCOL = 'ws' as const;
+
+export const API_URL = {
+  WS: '/ws',
+  GET_EMBEDDINGS: '/embeddings',
+  GET_NODE_DEFS: '/object_info',
+  GET_HISTORY: (maxItems: number) => `/history?max_items=${maxItems}`,
+  GET_SYSTEM_STATS: '/system_stats',
+  GET_USER_CONFIG: '/users',
+  CREATE_USER: '/users',
+  GET_SETTINGS: '/settings',
+  GET_SETTING_BY_ID: (id: string) => `/settings/${id}`,
+  STORE_SETTINGS: '/settings',
+  VIEW_FILE: ({ filename, subfolder = '', type }: ViewFileArgs) =>
+    `/view?filename=${filename}&subfolder=${subfolder}&type=${type}`,
+  GET_USER_DATA_FILE: (file: string) => `/userdata/${encodeURIComponent(file)}`,
+  STORE_USER_DATA_FILE: (file: string) => `/userdata/${encodeURIComponent(file)}`
 };

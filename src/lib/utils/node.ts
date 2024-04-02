@@ -49,6 +49,19 @@ export function computeInitialNodeState(
         state.widgets[afterGenWidget.name] = afterGenWidget;
       }
     } else {
+      if (input.type === 'IMAGE') {
+        if (input.imageUpload) {
+          // TODO: add image upload widget
+        }
+
+        const data = { name: 'image', type: 'IMAGE' } as const;
+        state.widgets['image'] = {
+          ...data,
+          serialize: false,
+          definition: data
+        };
+      }
+
       state.inputs.push({
         name: input.name,
         type: input.type,

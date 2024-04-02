@@ -21,8 +21,11 @@ import {
   SystemStatsResponse,
   UserConfigResponse
 } from '../types/api';
-import API_URL from './ApiUrl';
 import { ComfyObjectInfo } from '../types/comfy';
+import { API_URL, DEFAULT_SERVER_PROTOCOL, DEFAULT_SERVER_URL } from '../lib/config/constants.ts';
+import { toHttpURL, toWsURL } from '../lib/utils';
+import { ComfyWsMessage, SerializedFlow, ViewFileArgs } from '../lib/types.ts';
+import { ApiEventEmitter } from '../lib/apiEvent.ts';
 
 // This is injected into index.html by `start.py`
 declare global {
@@ -38,12 +41,14 @@ type ProtocolType = 'grpc' | 'ws';
 interface IApiContext extends IComfyApi {
   sessionId?: string;
   connectionStatus: string;
-  comfyClient: ComfyClient | null;
   requestMetadata?: Metadata;
+  comfyClient: ComfyClient | null;
+  socket: ReconnectingWebSocket | null;
   runWorkflow: (
-    workflow: Record<string, WorkflowStep>,
-    serializedGraph?: unknown
+    serializedGraph: SerializedFlow,
+    workflow?: Record<string, WorkflowStep>
   ) => Promise<JobCreated>;
+  makeServerURL: (route: string) => string;
 }
 
 enum ApiStatus {
@@ -53,12 +58,17 @@ enum ApiStatus {
   CLOSED = 'closed'
 }
 
-// Non-react component
-export const ApiEventEmitter = new EventTarget();
+const handleComfyMessage = (message: ComfyMessage | ComfyWsMessage) => {
+  let event: CustomEvent;
+  if ('type' in message) {
+    // this is from the websocket
+    event = new CustomEvent('comfyMessage', { detail: message });
+  } else {
+    // this is from the gRPC
+    event = new CustomEvent('room', { detail: message });
+  }
 
-// TO DO: implement this
-const handleComfyMessage = (message: ComfyMessage) => {
-  ApiEventEmitter.dispatchEvent(new CustomEvent('room', { detail: message }));
+  ApiEventEmitter.dispatchEvent(event);
 };
 
 // Use polling as a backup strategy incase the websocket fails to connect
@@ -80,11 +90,14 @@ const pollingFallback = () => {
 
 export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   // TO DO: add possible auth in here as well?
+
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
-  // const [socket, setSocket] = useState<ReconnectingWebSocket | null>(null);
-  const [serverUrl, setServerUrl] = useState<string>(window.SERVER_URL);
+  const [socket, setSocket] = useState<ReconnectingWebSocket | null>(null);
+  const [serverUrl, setServerUrl] = useState<string>(window.SERVER_URL ?? DEFAULT_SERVER_URL);
   const [connectionStatus, setConnectionStatus] = useState<string>(ApiStatus.CLOSED);
-  const [serverProtocol, setServerProtocol] = useState<ProtocolType>(window.SERVER_PROTOCOL);
+  const [serverProtocol, setServerProtocol] = useState<ProtocolType>(
+    window.SERVER_PROTOCOL ?? DEFAULT_SERVER_PROTOCOL
+  );
   const [requestMetadata, setRequestMetadata] = useState<Metadata | undefined>(undefined);
 
   // Only used for when serverProtocol is grpc. Used to both send messages and stream results
@@ -94,48 +107,63 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
 
   // Recreate ComfyClient as needed
   useEffect(() => {
-    if (serverProtocol === 'grpc') {
-      const channel = createChannel(serverUrl);
-      const newComfyClient = createClient(ComfyDefinition, channel);
-      setComfyClient(newComfyClient);
-      // No cleanup is explicitly required for gRPC client
-    }
+    if (serverProtocol !== 'grpc') return;
+
+    const channel = createChannel(serverUrl);
+    const newComfyClient = createClient(ComfyDefinition, channel);
+    setComfyClient(newComfyClient);
+    // No cleanup is explicitly required for gRPC client
   }, [serverUrl, serverProtocol]);
+
+  // Generate session-id for websocket connections
+  useEffect(() => {
+    if (serverProtocol !== 'ws') return;
+    setSessionId(crypto.randomUUID());
+  }, []);
 
   // Establish a connection to local-server if we're using websockets
   useEffect(() => {
-    if (serverProtocol === 'ws') {
-      const socket = new ReconnectingWebSocket(serverUrl, undefined, {
-        maxReconnectionDelay: 300
-      });
-      socket.binaryType = 'arraybuffer';
-      let cleanupPolling = () => {};
+    if (serverProtocol !== 'ws') return;
+    if (!sessionId) return;
 
-      socket.addEventListener('open', () => {
-        setConnectionStatus(ApiStatus.OPEN);
-      });
+    const url = `${toWsURL(serverUrl)}/ws?clientId=${sessionId}`;
+    const socketOptions = { maxReconnectionDelay: 300 };
+    const newSocket = new ReconnectingWebSocket(url, undefined, socketOptions);
+    newSocket.binaryType = 'arraybuffer';
 
-      socket.addEventListener('error', () => {
-        if (!(socket.readyState === socket.OPEN)) {
-          // The websocket failed to open; use a fallback instead
-          socket.close();
-          cleanupPolling = pollingFallback();
-        }
-        setConnectionStatus(ApiStatus.CLOSED);
-      });
+    let cleanupPolling = () => {};
 
-      socket.addEventListener('close', () => {
-        setConnectionStatus(ApiStatus.CONNECTING);
-      });
+    newSocket.addEventListener('open', () => {
+      setConnectionStatus(ApiStatus.OPEN);
+    });
 
+    newSocket.addEventListener('error', () => {
+      if (!(newSocket.readyState === newSocket.OPEN)) {
+        // The websocket failed to open; use a fallback instead
+        newSocket.close();
+        cleanupPolling = pollingFallback();
+      }
+      setConnectionStatus(ApiStatus.CLOSED);
+    });
+
+    newSocket.addEventListener('close', () => {
       setConnectionStatus(ApiStatus.CONNECTING);
+    });
 
-      return () => {
-        socket.close();
-        cleanupPolling();
-      };
-    }
-  }, [serverUrl, serverProtocol]);
+    newSocket.addEventListener('message', (event) => {
+      const message = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+      handleComfyMessage(message);
+    });
+
+    setConnectionStatus(ApiStatus.CONNECTING);
+
+    setSocket(newSocket);
+
+    return () => {
+      socket?.close();
+      cleanupPolling();
+    };
+  }, [serverUrl, sessionId, serverProtocol]);
 
   // Once we have a session-id, subscribe to the stream of results using grpc
   useEffect(() => {
@@ -185,15 +213,12 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
   // This is the function used to submit jobs to the server
   // ComfyUI terminology: 'queuePrompt'
   const runWorkflow = useCallback(
-    async (
-      workflow: Record<string, WorkflowStep>,
-      serializedGraph?: unknown
-    ): Promise<JobCreated> => {
+    async (flow: SerializedFlow, workflow?: Record<string, WorkflowStep>): Promise<JobCreated> => {
       if (serverProtocol === 'grpc' && comfyClient) {
         // Use gRPC server
         const request = {
           workflow,
-          serializedGraph,
+          serializedGraph: flow,
           inputFiles: [],
           output_config: undefined,
           worker_wait_duration: undefined,
@@ -224,12 +249,13 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
           }
         }
 
-        const res = await fetch(`${serverUrl}/prompt`, {
+        const res = await fetchApi('/prompt', {
           method: 'POST',
-          headers,
+          // headers,
           body: JSON.stringify({
-            workflow,
-            serializedGraph
+            prompt: flow,
+            extra_info: {},
+            client_id: sessionId
           })
         });
 
@@ -246,8 +272,8 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
   );
 
   // putting these functions here for now cos we might want to find a way to go with the gRPC and the fetch requests
-  const generateURL = (route: string): string => {
-    return serverUrl + route;
+  const makeServerURL = (route: string): string => {
+    return toHttpURL(serverUrl) + route;
   };
 
   const fetchApi = (route: string, options?: RequestInit) => {
@@ -258,7 +284,8 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
       options.headers = {};
     }
 
-    return fetch(generateURL(route), options);
+    console.log('fetching', makeServerURL(route), options);
+    return fetch(makeServerURL(route), options);
   };
 
   /**
@@ -267,7 +294,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
    */
   const getExtensions = async (): Promise<string[]> => {
     const resp = await fetchApi('/extensions', { cache: 'no-store' });
-    return (await resp.json()).map((route: string) => generateURL(route));
+    return (await resp.json()).map((route: string) => makeServerURL(route));
   };
 
   /**
@@ -497,9 +524,19 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
     }
   };
 
+  const viewFile = async (arg: ViewFileArgs) => {
+    const resp = await fetchApi(API_URL.VIEW_FILE(arg), { method: 'GET' });
+    if (resp.ok) {
+      return resp.blob();
+    }
+
+    throw new Error('');
+  };
+
   return (
     <Api.Provider
       value={{
+        socket,
         sessionId,
         connectionStatus,
         comfyClient,
@@ -507,6 +544,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
         runWorkflow,
 
         // API functions
+        makeServerURL,
         fetchApi,
         getExtensions,
         getEmbeddings,
@@ -525,7 +563,8 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
         storeSettings,
         storeSetting,
         getUserData,
-        storeUserData
+        storeUserData,
+        viewFile
       }}
     >
       {children}

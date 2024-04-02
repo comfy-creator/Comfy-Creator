@@ -113,7 +113,7 @@ export interface EnumInputDef extends BaseInputDef {
 
 export interface ImageInputDef extends BaseInputDef {
   readonly type: 'IMAGE';
-  image_upload?: boolean;
+  imageUpload?: boolean;
   readonly defaultValue?: string;
 }
 
@@ -230,7 +230,7 @@ export interface EnumInputState extends BaseInputState {
 
 export interface ImageInputState extends BaseInputState {
   type: 'IMAGE';
-  value: string;
+  value?: string;
 }
 
 export interface VideoInputState extends BaseInputState {
@@ -410,4 +410,63 @@ export interface AddValueControlWidget {
     addFilterList?: boolean;
     controlAfterGenerateName?: string;
   };
+}
+
+export type MessageType = 'status' | 'progress' | 'executing' | 'executed';
+
+export interface ComfyStatusMessage {
+  type: 'status';
+  data: {
+    sid?: string;
+    status: { [key: string]: any };
+  };
+}
+
+export interface ComfyProgressMessage {
+  type: 'progress';
+  data: {
+    max: number;
+    node: string;
+    value: number;
+    prompt_id: string;
+  };
+}
+
+export interface ComfyExecutingMessage {
+  type: 'executing';
+  data: {
+    prompt_id?: string;
+    node: string | null;
+  };
+}
+
+export interface ComfyExecutedMessage {
+  type: 'executed';
+  data: {
+    node: string;
+    prompt_id: string;
+    output: { [key: string]: any };
+  };
+}
+
+export type ComfyWsMessage =
+  | ComfyStatusMessage
+  | ComfyProgressMessage
+  | ComfyExecutingMessage
+  | ComfyExecutedMessage;
+
+export interface SerializedFlow {
+  [key: string]: {
+    inputs: Record<string, string | number | boolean | [string, number]>;
+    class_type: string;
+    _meta: {
+      title: string;
+    };
+  };
+}
+
+export interface ViewFileArgs {
+  type: string;
+  filename: string;
+  subfolder?: string;
 }

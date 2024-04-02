@@ -40,6 +40,7 @@ import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../lib/handlers/dragDrop';
 import { ConnectionLine } from './ConnectionLIne';
 import {
+  API_URL,
   FLOW_KEY,
   FLOW_MAX_ZOOM,
   FLOW_MIN_ZOOM,
@@ -51,8 +52,9 @@ import { useSettings } from '../contexts/settings';
 import { useSettingsStore } from '../store/settings';
 import { defaultThemeConfig } from '../lib/config/themes';
 import { colorSchemeSettings } from '../lib/settings';
-import nodeInfo from '../../node_info.json';
 import { subscribe as subscribeEvent } from '../lib/event';
+import { useApiContext } from '../contexts/api.tsx';
+import { computeInitialNodeState } from '../lib/utils/node.ts';
 
 const selector = (state: RFState) => ({
   panOnDrag: state.panOnDrag,
@@ -65,6 +67,7 @@ const selector = (state: RFState) => ({
   setEdges: state.setEdges,
   nodeComponents: state.nodeComponents,
   addNodeDefs: state.addNodeDefs,
+  nodeDefs: state.nodeDefs,
   addNode: state.addNode,
   updateWidgetState: state.updateWidgetState,
   hotKeysShortcut: state.hotKeysShortcut,
@@ -76,7 +79,8 @@ const selector = (state: RFState) => ({
   registerEdgeType: state.registerEdgeType,
   instance: state.instance,
   setInstance: state.setInstance,
-  addRawNode: state.addRawNode
+  addRawNode: state.addRawNode,
+  execution: state.execution
 });
 
 export function MainFlow() {
@@ -98,7 +102,10 @@ export function MainFlow() {
     edgeComponents,
     registerEdgeType,
     instance,
-    setInstance
+    setInstance,
+    execution,
+    updateWidgetState,
+    nodeDefs
   } = useFlowStore(selector);
 
   const { getNodes, getEdges, getViewport, fitView, setViewport } = useReactFlow<
@@ -107,7 +114,31 @@ export function MainFlow() {
   >();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
   const { loadCurrentSettings, addSetting } = useSettings();
+  const { getNodeDefs, makeServerURL } = useApiContext();
   const viewport = getViewport();
+
+  useEffect(() => {
+    getNodeDefs()
+      .then((defs) => {
+        addNodeDefs(transformNodeDefs(defs));
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (!execution.output) return;
+
+    const node = nodes.find((node) => node.id === execution.currentNodeId);
+    if (node?.id !== execution.currentNodeId) return;
+    const { images } = execution.output;
+
+    const fileView = API_URL.VIEW_FILE({ ...images?.[0] });
+    updateWidgetState({
+      name: 'image',
+      nodeId: node.id,
+      data: { value: makeServerURL(fileView) }
+    });
+  }, [execution]);
 
   useEffect(() => {
     const { addThemes } = useSettingsStore.getState();
@@ -121,14 +152,14 @@ export function MainFlow() {
 
     // Register Node definitions and edge types
     addNodeDefs({ PreviewImage, PreviewVideo, RerouteNode, PrimitiveNode });
-    addNodeDefs(transformNodeDefs(nodeInfo));
     registerEdgeType(HANDLE_TYPES);
 
     subscribeEvent('afterQueue', (event) => console.log({ event }));
-
-    // Load existing flow from local storage
-    loadFlow();
   }, []);
+
+  useEffect(() => {
+    loadFlow();
+  }, [nodeDefs]);
 
   // save to localStorage as nodes, edges and viewport changes
   useEffect(() => {
@@ -237,11 +268,34 @@ export function MainFlow() {
   };
 
   const loadFlow = () => {
-    const flow = JSON.parse(localStorage.getItem(FLOW_KEY) as string);
+    const flow: ReactFlowJsonObject<NodeState> = JSON.parse(
+      localStorage.getItem(FLOW_KEY) as string
+    );
 
     if (flow) {
       const { x = 0, y = 0, zoom = 1 } = flow.viewport;
-      setNodes(flow.nodes?.length > 0 ? flow.nodes : defaultNodes);
+      const nodes = flow.nodes.map((node) => {
+        if (!node.type) return node;
+
+        const { config, widgets } = node.data;
+        const values: Record<string, string> = {};
+
+        for (const name in widgets) {
+          const widget = widgets[name];
+          values[name] = widget.value;
+        }
+
+        const def = nodeDefs[node.type];
+        if (!def) return node;
+
+        console.log(def, node.type);
+        const state = computeInitialNodeState(def, values, { ...config });
+
+        console.log({ state, data: node.data });
+        return { ...node, data: { ...node.data, ...state } };
+      });
+
+      setNodes(nodes.length > 0 ? nodes : defaultNodes);
       setEdges(flow.edges?.length > 0 ? flow.edges : defaultEdges);
       setViewport({ x, y, zoom });
     }

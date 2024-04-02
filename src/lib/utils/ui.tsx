@@ -1,5 +1,6 @@
 import { RefObject, useEffect, useState } from 'react';
 import { IMenuType } from '../types.ts';
+import { useFlowStore } from '../../store/flow.ts';
 
 type RawInput = {
   text: string;
@@ -235,7 +236,7 @@ export function categorizeObjects(data: Record<string, Record<string, any>>) {
             subMenu: [],
             node: null
           };
-          newCategory.subMenu!.push({
+          newCategory.subMenu?.push({
             label: object.name,
             hasSubMenu: false,
             subMenu: null,
@@ -243,7 +244,7 @@ export function categorizeObjects(data: Record<string, Record<string, any>>) {
           });
           currentCategory.push(newCategory);
         } else {
-          foundCategory.subMenu!.push({
+          foundCategory.subMenu?.push({
             label: object.name,
             hasSubMenu: false,
             subMenu: null,
@@ -272,15 +273,26 @@ export function categorizeObjects(data: Record<string, Record<string, any>>) {
     const hasSubMenus = arr.filter((item) => item.hasSubMenu);
     const noSubMenu = arr.filter((item) => !item.hasSubMenu);
     const newArr = [...hasSubMenus, ...noSubMenu];
+
     return newArr.map((item) => {
       return {
+        node: item.node,
         label: item.label,
         hasSubMenu: item.hasSubMenu,
         subMenu: item.subMenu ? sort(item.subMenu) : item.subMenu,
-        node: item.node
+        // @ts-ignore
+        onClick: item.node ? (e: MouseEvent) => onNodeClick(e, item.node) : undefined
       };
-    });
+    }) as IMenuType[];
   };
 
   return sort(categorizedArray);
+}
+
+function onNodeClick(e: MouseEvent, node: { type: string }) {
+  const { addNode } = useFlowStore.getState();
+  const position = { x: e.clientX, y: e.clientY };
+
+  // @ts-ignore
+  addNode({ position, type: node.name });
 }
