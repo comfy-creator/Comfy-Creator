@@ -40,6 +40,8 @@ const LoadDefaultButton = () => {
           values[name] = widget.value;
         }
 
+        console.log('Node type>', node.type, nodeDefs);
+
         const def = nodeDefs[node.type];
         const state = computeInitialNodeState(def, values, { ...config });
 

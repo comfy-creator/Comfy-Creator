@@ -51,6 +51,8 @@ import { defaultThemeConfig } from '../lib/config/themes';
 import { colorSchemeSettings } from '../lib/settings';
 import { useApiContext } from '../contexts/api.tsx';
 import { useFlow } from '../lib/hooks/useFlow.tsx';
+import { computeInitialNodeState } from '../lib/utils/node.ts';
+import ImageFeedDrawer from './Drawer/ImageFeedDrawer.tsx';
 
 const selector = (state: RFState) => ({
   panOnDrag: state.panOnDrag,
@@ -400,6 +402,7 @@ export function MainFlow() {
         <NodeToolbar />
         <Panel position="top-right">
           <ControlPanel />
+          <ImageFeedDrawer />
         </Panel>
       </ReactHotkeys>
     </ReactFlow>
