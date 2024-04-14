@@ -7,11 +7,7 @@ import {
   NodeStateConfig,
   WidgetState
 } from '../types.ts';
-import {
-  controlAfterGenerateDef,
-  CONVERTABLE_WIDGET_TYPES,
-  WIDGET_TYPES
-} from '../config/constants.ts';
+import { CONVERTABLE_WIDGET_TYPES, WIDGET_TYPES } from '../config/constants.ts';
 import { Node } from 'reactflow';
 import { useFlowStore } from '../../store/flow.ts';
 import { createValueControlWidget, isSeedWidget } from './widgets.ts';
@@ -24,13 +20,13 @@ export function computeInitialNodeState(
   const { display_name: name, inputs, outputs } = def;
   const state: NodeState = {
     name,
+    inputs: [],
+    outputs: [],
+    widgets: {},
     config: {
       ...config,
       isOutputNode: def.output_node
-    },
-    inputs: [],
-    outputs: [],
-    widgets: {}
+    }
   };
 
   inputs.forEach((input) => {
@@ -40,10 +36,7 @@ export function computeInitialNodeState(
       state.widgets[input.name] = widget;
 
       if (isSeedWidget(input)) {
-        const afterGenWidget = createValueControlWidget({
-          widget,
-          inputDef: controlAfterGenerateDef
-        });
+        const afterGenWidget = createValueControlWidget({ widget });
 
         widget.linkedWidgets = [afterGenWidget.name];
         state.widgets[afterGenWidget.name] = afterGenWidget;
@@ -84,34 +77,35 @@ export function computeInitialNodeState(
 
 export function widgetStateFromDef(def: InputDef, values: Record<string, any>): WidgetState {
   const state = { name: def.name, optional: def.optional };
+  const value = values[def.name];
 
   switch (def.type) {
     case 'BOOLEAN':
       return {
         ...state,
         type: def.type,
-        value: values[def.type] ?? def.defaultValue
+        value: value ?? def.defaultValue
       };
 
     case 'INT':
       return {
         ...state,
         type: def.type,
-        value: values[def.type] ?? def.defaultValue
+        value: value ?? def.defaultValue
       };
 
     case 'FLOAT':
       return {
         ...state,
         type: def.type,
-        value: values[def.type] ?? def.defaultValue
+        value: value ?? def.defaultValue
       };
 
     case 'STRING':
       return {
         ...state,
         type: def.type,
-        value: values[def.type] ?? def.defaultValue
+        value: value ?? def.defaultValue
       };
 
     case 'ENUM':
@@ -125,21 +119,21 @@ export function widgetStateFromDef(def: InputDef, values: Record<string, any>): 
       return {
         ...state,
         type: def.type,
-        value: def.defaultValue ?? firstOptionValue
+        value: value ?? def.defaultValue ?? firstOptionValue
       };
 
     case 'IMAGE':
       return {
         ...state,
         type: def.type,
-        value: values[def.name] ?? def.defaultValue
+        value: value ?? def.defaultValue
       };
 
     case 'VIDEO':
       return {
         ...state,
         type: def.type,
-        value: values[def.name] ?? def.defaultValue ?? {}
+        value: value ?? def.defaultValue ?? {}
       };
 
     default:

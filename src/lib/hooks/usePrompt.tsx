@@ -2,27 +2,26 @@ import { useFlowStore } from '../../store/flow';
 import { ReactFlowJsonObject } from 'reactflow';
 import { NodeState, SerializedFlow } from '../types';
 import { useApiContext } from '../../contexts/api.tsx';
+import { applyWidgetControl } from '../utils/widgets.ts';
 
 export function usePrompt() {
-  const { instance } = useFlowStore();
+  const { instance, updateWidgetState } = useFlowStore();
   const { runWorkflow } = useApiContext();
 
   const queuePrompt = async () => {
-    if (!instance) throw new Error('Flow instance not found');
+    const flow = flowToObject();
     const prompt = flowToPrompt();
     if (!prompt) return;
 
     await runWorkflow(prompt);
 
-    // for (const node of flow.nodes) {
-    //   publishEvent<{ nodeId: string }>('afterQueue', { nodeId: node.id });
-    // }
+    for (const node of flow.nodes) {
+      applyWidgetControl(node, updateWidgetState);
+    }
   };
 
   const flowToPrompt = () => {
-    if (!instance) throw new Error('Flow instance not found');
-    const flow: ReactFlowJsonObject<NodeState> = instance.toObject();
-
+    const flow = flowToObject();
     const prompt: SerializedFlow = {};
 
     for (const node of flow.nodes) {
@@ -72,5 +71,10 @@ export function usePrompt() {
     return prompt;
   };
 
-  return { queuePrompt, flowToPrompt };
+  const flowToObject = () => {
+    if (!instance) throw new Error('Flow instance not found');
+    return instance.toObject() as ReactFlowJsonObject<NodeState>;
+  };
+
+  return { queuePrompt, flowToPrompt, flowToObject };
 }

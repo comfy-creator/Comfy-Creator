@@ -1,12 +1,11 @@
 import React, { createContext, ReactNode, useCallback, useEffect, useState } from 'react';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import { createUseContextHook } from './hookCreator';
-import { createChannel, createClient, Metadata } from 'nice-grpc-web';
+import { createChannel, createClient, FetchTransport, Metadata } from 'nice-grpc-web';
 import {
   ComfyClient,
   ComfyDefinition,
-  ComfyMessage,
-  JobCreated,
+  JobSnapshot,
   WorkflowStep
 } from '../autogen_web_ts/comfy_request.v1';
 import {
@@ -23,7 +22,7 @@ import {
 } from '../types/api';
 import { ComfyObjectInfo } from '../types/comfy';
 import { API_URL, DEFAULT_SERVER_PROTOCOL, DEFAULT_SERVER_URL } from '../lib/config/constants.ts';
-import { toHttpURL, toWsURL } from '../lib/utils';
+import { toWsURL } from '../lib/utils';
 import { ComfyWsMessage, SerializedFlow, ViewFileArgs } from '../lib/types.ts';
 import { ApiEventEmitter } from '../lib/apiEvent.ts';
 
@@ -47,7 +46,7 @@ interface IApiContext extends IComfyApi {
   runWorkflow: (
     serializedGraph: SerializedFlow,
     workflow?: Record<string, WorkflowStep>
-  ) => Promise<JobCreated>;
+  ) => Promise<JobSnapshot>;
   makeServerURL: (route: string) => string;
 }
 
@@ -58,7 +57,7 @@ enum ApiStatus {
   CLOSED = 'closed'
 }
 
-const handleComfyMessage = (message: ComfyMessage | ComfyWsMessage) => {
+const handleComfyMessage = (message: ComfyWsMessage) => {
   let event: CustomEvent;
   if ('type' in message) {
     // this is from the websocket
@@ -102,14 +101,14 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
 
   // Only used for when serverProtocol is grpc. Used to both send messages and stream results
   const [comfyClient, setComfyClient] = useState<ComfyClient>(
-    createClient(ComfyDefinition, createChannel(serverUrl))
+    createClient(ComfyDefinition, createChannel(serverUrl, FetchTransport()))
   );
 
   // Recreate ComfyClient as needed
   useEffect(() => {
     if (serverProtocol !== 'grpc') return;
 
-    const channel = createChannel(serverUrl);
+    const channel = createChannel(serverUrl, FetchTransport());
     const newComfyClient = createClient(ComfyDefinition, channel);
     setComfyClient(newComfyClient);
     // No cleanup is explicitly required for gRPC client
@@ -172,30 +171,30 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
 
     const abortController = new AbortController();
 
-    const stream = comfyClient.streamRoom(
-      { session_id: sessionId },
-      { signal: abortController.signal }
-    );
+    // const stream = comfyClient.streamRoom(
+    //   { session_id: sessionId },
+    //   { signal: abortController.signal }
+    // );
 
     setConnectionStatus(ApiStatus.CONNECTING);
 
-    (async () => {
-      let first = true;
-      for await (const message of stream) {
-        if (first) {
-          first = false;
-          setConnectionStatus(ApiStatus.OPEN);
-        }
-        handleComfyMessage(message);
-      }
-    })()
-      .then(() => {
-        setConnectionStatus(ApiStatus.CLOSED);
-      })
-      .catch((error) => {
-        setConnectionStatus(ApiStatus.CLOSED);
-        console.error(error);
-      });
+    // (async () => {
+    //   let first = true;
+    //   for await (const message of stream) {
+    //     if (first) {
+    //       first = false;
+    //       setConnectionStatus(ApiStatus.OPEN);
+    //     }
+    //     handleComfyMessage(message);
+    //   }
+    // })()
+    //   .then(() => {
+    //     setConnectionStatus(ApiStatus.CLOSED);
+    //   })
+    //   .catch((error) => {
+    //     setConnectionStatus(ApiStatus.CLOSED);
+    //     console.error(error);
+    //   });
 
     // Cleanup stream
     return () => {
@@ -213,28 +212,46 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
   // This is the function used to submit jobs to the server
   // ComfyUI terminology: 'queuePrompt'
   const runWorkflow = useCallback(
-    async (flow: SerializedFlow, workflow?: Record<string, WorkflowStep>): Promise<JobCreated> => {
+    async (flow: SerializedFlow, workflow?: Record<string, WorkflowStep>): Promise<JobSnapshot> => {
       if (serverProtocol === 'grpc' && comfyClient) {
         // Use gRPC server
         const request = {
-          workflow,
+          workflow: flow,
           serializedGraph: flow,
           inputFiles: [],
-          output_config: undefined,
           worker_wait_duration: undefined,
-          session_id: sessionId
+          request_id: crypto.randomUUID(),
+          output_config: {
+            write_to_graph_id: localStorage.getItem('graphId') ?? undefined
+          }
         };
 
-        const res = await comfyClient.runWorkflow(request, {
-          metadata: requestMetadata
-        });
+        try {
+          console.log({ request });
+          const res = await comfyClient.run(request, {
+            metadata: requestMetadata
+          });
 
-        // Update the assigned sessionId
-        if (res.session_id !== sessionId) {
-          setSessionId(res.session_id);
+          console.log(res.job_id);
+
+          // Update the assigned sessionId
+          if (res.request_id !== sessionId) {
+            setSessionId(res.request_id);
+          }
+
+          // Stream the job results
+
+          // wait for some time
+          await new Promise((resolve) => setTimeout(resolve, 5000));
+
+          for await (const response of comfyClient.streamJob({ job_id: res.job_id })) {
+            console.log(response);
+          }
+
+          return res;
+        } catch (e) {
+          console.log(e);
         }
-
-        return res;
       } else {
         // Use REST server
         const headers: Record<string, string> = {
@@ -273,7 +290,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
 
   // putting these functions here for now cos we might want to find a way to go with the gRPC and the fetch requests
   const makeServerURL = (route: string): string => {
-    return toHttpURL(serverUrl) + route;
+    return 'http://localhost:8188' + route;
   };
 
   const fetchApi = (route: string, options?: RequestInit) => {

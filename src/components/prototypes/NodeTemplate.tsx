@@ -19,7 +19,7 @@ import { ImageWidget } from '../widgets/Image';
 import { TextWidget } from '../widgets/Text';
 import { useSettingsStore } from '../../store/settings.ts';
 import { useFlowStore } from '../../store/flow.ts';
-import ProgressBar from '../ProgressBar.tsx';
+import { ProgressBar } from '../ProgressBar.tsx';
 
 const createWidgetFromSpec = (
   def: InputDef,
@@ -210,10 +210,8 @@ export const createNodeComponentFromDef = (
     const widgets = Object.entries(data.widgets || []).map(([name, inputState], index) => {
       if (inputState.hidden) return null;
 
-      let inputDef: InputDef | undefined;
-      if (inputState.definition) {
-        inputDef = inputState.definition;
-      } else {
+      let inputDef: InputDef | undefined = inputState.definition;
+      if (!inputDef) {
         inputDef = def.inputs.find((input) => input.name === name);
       }
 

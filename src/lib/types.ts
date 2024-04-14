@@ -403,7 +403,6 @@ export interface LogEntry {
 }
 
 export interface AddValueControlWidget {
-  inputDef: InputDef;
   widget: WidgetState;
   defaultValue?: string;
   options?: {

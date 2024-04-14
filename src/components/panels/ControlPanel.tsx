@@ -12,7 +12,6 @@ import { toggleSwitch } from '../../lib/utils/ui';
 import { ComfyList } from '../ComfyList';
 import { RFState, useFlowStore } from '../../store/flow';
 import { loadLegacyWorkflow } from '../../lib/handlers/loadLegacy.ts';
-import { useSettingsStore } from '../../store/settings.ts';
 
 type AutoQueueMode =
   | {
@@ -35,7 +34,6 @@ const ControlPanel = () => {
 
   const { addSetting, show: showSettings } = useSettings();
   const { queuePrompt } = usePrompt();
-  // const { lastExecutionError } = useComfyApp();
   const lastExecutionError = false;
 
   const [batchCount, setBatchCount] = useState(1);
@@ -61,10 +59,7 @@ const ControlPanel = () => {
   const queueSizeEl = useRef<HTMLSpanElement>(null);
   const autoQueueModeElRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const legacyFileLoadRef = useRef<HTMLInputElement>(null);
-
-  const { addSettingsValue } = useSettingsStore();
 
   useEffect(() => {
     const confirmClear = addSetting({
@@ -171,7 +166,7 @@ const ControlPanel = () => {
         (autoQueueMode === 'instant' || graphHasChanged) &&
         !lastExecutionError
       ) {
-        queuePrompt(0);
+        queuePrompt();
         status.exec_info.queue_remaining += batchCount;
         setGraphHasChanged(false);
       }
@@ -215,18 +210,34 @@ const ControlPanel = () => {
 
   const fileInput = (
     <input
-      id="comfy-file-input"
+      id="load-workflow"
       type="file"
       ref={fileInputRef}
       accept=".json,image/png,.latent,.safetensors,image/webp"
       style={{ display: 'none' }}
-      onChange={(e) => {}}
+      onChange={(e) => {
+        const file = e.target.files?.[0];
+
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const contents = e.target?.result;
+            if (typeof contents === 'string') {
+              const { edges, nodes } = JSON.parse(contents);
+
+              setNodes(nodes);
+              setEdges(edges);
+            }
+          };
+          reader.readAsText(file);
+        }
+      }}
     />
   );
 
   const legacyFIleLoad = (
     <input
-      id="comfy-file-input"
+      id="load-workflow-legacy"
       type="file"
       ref={legacyFileLoadRef}
       accept=".json"
@@ -286,7 +297,7 @@ const ControlPanel = () => {
             </button>
           </div>
 
-          <button id="queue-button" className="comfy-queue-btn" onClick={() => queuePrompt(0)}>
+          <button id="queue-button" className="comfy-queue-btn" onClick={queuePrompt}>
             Run All
           </button>
 
@@ -300,7 +311,7 @@ const ControlPanel = () => {
           />
 
           <div className="comfy-menu-btns">
-            <button id="queue-front-button" onClick={() => queuePrompt(-1)}>
+            <button id="queue-front-button" onClick={queuePrompt}>
               Queue Front
             </button>
 

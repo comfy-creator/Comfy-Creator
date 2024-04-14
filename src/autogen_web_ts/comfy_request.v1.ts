@@ -1,19 +1,79 @@
 /* eslint-disable */
+import Long from "long";
 import type { CallContext, CallOptions } from "nice-grpc-common";
-import * as _m0 from "protobufjs/minimal";
-import { Empty } from "./google/empty";
-import { Struct } from "./google/struct";
+import _m0 from "protobufjs/minimal";
+import { Any } from "./google/protobuf/any";
+import { Empty } from "./google/protobuf/empty";
+import { Struct } from "./google/protobuf/struct";
 import { SerializedGraph } from "./serialized_graph.v1";
 
 export const protobufPackage = "comfy_request.v1";
 
 /** These are more direct client-created workflows for client -> server -> worker */
 
+export enum JobStatus {
+  QUEUED = "QUEUED",
+  EXECUTING = "EXECUTING",
+  COMPLETED = "COMPLETED",
+  ERROR = "ERROR",
+  ABORTED = "ABORTED",
+  UNRECOGNIZED = "UNRECOGNIZED",
+}
+
+export function jobStatusFromJSON(object: any): JobStatus {
+  switch (object) {
+    case 0:
+    case "QUEUED":
+      return JobStatus.QUEUED;
+    case 1:
+    case "EXECUTING":
+      return JobStatus.EXECUTING;
+    case 2:
+    case "COMPLETED":
+      return JobStatus.COMPLETED;
+    case 3:
+    case "ERROR":
+      return JobStatus.ERROR;
+    case 4:
+    case "ABORTED":
+      return JobStatus.ABORTED;
+    case -1:
+    case "UNRECOGNIZED":
+    default:
+      return JobStatus.UNRECOGNIZED;
+  }
+}
+
+export function jobStatusToNumber(object: JobStatus): number {
+  switch (object) {
+    case JobStatus.QUEUED:
+      return 0;
+    case JobStatus.EXECUTING:
+      return 1;
+    case JobStatus.COMPLETED:
+      return 2;
+    case JobStatus.ERROR:
+      return 3;
+    case JobStatus.ABORTED:
+      return 4;
+    case JobStatus.UNRECOGNIZED:
+    default:
+      return -1;
+  }
+}
+
 /** Message definition for WorkflowStep */
 export interface WorkflowStep {
   class_type: string;
   /** Inputs are too idiosyncratic to be typed specifically */
   inputs: { [key: string]: any } | undefined;
+}
+
+export interface FileReference {
+  /** string must be a valid url */
+  url: string;
+  /** Comfy UI terminology: key 'type', values 'temp' | 'output' */
+  is_temp: boolean;
 }
 
 /**
@@ -23,57 +83,64 @@ export interface WorkflowStep {
  * image: png, jpg, svg, webp, gif
  * video: mp4
  * data: json (icluding RLE-encoded masks), npy (numpy array for embeddings)
- * TO DO: in the future, we may want more info, such as mask VS image, or latent preview
+ * TO DO: in the future, we may want more metadata, such as mask VS image VS latent preview
  */
 export interface WorkflowFile {
-  /** unique identifier for the file */
-  file_hash: string;
+  /** unique identifier for the file; use this instead of a filename */
+  blake3_hash: string;
   /** ComfyUI terminology: key 'format' */
   mime_type: string;
-  reference?: WorkflowFile_FileReference | undefined;
-  data?: Uint8Array | undefined;
+  reference?: FileReference | undefined;
+  bytes?: Uint8Array | undefined;
 }
 
-export interface WorkflowFile_FileReference {
-  /** string must be a valid url */
-  url: string;
-  /** Comfy UI terminology: key 'type', values 'temp' | 'output' */
-  is_temp: boolean;
+/** It would be helpful to have blake3 hashes rather than filenames */
+export interface LocalFile {
+  name: string;
+  path: string;
+  /** in bytes */
+  size: number;
+  mime_type: string;
+}
+
+export interface LocalFiles {
+  added: LocalFile[];
+  updated: LocalFile[];
+  removed: LocalFile[];
+}
+
+export interface JobId {
+  job_id: string;
 }
 
 /**
- * TO DO: add specific buckets for different users perhaps?
- * Private VS public outputs?
- *
- * Right now: output-files are saved to our DO S3 bucket, and all of them are publicly
- * available.
- * Temp-files are saved to our DO S3 temp bucket, which is wiped after 24 hours.
- * Corresponding records exist in Firestore for both.
- * If 'save outputs' is false, then the output files are saved to the temp bucket
- * In the future, API-clients can provide us with S3 secrets which we can use to upload
- * to their specified account.
- * In the future we may allow for S3 presigned urls as well.
- * In the future we may add support for webhook callbacks.
- * In the future we may allow for direct binary outputs (instead of uploading files to S3
- * and then returning urls)
+ * TO DO: consider implementing this
+ * enum ResponseFormat {
+ *   URL = 0;
+ *   BINARY = 1;
+ * }
  */
 export interface OutputConfig {
-  save_outputs: boolean;
-  send_latent_previews: boolean;
+  /** writes outputs to the specified collaborative graph */
+  write_to_graph_id?:
+    | string
+    | undefined;
+  /** Performs a callback to the webhook url with the outputs */
+  webhook_url?: string | undefined;
 }
 
-/** client -> server message */
 export interface ComfyRequest {
+  /**
+   * This is a client-supplied identifier; it allows the client to associate responses
+   * or multiple requests with the same identifier. Useful for webhook callbacks.
+   */
+  request_id?:
+    | string
+    | undefined;
   /** keys are node_ids */
   workflow: { [key: string]: WorkflowStep };
   serialized_graph?: SerializedGraph | undefined;
-  input_files: WorkflowFile[];
-  output_config: OutputConfig | undefined;
-  worker_wait_duration?:
-    | number
-    | undefined;
-  /** redis channel name to publish results to */
-  session_id?: string | undefined;
+  output_config?: OutputConfig | undefined;
 }
 
 export interface ComfyRequest_WorkflowEntry {
@@ -81,145 +148,135 @@ export interface ComfyRequest_WorkflowEntry {
   value: WorkflowStep | undefined;
 }
 
-/**
- * ComfyUI has 'delete' (remove specific non-running items), and 'interrupt'
- * (stop currently running process) commands. We roll them all into a single endpoint here.
- */
-export interface CancelJob {
+/** This is published to pulsar as a cumulative message; it contains all prior msg info */
+export interface JobSnapshot {
   job_id: string;
+  request_id?: string | undefined;
+  status: JobStatus;
+  outputs: JobOutput[];
+  metrics?: JobSnapshot_Metrics | undefined;
 }
 
-/** ComfyUI calls this 'clear' (remove all queued items owned by the user) */
-export interface PurgeRoomQueue {
-  session_id: string;
-}
-
-export interface JobCreated {
-  /** created by the server; id of the job in the queue */
-  job_id: string;
-  /** redis channel to subscribe to for updates */
-  session_id: string;
+/** Metrics are cumulative for the entire job */
+export interface JobSnapshot_Metrics {
   queue_seconds: number;
   execution_seconds: number;
 }
 
-/** Temp-files and latent-previews are not included */
 export interface JobOutput {
-  job_id: string;
-  session_id: string;
-  files: WorkflowFile[];
-}
-
-/** It's assumed that the consumer knows what session_id it's watching */
-export interface ComfyMessage {
-  job_id: string;
-  user_id: string;
-  queue_status?: ComfyMessage_QueueStatus | undefined;
-  execution_start?: ComfyMessage_ExecutionStart | undefined;
-  executing?: ComfyMessage_Executing | undefined;
-  progress?: ComfyMessage_Progress | undefined;
-  execution_error?: ComfyMessage_ExecutionError | undefined;
-  execution_interrupted?: ComfyMessage_ExecutionInterrupted | undefined;
-  execution_cached?: ComfyMessage_ExecutionCached | undefined;
-  output?: ComfyMessage_Output | undefined;
-  custom_message?: ComfyMessage_CustomMessage | undefined;
-}
-
-/**
- * updates queue-display on client. SID's purpose is unknown
- * ComfyUI terminology: 'Status'
- */
-export interface ComfyMessage_QueueStatus {
-  /** looks like: "99506f0d89b64dbdb09ae567274fb078" */
-  sid?: string | undefined;
-  queue_remaining: number;
-}
-
-/** job-started */
-export interface ComfyMessage_ExecutionStart {
-}
-
-/**
- * job execution moved to node_id
- * There is a bug in ComfyUI where it'll send an Executing update with node: null at the
- * end of a job; we ignore these
- */
-export interface ComfyMessage_Executing {
+  /** id of the node in the original workflow that produced this output */
   node_id: string;
+  /** output node's class type */
+  class_type: string;
+  file: WorkflowFile | undefined;
 }
 
-/** Updates a node's progress bar; like (value / max) = percent-complete */
-export interface ComfyMessage_Progress {
+/**
+ * Specify subset of fully qualified extension names, to load their node defs
+ * Leave empty to retrieve all node definitions
+ */
+export interface NodeDefRequest {
+  extension_ids: string[];
+}
+
+/**
+ * Input specs are used for to populate input-widgets. Example:
+ * number: min / max / step values for a number
+ * string: multiline: true / false
+ * or 'default' for any value really
+ */
+export interface NodeDefinition {
+  display_name: string;
+  description: string;
+  category: string;
+  inputs: NodeDefinition_InputDef[];
+  outputs: NodeDefinition_OutputDef[];
+  output_node: boolean;
+}
+
+export interface NodeDefinition_InputDef {
+  label: string;
+  edge_type: string;
+  spec: { [key: string]: any } | undefined;
+}
+
+export interface NodeDefinition_OutputDef {
+  label: string;
+  edge_type: string;
+}
+
+export interface NodeDefs {
+  defs: { [key: string]: NodeDefinition };
+}
+
+export interface NodeDefs_DefsEntry {
+  key: string;
+  value: NodeDefinition | undefined;
+}
+
+export interface Models {
+  info: Models_Info[];
+}
+
+export interface Models_Info {
+  blake3_hash: string;
+  display_name: string;
+}
+
+/** Maps base-family to model */
+export interface ModelCatalog {
+  models: { [key: string]: Models };
+}
+
+export interface ModelCatalog_ModelsEntry {
+  key: string;
+  value: Models | undefined;
+}
+
+/** Leave blank to retrieve all models */
+export interface ModelCatalogRequest {
+  base_family: string[];
+}
+
+export interface StatusMessage {
+  sid: string;
+  status: { [key: string]: Any };
+}
+
+export interface StatusMessage_StatusEntry {
+  key: string;
+  value: Any | undefined;
+}
+
+export interface ProgressMessage {
   max: number;
+  node: string;
   value: number;
+  prompt_id: string;
 }
 
-/** we remove currentInputs and currentOutputs as they are too large */
-export interface ComfyMessage_ExecutionError {
-  currentInputs: { [key: string]: any } | undefined;
-  currentOutputs: { [key: string]: any } | undefined;
-  execution_message: string;
-  exception_type: string;
-  /** list of nodes executed */
-  executed: string[];
-  /** node id that threw the error */
-  node_id: string;
-  node_type: string;
-  traceback: string[];
+export interface ExecutingMessage {
+  prompt_id: string;
+  node: string;
 }
 
-export interface ComfyMessage_ExecutionInterrupted {
-  /** node-ids that already finished */
-  executed: string[];
-  node_id: string;
-  node_type: string;
+export interface ExecutedMessage {
+  node: string;
+  prompt_id: string;
+  output: { [key: string]: Any };
 }
 
-/** This specifies nodes that were skipped due to their output being cached */
-export interface ComfyMessage_ExecutionCached {
-  node_ids: string[];
+export interface ExecutedMessage_OutputEntry {
+  key: string;
+  value: Any | undefined;
 }
 
-/**
- * A node produced an output (temp or saved); display it
- * In the original ComfyUI, it's like output.images[0] = { filename, subfolder, type }, or output.gifs[0]
- * There is also output.animated; an array whose indices are bools corresponding to the images array
- * We simplify all of this
- * ComfyUI terinology; this is called 'Executed', which was confusing
- */
-export interface ComfyMessage_Output {
-  node_id: string;
-  /** Note; in the future, we may need an 'event-type' as well */
-  files: WorkflowFile[];
-}
-
-/** This is a catch-all; custom-nodes can define their own update-messages */
-export interface ComfyMessage_CustomMessage {
-  type: string;
-  data: { [key: string]: any } | undefined;
-}
-
-/**
- * If outputs_only is true, then only Output messages will be returned,
- * otherwise all ComfyMessage types will be returned.
- * By default, output messages consisting of temp-files and latent-previews are
- * not included, but if you want them, set those flags to true.
- */
-export interface MessageFilter {
-  outputs_only: boolean;
-  include_temp_files?: boolean | undefined;
-  include_latent_previews?: boolean | undefined;
-}
-
-/** By default, all message-types will be returned, unless a filter is applied */
-export interface RoomStreamRequest {
-  session_id: string;
-  filter?: MessageFilter | undefined;
-}
-
-export interface JobStreamRequest {
-  job_id: string;
-  filter?: MessageFilter | undefined;
+export interface ComfyMessage {
+  status?: StatusMessage | undefined;
+  progress?: ProgressMessage | undefined;
+  executing?: ExecutingMessage | undefined;
+  executed?: ExecutedMessage | undefined;
+  data?: Uint8Array | undefined;
 }
 
 function createBaseWorkflowStep(): WorkflowStep {
@@ -278,92 +335,12 @@ export const WorkflowStep = {
   },
 };
 
-function createBaseWorkflowFile(): WorkflowFile {
-  return { file_hash: "", mime_type: "", reference: undefined, data: undefined };
-}
-
-export const WorkflowFile = {
-  encode(message: WorkflowFile, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.file_hash !== "") {
-      writer.uint32(10).string(message.file_hash);
-    }
-    if (message.mime_type !== "") {
-      writer.uint32(18).string(message.mime_type);
-    }
-    if (message.reference !== undefined) {
-      WorkflowFile_FileReference.encode(message.reference, writer.uint32(26).fork()).ldelim();
-    }
-    if (message.data !== undefined) {
-      writer.uint32(34).bytes(message.data);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): WorkflowFile {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseWorkflowFile();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.file_hash = reader.string();
-          continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
-
-          message.mime_type = reader.string();
-          continue;
-        case 3:
-          if (tag !== 26) {
-            break;
-          }
-
-          message.reference = WorkflowFile_FileReference.decode(reader, reader.uint32());
-          continue;
-        case 4:
-          if (tag !== 34) {
-            break;
-          }
-
-          message.data = reader.bytes();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  create(base?: DeepPartial<WorkflowFile>): WorkflowFile {
-    return WorkflowFile.fromPartial(base ?? {});
-  },
-  fromPartial(object: DeepPartial<WorkflowFile>): WorkflowFile {
-    const message = createBaseWorkflowFile();
-    message.file_hash = object.file_hash ?? "";
-    message.mime_type = object.mime_type ?? "";
-    message.reference = (object.reference !== undefined && object.reference !== null)
-      ? WorkflowFile_FileReference.fromPartial(object.reference)
-      : undefined;
-    message.data = object.data ?? undefined;
-    return message;
-  },
-};
-
-function createBaseWorkflowFile_FileReference(): WorkflowFile_FileReference {
+function createBaseFileReference(): FileReference {
   return { url: "", is_temp: false };
 }
 
-export const WorkflowFile_FileReference = {
-  encode(message: WorkflowFile_FileReference, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const FileReference = {
+  encode(message: FileReference, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.url !== "") {
       writer.uint32(10).string(message.url);
     }
@@ -373,10 +350,10 @@ export const WorkflowFile_FileReference = {
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): WorkflowFile_FileReference {
+  decode(input: _m0.Reader | Uint8Array, length?: number): FileReference {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseWorkflowFile_FileReference();
+    const message = createBaseFileReference();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -403,28 +380,298 @@ export const WorkflowFile_FileReference = {
     return message;
   },
 
-  create(base?: DeepPartial<WorkflowFile_FileReference>): WorkflowFile_FileReference {
-    return WorkflowFile_FileReference.fromPartial(base ?? {});
+  create(base?: DeepPartial<FileReference>): FileReference {
+    return FileReference.fromPartial(base ?? {});
   },
-  fromPartial(object: DeepPartial<WorkflowFile_FileReference>): WorkflowFile_FileReference {
-    const message = createBaseWorkflowFile_FileReference();
+  fromPartial(object: DeepPartial<FileReference>): FileReference {
+    const message = createBaseFileReference();
     message.url = object.url ?? "";
     message.is_temp = object.is_temp ?? false;
     return message;
   },
 };
 
+function createBaseWorkflowFile(): WorkflowFile {
+  return { blake3_hash: "", mime_type: "", reference: undefined, bytes: undefined };
+}
+
+export const WorkflowFile = {
+  encode(message: WorkflowFile, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.blake3_hash !== "") {
+      writer.uint32(10).string(message.blake3_hash);
+    }
+    if (message.mime_type !== "") {
+      writer.uint32(18).string(message.mime_type);
+    }
+    if (message.reference !== undefined) {
+      FileReference.encode(message.reference, writer.uint32(26).fork()).ldelim();
+    }
+    if (message.bytes !== undefined) {
+      writer.uint32(34).bytes(message.bytes);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): WorkflowFile {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseWorkflowFile();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.blake3_hash = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.mime_type = reader.string();
+          continue;
+        case 3:
+          if (tag !== 26) {
+            break;
+          }
+
+          message.reference = FileReference.decode(reader, reader.uint32());
+          continue;
+        case 4:
+          if (tag !== 34) {
+            break;
+          }
+
+          message.bytes = reader.bytes();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<WorkflowFile>): WorkflowFile {
+    return WorkflowFile.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<WorkflowFile>): WorkflowFile {
+    const message = createBaseWorkflowFile();
+    message.blake3_hash = object.blake3_hash ?? "";
+    message.mime_type = object.mime_type ?? "";
+    message.reference = (object.reference !== undefined && object.reference !== null)
+      ? FileReference.fromPartial(object.reference)
+      : undefined;
+    message.bytes = object.bytes ?? undefined;
+    return message;
+  },
+};
+
+function createBaseLocalFile(): LocalFile {
+  return { name: "", path: "", size: 0, mime_type: "" };
+}
+
+export const LocalFile = {
+  encode(message: LocalFile, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.name !== "") {
+      writer.uint32(10).string(message.name);
+    }
+    if (message.path !== "") {
+      writer.uint32(18).string(message.path);
+    }
+    if (message.size !== 0) {
+      writer.uint32(24).int64(message.size);
+    }
+    if (message.mime_type !== "") {
+      writer.uint32(34).string(message.mime_type);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): LocalFile {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseLocalFile();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.name = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.path = reader.string();
+          continue;
+        case 3:
+          if (tag !== 24) {
+            break;
+          }
+
+          message.size = longToNumber(reader.int64() as Long);
+          continue;
+        case 4:
+          if (tag !== 34) {
+            break;
+          }
+
+          message.mime_type = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<LocalFile>): LocalFile {
+    return LocalFile.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<LocalFile>): LocalFile {
+    const message = createBaseLocalFile();
+    message.name = object.name ?? "";
+    message.path = object.path ?? "";
+    message.size = object.size ?? 0;
+    message.mime_type = object.mime_type ?? "";
+    return message;
+  },
+};
+
+function createBaseLocalFiles(): LocalFiles {
+  return { added: [], updated: [], removed: [] };
+}
+
+export const LocalFiles = {
+  encode(message: LocalFiles, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    for (const v of message.added) {
+      LocalFile.encode(v!, writer.uint32(10).fork()).ldelim();
+    }
+    for (const v of message.updated) {
+      LocalFile.encode(v!, writer.uint32(18).fork()).ldelim();
+    }
+    for (const v of message.removed) {
+      LocalFile.encode(v!, writer.uint32(26).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): LocalFiles {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseLocalFiles();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.added.push(LocalFile.decode(reader, reader.uint32()));
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.updated.push(LocalFile.decode(reader, reader.uint32()));
+          continue;
+        case 3:
+          if (tag !== 26) {
+            break;
+          }
+
+          message.removed.push(LocalFile.decode(reader, reader.uint32()));
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<LocalFiles>): LocalFiles {
+    return LocalFiles.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<LocalFiles>): LocalFiles {
+    const message = createBaseLocalFiles();
+    message.added = object.added?.map((e) => LocalFile.fromPartial(e)) || [];
+    message.updated = object.updated?.map((e) => LocalFile.fromPartial(e)) || [];
+    message.removed = object.removed?.map((e) => LocalFile.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseJobId(): JobId {
+  return { job_id: "" };
+}
+
+export const JobId = {
+  encode(message: JobId, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.job_id !== "") {
+      writer.uint32(10).string(message.job_id);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): JobId {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseJobId();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.job_id = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<JobId>): JobId {
+    return JobId.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<JobId>): JobId {
+    const message = createBaseJobId();
+    message.job_id = object.job_id ?? "";
+    return message;
+  },
+};
+
 function createBaseOutputConfig(): OutputConfig {
-  return { save_outputs: false, send_latent_previews: false };
+  return { write_to_graph_id: undefined, webhook_url: undefined };
 }
 
 export const OutputConfig = {
   encode(message: OutputConfig, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.save_outputs === true) {
-      writer.uint32(8).bool(message.save_outputs);
+    if (message.write_to_graph_id !== undefined) {
+      writer.uint32(10).string(message.write_to_graph_id);
     }
-    if (message.send_latent_previews === true) {
-      writer.uint32(16).bool(message.send_latent_previews);
+    if (message.webhook_url !== undefined) {
+      writer.uint32(18).string(message.webhook_url);
     }
     return writer;
   },
@@ -437,18 +684,18 @@ export const OutputConfig = {
       const tag = reader.uint32();
       switch (tag >>> 3) {
         case 1:
-          if (tag !== 8) {
+          if (tag !== 10) {
             break;
           }
 
-          message.save_outputs = reader.bool();
+          message.write_to_graph_id = reader.string();
           continue;
         case 2:
-          if (tag !== 16) {
+          if (tag !== 18) {
             break;
           }
 
-          message.send_latent_previews = reader.bool();
+          message.webhook_url = reader.string();
           continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
@@ -464,42 +711,29 @@ export const OutputConfig = {
   },
   fromPartial(object: DeepPartial<OutputConfig>): OutputConfig {
     const message = createBaseOutputConfig();
-    message.save_outputs = object.save_outputs ?? false;
-    message.send_latent_previews = object.send_latent_previews ?? false;
+    message.write_to_graph_id = object.write_to_graph_id ?? undefined;
+    message.webhook_url = object.webhook_url ?? undefined;
     return message;
   },
 };
 
 function createBaseComfyRequest(): ComfyRequest {
-  return {
-    workflow: {},
-    serialized_graph: undefined,
-    input_files: [],
-    output_config: undefined,
-    worker_wait_duration: undefined,
-    session_id: undefined,
-  };
+  return { request_id: undefined, workflow: {}, serialized_graph: undefined, output_config: undefined };
 }
 
 export const ComfyRequest = {
   encode(message: ComfyRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.request_id !== undefined) {
+      writer.uint32(10).string(message.request_id);
+    }
     Object.entries(message.workflow).forEach(([key, value]) => {
-      ComfyRequest_WorkflowEntry.encode({ key: key as any, value }, writer.uint32(10).fork()).ldelim();
+      ComfyRequest_WorkflowEntry.encode({ key: key as any, value }, writer.uint32(18).fork()).ldelim();
     });
     if (message.serialized_graph !== undefined) {
-      SerializedGraph.encode(message.serialized_graph, writer.uint32(18).fork()).ldelim();
-    }
-    for (const v of message.input_files) {
-      WorkflowFile.encode(v!, writer.uint32(26).fork()).ldelim();
+      SerializedGraph.encode(message.serialized_graph, writer.uint32(26).fork()).ldelim();
     }
     if (message.output_config !== undefined) {
       OutputConfig.encode(message.output_config, writer.uint32(34).fork()).ldelim();
-    }
-    if (message.worker_wait_duration !== undefined) {
-      writer.uint32(40).uint32(message.worker_wait_duration);
-    }
-    if (message.session_id !== undefined) {
-      writer.uint32(50).string(message.session_id);
     }
     return writer;
   },
@@ -516,24 +750,24 @@ export const ComfyRequest = {
             break;
           }
 
-          const entry1 = ComfyRequest_WorkflowEntry.decode(reader, reader.uint32());
-          if (entry1.value !== undefined) {
-            message.workflow[entry1.key] = entry1.value;
-          }
+          message.request_id = reader.string();
           continue;
         case 2:
           if (tag !== 18) {
             break;
           }
 
-          message.serialized_graph = SerializedGraph.decode(reader, reader.uint32());
+          const entry2 = ComfyRequest_WorkflowEntry.decode(reader, reader.uint32());
+          if (entry2.value !== undefined) {
+            message.workflow[entry2.key] = entry2.value;
+          }
           continue;
         case 3:
           if (tag !== 26) {
             break;
           }
 
-          message.input_files.push(WorkflowFile.decode(reader, reader.uint32()));
+          message.serialized_graph = SerializedGraph.decode(reader, reader.uint32());
           continue;
         case 4:
           if (tag !== 34) {
@@ -541,20 +775,6 @@ export const ComfyRequest = {
           }
 
           message.output_config = OutputConfig.decode(reader, reader.uint32());
-          continue;
-        case 5:
-          if (tag !== 40) {
-            break;
-          }
-
-          message.worker_wait_duration = reader.uint32();
-          continue;
-        case 6:
-          if (tag !== 50) {
-            break;
-          }
-
-          message.session_id = reader.string();
           continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
@@ -570,6 +790,7 @@ export const ComfyRequest = {
   },
   fromPartial(object: DeepPartial<ComfyRequest>): ComfyRequest {
     const message = createBaseComfyRequest();
+    message.request_id = object.request_id ?? undefined;
     message.workflow = Object.entries(object.workflow ?? {}).reduce<{ [key: string]: WorkflowStep }>(
       (acc, [key, value]) => {
         if (value !== undefined) {
@@ -582,12 +803,9 @@ export const ComfyRequest = {
     message.serialized_graph = (object.serialized_graph !== undefined && object.serialized_graph !== null)
       ? SerializedGraph.fromPartial(object.serialized_graph)
       : undefined;
-    message.input_files = object.input_files?.map((e) => WorkflowFile.fromPartial(e)) || [];
     message.output_config = (object.output_config !== undefined && object.output_config !== null)
       ? OutputConfig.fromPartial(object.output_config)
       : undefined;
-    message.worker_wait_duration = object.worker_wait_duration ?? undefined;
-    message.session_id = object.session_id ?? undefined;
     return message;
   },
 };
@@ -650,121 +868,34 @@ export const ComfyRequest_WorkflowEntry = {
   },
 };
 
-function createBaseCancelJob(): CancelJob {
-  return { job_id: "" };
+function createBaseJobSnapshot(): JobSnapshot {
+  return { job_id: "", request_id: undefined, status: JobStatus.QUEUED, outputs: [], metrics: undefined };
 }
 
-export const CancelJob = {
-  encode(message: CancelJob, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+export const JobSnapshot = {
+  encode(message: JobSnapshot, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
     if (message.job_id !== "") {
       writer.uint32(10).string(message.job_id);
     }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): CancelJob {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseCancelJob();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.job_id = reader.string();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
+    if (message.request_id !== undefined) {
+      writer.uint32(18).string(message.request_id);
     }
-    return message;
-  },
-
-  create(base?: DeepPartial<CancelJob>): CancelJob {
-    return CancelJob.fromPartial(base ?? {});
-  },
-  fromPartial(object: DeepPartial<CancelJob>): CancelJob {
-    const message = createBaseCancelJob();
-    message.job_id = object.job_id ?? "";
-    return message;
-  },
-};
-
-function createBasePurgeRoomQueue(): PurgeRoomQueue {
-  return { session_id: "" };
-}
-
-export const PurgeRoomQueue = {
-  encode(message: PurgeRoomQueue, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.session_id !== "") {
-      writer.uint32(10).string(message.session_id);
+    if (message.status !== JobStatus.QUEUED) {
+      writer.uint32(24).int32(jobStatusToNumber(message.status));
+    }
+    for (const v of message.outputs) {
+      JobOutput.encode(v!, writer.uint32(34).fork()).ldelim();
+    }
+    if (message.metrics !== undefined) {
+      JobSnapshot_Metrics.encode(message.metrics, writer.uint32(42).fork()).ldelim();
     }
     return writer;
   },
 
-  decode(input: _m0.Reader | Uint8Array, length?: number): PurgeRoomQueue {
+  decode(input: _m0.Reader | Uint8Array, length?: number): JobSnapshot {
     const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
     let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBasePurgeRoomQueue();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.session_id = reader.string();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  create(base?: DeepPartial<PurgeRoomQueue>): PurgeRoomQueue {
-    return PurgeRoomQueue.fromPartial(base ?? {});
-  },
-  fromPartial(object: DeepPartial<PurgeRoomQueue>): PurgeRoomQueue {
-    const message = createBasePurgeRoomQueue();
-    message.session_id = object.session_id ?? "";
-    return message;
-  },
-};
-
-function createBaseJobCreated(): JobCreated {
-  return { job_id: "", session_id: "", queue_seconds: 0, execution_seconds: 0 };
-}
-
-export const JobCreated = {
-  encode(message: JobCreated, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.job_id !== "") {
-      writer.uint32(10).string(message.job_id);
-    }
-    if (message.session_id !== "") {
-      writer.uint32(18).string(message.session_id);
-    }
-    if (message.queue_seconds !== 0) {
-      writer.uint32(24).uint32(message.queue_seconds);
-    }
-    if (message.execution_seconds !== 0) {
-      writer.uint32(32).uint32(message.execution_seconds);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): JobCreated {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseJobCreated();
+    const message = createBaseJobSnapshot();
     while (reader.pos < end) {
       const tag = reader.uint32();
       switch (tag >>> 3) {
@@ -780,17 +911,85 @@ export const JobCreated = {
             break;
           }
 
-          message.session_id = reader.string();
+          message.request_id = reader.string();
           continue;
         case 3:
           if (tag !== 24) {
             break;
           }
 
-          message.queue_seconds = reader.uint32();
+          message.status = jobStatusFromJSON(reader.int32());
           continue;
         case 4:
-          if (tag !== 32) {
+          if (tag !== 34) {
+            break;
+          }
+
+          message.outputs.push(JobOutput.decode(reader, reader.uint32()));
+          continue;
+        case 5:
+          if (tag !== 42) {
+            break;
+          }
+
+          message.metrics = JobSnapshot_Metrics.decode(reader, reader.uint32());
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<JobSnapshot>): JobSnapshot {
+    return JobSnapshot.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<JobSnapshot>): JobSnapshot {
+    const message = createBaseJobSnapshot();
+    message.job_id = object.job_id ?? "";
+    message.request_id = object.request_id ?? undefined;
+    message.status = object.status ?? JobStatus.QUEUED;
+    message.outputs = object.outputs?.map((e) => JobOutput.fromPartial(e)) || [];
+    message.metrics = (object.metrics !== undefined && object.metrics !== null)
+      ? JobSnapshot_Metrics.fromPartial(object.metrics)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseJobSnapshot_Metrics(): JobSnapshot_Metrics {
+  return { queue_seconds: 0, execution_seconds: 0 };
+}
+
+export const JobSnapshot_Metrics = {
+  encode(message: JobSnapshot_Metrics, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.queue_seconds !== 0) {
+      writer.uint32(8).uint32(message.queue_seconds);
+    }
+    if (message.execution_seconds !== 0) {
+      writer.uint32(16).uint32(message.execution_seconds);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): JobSnapshot_Metrics {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseJobSnapshot_Metrics();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 8) {
+            break;
+          }
+
+          message.queue_seconds = reader.uint32();
+          continue;
+        case 2:
+          if (tag !== 16) {
             break;
           }
 
@@ -805,13 +1004,11 @@ export const JobCreated = {
     return message;
   },
 
-  create(base?: DeepPartial<JobCreated>): JobCreated {
-    return JobCreated.fromPartial(base ?? {});
+  create(base?: DeepPartial<JobSnapshot_Metrics>): JobSnapshot_Metrics {
+    return JobSnapshot_Metrics.fromPartial(base ?? {});
   },
-  fromPartial(object: DeepPartial<JobCreated>): JobCreated {
-    const message = createBaseJobCreated();
-    message.job_id = object.job_id ?? "";
-    message.session_id = object.session_id ?? "";
+  fromPartial(object: DeepPartial<JobSnapshot_Metrics>): JobSnapshot_Metrics {
+    const message = createBaseJobSnapshot_Metrics();
     message.queue_seconds = object.queue_seconds ?? 0;
     message.execution_seconds = object.execution_seconds ?? 0;
     return message;
@@ -819,19 +1016,19 @@ export const JobCreated = {
 };
 
 function createBaseJobOutput(): JobOutput {
-  return { job_id: "", session_id: "", files: [] };
+  return { node_id: "", class_type: "", file: undefined };
 }
 
 export const JobOutput = {
   encode(message: JobOutput, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.job_id !== "") {
-      writer.uint32(10).string(message.job_id);
+    if (message.node_id !== "") {
+      writer.uint32(10).string(message.node_id);
     }
-    if (message.session_id !== "") {
-      writer.uint32(18).string(message.session_id);
+    if (message.class_type !== "") {
+      writer.uint32(18).string(message.class_type);
     }
-    for (const v of message.files) {
-      WorkflowFile.encode(v!, writer.uint32(26).fork()).ldelim();
+    if (message.file !== undefined) {
+      WorkflowFile.encode(message.file, writer.uint32(26).fork()).ldelim();
     }
     return writer;
   },
@@ -848,21 +1045,21 @@ export const JobOutput = {
             break;
           }
 
-          message.job_id = reader.string();
+          message.node_id = reader.string();
           continue;
         case 2:
           if (tag !== 18) {
             break;
           }
 
-          message.session_id = reader.string();
+          message.class_type = reader.string();
           continue;
         case 3:
           if (tag !== 26) {
             break;
           }
 
-          message.files.push(WorkflowFile.decode(reader, reader.uint32()));
+          message.file = WorkflowFile.decode(reader, reader.uint32());
           continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
@@ -878,63 +1075,1056 @@ export const JobOutput = {
   },
   fromPartial(object: DeepPartial<JobOutput>): JobOutput {
     const message = createBaseJobOutput();
-    message.job_id = object.job_id ?? "";
-    message.session_id = object.session_id ?? "";
-    message.files = object.files?.map((e) => WorkflowFile.fromPartial(e)) || [];
+    message.node_id = object.node_id ?? "";
+    message.class_type = object.class_type ?? "";
+    message.file = (object.file !== undefined && object.file !== null)
+      ? WorkflowFile.fromPartial(object.file)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseNodeDefRequest(): NodeDefRequest {
+  return { extension_ids: [] };
+}
+
+export const NodeDefRequest = {
+  encode(message: NodeDefRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    for (const v of message.extension_ids) {
+      writer.uint32(10).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): NodeDefRequest {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseNodeDefRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.extension_ids.push(reader.string());
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<NodeDefRequest>): NodeDefRequest {
+    return NodeDefRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<NodeDefRequest>): NodeDefRequest {
+    const message = createBaseNodeDefRequest();
+    message.extension_ids = object.extension_ids?.map((e) => e) || [];
+    return message;
+  },
+};
+
+function createBaseNodeDefinition(): NodeDefinition {
+  return { display_name: "", description: "", category: "", inputs: [], outputs: [], output_node: false };
+}
+
+export const NodeDefinition = {
+  encode(message: NodeDefinition, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.display_name !== "") {
+      writer.uint32(10).string(message.display_name);
+    }
+    if (message.description !== "") {
+      writer.uint32(18).string(message.description);
+    }
+    if (message.category !== "") {
+      writer.uint32(26).string(message.category);
+    }
+    for (const v of message.inputs) {
+      NodeDefinition_InputDef.encode(v!, writer.uint32(34).fork()).ldelim();
+    }
+    for (const v of message.outputs) {
+      NodeDefinition_OutputDef.encode(v!, writer.uint32(42).fork()).ldelim();
+    }
+    if (message.output_node === true) {
+      writer.uint32(48).bool(message.output_node);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): NodeDefinition {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseNodeDefinition();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.display_name = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.description = reader.string();
+          continue;
+        case 3:
+          if (tag !== 26) {
+            break;
+          }
+
+          message.category = reader.string();
+          continue;
+        case 4:
+          if (tag !== 34) {
+            break;
+          }
+
+          message.inputs.push(NodeDefinition_InputDef.decode(reader, reader.uint32()));
+          continue;
+        case 5:
+          if (tag !== 42) {
+            break;
+          }
+
+          message.outputs.push(NodeDefinition_OutputDef.decode(reader, reader.uint32()));
+          continue;
+        case 6:
+          if (tag !== 48) {
+            break;
+          }
+
+          message.output_node = reader.bool();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<NodeDefinition>): NodeDefinition {
+    return NodeDefinition.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<NodeDefinition>): NodeDefinition {
+    const message = createBaseNodeDefinition();
+    message.display_name = object.display_name ?? "";
+    message.description = object.description ?? "";
+    message.category = object.category ?? "";
+    message.inputs = object.inputs?.map((e) => NodeDefinition_InputDef.fromPartial(e)) || [];
+    message.outputs = object.outputs?.map((e) => NodeDefinition_OutputDef.fromPartial(e)) || [];
+    message.output_node = object.output_node ?? false;
+    return message;
+  },
+};
+
+function createBaseNodeDefinition_InputDef(): NodeDefinition_InputDef {
+  return { label: "", edge_type: "", spec: undefined };
+}
+
+export const NodeDefinition_InputDef = {
+  encode(message: NodeDefinition_InputDef, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.label !== "") {
+      writer.uint32(10).string(message.label);
+    }
+    if (message.edge_type !== "") {
+      writer.uint32(18).string(message.edge_type);
+    }
+    if (message.spec !== undefined) {
+      Struct.encode(Struct.wrap(message.spec), writer.uint32(26).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): NodeDefinition_InputDef {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseNodeDefinition_InputDef();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.label = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.edge_type = reader.string();
+          continue;
+        case 3:
+          if (tag !== 26) {
+            break;
+          }
+
+          message.spec = Struct.unwrap(Struct.decode(reader, reader.uint32()));
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<NodeDefinition_InputDef>): NodeDefinition_InputDef {
+    return NodeDefinition_InputDef.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<NodeDefinition_InputDef>): NodeDefinition_InputDef {
+    const message = createBaseNodeDefinition_InputDef();
+    message.label = object.label ?? "";
+    message.edge_type = object.edge_type ?? "";
+    message.spec = object.spec ?? undefined;
+    return message;
+  },
+};
+
+function createBaseNodeDefinition_OutputDef(): NodeDefinition_OutputDef {
+  return { label: "", edge_type: "" };
+}
+
+export const NodeDefinition_OutputDef = {
+  encode(message: NodeDefinition_OutputDef, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.label !== "") {
+      writer.uint32(10).string(message.label);
+    }
+    if (message.edge_type !== "") {
+      writer.uint32(18).string(message.edge_type);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): NodeDefinition_OutputDef {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseNodeDefinition_OutputDef();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.label = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.edge_type = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<NodeDefinition_OutputDef>): NodeDefinition_OutputDef {
+    return NodeDefinition_OutputDef.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<NodeDefinition_OutputDef>): NodeDefinition_OutputDef {
+    const message = createBaseNodeDefinition_OutputDef();
+    message.label = object.label ?? "";
+    message.edge_type = object.edge_type ?? "";
+    return message;
+  },
+};
+
+function createBaseNodeDefs(): NodeDefs {
+  return { defs: {} };
+}
+
+export const NodeDefs = {
+  encode(message: NodeDefs, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    Object.entries(message.defs).forEach(([key, value]) => {
+      NodeDefs_DefsEntry.encode({ key: key as any, value }, writer.uint32(10).fork()).ldelim();
+    });
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): NodeDefs {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseNodeDefs();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          const entry1 = NodeDefs_DefsEntry.decode(reader, reader.uint32());
+          if (entry1.value !== undefined) {
+            message.defs[entry1.key] = entry1.value;
+          }
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<NodeDefs>): NodeDefs {
+    return NodeDefs.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<NodeDefs>): NodeDefs {
+    const message = createBaseNodeDefs();
+    message.defs = Object.entries(object.defs ?? {}).reduce<{ [key: string]: NodeDefinition }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = NodeDefinition.fromPartial(value);
+      }
+      return acc;
+    }, {});
+    return message;
+  },
+};
+
+function createBaseNodeDefs_DefsEntry(): NodeDefs_DefsEntry {
+  return { key: "", value: undefined };
+}
+
+export const NodeDefs_DefsEntry = {
+  encode(message: NodeDefs_DefsEntry, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== undefined) {
+      NodeDefinition.encode(message.value, writer.uint32(18).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): NodeDefs_DefsEntry {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseNodeDefs_DefsEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = NodeDefinition.decode(reader, reader.uint32());
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<NodeDefs_DefsEntry>): NodeDefs_DefsEntry {
+    return NodeDefs_DefsEntry.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<NodeDefs_DefsEntry>): NodeDefs_DefsEntry {
+    const message = createBaseNodeDefs_DefsEntry();
+    message.key = object.key ?? "";
+    message.value = (object.value !== undefined && object.value !== null)
+      ? NodeDefinition.fromPartial(object.value)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseModels(): Models {
+  return { info: [] };
+}
+
+export const Models = {
+  encode(message: Models, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    for (const v of message.info) {
+      Models_Info.encode(v!, writer.uint32(10).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): Models {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseModels();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.info.push(Models_Info.decode(reader, reader.uint32()));
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<Models>): Models {
+    return Models.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<Models>): Models {
+    const message = createBaseModels();
+    message.info = object.info?.map((e) => Models_Info.fromPartial(e)) || [];
+    return message;
+  },
+};
+
+function createBaseModels_Info(): Models_Info {
+  return { blake3_hash: "", display_name: "" };
+}
+
+export const Models_Info = {
+  encode(message: Models_Info, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.blake3_hash !== "") {
+      writer.uint32(10).string(message.blake3_hash);
+    }
+    if (message.display_name !== "") {
+      writer.uint32(18).string(message.display_name);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): Models_Info {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseModels_Info();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.blake3_hash = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.display_name = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<Models_Info>): Models_Info {
+    return Models_Info.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<Models_Info>): Models_Info {
+    const message = createBaseModels_Info();
+    message.blake3_hash = object.blake3_hash ?? "";
+    message.display_name = object.display_name ?? "";
+    return message;
+  },
+};
+
+function createBaseModelCatalog(): ModelCatalog {
+  return { models: {} };
+}
+
+export const ModelCatalog = {
+  encode(message: ModelCatalog, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    Object.entries(message.models).forEach(([key, value]) => {
+      ModelCatalog_ModelsEntry.encode({ key: key as any, value }, writer.uint32(10).fork()).ldelim();
+    });
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): ModelCatalog {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseModelCatalog();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          const entry1 = ModelCatalog_ModelsEntry.decode(reader, reader.uint32());
+          if (entry1.value !== undefined) {
+            message.models[entry1.key] = entry1.value;
+          }
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<ModelCatalog>): ModelCatalog {
+    return ModelCatalog.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<ModelCatalog>): ModelCatalog {
+    const message = createBaseModelCatalog();
+    message.models = Object.entries(object.models ?? {}).reduce<{ [key: string]: Models }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = Models.fromPartial(value);
+      }
+      return acc;
+    }, {});
+    return message;
+  },
+};
+
+function createBaseModelCatalog_ModelsEntry(): ModelCatalog_ModelsEntry {
+  return { key: "", value: undefined };
+}
+
+export const ModelCatalog_ModelsEntry = {
+  encode(message: ModelCatalog_ModelsEntry, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== undefined) {
+      Models.encode(message.value, writer.uint32(18).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): ModelCatalog_ModelsEntry {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseModelCatalog_ModelsEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = Models.decode(reader, reader.uint32());
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<ModelCatalog_ModelsEntry>): ModelCatalog_ModelsEntry {
+    return ModelCatalog_ModelsEntry.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<ModelCatalog_ModelsEntry>): ModelCatalog_ModelsEntry {
+    const message = createBaseModelCatalog_ModelsEntry();
+    message.key = object.key ?? "";
+    message.value = (object.value !== undefined && object.value !== null)
+      ? Models.fromPartial(object.value)
+      : undefined;
+    return message;
+  },
+};
+
+function createBaseModelCatalogRequest(): ModelCatalogRequest {
+  return { base_family: [] };
+}
+
+export const ModelCatalogRequest = {
+  encode(message: ModelCatalogRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    for (const v of message.base_family) {
+      writer.uint32(10).string(v!);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): ModelCatalogRequest {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseModelCatalogRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.base_family.push(reader.string());
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<ModelCatalogRequest>): ModelCatalogRequest {
+    return ModelCatalogRequest.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<ModelCatalogRequest>): ModelCatalogRequest {
+    const message = createBaseModelCatalogRequest();
+    message.base_family = object.base_family?.map((e) => e) || [];
+    return message;
+  },
+};
+
+function createBaseStatusMessage(): StatusMessage {
+  return { sid: "", status: {} };
+}
+
+export const StatusMessage = {
+  encode(message: StatusMessage, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.sid !== "") {
+      writer.uint32(10).string(message.sid);
+    }
+    Object.entries(message.status).forEach(([key, value]) => {
+      StatusMessage_StatusEntry.encode({ key: key as any, value }, writer.uint32(18).fork()).ldelim();
+    });
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): StatusMessage {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStatusMessage();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.sid = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          const entry2 = StatusMessage_StatusEntry.decode(reader, reader.uint32());
+          if (entry2.value !== undefined) {
+            message.status[entry2.key] = entry2.value;
+          }
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<StatusMessage>): StatusMessage {
+    return StatusMessage.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<StatusMessage>): StatusMessage {
+    const message = createBaseStatusMessage();
+    message.sid = object.sid ?? "";
+    message.status = Object.entries(object.status ?? {}).reduce<{ [key: string]: Any }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = Any.fromPartial(value);
+      }
+      return acc;
+    }, {});
+    return message;
+  },
+};
+
+function createBaseStatusMessage_StatusEntry(): StatusMessage_StatusEntry {
+  return { key: "", value: undefined };
+}
+
+export const StatusMessage_StatusEntry = {
+  encode(message: StatusMessage_StatusEntry, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== undefined) {
+      Any.encode(message.value, writer.uint32(18).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): StatusMessage_StatusEntry {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseStatusMessage_StatusEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = Any.decode(reader, reader.uint32());
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<StatusMessage_StatusEntry>): StatusMessage_StatusEntry {
+    return StatusMessage_StatusEntry.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<StatusMessage_StatusEntry>): StatusMessage_StatusEntry {
+    const message = createBaseStatusMessage_StatusEntry();
+    message.key = object.key ?? "";
+    message.value = (object.value !== undefined && object.value !== null) ? Any.fromPartial(object.value) : undefined;
+    return message;
+  },
+};
+
+function createBaseProgressMessage(): ProgressMessage {
+  return { max: 0, node: "", value: 0, prompt_id: "" };
+}
+
+export const ProgressMessage = {
+  encode(message: ProgressMessage, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.max !== 0) {
+      writer.uint32(8).int32(message.max);
+    }
+    if (message.node !== "") {
+      writer.uint32(18).string(message.node);
+    }
+    if (message.value !== 0) {
+      writer.uint32(24).int32(message.value);
+    }
+    if (message.prompt_id !== "") {
+      writer.uint32(34).string(message.prompt_id);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): ProgressMessage {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseProgressMessage();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 8) {
+            break;
+          }
+
+          message.max = reader.int32();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.node = reader.string();
+          continue;
+        case 3:
+          if (tag !== 24) {
+            break;
+          }
+
+          message.value = reader.int32();
+          continue;
+        case 4:
+          if (tag !== 34) {
+            break;
+          }
+
+          message.prompt_id = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<ProgressMessage>): ProgressMessage {
+    return ProgressMessage.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<ProgressMessage>): ProgressMessage {
+    const message = createBaseProgressMessage();
+    message.max = object.max ?? 0;
+    message.node = object.node ?? "";
+    message.value = object.value ?? 0;
+    message.prompt_id = object.prompt_id ?? "";
+    return message;
+  },
+};
+
+function createBaseExecutingMessage(): ExecutingMessage {
+  return { prompt_id: "", node: "" };
+}
+
+export const ExecutingMessage = {
+  encode(message: ExecutingMessage, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.prompt_id !== "") {
+      writer.uint32(10).string(message.prompt_id);
+    }
+    if (message.node !== "") {
+      writer.uint32(18).string(message.node);
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): ExecutingMessage {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseExecutingMessage();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.prompt_id = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.node = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<ExecutingMessage>): ExecutingMessage {
+    return ExecutingMessage.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<ExecutingMessage>): ExecutingMessage {
+    const message = createBaseExecutingMessage();
+    message.prompt_id = object.prompt_id ?? "";
+    message.node = object.node ?? "";
+    return message;
+  },
+};
+
+function createBaseExecutedMessage(): ExecutedMessage {
+  return { node: "", prompt_id: "", output: {} };
+}
+
+export const ExecutedMessage = {
+  encode(message: ExecutedMessage, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.node !== "") {
+      writer.uint32(10).string(message.node);
+    }
+    if (message.prompt_id !== "") {
+      writer.uint32(18).string(message.prompt_id);
+    }
+    Object.entries(message.output).forEach(([key, value]) => {
+      ExecutedMessage_OutputEntry.encode({ key: key as any, value }, writer.uint32(26).fork()).ldelim();
+    });
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): ExecutedMessage {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseExecutedMessage();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.node = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.prompt_id = reader.string();
+          continue;
+        case 3:
+          if (tag !== 26) {
+            break;
+          }
+
+          const entry3 = ExecutedMessage_OutputEntry.decode(reader, reader.uint32());
+          if (entry3.value !== undefined) {
+            message.output[entry3.key] = entry3.value;
+          }
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<ExecutedMessage>): ExecutedMessage {
+    return ExecutedMessage.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<ExecutedMessage>): ExecutedMessage {
+    const message = createBaseExecutedMessage();
+    message.node = object.node ?? "";
+    message.prompt_id = object.prompt_id ?? "";
+    message.output = Object.entries(object.output ?? {}).reduce<{ [key: string]: Any }>((acc, [key, value]) => {
+      if (value !== undefined) {
+        acc[key] = Any.fromPartial(value);
+      }
+      return acc;
+    }, {});
+    return message;
+  },
+};
+
+function createBaseExecutedMessage_OutputEntry(): ExecutedMessage_OutputEntry {
+  return { key: "", value: undefined };
+}
+
+export const ExecutedMessage_OutputEntry = {
+  encode(message: ExecutedMessage_OutputEntry, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
+    if (message.key !== "") {
+      writer.uint32(10).string(message.key);
+    }
+    if (message.value !== undefined) {
+      Any.encode(message.value, writer.uint32(18).fork()).ldelim();
+    }
+    return writer;
+  },
+
+  decode(input: _m0.Reader | Uint8Array, length?: number): ExecutedMessage_OutputEntry {
+    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseExecutedMessage_OutputEntry();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.key = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.value = Any.decode(reader, reader.uint32());
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skipType(tag & 7);
+    }
+    return message;
+  },
+
+  create(base?: DeepPartial<ExecutedMessage_OutputEntry>): ExecutedMessage_OutputEntry {
+    return ExecutedMessage_OutputEntry.fromPartial(base ?? {});
+  },
+  fromPartial(object: DeepPartial<ExecutedMessage_OutputEntry>): ExecutedMessage_OutputEntry {
+    const message = createBaseExecutedMessage_OutputEntry();
+    message.key = object.key ?? "";
+    message.value = (object.value !== undefined && object.value !== null) ? Any.fromPartial(object.value) : undefined;
     return message;
   },
 };
 
 function createBaseComfyMessage(): ComfyMessage {
-  return {
-    job_id: "",
-    user_id: "",
-    queue_status: undefined,
-    execution_start: undefined,
-    executing: undefined,
-    progress: undefined,
-    execution_error: undefined,
-    execution_interrupted: undefined,
-    execution_cached: undefined,
-    output: undefined,
-    custom_message: undefined,
-  };
+  return { status: undefined, progress: undefined, executing: undefined, executed: undefined, data: undefined };
 }
 
 export const ComfyMessage = {
   encode(message: ComfyMessage, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.job_id !== "") {
-      writer.uint32(10).string(message.job_id);
-    }
-    if (message.user_id !== "") {
-      writer.uint32(18).string(message.user_id);
-    }
-    if (message.queue_status !== undefined) {
-      ComfyMessage_QueueStatus.encode(message.queue_status, writer.uint32(26).fork()).ldelim();
-    }
-    if (message.execution_start !== undefined) {
-      ComfyMessage_ExecutionStart.encode(message.execution_start, writer.uint32(34).fork()).ldelim();
-    }
-    if (message.executing !== undefined) {
-      ComfyMessage_Executing.encode(message.executing, writer.uint32(42).fork()).ldelim();
+    if (message.status !== undefined) {
+      StatusMessage.encode(message.status, writer.uint32(10).fork()).ldelim();
     }
     if (message.progress !== undefined) {
-      ComfyMessage_Progress.encode(message.progress, writer.uint32(50).fork()).ldelim();
+      ProgressMessage.encode(message.progress, writer.uint32(18).fork()).ldelim();
     }
-    if (message.execution_error !== undefined) {
-      ComfyMessage_ExecutionError.encode(message.execution_error, writer.uint32(58).fork()).ldelim();
+    if (message.executing !== undefined) {
+      ExecutingMessage.encode(message.executing, writer.uint32(26).fork()).ldelim();
     }
-    if (message.execution_interrupted !== undefined) {
-      ComfyMessage_ExecutionInterrupted.encode(message.execution_interrupted, writer.uint32(66).fork()).ldelim();
+    if (message.executed !== undefined) {
+      ExecutedMessage.encode(message.executed, writer.uint32(34).fork()).ldelim();
     }
-    if (message.execution_cached !== undefined) {
-      ComfyMessage_ExecutionCached.encode(message.execution_cached, writer.uint32(74).fork()).ldelim();
-    }
-    if (message.output !== undefined) {
-      ComfyMessage_Output.encode(message.output, writer.uint32(82).fork()).ldelim();
-    }
-    if (message.custom_message !== undefined) {
-      ComfyMessage_CustomMessage.encode(message.custom_message, writer.uint32(90).fork()).ldelim();
+    if (message.data !== undefined) {
+      writer.uint32(42).bytes(message.data);
     }
     return writer;
   },
@@ -951,77 +2141,35 @@ export const ComfyMessage = {
             break;
           }
 
-          message.job_id = reader.string();
+          message.status = StatusMessage.decode(reader, reader.uint32());
           continue;
         case 2:
           if (tag !== 18) {
             break;
           }
 
-          message.user_id = reader.string();
+          message.progress = ProgressMessage.decode(reader, reader.uint32());
           continue;
         case 3:
           if (tag !== 26) {
             break;
           }
 
-          message.queue_status = ComfyMessage_QueueStatus.decode(reader, reader.uint32());
+          message.executing = ExecutingMessage.decode(reader, reader.uint32());
           continue;
         case 4:
           if (tag !== 34) {
             break;
           }
 
-          message.execution_start = ComfyMessage_ExecutionStart.decode(reader, reader.uint32());
+          message.executed = ExecutedMessage.decode(reader, reader.uint32());
           continue;
         case 5:
           if (tag !== 42) {
             break;
           }
 
-          message.executing = ComfyMessage_Executing.decode(reader, reader.uint32());
-          continue;
-        case 6:
-          if (tag !== 50) {
-            break;
-          }
-
-          message.progress = ComfyMessage_Progress.decode(reader, reader.uint32());
-          continue;
-        case 7:
-          if (tag !== 58) {
-            break;
-          }
-
-          message.execution_error = ComfyMessage_ExecutionError.decode(reader, reader.uint32());
-          continue;
-        case 8:
-          if (tag !== 66) {
-            break;
-          }
-
-          message.execution_interrupted = ComfyMessage_ExecutionInterrupted.decode(reader, reader.uint32());
-          continue;
-        case 9:
-          if (tag !== 74) {
-            break;
-          }
-
-          message.execution_cached = ComfyMessage_ExecutionCached.decode(reader, reader.uint32());
-          continue;
-        case 10:
-          if (tag !== 82) {
-            break;
-          }
-
-          message.output = ComfyMessage_Output.decode(reader, reader.uint32());
-          continue;
-        case 11:
-          if (tag !== 90) {
-            break;
-          }
-
-          message.custom_message = ComfyMessage_CustomMessage.decode(reader, reader.uint32());
+          message.data = reader.bytes();
           continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
@@ -1037,765 +2185,19 @@ export const ComfyMessage = {
   },
   fromPartial(object: DeepPartial<ComfyMessage>): ComfyMessage {
     const message = createBaseComfyMessage();
-    message.job_id = object.job_id ?? "";
-    message.user_id = object.user_id ?? "";
-    message.queue_status = (object.queue_status !== undefined && object.queue_status !== null)
-      ? ComfyMessage_QueueStatus.fromPartial(object.queue_status)
-      : undefined;
-    message.execution_start = (object.execution_start !== undefined && object.execution_start !== null)
-      ? ComfyMessage_ExecutionStart.fromPartial(object.execution_start)
-      : undefined;
-    message.executing = (object.executing !== undefined && object.executing !== null)
-      ? ComfyMessage_Executing.fromPartial(object.executing)
+    message.status = (object.status !== undefined && object.status !== null)
+      ? StatusMessage.fromPartial(object.status)
       : undefined;
     message.progress = (object.progress !== undefined && object.progress !== null)
-      ? ComfyMessage_Progress.fromPartial(object.progress)
+      ? ProgressMessage.fromPartial(object.progress)
       : undefined;
-    message.execution_error = (object.execution_error !== undefined && object.execution_error !== null)
-      ? ComfyMessage_ExecutionError.fromPartial(object.execution_error)
+    message.executing = (object.executing !== undefined && object.executing !== null)
+      ? ExecutingMessage.fromPartial(object.executing)
       : undefined;
-    message.execution_interrupted =
-      (object.execution_interrupted !== undefined && object.execution_interrupted !== null)
-        ? ComfyMessage_ExecutionInterrupted.fromPartial(object.execution_interrupted)
-        : undefined;
-    message.execution_cached = (object.execution_cached !== undefined && object.execution_cached !== null)
-      ? ComfyMessage_ExecutionCached.fromPartial(object.execution_cached)
+    message.executed = (object.executed !== undefined && object.executed !== null)
+      ? ExecutedMessage.fromPartial(object.executed)
       : undefined;
-    message.output = (object.output !== undefined && object.output !== null)
-      ? ComfyMessage_Output.fromPartial(object.output)
-      : undefined;
-    message.custom_message = (object.custom_message !== undefined && object.custom_message !== null)
-      ? ComfyMessage_CustomMessage.fromPartial(object.custom_message)
-      : undefined;
-    return message;
-  },
-};
-
-function createBaseComfyMessage_QueueStatus(): ComfyMessage_QueueStatus {
-  return { sid: undefined, queue_remaining: 0 };
-}
-
-export const ComfyMessage_QueueStatus = {
-  encode(message: ComfyMessage_QueueStatus, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.sid !== undefined) {
-      writer.uint32(10).string(message.sid);
-    }
-    if (message.queue_remaining !== 0) {
-      writer.uint32(16).uint32(message.queue_remaining);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): ComfyMessage_QueueStatus {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseComfyMessage_QueueStatus();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.sid = reader.string();
-          continue;
-        case 2:
-          if (tag !== 16) {
-            break;
-          }
-
-          message.queue_remaining = reader.uint32();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  create(base?: DeepPartial<ComfyMessage_QueueStatus>): ComfyMessage_QueueStatus {
-    return ComfyMessage_QueueStatus.fromPartial(base ?? {});
-  },
-  fromPartial(object: DeepPartial<ComfyMessage_QueueStatus>): ComfyMessage_QueueStatus {
-    const message = createBaseComfyMessage_QueueStatus();
-    message.sid = object.sid ?? undefined;
-    message.queue_remaining = object.queue_remaining ?? 0;
-    return message;
-  },
-};
-
-function createBaseComfyMessage_ExecutionStart(): ComfyMessage_ExecutionStart {
-  return {};
-}
-
-export const ComfyMessage_ExecutionStart = {
-  encode(_: ComfyMessage_ExecutionStart, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): ComfyMessage_ExecutionStart {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseComfyMessage_ExecutionStart();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  create(base?: DeepPartial<ComfyMessage_ExecutionStart>): ComfyMessage_ExecutionStart {
-    return ComfyMessage_ExecutionStart.fromPartial(base ?? {});
-  },
-  fromPartial(_: DeepPartial<ComfyMessage_ExecutionStart>): ComfyMessage_ExecutionStart {
-    const message = createBaseComfyMessage_ExecutionStart();
-    return message;
-  },
-};
-
-function createBaseComfyMessage_Executing(): ComfyMessage_Executing {
-  return { node_id: "" };
-}
-
-export const ComfyMessage_Executing = {
-  encode(message: ComfyMessage_Executing, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.node_id !== "") {
-      writer.uint32(10).string(message.node_id);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): ComfyMessage_Executing {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseComfyMessage_Executing();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.node_id = reader.string();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  create(base?: DeepPartial<ComfyMessage_Executing>): ComfyMessage_Executing {
-    return ComfyMessage_Executing.fromPartial(base ?? {});
-  },
-  fromPartial(object: DeepPartial<ComfyMessage_Executing>): ComfyMessage_Executing {
-    const message = createBaseComfyMessage_Executing();
-    message.node_id = object.node_id ?? "";
-    return message;
-  },
-};
-
-function createBaseComfyMessage_Progress(): ComfyMessage_Progress {
-  return { max: 0, value: 0 };
-}
-
-export const ComfyMessage_Progress = {
-  encode(message: ComfyMessage_Progress, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.max !== 0) {
-      writer.uint32(8).uint32(message.max);
-    }
-    if (message.value !== 0) {
-      writer.uint32(16).uint32(message.value);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): ComfyMessage_Progress {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseComfyMessage_Progress();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 8) {
-            break;
-          }
-
-          message.max = reader.uint32();
-          continue;
-        case 2:
-          if (tag !== 16) {
-            break;
-          }
-
-          message.value = reader.uint32();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  create(base?: DeepPartial<ComfyMessage_Progress>): ComfyMessage_Progress {
-    return ComfyMessage_Progress.fromPartial(base ?? {});
-  },
-  fromPartial(object: DeepPartial<ComfyMessage_Progress>): ComfyMessage_Progress {
-    const message = createBaseComfyMessage_Progress();
-    message.max = object.max ?? 0;
-    message.value = object.value ?? 0;
-    return message;
-  },
-};
-
-function createBaseComfyMessage_ExecutionError(): ComfyMessage_ExecutionError {
-  return {
-    currentInputs: undefined,
-    currentOutputs: undefined,
-    execution_message: "",
-    exception_type: "",
-    executed: [],
-    node_id: "",
-    node_type: "",
-    traceback: [],
-  };
-}
-
-export const ComfyMessage_ExecutionError = {
-  encode(message: ComfyMessage_ExecutionError, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.currentInputs !== undefined) {
-      Struct.encode(Struct.wrap(message.currentInputs), writer.uint32(10).fork()).ldelim();
-    }
-    if (message.currentOutputs !== undefined) {
-      Struct.encode(Struct.wrap(message.currentOutputs), writer.uint32(18).fork()).ldelim();
-    }
-    if (message.execution_message !== "") {
-      writer.uint32(26).string(message.execution_message);
-    }
-    if (message.exception_type !== "") {
-      writer.uint32(34).string(message.exception_type);
-    }
-    for (const v of message.executed) {
-      writer.uint32(42).string(v!);
-    }
-    if (message.node_id !== "") {
-      writer.uint32(50).string(message.node_id);
-    }
-    if (message.node_type !== "") {
-      writer.uint32(58).string(message.node_type);
-    }
-    for (const v of message.traceback) {
-      writer.uint32(66).string(v!);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): ComfyMessage_ExecutionError {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseComfyMessage_ExecutionError();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.currentInputs = Struct.unwrap(Struct.decode(reader, reader.uint32()));
-          continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
-
-          message.currentOutputs = Struct.unwrap(Struct.decode(reader, reader.uint32()));
-          continue;
-        case 3:
-          if (tag !== 26) {
-            break;
-          }
-
-          message.execution_message = reader.string();
-          continue;
-        case 4:
-          if (tag !== 34) {
-            break;
-          }
-
-          message.exception_type = reader.string();
-          continue;
-        case 5:
-          if (tag !== 42) {
-            break;
-          }
-
-          message.executed.push(reader.string());
-          continue;
-        case 6:
-          if (tag !== 50) {
-            break;
-          }
-
-          message.node_id = reader.string();
-          continue;
-        case 7:
-          if (tag !== 58) {
-            break;
-          }
-
-          message.node_type = reader.string();
-          continue;
-        case 8:
-          if (tag !== 66) {
-            break;
-          }
-
-          message.traceback.push(reader.string());
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  create(base?: DeepPartial<ComfyMessage_ExecutionError>): ComfyMessage_ExecutionError {
-    return ComfyMessage_ExecutionError.fromPartial(base ?? {});
-  },
-  fromPartial(object: DeepPartial<ComfyMessage_ExecutionError>): ComfyMessage_ExecutionError {
-    const message = createBaseComfyMessage_ExecutionError();
-    message.currentInputs = object.currentInputs ?? undefined;
-    message.currentOutputs = object.currentOutputs ?? undefined;
-    message.execution_message = object.execution_message ?? "";
-    message.exception_type = object.exception_type ?? "";
-    message.executed = object.executed?.map((e) => e) || [];
-    message.node_id = object.node_id ?? "";
-    message.node_type = object.node_type ?? "";
-    message.traceback = object.traceback?.map((e) => e) || [];
-    return message;
-  },
-};
-
-function createBaseComfyMessage_ExecutionInterrupted(): ComfyMessage_ExecutionInterrupted {
-  return { executed: [], node_id: "", node_type: "" };
-}
-
-export const ComfyMessage_ExecutionInterrupted = {
-  encode(message: ComfyMessage_ExecutionInterrupted, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    for (const v of message.executed) {
-      writer.uint32(10).string(v!);
-    }
-    if (message.node_id !== "") {
-      writer.uint32(18).string(message.node_id);
-    }
-    if (message.node_type !== "") {
-      writer.uint32(26).string(message.node_type);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): ComfyMessage_ExecutionInterrupted {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseComfyMessage_ExecutionInterrupted();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.executed.push(reader.string());
-          continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
-
-          message.node_id = reader.string();
-          continue;
-        case 3:
-          if (tag !== 26) {
-            break;
-          }
-
-          message.node_type = reader.string();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  create(base?: DeepPartial<ComfyMessage_ExecutionInterrupted>): ComfyMessage_ExecutionInterrupted {
-    return ComfyMessage_ExecutionInterrupted.fromPartial(base ?? {});
-  },
-  fromPartial(object: DeepPartial<ComfyMessage_ExecutionInterrupted>): ComfyMessage_ExecutionInterrupted {
-    const message = createBaseComfyMessage_ExecutionInterrupted();
-    message.executed = object.executed?.map((e) => e) || [];
-    message.node_id = object.node_id ?? "";
-    message.node_type = object.node_type ?? "";
-    return message;
-  },
-};
-
-function createBaseComfyMessage_ExecutionCached(): ComfyMessage_ExecutionCached {
-  return { node_ids: [] };
-}
-
-export const ComfyMessage_ExecutionCached = {
-  encode(message: ComfyMessage_ExecutionCached, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    for (const v of message.node_ids) {
-      writer.uint32(10).string(v!);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): ComfyMessage_ExecutionCached {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseComfyMessage_ExecutionCached();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.node_ids.push(reader.string());
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  create(base?: DeepPartial<ComfyMessage_ExecutionCached>): ComfyMessage_ExecutionCached {
-    return ComfyMessage_ExecutionCached.fromPartial(base ?? {});
-  },
-  fromPartial(object: DeepPartial<ComfyMessage_ExecutionCached>): ComfyMessage_ExecutionCached {
-    const message = createBaseComfyMessage_ExecutionCached();
-    message.node_ids = object.node_ids?.map((e) => e) || [];
-    return message;
-  },
-};
-
-function createBaseComfyMessage_Output(): ComfyMessage_Output {
-  return { node_id: "", files: [] };
-}
-
-export const ComfyMessage_Output = {
-  encode(message: ComfyMessage_Output, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.node_id !== "") {
-      writer.uint32(10).string(message.node_id);
-    }
-    for (const v of message.files) {
-      WorkflowFile.encode(v!, writer.uint32(18).fork()).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): ComfyMessage_Output {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseComfyMessage_Output();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.node_id = reader.string();
-          continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
-
-          message.files.push(WorkflowFile.decode(reader, reader.uint32()));
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  create(base?: DeepPartial<ComfyMessage_Output>): ComfyMessage_Output {
-    return ComfyMessage_Output.fromPartial(base ?? {});
-  },
-  fromPartial(object: DeepPartial<ComfyMessage_Output>): ComfyMessage_Output {
-    const message = createBaseComfyMessage_Output();
-    message.node_id = object.node_id ?? "";
-    message.files = object.files?.map((e) => WorkflowFile.fromPartial(e)) || [];
-    return message;
-  },
-};
-
-function createBaseComfyMessage_CustomMessage(): ComfyMessage_CustomMessage {
-  return { type: "", data: undefined };
-}
-
-export const ComfyMessage_CustomMessage = {
-  encode(message: ComfyMessage_CustomMessage, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.type !== "") {
-      writer.uint32(10).string(message.type);
-    }
-    if (message.data !== undefined) {
-      Struct.encode(Struct.wrap(message.data), writer.uint32(18).fork()).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): ComfyMessage_CustomMessage {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseComfyMessage_CustomMessage();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.type = reader.string();
-          continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
-
-          message.data = Struct.unwrap(Struct.decode(reader, reader.uint32()));
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  create(base?: DeepPartial<ComfyMessage_CustomMessage>): ComfyMessage_CustomMessage {
-    return ComfyMessage_CustomMessage.fromPartial(base ?? {});
-  },
-  fromPartial(object: DeepPartial<ComfyMessage_CustomMessage>): ComfyMessage_CustomMessage {
-    const message = createBaseComfyMessage_CustomMessage();
-    message.type = object.type ?? "";
     message.data = object.data ?? undefined;
-    return message;
-  },
-};
-
-function createBaseMessageFilter(): MessageFilter {
-  return { outputs_only: false, include_temp_files: undefined, include_latent_previews: undefined };
-}
-
-export const MessageFilter = {
-  encode(message: MessageFilter, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.outputs_only === true) {
-      writer.uint32(8).bool(message.outputs_only);
-    }
-    if (message.include_temp_files !== undefined) {
-      writer.uint32(16).bool(message.include_temp_files);
-    }
-    if (message.include_latent_previews !== undefined) {
-      writer.uint32(24).bool(message.include_latent_previews);
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): MessageFilter {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseMessageFilter();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 8) {
-            break;
-          }
-
-          message.outputs_only = reader.bool();
-          continue;
-        case 2:
-          if (tag !== 16) {
-            break;
-          }
-
-          message.include_temp_files = reader.bool();
-          continue;
-        case 3:
-          if (tag !== 24) {
-            break;
-          }
-
-          message.include_latent_previews = reader.bool();
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  create(base?: DeepPartial<MessageFilter>): MessageFilter {
-    return MessageFilter.fromPartial(base ?? {});
-  },
-  fromPartial(object: DeepPartial<MessageFilter>): MessageFilter {
-    const message = createBaseMessageFilter();
-    message.outputs_only = object.outputs_only ?? false;
-    message.include_temp_files = object.include_temp_files ?? undefined;
-    message.include_latent_previews = object.include_latent_previews ?? undefined;
-    return message;
-  },
-};
-
-function createBaseRoomStreamRequest(): RoomStreamRequest {
-  return { session_id: "", filter: undefined };
-}
-
-export const RoomStreamRequest = {
-  encode(message: RoomStreamRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.session_id !== "") {
-      writer.uint32(10).string(message.session_id);
-    }
-    if (message.filter !== undefined) {
-      MessageFilter.encode(message.filter, writer.uint32(18).fork()).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): RoomStreamRequest {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseRoomStreamRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.session_id = reader.string();
-          continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
-
-          message.filter = MessageFilter.decode(reader, reader.uint32());
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  create(base?: DeepPartial<RoomStreamRequest>): RoomStreamRequest {
-    return RoomStreamRequest.fromPartial(base ?? {});
-  },
-  fromPartial(object: DeepPartial<RoomStreamRequest>): RoomStreamRequest {
-    const message = createBaseRoomStreamRequest();
-    message.session_id = object.session_id ?? "";
-    message.filter = (object.filter !== undefined && object.filter !== null)
-      ? MessageFilter.fromPartial(object.filter)
-      : undefined;
-    return message;
-  },
-};
-
-function createBaseJobStreamRequest(): JobStreamRequest {
-  return { job_id: "", filter: undefined };
-}
-
-export const JobStreamRequest = {
-  encode(message: JobStreamRequest, writer: _m0.Writer = _m0.Writer.create()): _m0.Writer {
-    if (message.job_id !== "") {
-      writer.uint32(10).string(message.job_id);
-    }
-    if (message.filter !== undefined) {
-      MessageFilter.encode(message.filter, writer.uint32(18).fork()).ldelim();
-    }
-    return writer;
-  },
-
-  decode(input: _m0.Reader | Uint8Array, length?: number): JobStreamRequest {
-    const reader = input instanceof _m0.Reader ? input : _m0.Reader.create(input);
-    let end = length === undefined ? reader.len : reader.pos + length;
-    const message = createBaseJobStreamRequest();
-    while (reader.pos < end) {
-      const tag = reader.uint32();
-      switch (tag >>> 3) {
-        case 1:
-          if (tag !== 10) {
-            break;
-          }
-
-          message.job_id = reader.string();
-          continue;
-        case 2:
-          if (tag !== 18) {
-            break;
-          }
-
-          message.filter = MessageFilter.decode(reader, reader.uint32());
-          continue;
-      }
-      if ((tag & 7) === 4 || tag === 0) {
-        break;
-      }
-      reader.skipType(tag & 7);
-    }
-    return message;
-  },
-
-  create(base?: DeepPartial<JobStreamRequest>): JobStreamRequest {
-    return JobStreamRequest.fromPartial(base ?? {});
-  },
-  fromPartial(object: DeepPartial<JobStreamRequest>): JobStreamRequest {
-    const message = createBaseJobStreamRequest();
-    message.job_id = object.job_id ?? "";
-    message.filter = (object.filter !== undefined && object.filter !== null)
-      ? MessageFilter.fromPartial(object.filter)
-      : undefined;
     return message;
   },
 };
@@ -1805,57 +2207,72 @@ export const ComfyDefinition = {
   name: "Comfy",
   fullName: "comfy_request.v1.Comfy",
   methods: {
-    /** Queue a workflow and receive the job id */
-    runWorkflow: {
-      name: "RunWorkflow",
+    /**
+     * Queue a workflow and receive the job id.
+     * Results can be retrieved from the graph-id or via a webhook callback.
+     */
+    run: {
+      name: "Run",
       requestType: ComfyRequest,
       requestStream: false,
-      responseType: JobCreated,
+      responseType: JobSnapshot,
       responseStream: false,
       options: {},
     },
-    /** Queue a workflow and wait for the final outputs */
-    runWorkflowSync: {
-      name: "RunWorkflowSync",
+    /** Queue a workflow and await its outputs (synchronous) */
+    runSync: {
+      name: "RunSync",
       requestType: ComfyRequest,
       requestStream: false,
       responseType: JobOutput,
-      responseStream: false,
+      responseStream: true,
       options: {},
     },
-    /** Cancels a specific job (regardless if it's running or queued) */
-    cancel: {
-      name: "Cancel",
-      requestType: CancelJob,
+    /** Looks up the most current job state */
+    getJob: {
+      name: "GetJob",
+      requestType: JobId,
       requestStream: false,
-      responseType: Empty,
+      responseType: JobSnapshot,
       responseStream: false,
       options: {},
     },
-    /** Cancels all queued jobs owned by the user in a given session-id */
-    purgeQueue: {
-      name: "PurgeQueue",
-      requestType: PurgeRoomQueue,
-      requestStream: false,
-      responseType: Empty,
-      responseStream: false,
-      options: {},
-    },
-    /** Server-side stream of all jobs in a given session-id */
-    streamRoom: {
-      name: "StreamRoom",
-      requestType: RoomStreamRequest,
+    /** Looks up the most current job state */
+    streamJob: {
+      name: "StreamJob",
+      requestType: JobId,
       requestStream: false,
       responseType: ComfyMessage,
       responseStream: true,
       options: {},
     },
-    /** Server-side stream of a specific job-id */
-    streamJob: {
-      name: "StreamJob",
-      requestType: JobStreamRequest,
+    /** Gets the definitions of all nodes supported by this server */
+    getNodeDefinitions: {
+      name: "GetNodeDefinitions",
+      requestType: NodeDefRequest,
       requestStream: false,
-      responseType: ComfyMessage,
+      responseType: NodeDefs,
+      responseStream: false,
+      options: {},
+    },
+    /** Get models, grouped by architecture */
+    getModelCatalog: {
+      name: "GetModelCatalog",
+      requestType: ModelCatalogRequest,
+      requestStream: false,
+      responseType: ModelCatalog,
+      responseStream: false,
+      options: {},
+    },
+    /**
+     * Streams updates to local-files in realtime.
+     * This is only used when running Comfy Creator with local files.
+     */
+    syncLocalFiles: {
+      name: "SyncLocalFiles",
+      requestType: Empty,
+      requestStream: false,
+      responseType: LocalFiles,
       responseStream: true,
       options: {},
     },
@@ -1863,45 +2280,64 @@ export const ComfyDefinition = {
 } as const;
 
 export interface ComfyServiceImplementation<CallContextExt = {}> {
-  /** Queue a workflow and receive the job id */
-  runWorkflow(request: ComfyRequest, context: CallContext & CallContextExt): Promise<DeepPartial<JobCreated>>;
-  /** Queue a workflow and wait for the final outputs */
-  runWorkflowSync(request: ComfyRequest, context: CallContext & CallContextExt): Promise<DeepPartial<JobOutput>>;
-  /** Cancels a specific job (regardless if it's running or queued) */
-  cancel(request: CancelJob, context: CallContext & CallContextExt): Promise<DeepPartial<Empty>>;
-  /** Cancels all queued jobs owned by the user in a given session-id */
-  purgeQueue(request: PurgeRoomQueue, context: CallContext & CallContextExt): Promise<DeepPartial<Empty>>;
-  /** Server-side stream of all jobs in a given session-id */
-  streamRoom(
-    request: RoomStreamRequest,
+  /**
+   * Queue a workflow and receive the job id.
+   * Results can be retrieved from the graph-id or via a webhook callback.
+   */
+  run(request: ComfyRequest, context: CallContext & CallContextExt): Promise<DeepPartial<JobSnapshot>>;
+  /** Queue a workflow and await its outputs (synchronous) */
+  runSync(
+    request: ComfyRequest,
     context: CallContext & CallContextExt,
-  ): ServerStreamingMethodResult<DeepPartial<ComfyMessage>>;
-  /** Server-side stream of a specific job-id */
+  ): ServerStreamingMethodResult<DeepPartial<JobOutput>>;
+  /** Looks up the most current job state */
+  getJob(request: JobId, context: CallContext & CallContextExt): Promise<DeepPartial<JobSnapshot>>;
+  /** Looks up the most current job state */
   streamJob(
-    request: JobStreamRequest,
+    request: JobId,
     context: CallContext & CallContextExt,
   ): ServerStreamingMethodResult<DeepPartial<ComfyMessage>>;
+  /** Gets the definitions of all nodes supported by this server */
+  getNodeDefinitions(request: NodeDefRequest, context: CallContext & CallContextExt): Promise<DeepPartial<NodeDefs>>;
+  /** Get models, grouped by architecture */
+  getModelCatalog(
+    request: ModelCatalogRequest,
+    context: CallContext & CallContextExt,
+  ): Promise<DeepPartial<ModelCatalog>>;
+  /**
+   * Streams updates to local-files in realtime.
+   * This is only used when running Comfy Creator with local files.
+   */
+  syncLocalFiles(
+    request: Empty,
+    context: CallContext & CallContextExt,
+  ): ServerStreamingMethodResult<DeepPartial<LocalFiles>>;
 }
 
 export interface ComfyClient<CallOptionsExt = {}> {
-  /** Queue a workflow and receive the job id */
-  runWorkflow(request: DeepPartial<ComfyRequest>, options?: CallOptions & CallOptionsExt): Promise<JobCreated>;
-  /** Queue a workflow and wait for the final outputs */
-  runWorkflowSync(request: DeepPartial<ComfyRequest>, options?: CallOptions & CallOptionsExt): Promise<JobOutput>;
-  /** Cancels a specific job (regardless if it's running or queued) */
-  cancel(request: DeepPartial<CancelJob>, options?: CallOptions & CallOptionsExt): Promise<Empty>;
-  /** Cancels all queued jobs owned by the user in a given session-id */
-  purgeQueue(request: DeepPartial<PurgeRoomQueue>, options?: CallOptions & CallOptionsExt): Promise<Empty>;
-  /** Server-side stream of all jobs in a given session-id */
-  streamRoom(
-    request: DeepPartial<RoomStreamRequest>,
+  /**
+   * Queue a workflow and receive the job id.
+   * Results can be retrieved from the graph-id or via a webhook callback.
+   */
+  run(request: DeepPartial<ComfyRequest>, options?: CallOptions & CallOptionsExt): Promise<JobSnapshot>;
+  /** Queue a workflow and await its outputs (synchronous) */
+  runSync(request: DeepPartial<ComfyRequest>, options?: CallOptions & CallOptionsExt): AsyncIterable<JobOutput>;
+  /** Looks up the most current job state */
+  getJob(request: DeepPartial<JobId>, options?: CallOptions & CallOptionsExt): Promise<JobSnapshot>;
+  /** Looks up the most current job state */
+  streamJob(request: DeepPartial<JobId>, options?: CallOptions & CallOptionsExt): AsyncIterable<ComfyMessage>;
+  /** Gets the definitions of all nodes supported by this server */
+  getNodeDefinitions(request: DeepPartial<NodeDefRequest>, options?: CallOptions & CallOptionsExt): Promise<NodeDefs>;
+  /** Get models, grouped by architecture */
+  getModelCatalog(
+    request: DeepPartial<ModelCatalogRequest>,
     options?: CallOptions & CallOptionsExt,
-  ): AsyncIterable<ComfyMessage>;
-  /** Server-side stream of a specific job-id */
-  streamJob(
-    request: DeepPartial<JobStreamRequest>,
-    options?: CallOptions & CallOptionsExt,
-  ): AsyncIterable<ComfyMessage>;
+  ): Promise<ModelCatalog>;
+  /**
+   * Streams updates to local-files in realtime.
+   * This is only used when running Comfy Creator with local files.
+   */
+  syncLocalFiles(request: DeepPartial<Empty>, options?: CallOptions & CallOptionsExt): AsyncIterable<LocalFiles>;
 }
 
 type Builtin = Date | Function | Uint8Array | string | number | boolean | undefined;
@@ -1911,5 +2347,17 @@ export type DeepPartial<T> = T extends Builtin ? T
   : T extends ReadonlyArray<infer U> ? ReadonlyArray<DeepPartial<U>>
   : T extends {} ? { [K in keyof T]?: DeepPartial<T[K]> }
   : Partial<T>;
+
+function longToNumber(long: Long): number {
+  if (long.gt(globalThis.Number.MAX_SAFE_INTEGER)) {
+    throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
+  }
+  return long.toNumber();
+}
+
+if (_m0.util.Long !== Long) {
+  _m0.util.Long = Long as any;
+  _m0.configure();
+}
 
 export type ServerStreamingMethodResult<Response> = { [Symbol.asyncIterator](): AsyncIterator<Response, void> };

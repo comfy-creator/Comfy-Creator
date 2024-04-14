@@ -1,4 +1,6 @@
 import { usePrompt } from '../../../lib/hooks/usePrompt.tsx';
+import { useEffect } from 'react';
+import { useFlowStore } from '../../../store/flow.ts';
 
 interface SaveButtonProps {
   promptFilename: {
@@ -7,10 +9,11 @@ interface SaveButtonProps {
 }
 
 const SaveButton = ({ promptFilename }: SaveButtonProps) => {
-  const { graphToPrompt } = usePrompt();
+  const { flowToObject } = usePrompt();
+  const { addHotKeysHandlers } = useFlowStore();
 
   const handleClick = () => {
-    let filename: string | null = 'workflow.json';
+    let filename: string | null = 'worklow.json';
     if (promptFilename.value) {
       filename = prompt('Save workflow as:', filename);
       if (!filename) return;
@@ -19,21 +22,24 @@ const SaveButton = ({ promptFilename }: SaveButtonProps) => {
       }
     }
 
-    graphToPrompt().then((p: any) => {
-      const json = JSON.stringify(p.workflow, null, 2); // convert the data to a JSON string
-      const blob = new Blob([json], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
+    const json = JSON.stringify(flowToObject(), null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
 
-      const tag = document.createElement('a');
-      tag.href = url;
-      tag.download = filename || 'workflow_api.json';
-      document.body.appendChild(tag);
-      tag.click();
+    const tag = document.createElement('a');
+    tag.href = url;
+    tag.download = filename || 'workflow.json';
+    document.body.appendChild(tag);
+    tag.click();
 
-      document.body.removeChild(tag);
-      URL.revokeObjectURL(url);
-    });
+    document.body.removeChild(tag);
+    URL.revokeObjectURL(url);
   };
+
+  useEffect(() => {
+    console.log('Swjs');
+    addHotKeysHandlers({ 'ctrl+g': handleClick });
+  }, []);
 
   return (
     <button id="comfy-save-button" onClick={handleClick}>

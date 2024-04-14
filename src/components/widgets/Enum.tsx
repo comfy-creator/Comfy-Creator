@@ -48,9 +48,17 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
     onChange?.(value);
   }, [valueIndex]);
 
-  const handleInputIncrement = () => setValueIndex((i) => (!i ? 0 : i + 1));
+  const handleForward = () =>
+    setValueIndex((i) => {
+      if (i == undefined) return 0;
+      return i === enumOptions.length - 1 ? 0 : i + 1;
+    });
 
-  const handleBackward = () => setValueIndex((i) => (!i ? enumOptions.length - 1 : i - 1));
+  const handleBackward = () =>
+    setValueIndex((i) => {
+      if (i == undefined) return 0;
+      return i === 0 ? enumOptions.length - 1 : i - 1;
+    });
 
   return (
     <div className={'widget_box'}>
@@ -64,7 +72,7 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
           <span className={'widget_input_item_text'}>
             {valueIndex != undefined ? enumOptions[valueIndex] : 'undefined'}
           </span>
-          <WidgetForwardIcon onClick={handleInputIncrement} />
+          <WidgetForwardIcon onClick={handleForward} />
         </div>
       </div>
     </div>

@@ -152,6 +152,9 @@ export const controlAfterGenerateDef: InputDef = {
 export const DEFAULT_SERVER_URL = 'http://localhost:8188';
 export const DEFAULT_SERVER_PROTOCOL = 'ws' as const;
 
+// export const DEFAULT_SERVER_URL = 'http://localhost:30031';
+// export const DEFAULT_SERVER_PROTOCOL = 'grpc' as const;
+
 export const API_URL = {
   WS: '/ws',
   GET_EMBEDDINGS: '/embeddings',

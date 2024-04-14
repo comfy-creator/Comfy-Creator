@@ -6,9 +6,14 @@ import type { Edge, Node } from 'reactflow';
 // TO DO: load this from .env
 const CONNECT_URL = 'http://localhost:8000';
 
-// TO DO: fetch a local graphId from local storage, if it exists
-const graphId: string | undefined = 'xyz-123';
+// TODO: fetch a local graphId from local storage, if it exists
+let graphId = localStorage.getItem('graphId');
+if (!graphId) {
+  graphId = crypto.randomUUID();
+  localStorage.setItem('graphId', graphId);
+}
 
+console.log({ graphId });
 const firebaseAuthToken = localStorage.getItem('firebaseAuthToken');
 
 // If a pre-existing graphId does not exist, this will remain a new (empty) document,

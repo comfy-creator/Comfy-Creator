@@ -8,7 +8,9 @@ interface LoggingContextType {
   clear: () => void;
   enabled: boolean;
   entries: LogEntry[];
-  showLogs?: boolean;
+  showLogs: () => void;
+  log: (source: string, ...args: any[]) => void;
+  addErrorLogEntry: (source: string, ...args: any[]) => void;
 }
 
 const LoggingContext = React.createContext<LoggingContextType | null>(null);
@@ -82,7 +84,7 @@ export const LoggingContextProvider = ({ children }: { children: ReactNode }) =>
     }
   };
 
-  const enable = (value: boolean) => {
+  const handleEnableChange = (value: boolean) => {
     if (value === enabled) return;
     if (value) {
       patchConsole();
@@ -117,7 +119,7 @@ export const LoggingContextProvider = ({ children }: { children: ReactNode }) =>
       name: settingId,
       defaultValue: true,
       onChange: (value: boolean) => {
-        setEnabled(value);
+        handleEnableChange(value);
       },
       type: (_name: string, setter: (value: boolean) => void, value: boolean) => {
         return (
@@ -161,13 +163,17 @@ export const LoggingContextProvider = ({ children }: { children: ReactNode }) =>
     addInitData();
   }, []);
 
+  const addErrorLogEntry = (source: string, ...args: any[]) => addEntry(source, 'error', ...args);
+
   return (
     <LoggingContext.Provider
       value={{
+        log,
         clear,
         enabled,
         entries,
-        showLogs
+        addErrorLogEntry,
+        showLogs: () => setShowLogs(true)
       }}
     >
       {children}

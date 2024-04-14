@@ -223,20 +223,20 @@ export class YjsProvider extends EventTarget {
   // Fires whenever we first connect or change graphs
   private connectHandler = () => {
     // Specify which graph we are syncing
-    this.socket!.emit('watchGraph', this._doc.guid);
+    this.socket?.emit('watchGraph', this._doc.guid);
 
     // Send initial sync message
     const encoder = encoding.createEncoder();
     encoding.writeVarUint(encoder, MsgType.Sync);
     syncProtocol.writeSyncStep1(encoder, this._doc);
-    this.socket!.emit('message', encoding.toUint8Array(encoder));
+    this.socket?.emit('message', encoding.toUint8Array(encoder));
 
     // Optionally; send initial awareness message
     const awarenessUpdate = encodeAwarenessUpdate(this._awareness, [this._doc.clientID]);
     const encoderAwareness = encoding.createEncoder();
     encoding.writeVarUint(encoderAwareness, MsgType.Awareness);
     encoding.writeVarUint8Array(encoderAwareness, awarenessUpdate);
-    this.socket!.emit('message', encoding.toUint8Array(encoderAwareness));
+    this.socket?.emit('message', encoding.toUint8Array(encoderAwareness));
 
     // Start sending updates up to the server regularly
     if (this.updateTimer) clearInterval(this.updateTimer);

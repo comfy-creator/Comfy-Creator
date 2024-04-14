@@ -22,7 +22,6 @@ import ReactFlow, {
   OnConnectStart,
   OnConnectStartParams,
   Panel,
-  ReactFlowJsonObject,
   useReactFlow
 } from 'reactflow';
 import { useContextMenu } from '../contexts/contextmenu';
@@ -41,20 +40,17 @@ import { dragHandler, dropHandler } from '../lib/handlers/dragDrop';
 import { ConnectionLine } from './ConnectionLIne';
 import {
   API_URL,
-  FLOW_KEY,
   FLOW_MAX_ZOOM,
   FLOW_MIN_ZOOM,
   HANDLE_ID_DELIMITER,
   HANDLE_TYPES
 } from '../lib/config/constants';
-import { defaultEdges, defaultNodes } from '../default-flow';
 import { useSettings } from '../contexts/settings';
 import { useSettingsStore } from '../store/settings';
 import { defaultThemeConfig } from '../lib/config/themes';
 import { colorSchemeSettings } from '../lib/settings';
-import { subscribe as subscribeEvent } from '../lib/event';
 import { useApiContext } from '../contexts/api.tsx';
-import { computeInitialNodeState } from '../lib/utils/node.ts';
+import { useFlow } from '../lib/hooks/useFlow.tsx';
 
 const selector = (state: RFState) => ({
   panOnDrag: state.panOnDrag,
@@ -104,23 +100,28 @@ export function MainFlow() {
     instance,
     setInstance,
     execution,
-    updateWidgetState,
-    nodeDefs
+    updateWidgetState
   } = useFlowStore(selector);
 
-  const { getNodes, getEdges, getViewport, fitView, setViewport } = useReactFlow<
-    NodeState,
-    string
-  >();
+  const { getNodes, getEdges, getViewport, fitView } = useReactFlow<NodeState, string>();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
   const { loadCurrentSettings, addSetting } = useSettings();
   const { getNodeDefs, makeServerURL } = useApiContext();
+  const { saveFlow, loadFlow } = useFlow();
   const viewport = getViewport();
 
   useEffect(() => {
     getNodeDefs()
       .then((defs) => {
-        addNodeDefs(transformNodeDefs(defs));
+        addNodeDefs({
+          PreviewImage,
+          PreviewVideo,
+          RerouteNode,
+          PrimitiveNode,
+          ...transformNodeDefs(defs)
+        });
+
+        loadFlow();
       })
       .catch(console.error);
   }, []);
@@ -151,15 +152,8 @@ export function MainFlow() {
     addSetting(colorSchemeSettings);
 
     // Register Node definitions and edge types
-    addNodeDefs({ PreviewImage, PreviewVideo, RerouteNode, PrimitiveNode });
     registerEdgeType(HANDLE_TYPES);
-
-    subscribeEvent('afterQueue', (event) => console.log({ event }));
   }, []);
-
-  useEffect(() => {
-    loadFlow();
-  }, [nodeDefs]);
 
   // save to localStorage as nodes, edges and viewport changes
   useEffect(() => {
@@ -171,6 +165,7 @@ export function MainFlow() {
       };
 
       saveFlow(flow);
+      console.log('Flow saved to local storage');
     }
   }, [nodes, edges, viewport]);
 
@@ -181,7 +176,7 @@ export function MainFlow() {
     (event: MouseEvent | globalThis.TouchEvent) => {
       console.log(event);
       if (event.target && event.target.className !== 'flow_input') {
-        // TO DO: this logic may be wrong here? We're mixing react-events with native-events!
+        // TODO: this logic may be wrong here? We're mixing react-events with native-events!
         onContextMenu(event);
       }
 
@@ -259,48 +254,6 @@ export function MainFlow() {
     if (instance) saveFlow();
   }, [instance]);
 
-  const saveFlow = (flow?: ReactFlowJsonObject) => {
-    if (!flow) {
-      flow = instance?.toObject();
-    }
-
-    localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
-  };
-
-  const loadFlow = () => {
-    const flow: ReactFlowJsonObject<NodeState> = JSON.parse(
-      localStorage.getItem(FLOW_KEY) as string
-    );
-
-    if (flow) {
-      const { x = 0, y = 0, zoom = 1 } = flow.viewport;
-      const nodes = flow.nodes.map((node) => {
-        if (!node.type) return node;
-
-        const { config, widgets } = node.data;
-        const values: Record<string, string> = {};
-
-        for (const name in widgets) {
-          const widget = widgets[name];
-          values[name] = widget.value;
-        }
-
-        const def = nodeDefs[node.type];
-        if (!def) return node;
-
-        console.log(def, node.type);
-        const state = computeInitialNodeState(def, values, { ...config });
-
-        console.log({ state, data: node.data });
-        return { ...node, data: { ...node.data, ...state } };
-      });
-
-      setNodes(nodes.length > 0 ? nodes : defaultNodes);
-      setEdges(flow.edges?.length > 0 ? flow.edges : defaultEdges);
-      setViewport({ x, y, zoom });
-    }
-  };
-
   // Validation connection for edge-compatability and circular loops
   const isValidConnection = useCallback(
     (connection: Connection): boolean => {
@@ -355,8 +308,7 @@ export function MainFlow() {
   const handleKeyPress = useCallback(
     (keyName: string, event: any) => {
       event.preventDefault();
-      const func = hotKeysHandlers[keyName];
-      func && func();
+      hotKeysHandlers[keyName]?.();
     },
     [hotKeysHandlers]
   );
