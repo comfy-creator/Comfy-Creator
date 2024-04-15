@@ -50,7 +50,7 @@ import { useSettingsStore } from '../store/settings';
 import { defaultThemeConfig } from '../lib/config/themes';
 import { colorSchemeSettings } from '../lib/settings';
 import { useApiContext } from '../contexts/api.tsx';
-import { useFlow } from '../lib/hooks/useFlow.tsx';
+import { useGraph } from '../lib/hooks/useGraph.tsx';
 
 const selector = (state: RFState) => ({
   panOnDrag: state.panOnDrag,
@@ -107,7 +107,7 @@ export function MainFlow() {
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
   const { loadCurrentSettings, addSetting } = useSettings();
   const { getNodeDefs, makeServerURL } = useApiContext();
-  const { saveFlow, loadFlow } = useFlow();
+  const { saveSerializedGraph, loadSerializedGraph } = useGraph();
   const viewport = getViewport();
 
   useEffect(() => {
@@ -121,7 +121,7 @@ export function MainFlow() {
           ...transformNodeDefs(defs)
         });
 
-        loadFlow();
+        loadSerializedGraph();
       })
       .catch(console.error);
   }, []);
@@ -164,8 +164,8 @@ export function MainFlow() {
         edges: edges.filter(Boolean)
       };
 
-      saveFlow(flow);
-      console.log('Flow saved to local storage');
+      saveSerializedGraph(flow);
+      console.log('Graph saved to local storage');
     }
   }, [nodes, edges, viewport]);
 
@@ -248,11 +248,6 @@ export function MainFlow() {
     },
     [nodes, setCurrentConnectionLineType, setNodes]
   );
-
-  // Store graph state to local storage
-  const serializeFlow = useCallback(() => {
-    if (instance) saveFlow();
-  }, [instance]);
 
   // Validation connection for edge-compatability and circular loops
   const isValidConnection = useCallback(

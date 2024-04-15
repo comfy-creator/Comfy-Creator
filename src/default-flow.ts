@@ -1,4 +1,4 @@
-import { Node } from 'reactflow';
+import { Edge, Node } from 'reactflow';
 import { NodeState } from './lib/types.ts';
 
 export const defaultNodes: Node<NodeState>[] = [
@@ -348,7 +348,7 @@ export const defaultNodes: Node<NodeState>[] = [
   }
 ];
 
-export const defaultEdges = [
+export const defaultEdges: Edge[] = [
   {
     source: '6e068e95-86af-4d77-9846-c6e204a10c67',
     sourceHandle: 'output::1::CLIP',
