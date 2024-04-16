@@ -1,8 +1,13 @@
 import './Drawer.css';
-import Image from './image.png';
 
-export const Drawer = (props: any) => {
-  const { open, onClose } = props;
+interface IProps {
+  open: boolean;
+  onClose: () => void;
+  images: string[];
+}
+
+export const Drawer = (props: IProps) => {
+  const { open, onClose, images } = props;
 
   return (
     <>
@@ -16,9 +21,13 @@ export const Drawer = (props: any) => {
           <h3 className="header_title">Image Feed</h3>
         </div>
         <div className="image_list">
-          {[0, 0, 0, 0, 0, 0].map((_) => (
-            <ImageWithOverlay src={Image} alt="image" />
-          ))}
+          {images ? (
+            images.map((image, index) => <ImageWithOverlay key={index} src={image} alt="image" />)
+          ) : (
+            <div>
+              <h4>No images</h4>
+            </div>
+          )}
         </div>
       </div>
     </>

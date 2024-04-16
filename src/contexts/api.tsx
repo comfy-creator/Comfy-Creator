@@ -13,7 +13,7 @@ import {
   ComfyItemURLType,
   EmbeddingsResponse,
   HistoryResponse,
-  IComfyApi,
+  IComfyApi, IGetOutputImagesResponse, IPagination,
   QueueResponse,
   SettingsResponse,
   storeUserDataOptions,
@@ -48,6 +48,7 @@ interface IApiContext extends IComfyApi {
     workflow?: Record<string, WorkflowStep>
   ) => Promise<JobSnapshot>;
   makeServerURL: (route: string) => string;
+  getOutputImages: (pagination: IPagination) => Promise<IGetOutputImagesResponse>;
 }
 
 enum ApiStatus {
@@ -324,6 +325,15 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
   };
 
   /**
+   * Loads output image(s) from output folder (for local server)
+   * @returns The output image(s)
+   */
+  const getOutputImages = async (pagination: IPagination): Promise<IGetOutputImagesResponse> => {
+    const resp = await fetchApi(API_URL.GET_OUTPUT_IMAGE(pagination));
+    return await resp.json();
+  };
+
+  /**
    * Loads node object definitions for the graph
    * @returns The node definitions
    */
@@ -581,7 +591,8 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
         storeSetting,
         getUserData,
         storeUserData,
-        viewFile
+        viewFile,
+        getOutputImages
       }}
     >
       {children}
