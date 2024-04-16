@@ -157,7 +157,7 @@ export function MainFlow() {
     registerEdgeType(HANDLE_TYPES);
   }, []);
 
-  // save to localStorage as nodes, edges and viewport changes
+  // save to ComfyLocalStorage as nodes, edges and viewport changes
   useEffect(() => {
     if (nodes.length > 0 || edges.length > 0) {
       const flow = {
@@ -175,7 +175,7 @@ export function MainFlow() {
   // so we can auto-spawn a compatible node for that edge
   const onConnectEnd = useCallback(
     // ReactMouseEvent | TouchEvent instead ?
-    (event: ReactMouseEvent | MouseEvent | TouchEvent) => {
+    (event: Event) => {
       if (event.target && event.target.className !== 'flow_input') {
         // TODO: this logic may be wrong here? We're mixing react-events with native-events!
         onContextMenu(event);

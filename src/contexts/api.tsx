@@ -25,6 +25,7 @@ import { API_URL, DEFAULT_SERVER_PROTOCOL, DEFAULT_SERVER_URL } from '../lib/con
 import { toWsURL } from '../lib/utils';
 import { ComfyWsMessage, SerializedFlow, ViewFileArgs } from '../lib/types.ts';
 import { ApiEventEmitter } from '../lib/apiEvent.ts';
+import { ComfyLocalStorage } from '../lib/localStorage.ts';
 
 // This is injected into index.html by `start.py`
 declare global {
@@ -46,7 +47,7 @@ interface IApiContext extends IComfyApi {
   runWorkflow: (
     serializedGraph: SerializedFlow,
     workflow?: Record<string, WorkflowStep>
-  ) => Promise<JobSnapshot>;
+  ) => Promise<JobSnapshot | Error>;
   makeServerURL: (route: string) => string;
   getOutputImages: (pagination: IPagination) => Promise<IGetOutputImagesResponse>;
 }
@@ -213,7 +214,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
   // This is the function used to submit jobs to the server
   // ComfyUI terminology: 'queuePrompt'
   const runWorkflow = useCallback(
-    async (flow: SerializedFlow, workflow?: Record<string, WorkflowStep>): Promise<JobSnapshot> => {
+    async (flow: SerializedFlow, workflow?: Record<string, WorkflowStep>): Promise<JobSnapshot | Error> => {
       if (serverProtocol === 'grpc' && comfyClient) {
         // Use gRPC server
         const request = {
@@ -223,7 +224,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
           worker_wait_duration: undefined,
           request_id: crypto.randomUUID(),
           output_config: {
-            write_to_graph_id: localStorage.getItem('graphId') ?? undefined
+            write_to_graph_id: ComfyLocalStorage.getItem('graphId') ?? undefined
           }
         };
 
@@ -252,6 +253,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
           return res;
         } catch (e) {
           console.log(e);
+          return e as Error
         }
       } else {
         // Use REST server
@@ -283,7 +285,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
           };
         }
 
-        return await res.json();
+        return await res.json() as JobSnapshot;
       }
     },
     [requestMetadata, serverUrl, serverProtocol, comfyClient, sessionId]

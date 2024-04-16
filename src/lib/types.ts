@@ -240,6 +240,7 @@ export interface VideoInputState extends BaseInputState {
 
 export interface PrimitiveInputState extends BaseInputState {
   type: '*';
+  value?: undefined
 }
 
 export type WidgetState =

@@ -5,6 +5,7 @@ import { defaultEdges, defaultNodes } from '../../default-flow.ts';
 import { RFState, useFlowStore } from '../../store/flow.ts';
 import { useLogging } from '../../contexts/logging.tsx';
 import { computeInitialNodeState } from '../utils/node.ts';
+import { ComfyLocalStorage } from '../localStorage.ts';
 
 const selector = (state: RFState) => ({
   nodeDefs: state.nodeDefs,
@@ -58,7 +59,7 @@ export function useFlow() {
     try {
       if (!flow) {
         flow = JSON.parse(
-          localStorage.getItem(FLOW_KEY) as string
+          ComfyLocalStorage.getItem(FLOW_KEY) as string
         ) as ReactFlowJsonObject<NodeState>;
       }
 
@@ -79,7 +80,7 @@ export function useFlow() {
       flow = instance?.toObject();
     }
 
-    localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
+    ComfyLocalStorage.setItem(FLOW_KEY, JSON.stringify(flow));
   };
 
   return {

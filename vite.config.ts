@@ -21,7 +21,7 @@ export default defineConfig({
     lib: {
       fileName: 'index',
       formats: ['cjs', 'es'],
-      entry: 'src/index.ts'
+      entry: 'src/App.tsx'
     },
     emptyOutDir: true,
     sourcemap: true,
