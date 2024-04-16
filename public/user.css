@@ -1,16 +1,16 @@
 /* Put custom styles here */
 
 .context-menu {
-    font-family: Tahoma, sans-serif;
-    position: fixed;
     top: 100px;
-    left: 100px;
-    min-width: 100px;
     color: #aaf;
-    box-shadow: 0 0 10px black !important;
-    background-color: #2e2e2e !important;
     z-index: 10;
+    left: 100px;
+    position: fixed;
     padding: 0.3rem;
+    min-width: 100px;
+    font-family: Tahoma, sans-serif;
+    box-shadow: 0 0 10px black !important;
+    background: var(--comfy-menu-bg) !important;
 }
 
 .context-menu.dark {
@@ -152,7 +152,7 @@
 .flow_input_text {
     color: var(--drag-text);
     margin-left: 10px;
-    font-size: 0.5rem;
+    font-size: 0.6rem;
     transform: none !important;
 }
 
@@ -164,11 +164,11 @@
     top: unset !important;
     width: 4px !important;
     height: 4px !important;
+    padding: 1px !important;
     min-width: 4px !important;
     min-height: 4px !important;
     transform: none !important;
     border-radius: 50% !important;
-    border: 1px solid transparent !important;
 }
 
 .flow_handler.right {
@@ -181,6 +181,10 @@
     left: 5px !important;
 }
 
+.flow_input_output_handler {
+    border: 1px solid transparent !important;
+}
+
 /* widgets */
 .flow_content {
     padding: 8px;
@@ -188,13 +192,14 @@
 
 .widgets_container {
     width: 100%;
+    margin-top: 15px;
 }
 
 .widget_container {
     width: 100%;
     display: flex;
     font-size: 0.5em;
-    margin-bottom: 2px;
+    margin-bottom: 3px;
     align-items: center;
     font-weight: normal;
 }

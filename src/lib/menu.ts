@@ -8,9 +8,11 @@ import {
   removeNodeInput,
   showNodeWidget
 } from './utils/node.ts';
+import { categorizeObjects } from './utils/ui.tsx';
+import type { MouseEvent as ReactMouseEvent } from 'react';
 
 export function getNodeMenuItems(node: Node<NodeState>) {
-  const rest = { hasSubMenu: false, disabled: false, subMenu: null, node: null };
+  const rest = { hasSubMenu: false, disabled: false, subMenu: null, data: null };
 
   const to_inputs = Object.values(node.data.widgets)
     .map((widget) =>
@@ -63,8 +65,8 @@ export function getNodeMenuItems(node: Node<NodeState>) {
     .filter(Boolean) as IMenuType[];
 
   const items: (IMenuType | null)[] = [
-    { label: 'Inputs', hasSubMenu: true, disabled: true, subMenu: null, node: null },
-    { label: 'Outputs', hasSubMenu: true, disabled: true, subMenu: null, node: null },
+    { label: 'Inputs', hasSubMenu: true, disabled: true, subMenu: null, data: null },
+    { label: 'Outputs', hasSubMenu: true, disabled: true, subMenu: null, data: null },
 
     null,
 
@@ -73,25 +75,25 @@ export function getNodeMenuItems(node: Node<NodeState>) {
       hasSubMenu: false,
       disabled: true,
       subMenu: null,
-      node: null
+      data: null
     },
-    { label: 'Properties', hasSubMenu: true, disabled: false, subMenu: null, node: null },
-    { label: 'Properties Panel', hasSubMenu: false, disabled: false, subMenu: null, node: null },
+    { label: 'Properties', hasSubMenu: true, disabled: false, subMenu: null, data: null },
+    { label: 'Properties Panel', hasSubMenu: false, disabled: false, subMenu: null, data: null },
 
     null,
 
-    { label: 'Title', hasSubMenu: false, disabled: false, subMenu: null, node: null },
-    { label: 'Mode', hasSubMenu: true, disabled: false, subMenu: null, node: null },
-    { label: 'Resize', hasSubMenu: false, disabled: false, subMenu: null, node: null },
-    { label: 'Collapse', hasSubMenu: false, disabled: false, subMenu: null, node: null },
-    { label: 'Pin', hasSubMenu: false, disabled: false, subMenu: null, node: null },
-    { label: 'Colors', hasSubMenu: true, disabled: false, subMenu: null, node: null },
-    { label: 'Shapes', hasSubMenu: true, disabled: false, subMenu: null, node: null },
+    { label: 'Title', hasSubMenu: false, disabled: false, subMenu: null, data: null },
+    { label: 'Mode', hasSubMenu: true, disabled: false, subMenu: null, data: null },
+    { label: 'Resize', hasSubMenu: false, disabled: false, subMenu: null, data: null },
+    { label: 'Collapse', hasSubMenu: false, disabled: false, subMenu: null, data: null },
+    { label: 'Pin', hasSubMenu: false, disabled: false, subMenu: null, data: null },
+    { label: 'Colors', hasSubMenu: true, disabled: false, subMenu: null, data: null },
+    { label: 'Shapes', hasSubMenu: true, disabled: false, subMenu: null, data: null },
 
     null,
 
-    { label: 'Bypass', hasSubMenu: false, disabled: false, subMenu: null, node: null },
-    { label: 'Copy (Clipspace)', hasSubMenu: false, disabled: false, subMenu: null, node: null },
+    { label: 'Bypass', hasSubMenu: false, disabled: false, subMenu: null, data: null },
+    { label: 'Copy (Clipspace)', hasSubMenu: false, disabled: false, subMenu: null, data: null },
     ...to_inputs,
 
     null,
@@ -103,7 +105,7 @@ export function getNodeMenuItems(node: Node<NodeState>) {
       hasSubMenu: false,
       disabled: false,
       subMenu: null,
-      node: node.id,
+      data: node.id,
       onClick: () => cloneNode(node.id)
     },
 
@@ -114,7 +116,7 @@ export function getNodeMenuItems(node: Node<NodeState>) {
       hasSubMenu: false,
       disabled: false,
       subMenu: null,
-      node: node.id,
+      data: node.id,
       onClick: () => removeNode(node.id)
     }
   ];
@@ -138,4 +140,75 @@ function cloneNode(id: string) {
   };
 
   addRawNode(newNode);
+}
+
+export function getContextMenuItems() {
+  const state = useFlowStore.getState();
+
+  return [
+    {
+      data: null,
+      subMenu: categorizeObjects(state.nodeDefs),
+      isOpen: false,
+      disabled: false,
+      hasSubMenu: true,
+      label: 'Add Node',
+      onClick: (event: ReactMouseEvent) => null
+    },
+    {
+      data: null,
+      subMenu: [],
+      isOpen: false,
+      disabled: true,
+      hasSubMenu: false,
+      label: 'Add Group',
+      onClick: (event: ReactMouseEvent) => null
+    },
+    {
+      data: null,
+      subMenu: [],
+      isOpen: false,
+      disabled: false,
+      hasSubMenu: false,
+      label: 'Add group for selected nodes',
+      onClick: (event: ReactMouseEvent) => null
+    },
+    {
+      data: null,
+      subMenu: [],
+      isOpen: false,
+      disabled: false,
+      hasSubMenu: false,
+      label: 'Convert to group node',
+      onClick: (event: ReactMouseEvent) => null
+    },
+    {
+      data: null,
+      subMenu: [],
+      isOpen: false,
+      disabled: false,
+      hasSubMenu: false,
+      label: 'Manage group nodes',
+      onClick: (event: ReactMouseEvent) => null
+    },
+    null,
+    {
+      data: null,
+      subMenu: [],
+      isOpen: false,
+      disabled: false,
+      hasSubMenu: false,
+      label: 'Follow execution',
+      onClick: (event: ReactMouseEvent) => null
+    },
+    {
+      data: null,
+      subMenu: [],
+      isOpen: false,
+      disabled: false,
+      hasSubMenu: true,
+      label: 'Go to node',
+      onClick: (event: ReactMouseEvent) => null
+    }
+  ] as (IMenuType | null)[];
 }

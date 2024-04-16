@@ -29,7 +29,7 @@ export function ConnectionLine({
 
   return (
     <g>
-      <path fill="none" stroke={strokeColor} strokeWidth={1.5} d={path} />
+      <path fill="none" stroke={strokeColor} strokeWidth={2.5} d={path} />
       <circle cx={toX} cy={toY} fill="#fff" r={3} stroke={strokeColor} strokeWidth={3} />
     </g>
   );

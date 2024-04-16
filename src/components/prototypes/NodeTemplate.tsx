@@ -3,9 +3,12 @@ import {
   BoolInputState,
   EnumInputDef,
   InputDef,
+  InputHandle as IInputHandle,
   NodeDefinition,
   NodeState,
+  OutputHandle as IOutputHandle,
   StringInputDef,
+  ThemeConfig,
   UpdateWidgetState,
   WidgetState
 } from '../../lib/types.ts';
@@ -91,7 +94,7 @@ const createWidgetFromSpec = (
 };
 
 export const createNodeComponentFromDef = (
-  def: NodeDefinition,
+  nodeDef: NodeDefinition,
   updateWidgetState: UpdateWidgetState
 ): ComponentType<NodeProps<NodeState>> => {
   return ({ id, data, selected }: NodeProps<NodeState>) => {
@@ -103,7 +106,7 @@ export const createNodeComponentFromDef = (
     const { execution } = useFlowStore();
     const theme = getActiveTheme();
 
-    const appearance = theme.colors.appearance;
+    const { NODE_TEXT_SIZE, NODE_TITLE_COLOR } = theme.colors.appearance;
 
     useEffect(() => {
       const node = document.querySelector(`[data-id="${id}"]`);
@@ -157,105 +160,56 @@ export const createNodeComponentFromDef = (
     }, [selected]);
 
     const onClick = () => toast.success('File uploaded successfully!');
-
-    const handleNodeClick = () => {
-      console.log('Node clicked');
+    const { inputs, outputs, widgets } = data;
+    const resizerStyle = {
+      width: '12px',
+      height: '12px',
+      border: 'none',
+      cursor: 'se-resize'
     };
 
     // Generate input handles
-    const inputHandles = Object.entries(data.inputs || []).map(([label, handle], index) => {
-      if (handle.hidden) return null;
-
-      return (
-        <div className={`flow_input ${handle.isHighlighted ? 'edge_opacity' : ''}`} key={index}>
-          <Handle
-            style={{
-              backgroundColor:
-                theme.colors.types[handle.type as keyof typeof theme.colors.types] ??
-                theme.colors.types['DEFAULT']
-            }}
-            id={`input::${index}::${handle.type}`}
-            type="target"
-            position={Position.Left}
-            className={`flow_handler left ${handle.type}`}
-          />
-          <span className="flow_input_text">{handle.name}</span>
-        </div>
-      );
-    });
+    const inputHandles = inputs.map(
+      (handle, index) =>
+        !handle.hidden && <InputHandle key={index} index={index} theme={theme} handle={handle} />
+    );
 
     // Generate output handles
-    const outputHandles = Object.entries(data.outputs || []).map(([label, handle], index) => {
-      if (handle.hidden) return null;
-
-      return (
-        <div className={`flow_output ${handle.isHighlighted ? 'edge_opacity' : ''}`} key={index}>
-          <Handle
-            style={{
-              backgroundColor:
-                theme.colors.types[handle.type as keyof typeof theme.colors.types] ??
-                theme.colors.types['DEFAULT']
-            }}
-            id={`output::${label}::${handle.type}`}
-            type="source"
-            position={Position.Right}
-            className={`flow_handler right ${handle.type}`}
-          />
-          <span className="flow_output_text">{handle.name}</span>
-        </div>
-      );
-    });
+    const outputHandles = outputs.map(
+      (handle, index) =>
+        !handle.hidden && <OutputHandle key={index} index={index} theme={theme} handle={handle} />
+    );
 
     // Generate widgets
-    const widgets = Object.entries(data.widgets || []).map(([name, inputState], index) => {
-      if (inputState.hidden) return null;
-
-      let inputDef: InputDef | undefined = inputState.definition;
-      if (!inputDef) {
-        inputDef = def.inputs.find((input) => input.name === name);
-      }
-
-      if (!inputDef) return null;
-
-      const update = (data: Partial<WidgetState>) => {
-        if (!inputState.type) return;
-        updateWidgetState({ nodeId: id, name, data });
-      };
-
-      return (
-        <div key={index} className="widget_container">
-          {createWidgetFromSpec(inputDef, name, inputState, update)}
-        </div>
-      );
-    });
+    const displayWidgets = Object.entries(widgets).map(
+      ([name, state], index) =>
+        !state.hidden && (
+          <Widget
+            key={index}
+            name={name}
+            nodeId={id}
+            state={state}
+            nodeDef={nodeDef}
+            updateWidgetState={updateWidgetState}
+          />
+        )
+    );
 
     return (
       <>
         <NodeResizeControl
-          style={{
-            cursor: 'se-resize',
-            border: 'none',
-            width: '12px',
-            height: '12px'
-          }}
+          style={resizerStyle}
           color="transparent"
           position="bottom-right"
           minWidth={minWidth}
           minHeight={minHeight}
         />
-        <div
-          style={{ fontSize: appearance.NODE_TEXT_SIZE }}
-          className={`node_container`}
-          ref={divRef}
-        >
+
+        <div style={{ fontSize: NODE_TEXT_SIZE }} className={`node_container`} ref={divRef}>
           {!data.config?.hideLabel && (
             <div className="node_label_container">
-              <span
-                className="node_label"
-                style={{ color: appearance.NODE_TITLE_COLOR }}
-                onClick={onClick}
-              >
-                {def.display_name}
+              <span className="node_label" style={{ color: NODE_TITLE_COLOR }} onClick={onClick}>
+                {nodeDef.display_name}
               </span>
             </div>
           )}
@@ -268,10 +222,10 @@ export const createNodeComponentFromDef = (
               <div className="flow_output_container">{outputHandles}</div>
             </div>
 
-            <div className="widgets_container">{widgets}</div>
+            <div className="widgets_container">{displayWidgets}</div>
 
             <div className="node_footer">
-              {(def.output_node || data.config?.isOutputNode) && (
+              {(nodeDef.output_node || data.config?.isOutputNode) && (
                 <button className="comfy-btn">Run</button>
               )}
             </div>
@@ -281,3 +235,93 @@ export const createNodeComponentFromDef = (
     );
   };
 };
+
+interface InputHandleProps {
+  handle: IInputHandle;
+  theme: ThemeConfig;
+  index: number;
+}
+
+function InputHandle({ index, handle, theme }: InputHandleProps) {
+  return (
+    <div className={`flow_input ${handle.isHighlighted ? 'edge_opacity' : ''}`}>
+      <Handle
+        style={{
+          backgroundColor:
+            theme.colors.types[handle.type as keyof typeof theme.colors.types] ??
+            theme.colors.types['DEFAULT']
+        }}
+        id={`input::${index}::${handle.type}`}
+        type="target"
+        position={Position.Left}
+        className={`flow_handler flow_input_output_handler left ${handle.type}`}
+      />
+      <span className="flow_input_text">{handle.name}</span>
+    </div>
+  );
+}
+
+interface OutputHandleProps {
+  handle: IOutputHandle;
+  theme: ThemeConfig;
+  index: number;
+}
+
+function OutputHandle({ index, handle, theme }: OutputHandleProps) {
+  return (
+    <div className={`flow_output ${handle.isHighlighted ? 'edge_opacity' : ''}`}>
+      <Handle
+        style={{
+          backgroundColor:
+            theme.colors.types[handle.type as keyof typeof theme.colors.types] ??
+            theme.colors.types['DEFAULT']
+        }}
+        id={`output::${index}::${handle.type}`}
+        type="source"
+        position={Position.Right}
+        className={`flow_handler flow_input_output_handler right ${handle.type}`}
+      />
+      <span className="flow_output_text">{handle.name}</span>
+    </div>
+  );
+}
+
+interface WidgetProps {
+  name: string;
+  nodeId: string;
+  state: WidgetState;
+  nodeDef: NodeDefinition;
+  updateWidgetState: UpdateWidgetState;
+}
+
+function Widget({ name, nodeId, state, nodeDef, updateWidgetState }: WidgetProps) {
+  let inputDef: InputDef | undefined = state.definition;
+  if (!inputDef) {
+    inputDef = nodeDef.inputs.find((input) => input.name === name);
+  }
+
+  if (!inputDef) return null;
+
+  const update = (data: Partial<WidgetState>) => {
+    if (!state.type) return;
+    updateWidgetState({ nodeId, name, data });
+  };
+
+  return (
+    <div className="widget_container">
+      <Handle
+        type="target"
+        position={Position.Left}
+        id={`${nodeId}::widget::${name}`}
+        className={`flow_handler left`}
+        style={{ border: `1.5px solid red` }}
+      />
+
+      <div style={{ width: '1px' }} />
+
+      <div className="flow_input_text" style={{ width: '100%' }}>
+        {createWidgetFromSpec(inputDef, name, state, update)}
+      </div>
+    </div>
+  );
+}

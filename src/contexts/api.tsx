@@ -212,7 +212,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
   // This is the function used to submit jobs to the server
   // ComfyUI terminology: 'queuePrompt'
   const runWorkflow = useCallback(
-    async (flow: SerializedFlow, workflow?: Record<string, WorkflowStep>): Promise<JobSnapshot> => {
+    async (flow: SerializedFlow, workflow?: Record<string, WorkflowStep>) => {
       if (serverProtocol === 'grpc' && comfyClient) {
         // Use gRPC server
         const request = {

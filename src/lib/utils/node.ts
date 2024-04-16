@@ -36,6 +36,13 @@ export function computeInitialNodeState(
       state.widgets[input.name] = widget;
 
       if (isSeedWidget(input)) {
+        // const afterGenWidget = createValueControlWidget({ widget });
+        // state.widgets[input.name] = {
+        //   type: 'GROUP',
+        //   name: input.name,
+        //   widgets: [widget, afterGenWidget]
+        // };
+
         const afterGenWidget = createValueControlWidget({ widget });
 
         widget.linkedWidgets = [afterGenWidget.name];
@@ -281,4 +288,45 @@ export function removeNodeInput(node: Node<NodeState>, slot: number) {
   const { updateNodeState } = useFlowStore.getState();
   node.data.inputs = node.data.inputs.filter((_, i) => i !== slot);
   updateNodeState(node.id, node.data);
+}
+
+export function addWidgetToPrimitiveNode(
+  primitiveNodeId: string,
+  updateNodeState: (nodeId: string, newState: Partial<NodeState>) => void,
+  { nodeId, widgetName }: { nodeId: string; widgetName: string }
+) {
+  const { nodeDefs, nodes } = useFlowStore.getState();
+  const primitive = nodes.find((node) => node.id === primitiveNodeId);
+  if (primitive?.type !== 'PrimitiveNode') return;
+
+  const node = nodes.find((node) => node.id === nodeId);
+  if (!node) return;
+
+  const widget = node.data.widgets[widgetName];
+  if (!widget) return;
+
+  const definition = nodeDefs[node.type!]?.inputs?.find((input) => input.name == widget.name);
+
+  const output = {
+    name: widget.type,
+    type: '*'
+  } as const;
+
+  updateNodeState(primitive.id, {
+    outputs: [output],
+    widgets: {
+      [widget.name]: {
+        ...structuredClone(widget),
+        definition
+      }
+    }
+  });
+
+  return {
+    type: widget.type
+  };
+}
+
+export function isWidgetHandleId(id: string) {
+  return id.split('::')[1] === 'widget';
 }

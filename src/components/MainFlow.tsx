@@ -28,13 +28,7 @@ import { useContextMenu } from '../contexts/contextmenu';
 import ControlPanel from './panels/ControlPanel';
 import { RFState, useFlowStore } from '../store/flow';
 import { NodeState } from '../lib/types';
-import {
-  PreviewImage,
-  PreviewVideo,
-  PrimitiveNode,
-  RerouteNode,
-  transformNodeDefs
-} from '../lib/nodedefs';
+import { RerouteNode } from '../lib/nodedefs';
 import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../lib/handlers/dragDrop';
 import { ConnectionLine } from './ConnectionLIne';
@@ -51,6 +45,7 @@ import { defaultThemeConfig } from '../lib/config/themes';
 import { colorSchemeSettings } from '../lib/settings';
 import { useApiContext } from '../contexts/api.tsx';
 import { useGraph } from '../lib/hooks/useGraph.tsx';
+import { isWidgetHandleId } from '../lib/utils/node.ts';
 
 const selector = (state: RFState) => ({
   panOnDrag: state.panOnDrag,
@@ -62,7 +57,7 @@ const selector = (state: RFState) => ({
   setNodes: state.setNodes,
   setEdges: state.setEdges,
   nodeComponents: state.nodeComponents,
-  addNodeDefs: state.addNodeDefs,
+  loadNodeDefsFromApi: state.loadNodeDefsFromApi,
   nodeDefs: state.nodeDefs,
   addNode: state.addNode,
   updateWidgetState: state.updateWidgetState,
@@ -90,7 +85,7 @@ export function MainFlow() {
     setNodes,
     setEdges,
     nodeComponents,
-    addNodeDefs,
+    loadNodeDefsFromApi,
     addNode,
     hotKeysShortcut,
     hotKeysHandlers,
@@ -111,19 +106,8 @@ export function MainFlow() {
   const viewport = getViewport();
 
   useEffect(() => {
-    getNodeDefs()
-      .then((defs) => {
-        addNodeDefs({
-          PreviewImage,
-          PreviewVideo,
-          RerouteNode,
-          PrimitiveNode,
-          ...transformNodeDefs(defs)
-        });
-
-        loadSerializedGraph();
-      })
-      .catch(console.error);
+    loadNodeDefsFromApi(getNodeDefs);
+    loadSerializedGraph();
   }, []);
 
   useEffect(() => {
@@ -174,11 +158,11 @@ export function MainFlow() {
   const onConnectEnd = useCallback(
     // ReactMouseEvent | TouchEvent instead ?
     (event: MouseEvent | globalThis.TouchEvent) => {
-      console.log(event);
-      if (event.target && event.target.className !== 'flow_input') {
-        // TODO: this logic may be wrong here? We're mixing react-events with native-events!
-        onContextMenu(event);
-      }
+      // console.log(event);
+      // if (event.target && event.target.className !== 'flow_input') {
+      // TODO: this logic may be wrong here? We're mixing react-events with native-events!
+      // onContextMenu(event);
+      // }
 
       const newNodes = nodes.map((node) => {
         const outputs = Object.entries(node.data.outputs).map(([_, output]) => ({
@@ -196,13 +180,13 @@ export function MainFlow() {
           data: { ...node.data, outputs, inputs }
         };
       });
-      setNodes(newNodes);
+      // setNodes(newNodes);
     },
     [nodes, setNodes, onContextMenu]
   );
 
   const onConnectStart: OnConnectStart = useCallback(
-    (event: ReactMouseEvent | TouchEvent, params: OnConnectStartParams) => {
+    (_: ReactMouseEvent | TouchEvent, params: OnConnectStartParams) => {
       if (!params.handleId) return;
       const [_category, _index, type] = params.handleId.split(HANDLE_ID_DELIMITER);
       if (type) {
@@ -257,6 +241,7 @@ export function MainFlow() {
       const edges = getEdges();
 
       if (sourceHandle === null || targetHandle === null) return false;
+      if (isWidgetHandleId(targetHandle)) return true;
 
       // Find corresponding nodes
       const sourceNode = nodes.find((node) => node.id === source);
@@ -311,7 +296,7 @@ export function MainFlow() {
   // TO DO: this is aggressive; do not change zoom levels. We do not need to have
   // all nodes on screen at once; we merely do not want to leave too far out
   const handleMoveEnd = useCallback(
-    (event: MouseEvent | globalThis.TouchEvent) => {
+    (_: MouseEvent | globalThis.TouchEvent) => {
       const bounds = getNodesBounds(nodes);
       const viewPort = getViewport();
       //

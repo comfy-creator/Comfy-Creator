@@ -13,9 +13,8 @@ import { ContextMenuProps, IMenuType, NodeState } from '../lib/types.ts';
 import { ContextMenu } from '../components/prototypes/ContextMenuTemplate.tsx';
 import { Node } from 'reactflow';
 import SearchWidget from '../components/SearchWidget.tsx';
-import NodeDefs from '../../node_info.json';
-import { categorizeObjects } from '../lib/utils/ui.tsx';
-import { getNodeMenuItems } from '../lib/menu.ts';
+import { getContextMenuItems, getNodeMenuItems } from '../lib/menu.ts';
+import { useFlowStore } from '../store/flow.ts';
 
 interface IContextMenu {
   onNodeContextMenu: (event: ReactMouseEvent, node: Node) => void;
@@ -36,6 +35,8 @@ export function useContextMenu() {
 }
 
 export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode }>) {
+  const state = useFlowStore();
+
   const [menuProps, setMenuProps] = useState<ContextMenuProps | null>(null);
   const [nodeId, setNodeId] = useState<string | undefined>(undefined);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -96,7 +97,7 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
   const onContextMenu = useCallback(
     (event: ReactMouseEvent) => {
       event.preventDefault();
-      const menuData = getMenuData(event, categorizeObjects(NodeDefs));
+      const menuData = getMenuData(event, getContextMenuItems());
       if (!menuData) return;
 
       console.log('from pane context menu');
@@ -109,8 +110,6 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
     (event: ReactMouseEvent, node: Node<NodeState>) => {
       event.preventDefault();
       event.stopPropagation();
-
-      console.log('Dddd', node);
 
       const menuData = getMenuData(event, getNodeMenuItems(node));
       if (!menuData) return;
@@ -136,7 +135,6 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
 
   // Close the context menu if it's open whenever the window is clicked.
   const onPaneClick = useCallback(() => {
-    console.log('Clicking>>>');
     setMenuProps(null);
     setCurrentOpenedMenuIndex(0);
     setMenus([]);
