@@ -38,23 +38,21 @@ declare global {
   }
 }
 
-const getWindowConfig = () => {
+const getWindowConfig = (token?: string) => {
   if (typeof window !== 'undefined') {
     return {
-      API_KEY: window.API_KEY,
+      API_KEY: token || window.API_KEY || '', // using token passed to comfyCreator wrapper before window apiKey
       SERVER_URL: window.SERVER_URL,
       SERVER_PROTOCOL: window.SERVER_PROTOCOL
     };
   } else {
     return {
-      API_KEY: "",
+      API_KEY: token || '',
       SERVER_URL: DEFAULT_SERVER_URL,
       SERVER_PROTOCOL: DEFAULT_SERVER_PROTOCOL
     };
   }
 };
-
-const windowConfig = getWindowConfig();
 
 type ProtocolType = 'grpc' | 'ws';
 
@@ -109,9 +107,15 @@ const pollingFallback = () => {
   return () => clearInterval(intervalId);
 };
 
-export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const ApiContextProvider: React.FC<{ token?: string; children: ReactNode }> = ({
+  token,
+  children
+}) => {
   // TO DO: add possible auth in here as well?
 
+  // comfy window
+  const windowConfig = getWindowConfig(token);
+  
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [socket, setSocket] = useState<ReconnectingWebSocket | null>(null);
   const [serverUrl, setServerUrl] = useState<string>(windowConfig.SERVER_URL ?? DEFAULT_SERVER_URL);

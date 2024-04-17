@@ -167,8 +167,6 @@ export function MainFlow() {
       };
 
       saveFlow(flow);
-      console.log('Flow saved to local storage');
-      loadFlow()
     }
   }, [nodes, edges, viewport]);
 

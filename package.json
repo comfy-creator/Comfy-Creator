@@ -1,6 +1,6 @@
 {
   "name": "comfy-creator",
-  "version": "0.1.10",
+  "version": "0.1.13",
   "type": "module",
   "scripts": {
     "dev": "vite",
