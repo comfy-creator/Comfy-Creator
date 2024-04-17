@@ -167,7 +167,7 @@ export function dragElement(dragEl: HTMLDivElement, addSetting: any) {
   });
 
   function dragMouseDown(e: MouseEvent) {
-    e = e || window.event;
+    e = e || (typeof window !== 'undefined' && window?.event);
     e.preventDefault();
     // get the mouse cursor position at startup:
     posStartX = e.clientX;
@@ -178,7 +178,7 @@ export function dragElement(dragEl: HTMLDivElement, addSetting: any) {
   }
 
   function elementDrag(e: MouseEvent) {
-    e = e || window.event;
+    e = e || (typeof window !== 'undefined' && window?.event);
     e.preventDefault();
 
     dragEl.classList.add('comfy-menu-manual-pos');
@@ -201,7 +201,7 @@ export function dragElement(dragEl: HTMLDivElement, addSetting: any) {
     positionElement();
   }
 
-  window.addEventListener('resize', () => {
+  addEventListener('resize', () => {
     ensureInBounds();
   });
 

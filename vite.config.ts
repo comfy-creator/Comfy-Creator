@@ -25,7 +25,7 @@ export default defineConfig({
     },
     emptyOutDir: true,
     sourcemap: true,
-    minify: false,
+    minify: true,
     rollupOptions: {
       external: [
         ...Object.keys(dependencies || {}),

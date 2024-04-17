@@ -61,6 +61,7 @@ export function useFlow() {
         flow = JSON.parse(
           ComfyLocalStorage.getItem(FLOW_KEY) as string
         ) as ReactFlowJsonObject<NodeState>;
+        console.log("In No flow??", flow)
       }
 
       const { x = 0, y = 0, zoom = 1 } = flow.viewport;

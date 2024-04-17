@@ -129,7 +129,7 @@
 
 .flow_input_output_container {
     display: flex;
-    align-items: start;
+    align-items: flex-start;
     margin-bottom: 10px;
     justify-content: space-between;
 }

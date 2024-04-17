@@ -60,12 +60,12 @@ export const LoggingContextProvider = ({ children }: { children: ReactNode }) =>
 
   const catchUnhandled = () => {
     // Capture uncaught errors
-    window.addEventListener('error', (e) => {
+    addEventListener('error', (e) => {
       addEntry('window', 'error', e.error ?? 'Unknown error');
       return false;
     });
 
-    window.addEventListener('unhandledrejection', (e) => {
+    addEventListener('unhandledrejection', (e) => {
       addEntry('unhandledrejection', 'error', e.reason ?? 'Unknown error');
     });
   };

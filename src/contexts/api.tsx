@@ -13,7 +13,9 @@ import {
   ComfyItemURLType,
   EmbeddingsResponse,
   HistoryResponse,
-  IComfyApi, IGetOutputImagesResponse, IPagination,
+  IComfyApi,
+  IGetOutputImagesResponse,
+  IPagination,
   QueueResponse,
   SettingsResponse,
   storeUserDataOptions,
@@ -35,6 +37,24 @@ declare global {
     SERVER_PROTOCOL: ProtocolType;
   }
 }
+
+const getWindowConfig = () => {
+  if (typeof window !== 'undefined') {
+    return {
+      API_KEY: window.API_KEY,
+      SERVER_URL: window.SERVER_URL,
+      SERVER_PROTOCOL: window.SERVER_PROTOCOL
+    };
+  } else {
+    return {
+      API_KEY: "",
+      SERVER_URL: DEFAULT_SERVER_URL,
+      SERVER_PROTOCOL: DEFAULT_SERVER_PROTOCOL
+    };
+  }
+};
+
+const windowConfig = getWindowConfig();
 
 type ProtocolType = 'grpc' | 'ws';
 
@@ -94,10 +114,10 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
 
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [socket, setSocket] = useState<ReconnectingWebSocket | null>(null);
-  const [serverUrl, setServerUrl] = useState<string>(window.SERVER_URL ?? DEFAULT_SERVER_URL);
+  const [serverUrl, setServerUrl] = useState<string>(windowConfig.SERVER_URL ?? DEFAULT_SERVER_URL);
   const [connectionStatus, setConnectionStatus] = useState<string>(ApiStatus.CLOSED);
   const [serverProtocol, setServerProtocol] = useState<ProtocolType>(
-    window.SERVER_PROTOCOL ?? DEFAULT_SERVER_PROTOCOL
+    windowConfig.SERVER_PROTOCOL ?? DEFAULT_SERVER_PROTOCOL
   );
   const [requestMetadata, setRequestMetadata] = useState<Metadata | undefined>(undefined);
 
@@ -207,14 +227,17 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
   // Update metadata based on api-key / login status
   useEffect(() => {
     const metadata = new Metadata();
-    if (window.API_KEY) metadata.set('api-key', window.API_KEY);
+    if (windowConfig.API_KEY) metadata.set('api-key', windowConfig.API_KEY);
     setRequestMetadata(metadata);
   }, []);
 
   // This is the function used to submit jobs to the server
   // ComfyUI terminology: 'queuePrompt'
   const runWorkflow = useCallback(
-    async (flow: SerializedFlow, workflow?: Record<string, WorkflowStep>): Promise<JobSnapshot | Error> => {
+    async (
+      flow: SerializedFlow,
+      workflow?: Record<string, WorkflowStep>
+    ): Promise<JobSnapshot | Error> => {
       if (serverProtocol === 'grpc' && comfyClient) {
         // Use gRPC server
         const request = {
@@ -253,7 +276,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
           return res;
         } catch (e) {
           console.log(e);
-          return e as Error
+          return e as Error;
         }
       } else {
         // Use REST server
@@ -285,7 +308,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
           };
         }
 
-        return await res.json() as JobSnapshot;
+        return (await res.json()) as JobSnapshot;
       }
     },
     [requestMetadata, serverUrl, serverProtocol, comfyClient, sessionId]
