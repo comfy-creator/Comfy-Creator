@@ -2,12 +2,13 @@ import * as fs from 'node:fs';
 import { extname, relative, resolve } from 'path';
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+// import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
-import { libInjectCss } from 'vite-plugin-lib-inject-css';
 import { glob } from 'glob';
+import reactRefresh from '@vitejs/plugin-react-refresh';
+import { libInjectCss } from 'vite-plugin-lib-inject-css';
 
-const { dependencies, peerDependencies } = JSON.parse(fs.readFileSync(`./package.json`, 'utf8'));
+const { peerDependencies } = JSON.parse(fs.readFileSync(`./package.json`, 'utf8'));
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -26,16 +27,19 @@ export default defineConfig({
         ...Object.keys(peerDependencies || {}),
         'react/jsx-runtime'
       ],
-      input: Object.fromEntries(
-        glob.sync('lib/**/*.{ts,tsx}').map((file) => [
-          // The name of the entry point
-          // lib/nested/foo.ts becomes nested/foo
-          relative('lib', file.slice(0, file.length - extname(file).length)),
-          // The absolute path to the entry file
-          // lib/nested/foo.ts becomes /project/lib/nested/foo.ts
-          fileURLToPath(new URL(file, import.meta.url))
-        ])
-      ),
+      input: {
+        ...Object.fromEntries(
+          glob.sync('lib/**/*.{ts,tsx}').map((file) => [
+            // The name of the entry point
+            // lib/nested/foo.ts becomes nested/foo
+            relative('lib', file.slice(0, file.length - extname(file).length)),
+            // The absolute path to the entry file
+            // lib/nested/foo.ts becomes /project/lib/nested/foo.ts
+            fileURLToPath(new URL(file, import.meta.url))
+          ])
+        ),
+        main: resolve(__dirname, 'index.html')
+      },
       output: {
         // Filenames outputted to dist
         assetFileNames: 'assets/[name][extname]',
@@ -43,5 +47,25 @@ export default defineConfig({
       }
     }
   },
-  plugins: [react(), libInjectCss(), dts({ include: ['lib/**/*.tsx', 'lib/**/*.ts'] })]
+
+  // resolve: {
+  //   alias: {
+  //     react: 'https://cdn.skypack.dev/react@17',
+  //     'react-dom': 'https://cdn.skypack.dev/react-dom@17'
+  //   }
+  // },
+
+  plugins: [
+    // react(),
+    reactRefresh(),
+    // vitePluginExternal({
+    //   nodeBuiltins: true,
+    //   externalizeDeps: Object.keys(peerDependencies)
+    // }),
+    // importToCDN({
+    //   modules: [autoComplete('react'), autoComplete('react-dom')]
+    // }),
+    libInjectCss(),
+    dts({ include: ['lib/**/*.tsx', 'lib/**/*.ts'] })
+  ]
 });
