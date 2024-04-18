@@ -2,7 +2,7 @@
 
 import {
   DragEvent,
-  MouseEvent as ReactMouseEvent,
+  type MouseEvent as ReactMouseEvent,
   TouchEvent,
   useCallback,
   useEffect
@@ -51,6 +51,8 @@ import { defaultThemeConfig } from '../lib/config/themes';
 import { colorSchemeSettings } from '../lib/settings';
 import { useApiContext } from '../contexts/api.tsx';
 import { useFlow } from '../lib/hooks/useFlow.tsx';
+import { computeInitialNodeState } from '../lib/utils/node.ts';
+import ImageFeedDrawer from './Drawer/ImageFeedDrawer.tsx';
 
 const selector = (state: RFState) => ({
   panOnDrag: state.panOnDrag,
@@ -155,7 +157,7 @@ export function MainFlow() {
     registerEdgeType(HANDLE_TYPES);
   }, []);
 
-  // save to localStorage as nodes, edges and viewport changes
+  // save to ComfyLocalStorage as nodes, edges and viewport changes
   useEffect(() => {
     if (nodes.length > 0 || edges.length > 0) {
       const flow = {
@@ -165,7 +167,6 @@ export function MainFlow() {
       };
 
       saveFlow(flow);
-      console.log('Flow saved to local storage');
     }
   }, [nodes, edges, viewport]);
 
@@ -173,8 +174,7 @@ export function MainFlow() {
   // so we can auto-spawn a compatible node for that edge
   const onConnectEnd = useCallback(
     // ReactMouseEvent | TouchEvent instead ?
-    (event: MouseEvent | globalThis.TouchEvent) => {
-      console.log(event);
+    (event: Event) => {
       if (event.target && event.target.className !== 'flow_input') {
         // TODO: this logic may be wrong here? We're mixing react-events with native-events!
         onContextMenu(event);
@@ -400,6 +400,7 @@ export function MainFlow() {
         <NodeToolbar />
         <Panel position="top-right">
           <ControlPanel />
+          <ImageFeedDrawer />
         </Panel>
       </ReactHotkeys>
     </ReactFlow>

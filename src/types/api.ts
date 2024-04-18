@@ -8,6 +8,18 @@ export type ComfyItemURLType = 'queue' | 'history' | 'interrupt';
 
 export type storeUserDataOptions = RequestInit & { stringify?: boolean; throwOnError?: boolean };
 
+export interface IPagination {
+  page: number;
+  page_size: number;
+}
+
+export interface IGetOutputImagesResponse {
+  page: number;
+  page_size: number;
+  total_pages: number;
+  files: string[];
+}
+
 export interface UploadFileResponse {
   name: string;
   type: string;

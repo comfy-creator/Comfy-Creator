@@ -302,6 +302,6 @@ export class YjsProvider extends EventTarget {
 // An internal Client-id will also be generated; this is used for the awareness protocol.
 // const doc = new Y.Doc({ guid: graphId });
 
-// const firebaseAuthToken = localStorage.getItem('firebaseAuthToken');
+// const firebaseAuthToken = ComfyLocalStorage.getItem('firebaseAuthToken');
 
 // const provider = new YjsProvider('ws://localhost:1234/', firebaseAuthToken, doc);

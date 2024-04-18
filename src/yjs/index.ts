@@ -2,19 +2,20 @@ import * as Y from 'yjs';
 import { YjsProvider } from './client';
 import { NodeState } from '../lib/types.ts';
 import type { Edge, Node } from 'reactflow';
+import { ComfyLocalStorage } from '../lib/localStorage.ts';
 
 // TO DO: load this from .env
 const CONNECT_URL = 'http://localhost:8000';
 
 // TODO: fetch a local graphId from local storage, if it exists
-let graphId = localStorage.getItem('graphId');
+let graphId = ComfyLocalStorage.getItem('graphId');
 if (!graphId) {
   graphId = crypto.randomUUID();
-  localStorage.setItem('graphId', graphId);
+  ComfyLocalStorage.setItem('graphId', graphId);
 }
 
 console.log({ graphId });
-const firebaseAuthToken = localStorage.getItem('firebaseAuthToken');
+const firebaseAuthToken = ComfyLocalStorage.getItem('firebaseAuthToken');
 
 // If a pre-existing graphId does not exist, this will remain a new (empty) document,
 // otherwise the server may be able to load an existing document from a Pulsar topic.

@@ -14,6 +14,8 @@ import {
   EmbeddingsResponse,
   HistoryResponse,
   IComfyApi,
+  IGetOutputImagesResponse,
+  IPagination,
   QueueResponse,
   SettingsResponse,
   storeUserDataOptions,
@@ -25,6 +27,7 @@ import { API_URL, DEFAULT_SERVER_PROTOCOL, DEFAULT_SERVER_URL } from '../lib/con
 import { toWsURL } from '../lib/utils';
 import { ComfyWsMessage, SerializedFlow, ViewFileArgs } from '../lib/types.ts';
 import { ApiEventEmitter } from '../lib/apiEvent.ts';
+import { ComfyLocalStorage } from '../lib/localStorage.ts';
 
 // This is injected into index.html by `start.py`
 declare global {
@@ -34,6 +37,22 @@ declare global {
     SERVER_PROTOCOL: ProtocolType;
   }
 }
+
+const getWindowConfig = (token?: string) => {
+  if (typeof window !== 'undefined') {
+    return {
+      API_KEY: token || window.API_KEY || '', // using token passed to comfyCreator wrapper before window apiKey
+      SERVER_URL: window.SERVER_URL,
+      SERVER_PROTOCOL: window.SERVER_PROTOCOL
+    };
+  } else {
+    return {
+      API_KEY: token || '',
+      SERVER_URL: DEFAULT_SERVER_URL,
+      SERVER_PROTOCOL: DEFAULT_SERVER_PROTOCOL
+    };
+  }
+};
 
 type ProtocolType = 'grpc' | 'ws';
 
@@ -46,8 +65,9 @@ interface IApiContext extends IComfyApi {
   runWorkflow: (
     serializedGraph: SerializedFlow,
     workflow?: Record<string, WorkflowStep>
-  ) => Promise<JobSnapshot>;
+  ) => Promise<JobSnapshot | Error>;
   makeServerURL: (route: string) => string;
+  getOutputImages: (pagination: IPagination) => Promise<IGetOutputImagesResponse>;
 }
 
 enum ApiStatus {
@@ -87,15 +107,21 @@ const pollingFallback = () => {
   return () => clearInterval(intervalId);
 };
 
-export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const ApiContextProvider: React.FC<{ token?: string; children: ReactNode }> = ({
+  token,
+  children
+}) => {
   // TO DO: add possible auth in here as well?
 
+  // comfy window
+  const windowConfig = getWindowConfig(token);
+  
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [socket, setSocket] = useState<ReconnectingWebSocket | null>(null);
-  const [serverUrl, setServerUrl] = useState<string>(window.SERVER_URL ?? DEFAULT_SERVER_URL);
+  const [serverUrl, setServerUrl] = useState<string>(windowConfig.SERVER_URL ?? DEFAULT_SERVER_URL);
   const [connectionStatus, setConnectionStatus] = useState<string>(ApiStatus.CLOSED);
   const [serverProtocol, setServerProtocol] = useState<ProtocolType>(
-    window.SERVER_PROTOCOL ?? DEFAULT_SERVER_PROTOCOL
+    windowConfig.SERVER_PROTOCOL ?? DEFAULT_SERVER_PROTOCOL
   );
   const [requestMetadata, setRequestMetadata] = useState<Metadata | undefined>(undefined);
 
@@ -205,14 +231,17 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
   // Update metadata based on api-key / login status
   useEffect(() => {
     const metadata = new Metadata();
-    if (window.API_KEY) metadata.set('api-key', window.API_KEY);
+    if (windowConfig.API_KEY) metadata.set('api-key', windowConfig.API_KEY);
     setRequestMetadata(metadata);
   }, []);
 
   // This is the function used to submit jobs to the server
   // ComfyUI terminology: 'queuePrompt'
   const runWorkflow = useCallback(
-    async (flow: SerializedFlow, workflow?: Record<string, WorkflowStep>): Promise<JobSnapshot> => {
+    async (
+      flow: SerializedFlow,
+      workflow?: Record<string, WorkflowStep>
+    ): Promise<JobSnapshot | Error> => {
       if (serverProtocol === 'grpc' && comfyClient) {
         // Use gRPC server
         const request = {
@@ -222,7 +251,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
           worker_wait_duration: undefined,
           request_id: crypto.randomUUID(),
           output_config: {
-            write_to_graph_id: localStorage.getItem('graphId') ?? undefined
+            write_to_graph_id: ComfyLocalStorage.getItem('graphId') ?? undefined
           }
         };
 
@@ -251,6 +280,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
           return res;
         } catch (e) {
           console.log(e);
+          return e as Error;
         }
       } else {
         // Use REST server
@@ -282,7 +312,7 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
           };
         }
 
-        return await res.json();
+        return (await res.json()) as JobSnapshot;
       }
     },
     [requestMetadata, serverUrl, serverProtocol, comfyClient, sessionId]
@@ -320,6 +350,15 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
    */
   const getEmbeddings = async (): Promise<EmbeddingsResponse> => {
     const resp = await fetchApi(API_URL.GET_EMBEDDINGS, { cache: 'no-store' });
+    return await resp.json();
+  };
+
+  /**
+   * Loads output image(s) from output folder (for local server)
+   * @returns The output image(s)
+   */
+  const getOutputImages = async (pagination: IPagination): Promise<IGetOutputImagesResponse> => {
+    const resp = await fetchApi(API_URL.GET_OUTPUT_IMAGE(pagination));
     return await resp.json();
   };
 
@@ -581,7 +620,8 @@ export const ApiContextProvider: React.FC<{ children: ReactNode }> = ({ children
         storeSetting,
         getUserData,
         storeUserData,
-        viewFile
+        viewFile,
+        getOutputImages
       }}
     >
       {children}

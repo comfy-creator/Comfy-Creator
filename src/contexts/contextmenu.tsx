@@ -19,7 +19,7 @@ import { getNodeMenuItems } from '../lib/menu.ts';
 
 interface IContextMenu {
   onNodeContextMenu: (event: ReactMouseEvent, node: Node) => void;
-  onContextMenu: (event: ReactMouseEvent) => void;
+  onContextMenu: (event: ReactMouseEvent | MouseEvent | Event) => void;
   menuRef: RefObject<HTMLDivElement>;
   onPaneClick: () => void;
 }
@@ -94,9 +94,9 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
   }, []);
 
   const onContextMenu = useCallback(
-    (event: ReactMouseEvent) => {
+    (event: ReactMouseEvent | MouseEvent | Event) => {
       event.preventDefault();
-      const menuData = getMenuData(event, categorizeObjects(NodeDefs));
+      const menuData = getMenuData(event as ReactMouseEvent, categorizeObjects(NodeDefs));
       if (!menuData) return;
 
       console.log('from pane context menu');

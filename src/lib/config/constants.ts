@@ -1,5 +1,6 @@
 import { EdgeType, InputDef, ViewFileArgs } from '../types.ts';
 import { useFlowStore } from '../../store/flow.ts';
+import { IPagination } from '../../types/api.ts';
 
 export const SUPPORTED_IMAGE_TYPES = [
   'image/png',
@@ -169,5 +170,6 @@ export const API_URL = {
   VIEW_FILE: ({ filename, subfolder = '', type }: ViewFileArgs) =>
     `/view?filename=${filename}&subfolder=${subfolder}&type=${type}`,
   GET_USER_DATA_FILE: (file: string) => `/userdata/${encodeURIComponent(file)}`,
-  STORE_USER_DATA_FILE: (file: string) => `/userdata/${encodeURIComponent(file)}`
+  STORE_USER_DATA_FILE: (file: string) => `/userdata/${encodeURIComponent(file)}`,
+  GET_OUTPUT_IMAGE: (pagination: IPagination) => `/view_all?page=${pagination.page}&page_size=${pagination.page_size}`,
 };

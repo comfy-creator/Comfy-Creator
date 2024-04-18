@@ -13,7 +13,7 @@ const LoadDefaultButton = () => {
 
   // const loadFlow = () => {
   //   const flow: ReactFlowJsonObject<NodeState> = JSON.parse(
-  //     localStorage.getItem(FLOW_KEY) as string
+  //     ComfyLocalStorage.getItem(FLOW_KEY) as string
   //   );
   //
   //   if (flow) {
@@ -33,12 +33,17 @@ const LoadDefaultButton = () => {
         if (!node.type) return node;
 
         const { config, widgets } = node.data;
-        const values: Record<string, string> = {};
+        const values: Record<
+          string,
+          string | number | boolean | Record<string, string> | undefined
+        > = {};
 
         for (const name in widgets) {
           const widget = widgets[name];
           values[name] = widget.value;
         }
+
+        console.log('Node type>', node.type, nodeDefs);
 
         const def = nodeDefs[node.type];
         const state = computeInitialNodeState(def, values, { ...config });

@@ -1,6 +1,7 @@
 import { RefObject, useEffect, useState } from 'react';
 import { IMenuType } from '../types.ts';
 import { useFlowStore } from '../../store/flow.ts';
+import { ComfyLocalStorage } from '../localStorage.ts';
 
 type RawInput = {
   text: string;
@@ -130,7 +131,7 @@ export function dragElement(dragEl: HTMLDivElement, addSetting: any) {
     dragEl.style.bottom = 'unset';
 
     if (savePos) {
-      localStorage.setItem(
+      ComfyLocalStorage.setItem(
         'Comfy.MenuPosition',
         JSON.stringify({
           x: dragEl.offsetLeft,
@@ -141,7 +142,7 @@ export function dragElement(dragEl: HTMLDivElement, addSetting: any) {
   }
 
   function restorePos() {
-    const pos = localStorage.getItem('Comfy.MenuPosition');
+    const pos = ComfyLocalStorage.getItem('Comfy.MenuPosition');
     if (pos) {
       const newPos = JSON.parse(pos);
       newPosX = newPos.x;
@@ -166,7 +167,7 @@ export function dragElement(dragEl: HTMLDivElement, addSetting: any) {
   });
 
   function dragMouseDown(e: MouseEvent) {
-    e = e || window.event;
+    e = e || (typeof window !== 'undefined' && window?.event);
     e.preventDefault();
     // get the mouse cursor position at startup:
     posStartX = e.clientX;
@@ -177,7 +178,7 @@ export function dragElement(dragEl: HTMLDivElement, addSetting: any) {
   }
 
   function elementDrag(e: MouseEvent) {
-    e = e || window.event;
+    e = e || (typeof window !== 'undefined' && window?.event);
     e.preventDefault();
 
     dragEl.classList.add('comfy-menu-manual-pos');
@@ -200,7 +201,7 @@ export function dragElement(dragEl: HTMLDivElement, addSetting: any) {
     positionElement();
   }
 
-  window.addEventListener('resize', () => {
+  addEventListener('resize', () => {
     ensureInBounds();
   });
 

@@ -13,7 +13,11 @@ import { DialogContextProvider } from './contexts/dialog';
 import { ErrorProvider } from './contexts/error';
 import { LoggingContextProvider } from './contexts/logging';
 
-function App() {
+interface IProps {
+  token: string;
+}
+
+function App(props?: IProps) {
   return (
     <ReactFlowProvider>
       <DialogContextProvider>
@@ -32,7 +36,7 @@ function App() {
           />
 
           <ContextMenuProvider>
-            <ApiContextProvider>
+            <ApiContextProvider token={props?.token}>
               <SettingsContextProvider>
                 <LoggingContextProvider>
                   <MainFlow />
