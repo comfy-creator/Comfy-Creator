@@ -36,7 +36,7 @@ export function dropHandler({ rfInstance, setNodes, setEdges, addNode }: DropHan
           addNode({
             position,
             type: 'PreviewImage',
-            inputWidgetValues: { image: imageData }
+            defaultValues: { image: imageData }
           });
 
           break;
@@ -45,7 +45,7 @@ export function dropHandler({ rfInstance, setNodes, setEdges, addNode }: DropHan
           addNode({
             position,
             type: 'PreviewVideo',
-            inputWidgetValues: {
+            defaultValues: {
               video: {
                 src: videoData,
                 type: file.type

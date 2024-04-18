@@ -1,9 +1,9 @@
 import { Node, ReactFlowJsonObject, useReactFlow, Viewport } from 'reactflow';
-import { NodeState } from '../types.ts';
+import { NodeData } from '../types.ts';
 import { FLOW_KEY } from '../config/constants.ts';
 import { RFState, useFlowStore } from '../../store/flow.ts';
 import { useLogging } from '../../contexts/logging.tsx';
-import { computeInitialNodeState } from '../utils/node.ts';
+import { computeInitialNodeData, isWidgetInput } from '../utils/node.ts';
 
 const selector = (state: RFState) => ({
   nodeDefs: state.nodeDefs,
@@ -14,52 +14,47 @@ const selector = (state: RFState) => ({
 
 export function useGraph() {
   const { instance, nodeDefs, setNodes, setEdges } = useFlowStore(selector);
-  const { setViewport } = useReactFlow<NodeState, string>();
+  const { setViewport } = useReactFlow<NodeData, string>();
 
   const { log } = useLogging();
 
-  const recomputeNodes = (nodes: Node<NodeState>[]) => {
+  const recomputeNodes = (nodes: Node<NodeData>[]) => {
     return nodes.map((node) => {
       if (!node.type) return node;
 
       const def = nodeDefs[node.type];
-      const { config, widgets } = node.data;
+      const { inputs } = node.data;
       const values: Record<string, any> = {};
 
       if (!def) return node;
+
+      const widgets = inputs.filter((input) => isWidgetInput(input.type));
 
       for (const name in widgets) {
         const widget = widgets[name];
         if (!('value' in widget)) continue;
 
-        let value = widget.value;
-        if (typeof value == 'object' && 'src' in value) {
-          values[name] = value.src;
-        } else {
-          values[name] = value;
-        }
+        values[name] = widget.value;
       }
 
       return {
         ...node,
         data: {
           ...node.data,
-          ...computeInitialNodeState(def, values, {
-            ...config
-          })
+          ...computeInitialNodeData(def, values)
         }
       };
     });
   };
 
   const loadSerializedGraph = (
-    flow?: Omit<ReactFlowJsonObject<NodeState>, 'viewport'> & { viewport?: Viewport }
+    flow?: Omit<ReactFlowJsonObject<NodeData>, 'viewport'> & { viewport?: Viewport }
   ) => {
     try {
       if (!flow) {
         flow = JSON.parse(
           localStorage.getItem(FLOW_KEY) as string
-        ) as ReactFlowJsonObject<NodeState>;
+        ) as ReactFlowJsonObject<NodeData>;
       }
 
       if (!flow.nodes?.length) throw new Error('No nodes found in flow');

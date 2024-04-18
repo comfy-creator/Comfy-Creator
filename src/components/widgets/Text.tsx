@@ -4,7 +4,7 @@ import { RFState, useFlowStore } from '../../store/flow.ts';
 type TextProps = {
   label: string;
   disabled?: boolean;
-  value: string;
+  value?: string;
   onChange?: (value: string) => void;
 };
 

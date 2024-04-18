@@ -31,7 +31,7 @@ export const PreviewVideo: NodeDefinition = {
 export const PrimitiveNode: NodeDefinition = {
   inputs: [],
   category: 'utils',
-  output_node: true,
+  output_node: false,
   display_name: 'Primitive',
   description: 'Primitive Node',
   outputs: [{ type: '*', name: 'connect widget to input' }]

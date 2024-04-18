@@ -61,11 +61,7 @@ export const DEFAULT_HOTKEYS_HANDLERS = {
     const { addNode } = useFlowStore.getState();
     addNode({
       position: { x: 200, y: 200 },
-      type: 'RerouteNode',
-      config: {
-        hideType: true,
-        hideLabel: true
-      }
+      type: 'RerouteNode'
     });
   },
   'ctrl+del': () => {
@@ -111,9 +107,9 @@ export const WIDGET_TYPES: EdgeType[] = [
   'STRING',
   'BOOLEAN',
   'FLOAT',
-  'ENUM',
+  'ENUM'
   // 'IMAGE',
-  'VIDEO'
+  // 'VIDEO'
 ];
 
 export const HANDLE_TYPES: EdgeType[] = [

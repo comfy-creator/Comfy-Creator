@@ -27,7 +27,7 @@ import ReactFlow, {
 import { useContextMenu } from '../contexts/contextmenu';
 import ControlPanel from './panels/ControlPanel';
 import { RFState, useFlowStore } from '../store/flow';
-import { NodeState } from '../lib/types';
+import { NodeData } from '../lib/types';
 import { RerouteNode } from '../lib/nodedefs';
 import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../lib/handlers/dragDrop';
@@ -60,7 +60,7 @@ const selector = (state: RFState) => ({
   loadNodeDefsFromApi: state.loadNodeDefsFromApi,
   nodeDefs: state.nodeDefs,
   addNode: state.addNode,
-  updateWidgetState: state.updateWidgetState,
+  updateInputData: state.updateInputData,
   hotKeysShortcut: state.hotKeysShortcut,
   hotKeysHandlers: state.hotKeysHandlers,
   addHotKeysShortcut: state.addHotKeysShortcut,
@@ -95,10 +95,10 @@ export function MainFlow() {
     instance,
     setInstance,
     execution,
-    updateWidgetState
+    updateInputData
   } = useFlowStore(selector);
 
-  const { getNodes, getEdges, getViewport, fitView } = useReactFlow<NodeState, string>();
+  const { getNodes, getEdges, getViewport, fitView } = useReactFlow<NodeData, string>();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
   const { loadCurrentSettings, addSetting } = useSettings();
   const { getNodeDefs, makeServerURL } = useApiContext();
@@ -118,7 +118,7 @@ export function MainFlow() {
     const { images } = execution.output;
 
     const fileView = API_URL.VIEW_FILE({ ...images?.[0] });
-    updateWidgetState({
+    updateInputData({
       name: 'image',
       nodeId: node.id,
       data: { value: makeServerURL(fileView) }
@@ -164,8 +164,9 @@ export function MainFlow() {
       // onContextMenu(event);
       // }
 
+      const { nodes } = useFlowStore.getState();
       const newNodes = nodes.map((node) => {
-        const outputs = Object.entries(node.data.outputs).map(([_, output]) => ({
+        const outputs = node.data.outputs.map((output) => ({
           ...output,
           isHighlighted: false
         }));
@@ -180,9 +181,10 @@ export function MainFlow() {
           data: { ...node.data, outputs, inputs }
         };
       });
-      // setNodes(newNodes);
+
+      setNodes(newNodes);
     },
-    [nodes, setNodes, onContextMenu]
+    [nodes]
   );
 
   const onConnectStart: OnConnectStart = useCallback(
@@ -299,7 +301,7 @@ export function MainFlow() {
     (_: MouseEvent | globalThis.TouchEvent) => {
       const bounds = getNodesBounds(nodes);
       const viewPort = getViewport();
-      //
+
       const boundViewPort = getViewportForBounds(
         bounds,
         menuRef.current?.clientWidth || 1200,
@@ -307,7 +309,7 @@ export function MainFlow() {
         0.7,
         viewPort.zoom
       );
-      //
+
       if (
         viewPort.x > (menuRef.current?.clientWidth || 0) ||
         viewPort.y > (menuRef.current?.clientHeight || 0)

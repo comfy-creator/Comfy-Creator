@@ -18,17 +18,19 @@ import {
   AddNodeParams,
   EdgeComponents,
   EdgeType,
+  InputData,
   KeyboardHandler,
+  NodeData,
   NodeDefinitions,
-  NodeState,
   NodeTypes as NodeComponents,
-  UpdateWidgetState,
-  UpdateWidgetStateParams,
-  WidgetState
+  UpdateInputData,
+  UpdateInputDataParams
 } from '../lib/types';
 import {
   addWidgetToPrimitiveNode,
-  computeInitialNodeState,
+  computeInitialNodeData,
+  disconnectPrimitiveNode,
+  isPrimitiveNode,
   isWidgetHandleId
 } from '../lib/utils/node';
 import { createNodeComponentFromDef } from '../components/prototypes/NodeTemplate';
@@ -49,7 +51,7 @@ import {
 } from '../lib/nodedefs.ts';
 import { ComfyObjectInfo } from '../types/comfy.ts';
 
-const nodesMap = yjsProvider.doc.getMap<Node<NodeState>>('nodes');
+const nodesMap = yjsProvider.doc.getMap<Node<NodeData>>('nodes');
 const edgesMap = yjsProvider.doc.getMap<Edge>('edges');
 const awareness = yjsProvider.awareness; // TO DO: use for cusor location
 
@@ -71,9 +73,9 @@ export type RFState = {
   panOnDrag: boolean;
   setPanOnDrag: (panOnDrag: boolean) => void;
 
-  nodes: Node<NodeState>[];
+  nodes: Node<NodeData>[];
   edges: Edge[];
-  setNodes: (nodes: React.SetStateAction<Node<NodeState>[]>) => void;
+  setNodes: (nodes: React.SetStateAction<Node<NodeData>[]>) => void;
   setEdges: (edges: React.SetStateAction<Edge[]>) => void;
 
   onNodesChange: OnNodesChange;
@@ -90,8 +92,8 @@ export type RFState = {
   removeNode: (nodeId: string) => void;
   addRawNode: (node: Node) => void;
 
-  updateNodeState: (nodeId: string, newState: Partial<NodeState>) => void;
-  updateWidgetState: UpdateWidgetState;
+  updateNodeData: (nodeId: string, newState: Partial<NodeData>) => void;
+  updateInputData: UpdateInputData;
 
   hotKeysShortcut: string[];
   addHotKeysShortcut: (keys: string[]) => void;
@@ -108,11 +110,11 @@ export type RFState = {
   destroy: () => void;
 
   nodeCallbacks: {
-    [key in NodeCallbackType]?: (node: Node<NodeState>, ...v: any[]) => any;
+    [key in NodeCallbackType]?: (node: Node<NodeData>, ...v: any[]) => any;
   };
   registerNodeCallback: (
     type: NodeCallbackType,
-    value: (node: Node<NodeState>, ...v: any[]) => any
+    value: (node: Node<NodeData>, ...v: any[]) => any
   ) => void;
 
   setInstance: (instance: ReactFlowInstance) => void;
@@ -200,6 +202,7 @@ export const useFlowStore = create<RFState>((set, get) => {
       const nextNodes = applyNodeChanges(changes, nodes);
 
       for (const change of changes) {
+        console.log(change);
         if (change.type === 'add' || change.type === 'reset') {
           nodesMap.set(change.item.id, change.item);
         } else if (change.type === 'remove' && nodesMap.has(change.id)) {
@@ -252,11 +255,16 @@ export const useFlowStore = create<RFState>((set, get) => {
 
       if (isWidgetHandleId(targetHandle ?? '')) {
         if (source.type == 'PrimitiveNode') {
+          if (!targetNodeId) return;
+
           const widgetData = { nodeId: targetNodeId, widgetName: targetHandleType };
-          const result = addWidgetToPrimitiveNode(source.id, get().updateNodeState, widgetData);
+          const result = addWidgetToPrimitiveNode(source.id, get().updateNodeData, widgetData);
 
           if (result) {
-            newConn = { ...connection, type: result.type };
+            newConn = {
+              ...connection,
+              type: result.type
+            };
           }
         }
       } else {
@@ -281,11 +289,11 @@ export const useFlowStore = create<RFState>((set, get) => {
 
     // This will overwrite old node-definitions of the same name
     addNodeDefs: (defs: NodeDefinitions) => {
-      const { updateWidgetState } = get();
+      const { updateInputData } = get();
 
       set((state) => {
         const components = Object.entries(defs).reduce((components, [type, def]) => {
-          components[type] = createNodeComponentFromDef(def, updateWidgetState);
+          components[type] = createNodeComponentFromDef(def, updateInputData);
           return components;
         }, {} as NodeComponents);
 
@@ -316,21 +324,27 @@ export const useFlowStore = create<RFState>((set, get) => {
       });
     },
 
-    addNode: ({ config = {}, type, position, inputWidgetValues = {} }: AddNodeParams) => {
+    addNode: ({ type, position, defaultValues = {} }: AddNodeParams) => {
       const def = get().nodeDefs[type];
       if (!def) {
         throw new Error(`Node type ${type} does not exist`);
       }
 
       const id = crypto.randomUUID();
-      const data = computeInitialNodeState(def, inputWidgetValues, config);
-      const newNode: Node<NodeState> = { id, type, position, data };
-
+      const data = computeInitialNodeData(def, defaultValues);
+      const newNode: Node<NodeData> = { id, type, position, data };
       nodesMap.set(id, newNode);
     },
 
-    addRawNode: (node: Node<NodeState>) => nodesMap.set(node.id, node),
+    addRawNode: (node: Node<NodeData>) => nodesMap.set(node.id, node),
     removeNode: (nodeId: string) => {
+      const node = nodesMap.get(nodeId);
+      if (!node) return;
+
+      if (isPrimitiveNode(node)) {
+        disconnectPrimitiveNode(node.id);
+      }
+
       nodesMap.delete(nodeId);
       const edges = edgesMap.values();
       for (const edge of edges) {
@@ -340,7 +354,7 @@ export const useFlowStore = create<RFState>((set, get) => {
       }
     },
 
-    updateNodeState: (nodeId: string, newState: Partial<NodeState>) => {
+    updateNodeData: (nodeId: string, newState: Partial<NodeData>) => {
       const node = nodesMap.get(nodeId);
       if (!node) return;
 
@@ -364,34 +378,28 @@ export const useFlowStore = create<RFState>((set, get) => {
       });
     },
 
-    updateWidgetState: ({ nodeId, name, data }: UpdateWidgetStateParams) => {
+    updateInputData: ({ nodeId, name, data }: UpdateInputDataParams) => {
       const node = nodesMap.get(nodeId);
       if (!node) {
         console.error(`Node ${nodeId} not found`);
         return;
       }
 
-      const widget = node.data.widgets[name];
-      if (!widget) {
-        console.error(`Widget '${name}' not found in node '${nodeId}'.`);
+      const inputs = [...node.data.inputs];
+      const index = inputs.findIndex((input) => input.name === name);
+      if (index === -1) {
+        console.error(`Input '${name}' not found in node '${nodeId}'.`);
         return;
       }
 
-      // Update the widgets, but keep the widget type the same
-      const updatedWidgets = {
-        ...node.data.widgets,
-        [name]: {
-          ...widget,
-          ...(data as WidgetState),
-          type: widget.type
-        }
-      } as Record<string, WidgetState>;
+      const { type, ...input } = inputs[index];
+      inputs[index] = { ...input, ...data, type } as InputData;
 
       nodesMap.set(nodeId, {
         ...node,
         data: {
           ...node.data,
-          widgets: updatedWidgets
+          inputs
         }
       });
     },

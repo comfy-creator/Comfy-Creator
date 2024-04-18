@@ -197,10 +197,8 @@
 
 .widget_container {
     width: 100%;
-    display: flex;
     font-size: 0.5em;
     margin-bottom: 3px;
-    align-items: center;
     font-weight: normal;
 }
 

@@ -3,13 +3,13 @@ import { InputDialog } from '../dialogs/InputDialog.tsx';
 import { WidgetBackwardIcon, WidgetForwardIcon } from '../icons/WidgetDirectionIcon.tsx';
 
 type NumberWidgetProps = {
-  value: number;
+  value?: number;
   label: string;
   disabled?: boolean;
   onChange?: (value: number) => void;
 };
 
-export const NumberWidget: FC<NumberWidgetProps> = ({ label, value, onChange }) => {
+export const NumberWidget: FC<NumberWidgetProps> = ({ label, value = 0, onChange }) => {
   const [inputValue, setInputValue] = useState(value);
   const [showDialog, setShowDialog] = useState(false);
 
@@ -45,9 +45,6 @@ export const NumberWidget: FC<NumberWidgetProps> = ({ label, value, onChange }) 
       <div className={'widget_input'}>
         <div className={'widget_input_item'}>
           <WidgetBackwardIcon onClick={handleClickBackward} />
-          <span className={'widget_input_item_text'} onClick={handleShowDialog}>
-            {label}
-          </span>
         </div>
 
         <div className={'widget_input_item'}>
