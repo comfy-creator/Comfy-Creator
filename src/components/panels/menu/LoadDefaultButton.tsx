@@ -1,5 +1,5 @@
 import { RFState, useFlowStore } from '../../../store/flow';
-import { defaultEdges, defaultNodes } from '../../../default-flow';
+import { defaultEdges, defaultNodes } from '../../../default-graph';
 import { computeInitialNodeState } from '../../../lib/utils/node.ts';
 
 const selector = (state: RFState) => ({

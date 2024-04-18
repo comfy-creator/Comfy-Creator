@@ -1,11 +1,11 @@
 import { Node, ReactFlowJsonObject, useReactFlow } from 'reactflow';
-import { NodeState } from '../types.ts';
-import { FLOW_KEY } from '../config/constants.ts';
-import { defaultEdges, defaultNodes } from '../../default-flow.ts';
-import { RFState, useFlowStore } from '../../store/flow.ts';
+import { NodeState } from '../types';
+import { FLOW_KEY } from '../config/constants';
+import { defaultEdges, defaultNodes } from '../../default-graph';
+import { RFState, useFlowStore } from '../../store/flow';
 import { useLogging } from '../../contexts/logging.tsx';
-import { computeInitialNodeState } from '../utils/node.ts';
-import { ComfyLocalStorage } from '../localStorage.ts';
+import { computeInitialNodeState } from '../utils/node';
+import { ComfyLocalStorage } from '../localStorage';
 
 const selector = (state: RFState) => ({
   nodeDefs: state.nodeDefs,
@@ -35,7 +35,7 @@ export function useFlow() {
         const widget = widgets[name];
         if (!('value' in widget)) continue;
 
-        let value = widget.value;
+        const value = widget.value;
         if (typeof value == 'object' && 'src' in value) {
           values[name] = value.src;
         } else {
@@ -61,7 +61,7 @@ export function useFlow() {
         flow = JSON.parse(
           ComfyLocalStorage.getItem(FLOW_KEY) as string
         ) as ReactFlowJsonObject<NodeState>;
-        console.log("In No flow??", flow)
+        console.log('In No flow??', flow);
       }
 
       const { x = 0, y = 0, zoom = 1 } = flow.viewport;
