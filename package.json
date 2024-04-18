@@ -1,14 +1,13 @@
 {
-  "name": "comfy-creator",
-  "version": "0.1.13",
+  "name": "@comfy-creator/graph-editor",
+  "version": "0.2.1",
   "type": "module",
   "private": false,
   "scripts": {
     "dev": "vite",
     "build": "tsc --p tsconfig-build.json && vite build",
     "prepublishOnly": "yarn run build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview"
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "main": "dist/main.js",
   "types": "dist/main.d.ts",

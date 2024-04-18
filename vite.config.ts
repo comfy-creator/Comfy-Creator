@@ -11,17 +11,6 @@ const { dependencies, peerDependencies } = JSON.parse(fs.readFileSync(`./package
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-    react(),
-    libInjectCss(),
-    dts({
-      rollupTypes: true,
-      include: ['lib']
-      // afterBuild: () => {
-      //   fs.copyFileSync('dist/index.d.ts', 'dist/index.d.cts');
-      // }
-    })
-  ],
   build: {
     target: 'es2017',
     lib: {
@@ -53,5 +42,6 @@ export default defineConfig({
         entryFileNames: '[name].js'
       }
     }
-  }
+  },
+  plugins: [react(), libInjectCss(), dts({ include: ['lib/**/*.tsx', 'lib/**/*.ts'] })]
 });
