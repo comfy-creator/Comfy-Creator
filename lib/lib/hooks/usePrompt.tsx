@@ -1,8 +1,8 @@
 import { useFlowStore } from '../../store/flow';
 import { ReactFlowJsonObject } from 'reactflow';
 import { NodeState, SerializedFlow } from '../types';
-import { useApiContext } from '../../contexts/api.tsx';
-import { applyWidgetControl } from '../utils/widgets.ts';
+import { useApiContext } from '../../contexts/api';
+import { applyWidgetControl } from '../utils/widgets';
 
 export function usePrompt() {
   const { instance, updateWidgetState } = useFlowStore();

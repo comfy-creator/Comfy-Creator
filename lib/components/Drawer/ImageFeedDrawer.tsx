@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Drawer } from './Drawer';
-import { useApiContext } from '../../contexts/api.tsx';
+import { useApiContext } from '../../contexts/api';
 
 const ImageFeedDrawer: React.FC = () => {
   const { getOutputImages, makeServerURL } = useApiContext();

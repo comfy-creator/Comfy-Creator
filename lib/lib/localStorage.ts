@@ -14,4 +14,4 @@ const Cache = {
     setItem
 }
 
-export const ComfyLocalStorage = typeof window === 'undefined' ? Cache : window?.localStorage;
+export const ComfyLocalStorage = Cache;

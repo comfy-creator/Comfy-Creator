@@ -23,36 +23,11 @@ import {
   UserConfigResponse
 } from '../types/api';
 import { ComfyObjectInfo } from '../types/comfy';
-import { API_URL, DEFAULT_SERVER_PROTOCOL, DEFAULT_SERVER_URL } from '../lib/config/constants.ts';
+import { API_URL, DEFAULT_SERVER_PROTOCOL, DEFAULT_SERVER_URL } from '../lib/config/constants';
 import { toWsURL } from '../lib/utils';
-import { ComfyWsMessage, SerializedFlow, ViewFileArgs } from '../lib/types.ts';
-import { ApiEventEmitter } from '../lib/apiEvent.ts';
-import { ComfyLocalStorage } from '../lib/localStorage.ts';
-
-// This is injected into index.html by `start.py`
-declare global {
-  interface Window {
-    API_KEY?: string;
-    SERVER_URL: string;
-    SERVER_PROTOCOL: ProtocolType;
-  }
-}
-
-const getWindowConfig = (token?: string) => {
-  if (typeof window !== 'undefined') {
-    return {
-      API_KEY: token || window.API_KEY || '', // using token passed to comfyCreator wrapper before window apiKey
-      SERVER_URL: window.SERVER_URL,
-      SERVER_PROTOCOL: window.SERVER_PROTOCOL
-    };
-  } else {
-    return {
-      API_KEY: token || '',
-      SERVER_URL: DEFAULT_SERVER_URL,
-      SERVER_PROTOCOL: DEFAULT_SERVER_PROTOCOL
-    };
-  }
-};
+import { ComfyWsMessage, SerializedFlow, ViewFileArgs } from '../lib/types';
+import { ApiEventEmitter } from '../lib/apiEvent';
+import { ComfyLocalStorage } from '../lib/localStorage';
 
 type ProtocolType = 'grpc' | 'ws';
 
@@ -113,16 +88,18 @@ export const ApiContextProvider: React.FC<{ token?: string; children: ReactNode 
 }) => {
   // TO DO: add possible auth in here as well?
 
-  // comfy window
-  const windowConfig = getWindowConfig(token);
-  
+  // graph editor app config
+  const appConfig = {
+    API_KEY: token || '',
+    SERVER_URL: DEFAULT_SERVER_URL,
+    SERVER_PROTOCOL: DEFAULT_SERVER_PROTOCOL
+  };
+
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [socket, setSocket] = useState<ReconnectingWebSocket | null>(null);
-  const [serverUrl, setServerUrl] = useState<string>(windowConfig.SERVER_URL ?? DEFAULT_SERVER_URL);
+  const [serverUrl, setServerUrl] = useState<string>(appConfig.SERVER_URL);
   const [connectionStatus, setConnectionStatus] = useState<string>(ApiStatus.CLOSED);
-  const [serverProtocol, setServerProtocol] = useState<ProtocolType>(
-    windowConfig.SERVER_PROTOCOL ?? DEFAULT_SERVER_PROTOCOL
-  );
+  const [serverProtocol, setServerProtocol] = useState<ProtocolType>(appConfig.SERVER_PROTOCOL);
   const [requestMetadata, setRequestMetadata] = useState<Metadata | undefined>(undefined);
 
   // Only used for when serverProtocol is grpc. Used to both send messages and stream results
@@ -231,7 +208,7 @@ export const ApiContextProvider: React.FC<{ token?: string; children: ReactNode 
   // Update metadata based on api-key / login status
   useEffect(() => {
     const metadata = new Metadata();
-    if (windowConfig.API_KEY) metadata.set('api-key', windowConfig.API_KEY);
+    if (appConfig.API_KEY) metadata.set('api-key', appConfig.API_KEY);
     setRequestMetadata(metadata);
   }, []);
 

@@ -1,6 +1,6 @@
-import { usePrompt } from '../../../lib/hooks/usePrompt.tsx';
+import { usePrompt } from '../../../lib/hooks/usePrompt';
 import { useEffect } from 'react';
-import { useFlowStore } from '../../../store/flow.ts';
+import { useFlowStore } from '../../../store/flow';
 
 interface DevSaveButtonProps {
   promptFilename: {

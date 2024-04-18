@@ -1,4 +1,4 @@
-import { InputDialog } from '../dialogs/InputDialog.tsx';
+import { InputDialog } from '../dialogs/InputDialog';
 import { ChangeEvent, useState } from 'react';
 
 type StringProps = {

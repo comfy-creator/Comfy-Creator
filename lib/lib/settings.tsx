@@ -1,5 +1,5 @@
-import { Theme } from '../components/Theme.tsx';
-import { useSettingsStore } from '../store/settings.ts';
+import { Theme } from '../components/Theme';
+import { useSettingsStore } from '../store/settings';
 
 const { setActiveTheme, getActiveTheme } = useSettingsStore.getState();
 

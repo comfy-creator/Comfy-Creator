@@ -1,5 +1,4 @@
-import { ReactNode } from 'react';
-import { ErrorHint } from './ErrorHint.tsx';
+import { ErrorHint } from './ErrorHint';
 
 interface WorkflowLoadErrorProps {
   err: Error;

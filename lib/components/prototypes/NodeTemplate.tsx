@@ -8,7 +8,7 @@ import {
   StringInputDef,
   UpdateWidgetState,
   WidgetState
-} from '../../lib/types.ts';
+} from '../../lib/types';
 import { toast } from 'react-toastify';
 import { Handle, NodeProps, NodeResizeControl, Position } from 'reactflow';
 import { NumberWidget } from '../widgets/Number';
@@ -17,9 +17,9 @@ import { ToggleWidget } from '../widgets/Toggle';
 import { EnumWidget } from '../widgets/Enum';
 import { ImageWidget } from '../widgets/Image';
 import { TextWidget } from '../widgets/Text';
-import { useSettingsStore } from '../../store/settings.ts';
-import { useFlowStore } from '../../store/flow.ts';
-import { ProgressBar } from '../ProgressBar.tsx';
+import { useSettingsStore } from '../../store/settings';
+import { useFlowStore } from '../../store/flow';
+import { ProgressBar } from '../ProgressBar';
 
 const createWidgetFromSpec = (
   def: InputDef,

@@ -3,7 +3,7 @@ import { createContext, ReactNode } from 'react';
 import { createUseContextHook } from './hookCreator';
 import { WorkflowLoadError } from '../components/errors/WorkflowLoadError';
 import { MissingNodesError } from '../components/errors/MissingNodesError';
-import { useDialog } from './dialog.tsx';
+import { useDialog } from './dialog';
 
 interface IErrorContext {
   triggerWorkflowError: (hints: string[], error: Error) => void;

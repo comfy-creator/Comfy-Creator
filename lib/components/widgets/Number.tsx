@@ -1,6 +1,6 @@
 import { ChangeEvent, FC, useEffect, useState } from 'react';
-import { InputDialog } from '../dialogs/InputDialog.tsx';
-import { WidgetBackwardIcon, WidgetForwardIcon } from '../icons/WidgetDirectionIcon.tsx';
+import { InputDialog } from '../dialogs/InputDialog';
+import { WidgetBackwardIcon, WidgetForwardIcon } from '../icons/WidgetDirectionIcon';
 
 type NumberWidgetProps = {
   value: number;

@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { ComfyItems } from '../types/api.ts';
-import { useApiContext } from '../contexts/api.tsx';
+import { ComfyItems } from '../types/api';
+import { useApiContext } from '../contexts/api';
 
 // import { useLoadGraphData } from '../hooks/useLoadGraphData';
 

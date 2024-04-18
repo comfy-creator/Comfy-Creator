@@ -14,7 +14,7 @@ export default defineConfig({
   build: {
     target: 'es2017',
     lib: {
-      entry: resolve(__dirname, 'lib/main.ts'),
+      entry: resolve(__dirname, 'lib/main.tsx'),
       formats: ['es']
     },
     emptyOutDir: true,
@@ -43,5 +43,15 @@ export default defineConfig({
       }
     }
   },
-  plugins: [react(), libInjectCss(), dts({ include: ['lib/**/*.tsx', 'lib/**/*.ts'] })]
+  plugins: [
+    react(),
+    libInjectCss(),
+    dts({
+      include: ['lib/**/*.tsx', 'lib/**/*.ts'],
+      rollupTypes: true,
+      afterBuild: () => {
+        fs.copyFileSync('dist/main.d.ts', 'dist/main.d.cts');
+      }
+    })
+  ]
 });

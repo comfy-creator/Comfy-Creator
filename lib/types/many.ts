@@ -1,11 +1,6 @@
 import { InputHTMLAttributes } from 'react';
 
 declare global {
-  interface Window {
-    app: any;
-    clipboardData: DataTransfer;
-  }
-
   interface Event {
     detail: any;
   }

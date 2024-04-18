@@ -9,13 +9,13 @@ import {
   useRef,
   useState
 } from 'react';
-import { ContextMenuProps, IMenuType, NodeState } from '../lib/types.ts';
-import { ContextMenu } from '../components/prototypes/ContextMenuTemplate.tsx';
+import { ContextMenuProps, IMenuType, NodeState } from '../lib/types';
+import { ContextMenu } from '../components/prototypes/ContextMenuTemplate';
 import { Node } from 'reactflow';
-import SearchWidget from '../components/SearchWidget.tsx';
+import SearchWidget from '../components/SearchWidget';
 import NodeDefs from '../../node_info.json';
-import { categorizeObjects } from '../lib/utils/ui.tsx';
-import { getNodeMenuItems } from '../lib/menu.ts';
+import { categorizeObjects } from '../lib/utils/ui';
+import { getNodeMenuItems } from '../lib/menu';
 
 interface IContextMenu {
   onNodeContextMenu: (event: ReactMouseEvent, node: Node) => void;
@@ -136,7 +136,6 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
 
   // Close the context menu if it's open whenever the window is clicked.
   const onPaneClick = useCallback(() => {
-    console.log('Clicking>>>');
     setMenuProps(null);
     setCurrentOpenedMenuIndex(0);
     setMenus([]);

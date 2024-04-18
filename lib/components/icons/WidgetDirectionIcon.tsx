@@ -1,5 +1,5 @@
-import { RightTriangle } from './RightTriangle.tsx';
-import { LeftTriangle } from './LeftTriangle.tsx';
+import { RightTriangle } from './RightTriangle';
+import { LeftTriangle } from './LeftTriangle';
 
 export function WidgetForwardIcon({ onClick }: { onClick: () => void }) {
   return (

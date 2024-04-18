@@ -49,10 +49,9 @@ import { useSettings } from '../contexts/settings';
 import { useSettingsStore } from '../store/settings';
 import { defaultThemeConfig } from '../lib/config/themes';
 import { colorSchemeSettings } from '../lib/settings';
-import { useApiContext } from '../contexts/api.tsx';
-import { useFlow } from '../lib/hooks/useFlow.tsx';
-import { computeInitialNodeState } from '../lib/utils/node.ts';
-import ImageFeedDrawer from './Drawer/ImageFeedDrawer.tsx';
+import { useApiContext } from '../contexts/api';
+import { useFlow } from '../lib/hooks/useFlow';
+import ImageFeedDrawer from './Drawer/ImageFeedDrawer';
 
 const selector = (state: RFState) => ({
   panOnDrag: state.panOnDrag,

@@ -11,9 +11,9 @@ import {
   TextInput
 } from '../components/SettingInputs';
 import { ComboOption } from '../types/many';
-import { useApiContext } from './api.tsx';
-import { useSettingsStore } from '../store/settings.ts';
-import { ComfyLocalStorage } from '../lib/localStorage.ts';
+import { useApiContext } from './api';
+import { useSettingsStore } from '../store/settings';
+import { ComfyLocalStorage } from '../lib/localStorage';
 
 interface ISettingsContext {
   show: () => void;

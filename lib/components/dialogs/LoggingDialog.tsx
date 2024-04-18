@@ -1,7 +1,7 @@
-import { useLogging } from '../../contexts/logging.tsx';
+import { useLogging } from '../../contexts/logging';
 import { useEffect, useRef } from 'react';
-import { LogEntry } from '../../lib/types.ts';
-import { useDialog } from '../../contexts/dialog.tsx';
+import { LogEntry } from '../../lib/types';
+import { useDialog } from '../../contexts/dialog';
 
 function stringify(val: any, depth: number, replacer?: any, space?: any, onGetObjID?: any) {
   depth = isNaN(+depth) ? 1 : depth;
@@ -113,7 +113,7 @@ export function LoggingDialog() {
 
     setTimeout(function () {
       anchorRef.current?.remove();
-      window.URL.revokeObjectURL(url);
+      URL.revokeObjectURL(url);
     }, 0);
   };
 

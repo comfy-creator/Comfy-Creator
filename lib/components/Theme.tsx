@@ -49,7 +49,7 @@ export function Theme({ value, onChange }: ThemeProps) {
               // a.click();
               // setTimeout(function () {
               //   a.remove();
-              //   window.URL.revokeObjectURL(url);
+              //   URL.revokeObjectURL(url);
               // }, 0);
             }}
           />
@@ -73,7 +73,7 @@ export function Theme({ value, onChange }: ThemeProps) {
               // a.click();
               // setTimeout(function () {
               //   a.remove();
-              //   window.URL.revokeObjectURL(url);
+              //   URL.revokeObjectURL(url);
               // }, 0);
             }}
           />

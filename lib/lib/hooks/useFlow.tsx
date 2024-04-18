@@ -3,7 +3,7 @@ import { NodeState } from '../types';
 import { FLOW_KEY } from '../config/constants';
 import { defaultEdges, defaultNodes } from '../../default-graph';
 import { RFState, useFlowStore } from '../../store/flow';
-import { useLogging } from '../../contexts/logging.tsx';
+import { useLogging } from '../../contexts/logging';
 import { computeInitialNodeState } from '../utils/node';
 import { ComfyLocalStorage } from '../localStorage';
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { WidgetBackwardIcon, WidgetForwardIcon } from '../icons/WidgetDirectionIcon.tsx';
+import { WidgetBackwardIcon, WidgetForwardIcon } from '../icons/WidgetDirectionIcon';
 
 type EnumProps = {
   label: string;
