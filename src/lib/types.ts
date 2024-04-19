@@ -1,4 +1,4 @@
-import { ComponentType, type MouseEvent as ReactMouseEvent, ReactNode } from 'react';
+*import { ComponentType, type MouseEvent as ReactMouseEvent, ReactNode } from 'react';
 import { EdgeProps, NodeProps, XYPosition } from 'reactflow';
 
 export type EdgeType =
@@ -141,17 +141,9 @@ export interface AddNodeParams {
 
 // =========== Input States ===========
 
-export interface BaseInputData<
-  InputType extends EdgeType = EdgeType,
-  ValueType extends any = undefined
-> {
+export interface BaseInputData<ValueType extends any = undefined> extends BaseInputDef {
   name: string;
-  def?: InputDef;
-  type: InputType;
   value?: ValueType;
-  optional?: boolean;
-  serialize?: boolean;
-  valueControl?: boolean;
   isHighlighted?: boolean;
   primitiveNodeId?: string | null;
   linkedWidgets?: string[]; // array of widget names
@@ -165,7 +157,7 @@ export interface OutputData {
 
 export type InputHandleData = BaseInputData;
 
-export interface BoolInputData extends BaseInputData<'BOOLEAN', boolean> {}
+export interface BoolInputData extends BaseInputData<boolean> {}
 
 export interface IntInputData extends BaseInputData<'INT', number> {}
 
