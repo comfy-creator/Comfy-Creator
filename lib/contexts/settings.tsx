@@ -56,9 +56,9 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
     isNewUserSession = true;
 
   const getLocalSettings = () => {
-    var values: Record<string, any> = {},
-      keys = Object.keys(ComfyLocalStorage),
-      i = keys.length;
+    const values: Record<string, any> = {};
+    const keys = Object.keys(ComfyLocalStorage);
+    let i = keys.length;
 
     while (i--) {
       if (keys[i].startsWith('Comfy.Settings.')) {
