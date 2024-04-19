@@ -1,12 +1,13 @@
 import React from 'react';
-import ReactDOM from 'react-dom/client';
+import ReactDOM from 'react-dom';
 
 import GraphEditor from '../lib';
 
 import './index.css';
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+ReactDOM.render(
   <React.StrictMode>
     <GraphEditor />
-  </React.StrictMode>
+  </React.StrictMode>,
+  document.getElementById('root')!
 );
