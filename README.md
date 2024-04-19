@@ -11,7 +11,8 @@ This is a rewrite of ComfyUI. We changed the following:
 
 ### Usage:
 
-- (write this later)
+- Run `yarn dev` to start the development server; this is served by Vite directly along with hot-reload.
+- Run `yarn build` to build the library that is published to NPM.
 
 ## Dev Notes:
 
