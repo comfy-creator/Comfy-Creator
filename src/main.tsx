@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-import GraphEditor from '../lib/main';
+import GraphEditor from '../lib';
 
 import './index.css';
 
