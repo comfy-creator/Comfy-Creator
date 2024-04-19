@@ -4,11 +4,11 @@ import { NodeState, SerializedFlow } from '../types';
 import { useApiContext } from '../../contexts/api.tsx';
 import { applyWidgetControl } from '../utils/widgets.ts';
 
-export function usePrompt() {
+export function useWorkflow() {
   const { instance, updateWidgetState } = useFlowStore();
   const { runWorkflow } = useApiContext();
 
-  const queuePrompt = async () => {
+  const submitWorkflow = async () => {
     const flow = flowToObject();
     const prompt = flowToPrompt();
     if (!prompt) return;
@@ -76,5 +76,5 @@ export function usePrompt() {
     return instance.toObject() as ReactFlowJsonObject<NodeState>;
   };
 
-  return { queuePrompt, flowToPrompt, flowToObject };
+  return { submitWorkflow, flowToPrompt, flowToObject };
 }

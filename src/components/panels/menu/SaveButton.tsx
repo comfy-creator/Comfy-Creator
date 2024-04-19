@@ -1,4 +1,4 @@
-import { usePrompt } from '../../../lib/hooks/usePrompt.tsx';
+import { useWorkflow } from '../../../lib/hooks/useWorkflow.tsx';
 import { useEffect } from 'react';
 import { useFlowStore } from '../../../store/flow.ts';
 
@@ -9,7 +9,7 @@ interface SaveButtonProps {
 }
 
 const SaveButton = ({ promptFilename }: SaveButtonProps) => {
-  const { flowToObject } = usePrompt();
+  const { flowToObject } = useWorkflow();
   const { addHotKeysHandlers } = useFlowStore();
 
   const handleClick = () => {

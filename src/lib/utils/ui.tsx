@@ -1,5 +1,5 @@
 import { RefObject, useEffect, useState } from 'react';
-import { IMenuType } from '../types.ts';
+import { IMenuType, NodeDefinitions } from '../types.ts';
 import { useFlowStore } from '../../store/flow.ts';
 
 type RawInput = {
@@ -211,52 +211,51 @@ export function dragElement(dragEl: HTMLDivElement, addSetting: any) {
   }
 }
 
-export function categorizeObjects(data: Record<string, Record<string, any>>) {
+export function categorizeObjects(nodeDefs: NodeDefinitions) {
   const categorizedArray: IMenuType[] = [];
 
-  for (const key in data) {
-    const object = data[key];
-    const categories = object.category.split('/');
+  for (const name in nodeDefs) {
+    const nodeDef = nodeDefs[name];
+    const categories = nodeDef.category.split('/');
     let currentCategory = categorizedArray;
 
     const stillHasSub = (name: string) => {
-      const found = Object.values(data).filter((value) => value.category.includes(`${name}/`));
+      const found = Object.values(nodeDefs).filter((value) => value.category.includes(`${name}/`));
       return found.length > 0;
     };
 
     categories.forEach((category: string, index: number) => {
       const foundCategory = currentCategory.find((item) => item.label === category);
       const currentCat = categories.slice(0, index).join('/');
-
       if (index === categories.length - 1) {
         if (!foundCategory) {
           const newCategory: IMenuType = {
             label: category,
             hasSubMenu: true,
             subMenu: [],
-            node: null
+            data: null
           };
           newCategory.subMenu?.push({
-            label: object.name,
+            label: nodeDef.display_name,
             hasSubMenu: false,
             subMenu: null,
-            node: object
+            data: { name, ...nodeDef }
           });
           currentCategory.push(newCategory);
         } else {
           foundCategory.subMenu?.push({
-            label: object.name,
+            label: nodeDef.display_name,
             hasSubMenu: false,
             subMenu: null,
-            node: object
+            data: { name, ...nodeDef }
           });
         }
       } else if (!foundCategory) {
         const newCategory = {
-          label: stillHasSub(currentCat) ? category : object.name,
+          label: stillHasSub(currentCat) ? category : nodeDef.display_name,
           hasSubMenu: stillHasSub(currentCat),
           subMenu: stillHasSub(currentCat) ? [] : null,
-          node: stillHasSub(currentCat) ? null : object
+          data: stillHasSub(currentCat) ? null : { name, ...nodeDef }
         };
 
         currentCategory.push(newCategory);
@@ -276,12 +275,11 @@ export function categorizeObjects(data: Record<string, Record<string, any>>) {
 
     return newArr.map((item) => {
       return {
-        node: item.node,
+        data: item.data,
         label: item.label,
         hasSubMenu: item.hasSubMenu,
         subMenu: item.subMenu ? sort(item.subMenu) : item.subMenu,
-        // @ts-ignore
-        onClick: item.node ? (e: MouseEvent) => onNodeClick(e, item.node) : undefined
+        onClick: item.data ? (e: MouseEvent) => onNodeClick(e, item.data!) : undefined
       };
     }) as IMenuType[];
   };
@@ -289,10 +287,9 @@ export function categorizeObjects(data: Record<string, Record<string, any>>) {
   return sort(categorizedArray);
 }
 
-function onNodeClick(e: MouseEvent, node: { type: string }) {
+function onNodeClick(e: MouseEvent, data: Record<string, any>) {
   const { addNode } = useFlowStore.getState();
   const position = { x: e.clientX, y: e.clientY };
 
-  // @ts-ignore
-  addNode({ position, type: node.name });
+  addNode({ position, type: data.name });
 }

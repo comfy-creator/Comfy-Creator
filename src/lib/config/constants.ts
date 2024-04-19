@@ -128,7 +128,12 @@ export const HANDLE_TYPES: EdgeType[] = [
   'MODEL',
   'STYLE_MODEL',
   'VAE',
-  'TAESD'
+  'TAESD',
+
+  // widget types
+  'INT',
+  'FLOAT',
+  'STRING'
 ];
 
 export const HANDLE_ID_DELIMITER = '::';

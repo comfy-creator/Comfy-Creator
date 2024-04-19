@@ -26,7 +26,11 @@ import {
   UpdateWidgetStateParams,
   WidgetState
 } from '../lib/types';
-import { computeInitialNodeState, exchangeInputForWidget } from '../lib/utils/node';
+import {
+  addWidgetToPrimitiveNode,
+  computeInitialNodeState,
+  isWidgetHandleId
+} from '../lib/utils/node';
 import { createNodeComponentFromDef } from '../components/prototypes/NodeTemplate';
 import {
   DEFAULT_HOTKEYS_HANDLERS,
@@ -36,6 +40,14 @@ import {
 } from '../lib/config/constants';
 import { createEdgeFromTemplate } from '../components/prototypes/EdgeTemplate';
 import { yjsProvider } from '../yjs';
+import {
+  PreviewImage,
+  PreviewVideo,
+  PrimitiveNode,
+  RerouteNode,
+  transformNodeDefs
+} from '../lib/nodedefs.ts';
+import { ComfyObjectInfo } from '../types/comfy.ts';
 
 const nodesMap = yjsProvider.doc.getMap<Node<NodeState>>('nodes');
 const edgesMap = yjsProvider.doc.getMap<Edge>('edges');
@@ -71,6 +83,7 @@ export type RFState = {
   nodeDefs: NodeDefinitions;
   nodeComponents: NodeComponents;
   addNodeDefs: (defs: NodeDefinitions) => void;
+  loadNodeDefsFromApi: (fetcher: () => Promise<Record<string, ComfyObjectInfo>>) => void;
   removeNodeDefs: (typeNames: string[]) => void;
 
   addNode: (params: AddNodeParams) => void;
@@ -108,6 +121,7 @@ export type RFState = {
 export const useFlowStore = create<RFState>((set, get) => {
   // Propagate changes from Yjs doc -> our Zustand state
   const yjsNodesObserver = () => {
+    // console.log(Array.from(nodesMap.values()));
     set({ nodes: Array.from(nodesMap.values()) });
   };
   yjsNodesObserver();
@@ -226,26 +240,35 @@ export const useFlowStore = create<RFState>((set, get) => {
           !(edge.target === connection.target && edge.targetHandle === connection.targetHandle)
       );
 
-      const sourceParts = connection.sourceHandle?.split(HANDLE_ID_DELIMITER) || [];
-      const targetParts = connection.targetHandle?.split(HANDLE_ID_DELIMITER) || [];
+      const { targetHandle, sourceHandle, source: sourceNodeId, target: targetNodeId } = connection;
+      const source = get().nodes.find((node) => node.id == sourceNodeId);
+      const target = get().nodes.find((node) => node.id == targetNodeId);
 
-      const sourceNode = get().nodes.find((node) => node.id == connection.source);
-      const targetNode = get().nodes.find((node) => node.id == connection.target);
-      if (!sourceNode || !targetNode) return;
+      if (!source || !target) return;
+      const [_s1, _s2, sourceHandleType] = sourceHandle?.split(HANDLE_ID_DELIMITER) || [];
+      const [_t1, _t2, targetHandleType] = targetHandle?.split(HANDLE_ID_DELIMITER) || [];
 
-      if (sourceNode.type == 'PrimitiveNode') {
-        const inputSlot = Number(targetParts[1]);
-        exchangeInputForWidget({ inputSlot, sourceNode: targetNode, targetNode: sourceNode });
-      } else if (targetNode.type == 'PrimitiveNode') {
-        const inputSlot = Number(sourceParts[1]);
-        exchangeInputForWidget({ inputSlot, sourceNode, targetNode });
+      let newConn: (Connection & { type?: string }) | undefined;
+
+      if (isWidgetHandleId(targetHandle ?? '')) {
+        if (source.type == 'PrimitiveNode') {
+          const widgetData = { nodeId: targetNodeId, widgetName: targetHandleType };
+          const result = addWidgetToPrimitiveNode(source.id, get().updateNodeState, widgetData);
+
+          if (result) {
+            newConn = { ...connection, type: result.type };
+          }
+        }
+      } else {
+        newConn = {
+          ...connection,
+          type: sourceHandleType === targetHandleType ? sourceHandleType : undefined
+        };
       }
 
-      const newEdge = {
-        ...connection,
-        type: sourceParts[2] === targetParts[2] ? sourceParts[2] : undefined
-      };
-      get().setEdges(addEdge(newEdge, filterEdges));
+      if (newConn) {
+        get().setEdges(addEdge(newConn, filterEdges));
+      }
     },
 
     nodeDefs: {},
@@ -271,6 +294,12 @@ export const useFlowStore = create<RFState>((set, get) => {
           nodeComponents: { ...state.nodeComponents, ...components }
         };
       });
+    },
+
+    loadNodeDefsFromApi: async (fetcher) => {
+      const nodes = transformNodeDefs(await fetcher());
+      const allNodeDefs = { PreviewImage, PreviewVideo, RerouteNode, PrimitiveNode, ...nodes };
+      get().addNodeDefs(allNodeDefs);
     },
 
     removeNodeDefs: (typeNames: string[]) => {
@@ -315,9 +344,23 @@ export const useFlowStore = create<RFState>((set, get) => {
       const node = nodesMap.get(nodeId);
       if (!node) return;
 
+      console.log({ prev: node });
+      console.log({
+        new: {
+          ...node,
+          data: {
+            ...node.data,
+            ...newState
+          }
+        }
+      });
+
       nodesMap.set(nodeId, {
         ...node,
-        data: { ...node.data, ...newState }
+        data: {
+          ...node.data,
+          ...newState
+        }
       });
     },
 

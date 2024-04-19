@@ -62,7 +62,8 @@ export type EdgeType =
   | 'VIDEO'
   | 'ENUM'
   | 'TAESD'
-  | '*';
+  | '*'
+  | 'GROUP';
 
 // =========== Input Definitions ===========
 // Provides constraints on top of state
@@ -182,6 +183,7 @@ export interface AddNodeParams {
 export interface BaseInputState {
   name: string;
   type: EdgeType;
+  group?: string;
   hidden?: boolean;
   optional?: boolean;
   serialize?: boolean;
@@ -228,6 +230,11 @@ export interface EnumInputState extends BaseInputState {
   value: string;
 }
 
+export interface GroupInputState extends BaseInputState {
+  type: 'GROUP';
+  widgets: WidgetState[];
+}
+
 export interface ImageInputState extends BaseInputState {
   type: 'IMAGE';
   value?: string;
@@ -250,7 +257,8 @@ export type WidgetState =
   | EnumInputState
   | ImageInputState
   | VideoInputState
-  | PrimitiveInputState;
+  | PrimitiveInputState
+  | GroupInputState;
 
 // =========== Entire Node State ===========
 // This is the 'data' type stored inside a node instance
@@ -337,12 +345,12 @@ export interface ComfyError extends Error {
 export type EdgeComponents = Record<string, ComponentType<EdgeProps>>;
 
 export interface IMenuType {
-  disabled?: boolean;
   label: string;
-  hasSubMenu: boolean;
-  node: Record<string, object> | string | null;
-  subMenu: IMenuType[] | null;
   isOpen?: boolean;
+  disabled?: boolean;
+  hasSubMenu: boolean;
+  subMenu: IMenuType[] | null;
+  data: Record<string, any> | null | string;
   onClick?: (event: ReactMouseEvent) => void;
 }
 

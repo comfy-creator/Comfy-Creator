@@ -1,5 +1,12 @@
-import { useFlowStore } from '../../store/flow.ts';
-import { EdgeType, InputDef, InputHandle, NodeState, OutputHandle, WidgetState } from '../types.ts';
+import {
+  EdgeType,
+  InputDef,
+  InputHandle,
+  NodeDefinition,
+  NodeState,
+  OutputHandle,
+  WidgetState
+} from '../types.ts';
 import { Edge, Node } from 'reactflow';
 import { isWidgetInput } from '../utils/node.ts';
 
@@ -172,9 +179,10 @@ function getEdge(link: LegacyLink) {
   return edge;
 }
 
-export function loadLegacyWorkflow(workflow: LegacyWorkflow) {
-  const { nodeDefs } = useFlowStore.getState();
-
+export function loadLegacyWorkflow(
+  workflow: LegacyWorkflow,
+  nodeDefs: Record<string, NodeDefinition>
+) {
   const nodes: Node<NodeState>[] = [];
   const edges: Edge[] = [];
 

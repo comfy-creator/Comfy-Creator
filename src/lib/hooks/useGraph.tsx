@@ -1,7 +1,6 @@
-import { Node, ReactFlowJsonObject, useReactFlow } from 'reactflow';
+import { Node, ReactFlowJsonObject, useReactFlow, Viewport } from 'reactflow';
 import { NodeState } from '../types.ts';
 import { FLOW_KEY } from '../config/constants.ts';
-import { defaultEdges, defaultNodes } from '../../default-flow.ts';
 import { RFState, useFlowStore } from '../../store/flow.ts';
 import { useLogging } from '../../contexts/logging.tsx';
 import { computeInitialNodeState } from '../utils/node.ts';
@@ -13,7 +12,7 @@ const selector = (state: RFState) => ({
   instance: state.instance
 });
 
-export function useFlow() {
+export function useGraph() {
   const { instance, nodeDefs, setNodes, setEdges } = useFlowStore(selector);
   const { setViewport } = useReactFlow<NodeState, string>();
 
@@ -23,12 +22,11 @@ export function useFlow() {
     return nodes.map((node) => {
       if (!node.type) return node;
 
-      // Check the node def
       const def = nodeDefs[node.type];
-      if (!def) return node;
-
       const { config, widgets } = node.data;
-      const values: Record<string, string | number | boolean | undefined> = {};
+      const values: Record<string, any> = {};
+
+      if (!def) return node;
 
       for (const name in widgets) {
         const widget = widgets[name];
@@ -54,7 +52,9 @@ export function useFlow() {
     });
   };
 
-  const loadFlow = (flow?: ReactFlowJsonObject<NodeState>) => {
+  const loadSerializedGraph = (
+    flow?: Omit<ReactFlowJsonObject<NodeState>, 'viewport'> & { viewport?: Viewport }
+  ) => {
     try {
       if (!flow) {
         flow = JSON.parse(
@@ -62,19 +62,26 @@ export function useFlow() {
         ) as ReactFlowJsonObject<NodeState>;
       }
 
-      const { x = 0, y = 0, zoom = 1 } = flow.viewport;
+      if (!flow.nodes?.length) throw new Error('No nodes found in flow');
+      if (!flow.edges?.length) throw new Error('No edges found in flow');
+
+      let viewport = flow.viewport;
+      if (!viewport) {
+        viewport = { x: 0, y: 0, zoom: 1 };
+      }
+
       const nodes = recomputeNodes(flow.nodes);
 
-      setNodes(nodes.length > 0 ? nodes : defaultNodes);
-      setEdges(flow.edges?.length > 0 ? flow.edges : defaultEdges);
-      setViewport({ x, y, zoom });
+      setNodes(nodes);
+      setEdges(flow.edges);
+      setViewport(viewport);
     } catch (e) {
       log('Error loading flow', e);
       console.log('Error loading flow: ', e);
     }
   };
 
-  const saveFlow = (flow?: ReactFlowJsonObject) => {
+  const saveSerializedGraph = (flow?: ReactFlowJsonObject) => {
     if (!flow) {
       flow = instance?.toObject();
     }
@@ -83,7 +90,7 @@ export function useFlow() {
   };
 
   return {
-    loadFlow,
-    saveFlow
+    loadSerializedGraph,
+    saveSerializedGraph
   };
 }
