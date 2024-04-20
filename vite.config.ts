@@ -3,7 +3,6 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
 import { libInjectCss } from 'vite-plugin-lib-inject-css';
-import libCss from 'vite-plugin-libcss';
 
 // const { peerDependencies } = JSON.parse(fs.readFileSync(`./package.json`, 'utf8'));
 
@@ -29,16 +28,11 @@ export default defineConfig({
           'react-dom': 'ReactDOM',
           'react/jsx-runtime': 'jsxRuntime'
         }
-      },
-      plugins: [
-        // postcss({ extract: 'styles.css' })
-        // add other Rollup plugins here if needed
-      ]
+      }
     }
   },
   plugins: [
     react(),
-    libCss(),
     libInjectCss(),
     dts({
       include: ['lib/**/*.tsx', 'lib/**/*.ts'],
