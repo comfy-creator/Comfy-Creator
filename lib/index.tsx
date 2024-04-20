@@ -14,6 +14,8 @@ import { DialogContextProvider } from './contexts/dialog';
 import { ErrorProvider } from './contexts/error';
 import { LoggingContextProvider } from './contexts/logging';
 
+import '../src/index.css';
+
 interface GraphEditorProps {
   token?: string;
 }
