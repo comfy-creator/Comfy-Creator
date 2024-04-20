@@ -3,9 +3,6 @@
 import React from 'react';
 import { MainFlow } from './components/MainFlow';
 import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-
-import 'reactflow/dist/style.css';
 import { ContextMenuProvider } from './contexts/contextmenu';
 import { ApiContextProvider } from './contexts/api';
 import { SettingsContextProvider } from './contexts/settings';
@@ -14,7 +11,9 @@ import { DialogContextProvider } from './contexts/dialog';
 import { ErrorProvider } from './contexts/error';
 import { LoggingContextProvider } from './contexts/logging';
 
-import '../src/index.css';
+import './index.css';
+import 'react-toastify/dist/ReactToastify.css';
+import 'reactflow/dist/style.css';
 
 interface GraphEditorProps {
   token?: string;
