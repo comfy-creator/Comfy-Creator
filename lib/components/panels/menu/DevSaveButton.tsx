@@ -1,4 +1,4 @@
-import { usePrompt } from '../../../lib/hooks/usePrompt';
+import { useWorkflow } from '../../../lib/hooks/useWorkflow.tsx';
 import { useEffect } from 'react';
 import { useFlowStore } from '../../../store/flow';
 
@@ -9,7 +9,7 @@ interface DevSaveButtonProps {
 }
 
 const DevSaveButton = ({ promptFilename }: DevSaveButtonProps) => {
-  const { flowToPrompt } = usePrompt();
+  const { flowToPrompt } = useWorkflow();
   const { addHotKeysHandlers } = useFlowStore();
 
   const handleClick = () => {

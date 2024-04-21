@@ -1,14 +1,20 @@
-import React, { ComponentType, useEffect, useRef, useState } from 'react';
+import React, { ComponentType, ReactNode, useEffect, useRef, useState } from 'react';
 import {
-  BoolInputState,
+  BoolInputData,
+  EnumInputData,
   EnumInputDef,
+  ImageInputData,
+  InputData,
   InputDef,
+  IntInputData,
+  NodeData,
   NodeDefinition,
-  NodeState,
+  OutputData,
+  StringInputData,
   StringInputDef,
-  UpdateWidgetState,
-  WidgetState
-} from '../../lib/types';
+  ThemeConfig,
+  UpdateInputData
+} from '../../lib/types.ts';
 import { toast } from 'react-toastify';
 import { Handle, NodeProps, NodeResizeControl, Position } from 'reactflow';
 import { NumberWidget } from '../widgets/Number';
@@ -17,26 +23,29 @@ import { ToggleWidget } from '../widgets/Toggle';
 import { EnumWidget } from '../widgets/Enum';
 import { ImageWidget } from '../widgets/Image';
 import { TextWidget } from '../widgets/Text';
-import { useSettingsStore } from '../../store/settings';
-import { useFlowStore } from '../../store/flow';
-import { ProgressBar } from '../ProgressBar';
+import { useSettingsStore } from '../../store/settings.ts';
+import { useFlowStore } from '../../store/flow.ts';
+import { ProgressBar } from '../ProgressBar.tsx';
+import { ChevronDown } from '../icons/ChevronDown.tsx';
+import { ChevronUp } from '../icons/ChevronUp.tsx';
+import { isWidgetInput } from '../../lib/utils/node.ts';
 
 const createWidgetFromSpec = (
   def: InputDef,
   label: string,
-  state: WidgetState,
-  updateWidgetState: (newState: Partial<WidgetState>) => void
+  data: InputData,
+  updateInputData: (newState: Partial<InputData>) => void
 ) => {
   const commonProps = { label };
-  if (state.type !== def.type) return;
+  if (data.type !== def.type) return;
 
-  switch (state.type) {
+  switch (data.type) {
     case 'BOOLEAN':
       return (
         <ToggleWidget
           {...commonProps}
-          checked={(state as BoolInputState).value || false}
-          onChange={(checked: boolean) => updateWidgetState({ value: checked })}
+          checked={(data as BoolInputData).value || false}
+          onChange={(checked: boolean) => updateInputData({ value: checked })}
         />
       );
 
@@ -45,8 +54,8 @@ const createWidgetFromSpec = (
       return (
         <NumberWidget
           {...commonProps}
-          value={state.value}
-          onChange={(value: number) => updateWidgetState({ value })}
+          value={(data as IntInputData).value}
+          onChange={(value: number) => updateInputData({ value })}
         />
       );
 
@@ -55,16 +64,16 @@ const createWidgetFromSpec = (
         return (
           <TextWidget
             {...commonProps}
-            value={state.value}
-            onChange={(value: string) => updateWidgetState({ value })}
+            value={(data as StringInputData).value}
+            onChange={(value: string) => updateInputData({ value })}
           />
         );
       }
       return (
         <StringWidget
           {...commonProps}
-          value={state.value}
-          onChange={(value: string) => updateWidgetState({ value })}
+          value={(data as StringInputData).value}
+          onChange={(value: string) => updateInputData({ value })}
         />
       );
 
@@ -72,38 +81,41 @@ const createWidgetFromSpec = (
       return (
         <EnumWidget
           {...commonProps}
-          value={state.value}
-          onChange={(value: string) => updateWidgetState({ value })}
+          value={(data as EnumInputData).value}
+          onChange={(value: string) => updateInputData({ value })}
           options={{ values: (def as EnumInputDef).options }}
           multiSelect={(def as EnumInputDef).multiSelect}
         />
       );
     case 'IMAGE':
-      return <ImageWidget {...commonProps} value={state.value} />;
+      return <ImageWidget {...commonProps} value={(data as ImageInputData).value} />;
 
     // case 'VIDEO':
-    // return <VideoWidget {...commonProps} value={state.value} />;
+    // return <VideoWidget {...commonProps} value={data.value} />;
 
     default:
-      console.warn(`Unsupported data type: ${(state as WidgetState).type}`);
+      console.warn(`Unsupported data type: ${(data as InputData).type}`);
       return null;
   }
 };
 
 export const createNodeComponentFromDef = (
-  def: NodeDefinition,
-  updateWidgetState: UpdateWidgetState
-): ComponentType<NodeProps<NodeState>> => {
-  return ({ id, data, selected }: NodeProps<NodeState>) => {
-    const divRef = useRef<HTMLDivElement>(null);
+  nodeDef: NodeDefinition,
+  updateInputData: UpdateInputData
+): ComponentType<NodeProps<NodeData>> => {
+  return ({ id, data, selected }: NodeProps<NodeData>) => {
+    const containerRef = useRef<HTMLDivElement>(null);
+    // const labelDivRef = useRef<HTMLDivElement>(null);
+
+    const [advanced, setAdvanced] = useState(false);
     const [minWidth, setMinWidth] = useState(0);
     const [minHeight, setMinHeight] = useState(0);
 
     const { getActiveTheme, activeTheme } = useSettingsStore();
-    const { execution } = useFlowStore();
+    const { execution, updateNodeData } = useFlowStore();
     const theme = getActiveTheme();
 
-    const appearance = theme.colors.appearance;
+    const { NODE_TEXT_SIZE, NODE_TITLE_COLOR } = theme.colors.appearance;
 
     useEffect(() => {
       const node = document.querySelector(`[data-id="${id}"]`);
@@ -121,13 +133,8 @@ export const createNodeComponentFromDef = (
       const { getActiveTheme } = useSettingsStore.getState();
       const appearance = getActiveTheme().colors.appearance;
 
-      container.style.backgroundColor = data.config?.bgColor
-        ? data.config.bgColor
-        : appearance.NODE_BG_COLOR;
-
-      container.style.color = data.config?.textColor
-        ? data.config.textColor
-        : appearance.NODE_TEXT_COLOR;
+      container.style.backgroundColor = appearance.NODE_BG_COLOR;
+      container.style.color = appearance.NODE_TEXT_COLOR;
     }, [activeTheme]);
 
     useEffect(() => {
@@ -157,127 +164,186 @@ export const createNodeComponentFromDef = (
     }, [selected]);
 
     const onClick = () => toast.success('File uploaded successfully!');
-
-    const handleNodeClick = () => {
-      console.log('Node clicked');
+    const { inputs, outputs } = data;
+    const resizerStyle = {
+      width: '12px',
+      height: '12px',
+      border: 'none',
+      cursor: 'se-resize'
     };
 
-    // Generate input handles
-    const inputHandles = Object.entries(data.inputs || []).map(([label, handle], index) => {
-      if (handle.hidden) return null;
+    const inputHandles: ReactNode[] = [];
+    const inputWidgets: ReactNode[] = [];
+    const isOutputNode = nodeDef.output_node || data.isOutputNode;
 
-      return (
-        <div className={`flow_input ${handle.isHighlighted ? 'edge_opacity' : ''}`} key={index}>
-          <Handle
-            style={{
-              backgroundColor:
-                theme.colors.types[handle.type as keyof typeof theme.colors.types] ??
-                theme.colors.types['DEFAULT']
-            }}
-            id={`input::${index}::${handle.type}`}
-            type="target"
-            position={Position.Left}
-            className={`flow_handler left ${handle.type}`}
+    for (const input of inputs) {
+      if (isWidgetInput(input.type)) {
+        inputWidgets.push(
+          <Widget
+            nodeId={id}
+            theme={theme}
+            data={input}
+            nodeDef={nodeDef}
+            key={`widget-${input.name}`}
+            updateInputData={updateInputData}
           />
-          <span className="flow_input_text">{handle.name}</span>
-        </div>
-      );
-    });
+        );
+      } else {
+        inputHandles.push(
+          <InputHandle key={`handle-${input.name}`} theme={theme} handle={input} />
+        );
+      }
+    }
 
     // Generate output handles
-    const outputHandles = Object.entries(data.outputs || []).map(([label, handle], index) => {
-      if (handle.hidden) return null;
-
-      return (
-        <div className={`flow_output ${handle.isHighlighted ? 'edge_opacity' : ''}`} key={index}>
-          <Handle
-            style={{
-              backgroundColor:
-                theme.colors.types[handle.type as keyof typeof theme.colors.types] ??
-                theme.colors.types['DEFAULT']
-            }}
-            id={`output::${label}::${handle.type}`}
-            type="source"
-            position={Position.Right}
-            className={`flow_handler right ${handle.type}`}
-          />
-          <span className="flow_output_text">{handle.name}</span>
-        </div>
-      );
-    });
-
-    // Generate widgets
-    const widgets = Object.entries(data.widgets || []).map(([name, inputState], index) => {
-      if (inputState.hidden) return null;
-
-      let inputDef: InputDef | undefined = inputState.definition;
-      if (!inputDef) {
-        inputDef = def.inputs.find((input) => input.name === name);
-      }
-
-      if (!inputDef) return null;
-
-      const update = (data: Partial<WidgetState>) => {
-        if (!inputState.type) return;
-        updateWidgetState({ nodeId: id, name, data });
-      };
-
-      return (
-        <div key={index} className="widget_container">
-          {createWidgetFromSpec(inputDef, name, inputState, update)}
-        </div>
-      );
-    });
+    const outputHandles = outputs.map((handle, i) => (
+      <OutputHandle key={i} theme={theme} handle={handle} />
+    ));
 
     return (
       <>
         <NodeResizeControl
-          style={{
-            cursor: 'se-resize',
-            border: 'none',
-            width: '12px',
-            height: '12px'
-          }}
+          style={resizerStyle}
           color="transparent"
           position="bottom-right"
           minWidth={minWidth}
           minHeight={minHeight}
         />
-        <div
-          style={{ fontSize: appearance.NODE_TEXT_SIZE }}
-          className={`node_container`}
-          ref={divRef}
-        >
-          {!data.config?.hideLabel && (
-            <div className="node_label_container">
-              <span
-                className="node_label"
-                style={{ color: appearance.NODE_TITLE_COLOR }}
-                onClick={onClick}
-              >
-                {def.display_name}
-              </span>
-            </div>
-          )}
 
-          {execution.currentNodeId === id && <ProgressBar />}
-
-          <div className="flow_content">
-            <div className="flow_input_output_container">
-              <div className="flow_input_container">{inputHandles}</div>
-              <div className="flow_output_container">{outputHandles}</div>
-            </div>
-
-            <div className="widgets_container">{widgets}</div>
-
-            <div className="node_footer">
-              {(def.output_node || data.config?.isOutputNode) && (
-                <button className="comfy-btn">Run</button>
-              )}
-            </div>
+        <div style={{ fontSize: NODE_TEXT_SIZE }} className={`node_container`} ref={containerRef}>
+          <div className="node_label_container">
+            <span className="node_label" style={{ color: NODE_TITLE_COLOR }} onClick={onClick}>
+              {nodeDef.display_name}
+            </span>
           </div>
+
+          {advanced ? (
+            <>
+              <div>Advanced options</div>
+            </>
+          ) : (
+            <>
+              {execution.currentNodeId === id && <ProgressBar />}
+
+              <div className="flow_content">
+                <div className="flow_input_output_container">
+                  <div className="flow_input_container">{inputHandles}</div>
+                  <div className="flow_output_container">{outputHandles}</div>
+                </div>
+
+                <div className="widgets_container">{inputWidgets}</div>
+
+                <div className="node_footer">
+                  <>
+                    {isOutputNode && <button className="comfy-btn">Run</button>}
+
+                    <div
+                      style={{ textAlign: 'center', marginTop: '8px' }}
+                      onClick={() => setAdvanced(!advanced)}
+                    >
+                      {advanced ? <ChevronUp /> : <ChevronDown />}
+                    </div>
+                  </>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </>
     );
   };
 };
+
+interface InputHandleProps {
+  theme: ThemeConfig;
+  handle: InputData;
+}
+
+function InputHandle({ handle, theme }: InputHandleProps) {
+  return (
+    <div className={`flow_input ${handle.isHighlighted ? 'edge_opacity' : ''}`}>
+      <Handle
+        style={{
+          backgroundColor:
+            theme.colors.types[handle.type as keyof typeof theme.colors.types] ??
+            theme.colors.types['DEFAULT']
+        }}
+        id={`input::${handle.name}::${handle.type}`}
+        type="target"
+        position={Position.Left}
+        className={`flow_handler flow_input_output_handler left ${handle.type}`}
+      />
+      <span className="flow_input_text">{handle.name}</span>
+    </div>
+  );
+}
+
+interface OutputHandleProps {
+  handle: OutputData;
+  theme: ThemeConfig;
+}
+
+function OutputHandle({ handle, theme }: OutputHandleProps) {
+  return (
+    <div className={`flow_output ${handle.isHighlighted ? 'edge_opacity' : ''}`}>
+      <Handle
+        style={{
+          backgroundColor:
+            theme.colors.types[handle.type as keyof typeof theme.colors.types] ??
+            theme.colors.types['DEFAULT']
+        }}
+        id={`output::${handle.name}::${handle.type}`}
+        type="source"
+        position={Position.Right}
+        className={`flow_handler flow_input_output_handler right ${handle.type}`}
+      />
+      <span className="flow_output_text">{handle.name}</span>
+    </div>
+  );
+}
+
+interface WidgetProps {
+  nodeId: string;
+  data: InputData;
+  theme: ThemeConfig;
+  nodeDef: NodeDefinition;
+  updateInputData: UpdateInputData;
+}
+
+function Widget({ theme, nodeId, data, nodeDef, updateInputData }: WidgetProps) {
+  const inputDef: InputDef | undefined =
+    data.def ?? nodeDef.inputs.find((input) => input.name === data.name);
+  if (!inputDef) return null;
+
+  const appearance = theme.colors.types;
+
+  const update = (data: Partial<InputData>) => {
+    if (!data.type) return;
+    updateInputData({ nodeId, name: data.name, data });
+  };
+
+  const handleStyle = data.primitiveNodeId
+    ? { background: appearance[data.type], border: '1px solid transparent' }
+    : { border: `1.5px solid ${appearance[data.type]}` };
+
+  return (
+    <div className="widget_container">
+      <div style={{ display: 'flex', alignItems: 'center' }}>
+        <Handle
+          type="target"
+          position={Position.Left}
+          id={`widget::${data.name}::${data.type}`}
+          className={`flow_handler left`}
+          style={{ ...handleStyle }}
+        />
+
+        <div style={{ width: '12px' }} />
+        <div style={{ fontSize: '0.6rem' }}>{data.name}</div>
+      </div>
+
+      <div style={{ width: '100%', marginTop: '2px' }}>
+        {createWidgetFromSpec(inputDef, data.name, data, update)}
+      </div>
+    </div>
+  );
+}

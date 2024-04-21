@@ -1,14 +1,16 @@
 import { useFlowStore } from '../../store/flow';
 import { ReactFlowJsonObject } from 'reactflow';
-import { NodeState, SerializedFlow } from '../types';
-import { useApiContext } from '../../contexts/api';
-import { applyWidgetControl } from '../utils/widgets';
+import { NodeData, SerializedFlow } from '../types';
+import { useApiContext } from '../../contexts/api.tsx';
+import { isWidgetInput } from '../utils/node.ts';
 
-export function usePrompt() {
-  const { instance, updateWidgetState } = useFlowStore();
+// import { applyWidgetControl } from '../utils/widgets.ts';
+
+export function useWorkflow() {
+  const { instance, updateInputData } = useFlowStore();
   const { runWorkflow } = useApiContext();
 
-  const queuePrompt = async () => {
+  const submitWorkflow = async () => {
     const flow = flowToObject();
     const prompt = flowToPrompt();
     if (!prompt) return;
@@ -16,7 +18,7 @@ export function usePrompt() {
     await runWorkflow(prompt);
 
     for (const node of flow.nodes) {
-      applyWidgetControl(node, updateWidgetState);
+      // applyWidgetControl(node, updateInputData);
     }
   };
 
@@ -33,7 +35,8 @@ export function usePrompt() {
         inputs: {}
       };
 
-      const { inputs, widgets } = node.data;
+      const { inputs } = node.data;
+      const widgets = inputs.filter((input) => isWidgetInput(input.type));
 
       for (let i = 0; i < inputs.length; i++) {
         const input = inputs[i];
@@ -54,14 +57,7 @@ export function usePrompt() {
         if (widget.serialize === false) continue;
 
         if ('value' in widget) {
-          const value =
-            widget.type === 'VIDEO'
-              ? widget.value.src
-              : Array.isArray(widget.value)
-                ? widget.value[0]
-                : widget.value;
-
-          data.inputs[name] = value;
+          data.inputs[name] = widget.value as any;
         }
       }
 
@@ -73,8 +69,8 @@ export function usePrompt() {
 
   const flowToObject = () => {
     if (!instance) throw new Error('Flow instance not found');
-    return instance.toObject() as ReactFlowJsonObject<NodeState>;
+    return instance.toObject() as ReactFlowJsonObject<NodeData>;
   };
 
-  return { queuePrompt, flowToPrompt, flowToObject };
+  return { submitWorkflow, flowToPrompt, flowToObject };
 }

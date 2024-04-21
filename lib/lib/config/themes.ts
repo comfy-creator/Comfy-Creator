@@ -19,7 +19,12 @@ export const defaultThemeConfig: { [x: string]: ThemeConfig } = {
         MODEL: '#B39DDB', // light lavender-purple
         STYLE_MODEL: '#C2FFAE', // light green-yellow
         VAE: '#FF6E6E', // bright red
-        TAESD: '#DCC274', // cheesecake
+        TAESD: '#DCC274', // cheesecake,
+        INT: '#90CAF9', // light blue
+        FLOAT: '#B2EBF2', // light cyan
+        STRING: '#FFCCBC', // light peach
+        ENUM: '#C5CAE9', // periwinkle
+        BOOLEAN: '#B2DFDB', // pale teal
         DEFAULT: '#66BB6A'
       },
       appearance: {
@@ -70,6 +75,11 @@ export const defaultThemeConfig: { [x: string]: ThemeConfig } = {
         MODEL: '#7E57C2', // deep purple
         STYLE_MODEL: '#D4E157', // lime
         VAE: '#FF7043', // deep orange,
+        INT: '#FFD54F', // amber
+        FLOAT: '#FFB74D', // deep orange
+        STRING: '#FF8A65', // deep peach
+        ENUM: '#FFCA28', // yellow
+        BOOLEAN: '#AED581', // light green
         DEFAULT: '#66BB6A'
       },
       appearance: {
@@ -121,6 +131,11 @@ export const defaultThemeConfig: { [x: string]: ThemeConfig } = {
         STYLE_MODEL: '#1a998a', // teal
         UPSCALE_MODEL: '#054A29', // dark green
         VAE: '#facfad', // light pink-orange
+        INT: '#2AB7CA', // light blue
+        FLOAT: '#6c71c4', // blue violet
+        STRING: '#859900', // olive green
+        ENUM: '#d33682', // magenta
+        BOOLEAN: '#d1ffd7', // light mint green
         DEFAULT: '#00f16a'
       },
       appearance: {
@@ -160,31 +175,31 @@ export const defaultThemeConfig: { [x: string]: ThemeConfig } = {
     name: 'Arc',
     colors: {
       types: {
-        BOOLEAN: '',
         CLIP: '#eacb8b',
         CLIP_VISION: '#A8DADC',
         CLIP_VISION_OUTPUT: '#ad7452',
         CONDITIONING: '#cf876f',
         CONTROL_NET: '#00d78d',
         CONTROL_NET_WEIGHTS: '',
-        FLOAT: '',
-        GLIGEN: '',
         IMAGE: '#80a1c0',
-        IMAGEUPLOAD: '',
-        INT: '',
         LATENT: '#b38ead',
-        LATENT_KEYFRAME: '',
         MASK: '#a3bd8d',
         MODEL: '#8978a7',
-        SAMPLER: '',
-        SIGMAS: '',
-        STRING: '',
         STYLE_MODEL: '#C2FFAE',
-        T2I_ADAPTER_WEIGHTS: '',
         TAESD: '#DCC274',
-        TIMESTEP_KEYFRAME: '',
-        UPSCALE_MODEL: '',
         VAE: '#be616b',
+        BOOLEAN: '#4CAF50', // green
+        FLOAT: '#FFC107', // amber
+        GLIGEN: '#9E9E9E', // gray
+        INT: '#2196F3', // blue
+        IMAGEUPLOAD: '#FF5722', // deep orange
+        LATENT_KEYFRAME: '#FFEB3B', // yellow
+        SAMPLER: '#FF9800', // orange
+        SIGMAS: '#607D8B', // blue-gray
+        STRING: '#9C27B0', // purple
+        T2I_ADAPTER_WEIGHTS: '#FFEB3B', // yellow
+        TIMESTEP_KEYFRAME: '#FFC107', // amber
+        UPSCALE_MODEL: '#4CAF50', // green
         DEFAULT: '#04f8b0'
       },
       appearance: {
@@ -222,31 +237,30 @@ export const defaultThemeConfig: { [x: string]: ThemeConfig } = {
     name: 'Nord',
     colors: {
       types: {
-        BOOLEAN: '',
         CLIP: '#eacb8b',
         CLIP_VISION: '#A8DADC',
         CLIP_VISION_OUTPUT: '#ad7452',
         CONDITIONING: '#cf876f',
         CONTROL_NET: '#00d78d',
-        CONTROL_NET_WEIGHTS: '',
-        FLOAT: '',
-        GLIGEN: '',
         IMAGE: '#80a1c0',
-        IMAGEUPLOAD: '',
-        INT: '',
         LATENT: '#b38ead',
-        LATENT_KEYFRAME: '',
         MASK: '#a3bd8d',
         MODEL: '#8978a7',
-        SAMPLER: '',
-        SIGMAS: '',
-        STRING: '',
         STYLE_MODEL: '#C2FFAE',
-        T2I_ADAPTER_WEIGHTS: '',
         TAESD: '#DCC274',
-        TIMESTEP_KEYFRAME: '',
-        UPSCALE_MODEL: '',
         VAE: '#be616b',
+        BOOLEAN: '#4CAF50', // lush green
+        FLOAT: '#FFC107', // goldenrod
+        GLIGEN: '#9E9E9E', // slate gray
+        INT: '#2196F3', // cerulean blue
+        IMAGEUPLOAD: '#FF5722', // tangerine orange
+        LATENT_KEYFRAME: '#FFEB3B', // lemon yellow
+        SAMPLER: '#FF9800', // pumpkin orange
+        SIGMAS: '#607D8B', // steel blue
+        STRING: '#9C27B0', // royal purple
+        T2I_ADAPTER_WEIGHTS: '#FF5722', // tangerine orange
+        TIMESTEP_KEYFRAME: '#FFC107', // goldenrod
+        UPSCALE_MODEL: '#4CAF50', // lush green
         DEFAULT: '#f10404'
       },
       appearance: {
@@ -284,31 +298,30 @@ export const defaultThemeConfig: { [x: string]: ThemeConfig } = {
     name: 'Github',
     colors: {
       types: {
-        BOOLEAN: '',
         CLIP: '#eacb8b',
         CLIP_VISION: '#A8DADC',
         CLIP_VISION_OUTPUT: '#ad7452',
         CONDITIONING: '#cf876f',
         CONTROL_NET: '#00d78d',
-        CONTROL_NET_WEIGHTS: '',
-        FLOAT: '',
-        GLIGEN: '',
         IMAGE: '#80a1c0',
-        IMAGEUPLOAD: '',
-        INT: '',
         LATENT: '#b38ead',
-        LATENT_KEYFRAME: '',
         MASK: '#a3bd8d',
         MODEL: '#8978a7',
-        SAMPLER: '',
-        SIGMAS: '',
-        STRING: '',
         STYLE_MODEL: '#C2FFAE',
-        T2I_ADAPTER_WEIGHTS: '',
         TAESD: '#DCC274',
-        TIMESTEP_KEYFRAME: '',
-        UPSCALE_MODEL: '',
         VAE: '#be616b',
+        BOOLEAN: '#66BB6A', // soft green
+        FLOAT: '#FF9800', // vivid orange
+        GLIGEN: '#757575', // medium gray
+        INT: '#1976D2', // deep blue
+        IMAGEUPLOAD: '#F06292', // pink
+        LATENT_KEYFRAME: '#FFD54F', // golden yellow
+        SAMPLER: '#FFB74D', // warm amber
+        SIGMAS: '#455A64', // dark slate gray
+        STRING: '#9C27B0', // royal purple
+        T2I_ADAPTER_WEIGHTS: '#FF9800', // vivid orange
+        TIMESTEP_KEYFRAME: '#FF5722', // vibrant red-orange
+        UPSCALE_MODEL: '#66BB6A', // soft green
         DEFAULT: '#3ae702'
       },
       appearance: {

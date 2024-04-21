@@ -9,13 +9,12 @@ import {
   useRef,
   useState
 } from 'react';
-import { ContextMenuProps, IMenuType, NodeState } from '../lib/types';
+import { ContextMenuProps, IMenuType, NodeData } from '../lib/types';
 import { ContextMenu } from '../components/prototypes/ContextMenuTemplate';
 import { Node } from 'reactflow';
 import SearchWidget from '../components/SearchWidget';
-import NodeDefs from '../../node_info.json';
-import { categorizeObjects } from '../lib/utils/ui';
-import { getNodeMenuItems } from '../lib/menu';
+import { getContextMenuItems, getNodeMenuItems } from '../lib/menu';
+import { useFlowStore } from '../store/flow';
 
 interface IContextMenu {
   onNodeContextMenu: (event: ReactMouseEvent, node: Node) => void;
@@ -36,6 +35,8 @@ export function useContextMenu() {
 }
 
 export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode }>) {
+  const state = useFlowStore();
+
   const [menuProps, setMenuProps] = useState<ContextMenuProps | null>(null);
   const [nodeId, setNodeId] = useState<string | undefined>(undefined);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -96,7 +97,7 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
   const onContextMenu = useCallback(
     (event: ReactMouseEvent | MouseEvent | Event) => {
       event.preventDefault();
-      const menuData = getMenuData(event as ReactMouseEvent, categorizeObjects(NodeDefs));
+      const menuData = getMenuData(event, getContextMenuItems());
       if (!menuData) return;
 
       console.log('from pane context menu');
@@ -106,11 +107,9 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
   );
 
   const onNodeContextMenu = useCallback(
-    (event: ReactMouseEvent, node: Node<NodeState>) => {
+    (event: ReactMouseEvent, node: Node<NodeData>) => {
       event.preventDefault();
       event.stopPropagation();
-
-      console.log('Dddd', node);
 
       const menuData = getMenuData(event, getNodeMenuItems(node));
       if (!menuData) return;

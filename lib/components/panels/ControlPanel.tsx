@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import Draggable from 'react-draggable';
 import { useSettings } from '../../contexts/settings';
-import { usePrompt } from '../../lib/hooks/usePrompt';
+import { useWorkflow } from '../../lib/hooks/useWorkflow';
 import ExtraOptions from './menu/ExtraOptions';
 import SaveButton from './menu/SaveButton';
 import DevSaveButton from './menu/DevSaveButton';
@@ -10,8 +10,9 @@ import LoadDefaultButton from './menu/LoadDefaultButton';
 import { ComfyPromptStatus } from '../../types/comfy';
 import { toggleSwitch } from '../../lib/utils/ui';
 import { ComfyList } from '../ComfyList';
-import { RFState, useFlowStore } from '../../store/flow';
+import { useFlowStore } from '../../store/flow';
 import { loadLegacyWorkflow } from '../../lib/handlers/loadLegacy';
+import { useGraph } from '../../lib/hooks/useGraph';
 
 type AutoQueueMode =
   | {
@@ -22,18 +23,11 @@ type AutoQueueMode =
   | string
   | null;
 
-const selector = (state: RFState) => ({
-  nodes: state.nodes,
-  edges: state.edges,
-  setNodes: state.setNodes,
-  setEdges: state.setEdges
-});
-
 const ControlPanel = () => {
-  const { nodes, edges, setNodes, setEdges } = useFlowStore(selector);
-
   const { addSetting, show: showSettings } = useSettings();
-  const { queuePrompt } = usePrompt();
+  const { nodeDefs } = useFlowStore((state) => ({ nodeDefs: state.nodeDefs }));
+  const { submitWorkflow } = useWorkflow();
+  const { loadSerializedGraph } = useGraph();
   const lastExecutionError = false;
 
   const [batchCount, setBatchCount] = useState(1);
@@ -132,7 +126,7 @@ const ControlPanel = () => {
     //   if (autoQueueMode === 'change' && autoQueueEnabled) {
     //     if (lastQueueSize === 0) {
     //       setGraphHasChanged(false);
-    //       queuePrompt(0);
+    //       submitWorkflow(0);
     //     } else {
     //       setGraphHasChanged(true);
     //     }
@@ -166,7 +160,7 @@ const ControlPanel = () => {
         (autoQueueMode === 'instant' || graphHasChanged) &&
         !lastExecutionError
       ) {
-        queuePrompt();
+        submitWorkflow();
         status.exec_info.queue_remaining += batchCount;
         setGraphHasChanged(false);
       }
@@ -223,10 +217,7 @@ const ControlPanel = () => {
           reader.onload = (e) => {
             const contents = e.target?.result;
             if (typeof contents === 'string') {
-              const { edges, nodes } = JSON.parse(contents);
-
-              setNodes(nodes);
-              setEdges(edges);
+              loadSerializedGraph(JSON.parse(contents));
             }
           };
           reader.readAsText(file);
@@ -251,10 +242,7 @@ const ControlPanel = () => {
             const contents = e.target?.result;
             if (typeof contents === 'string') {
               const graph = JSON.parse(contents);
-              const { edges, nodes } = loadLegacyWorkflow(graph);
-
-              setNodes(nodes);
-              setEdges(edges);
+              loadSerializedGraph(loadLegacyWorkflow(graph, nodeDefs));
             }
           };
           reader.readAsText(file);
@@ -297,7 +285,7 @@ const ControlPanel = () => {
             </button>
           </div>
 
-          <button id="queue-button" className="comfy-queue-btn" onClick={queuePrompt}>
+          <button id="queue-button" className="comfy-queue-btn" onClick={submitWorkflow}>
             Run All
           </button>
 
@@ -311,7 +299,7 @@ const ControlPanel = () => {
           />
 
           <div className="comfy-menu-btns">
-            <button id="queue-front-button" onClick={queuePrompt}>
+            <button id="queue-front-button" onClick={submitWorkflow}>
               Queue Front
             </button>
 

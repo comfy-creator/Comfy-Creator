@@ -1,45 +1,30 @@
-import {
-  EdgeType,
-  InputDef,
-  InputHandle,
-  NodeDefinition,
-  NodeState,
-  NodeStateConfig,
-  WidgetState
-} from '../types.ts';
-import { CONVERTABLE_WIDGET_TYPES, WIDGET_TYPES } from '../config/constants.ts';
-import { Node } from 'reactflow';
+import { EdgeType, InputData, InputDef, NodeData, NodeDefinition } from '../types.ts';
+import { WIDGET_TYPES } from '../config/constants.ts';
 import { useFlowStore } from '../../store/flow.ts';
-import { createValueControlWidget, isSeedWidget } from './widgets.ts';
+import { isSeedInput } from './widgets.ts';
+import { Node } from 'reactflow';
 
-export function computeInitialNodeState(
-  def: NodeDefinition,
-  widgetValues: Record<string, any>,
-  config: NodeStateConfig
-) {
+export function computeInitialNodeData(def: NodeDefinition, widgetValues: Record<string, any>) {
   const { display_name: name, inputs, outputs } = def;
-  const state: NodeState = {
-    name,
-    inputs: [],
-    outputs: [],
-    widgets: {},
-    config: {
-      ...config,
-      isOutputNode: def.output_node
-    }
-  };
+  const state: NodeData = { name, inputs: [], outputs: [] };
 
-  inputs.forEach((input) => {
+  for (const input of inputs) {
     const isWidget = isWidgetInput(input.type);
+
     if (isWidget) {
-      const widget = { ...widgetStateFromDef(input, widgetValues) };
-      state.widgets[input.name] = widget;
+      const inputData: InputData = inputDataFromDef(input, widgetValues);
+      state.inputs = [...state.inputs, inputData];
 
-      if (isSeedWidget(input)) {
-        const afterGenWidget = createValueControlWidget({ widget });
-
-        widget.linkedWidgets = [afterGenWidget.name];
-        state.widgets[afterGenWidget.name] = afterGenWidget;
+      if (isSeedInput(input)) {
+        // const afterGenWidget = createValueControlWidget({ widget });
+        // state.widgets[input.name] = {
+        //   type: 'GROUP',
+        //   name: input.name,
+        //   widgets: [widget, afterGenWidget]
+        // };
+        // const afterGenWidget = createValueControlWidget({ widget });
+        // widget.linkedWidgets = [afterGenWidget.name];
+        // state.widgets[afterGenWidget.name] = afterGenWidget;
       }
     } else {
       if (input.type === 'IMAGE') {
@@ -48,34 +33,26 @@ export function computeInitialNodeState(
         }
 
         const data = { name: 'image', type: 'IMAGE' } as const;
-        state.widgets['image'] = {
-          ...data,
-          serialize: false,
-          definition: data
-        };
+        state.inputs = [...state.inputs, { ...data, serialize: false, def: data }];
       }
 
-      state.inputs.push({
-        name: input.name,
-        type: input.type,
-        isHighlighted: false,
-        optional: input.optional
-      });
+      state.inputs = [
+        ...state.inputs,
+        {
+          name: input.name,
+          type: input.type,
+          isHighlighted: false,
+          optional: input.optional
+        }
+      ];
     }
-  });
+  }
 
-  outputs.forEach((output) => {
-    state.outputs.push({
-      name: output.name,
-      type: output.type,
-      isHighlighted: false
-    });
-  });
-
+  state.outputs = outputs.map(({ name, type }) => ({ name, type, isHighlighted: false }));
   return state;
 }
 
-export function widgetStateFromDef(def: InputDef, values: Record<string, any>): WidgetState {
+export function inputDataFromDef(def: InputDef, values: Record<string, any>): InputData {
   const state = { name: def.name, optional: def.optional };
   const value = values[def.name];
 
@@ -143,142 +120,76 @@ export function widgetStateFromDef(def: InputDef, values: Record<string, any>): 
 
 export const isWidgetInput = (type: EdgeType) => WIDGET_TYPES.includes(type);
 
-const isConvertableWidget = (widget: WidgetState) => CONVERTABLE_WIDGET_TYPES.includes(widget.type);
+export const disconnectPrimitiveNode = (id: string) => {
+  const { nodes, updateInputData, updateNodeData } = useFlowStore.getState();
+  const primitive = nodes.find((node) => node.id === id);
+  if (primitive?.type !== 'PrimitiveNode') return;
 
-export function hideNodeWidget(node: Node<NodeState>, name: string) {
-  const widget = node.data.widgets[name];
-  if (!widget) {
-    throw new Error(`Widget ${name} not found in Node "${node.id}"`);
-  }
+  const node = nodes.find((node) => node.id === primitive.data.targetNodeId);
+  if (!node) return;
 
-  // already hidden?
-  if (widget.hidden) return;
-
-  const { updateWidgetState } = useFlowStore.getState();
-  updateWidgetState({
-    name,
-    nodeId: node.id,
-    data: { hidden: true }
-  });
-
-  console.log(useFlowStore.getState().nodes);
-}
-
-export function showNodeWidget(node: Node<NodeState>, name: string) {
-  const widget = node.data.widgets[name];
-  if (!widget) {
-    throw new Error(`Widget ${name} not found in Node "${node.id}"`);
-  }
-
-  // not already hidden?
-  if (!widget.hidden) return;
-
-  const { updateWidgetState } = useFlowStore.getState();
-  updateWidgetState({
-    name,
-    nodeId: node.id,
-    data: { hidden: false }
-  });
-}
-
-export function convertNodeWidgetToInput(node: Node<NodeState>, name: string) {
-  if (!node.type) return;
-
-  const widget = node.data.widgets[name];
-  if (!widget) {
-    throw new Error(`Widget ${name} not found in Node "${node.id}"`);
-  }
-
-  if (!isConvertableWidget(widget)) {
-    throw new Error(`Widget ${widget.type} cannot be converted to input`);
-  }
-
-  const { nodeDefs } = useFlowStore.getState();
-  const definition = nodeDefs[node.type]?.inputs.find((input) => input.name === name);
-  if (!definition) {
-    throw new Error(`No definition found for widget ${widget.type} in ${node.type}`);
-  }
-
-  return {
-    type: '*',
-    name: widget.name,
-    optional: widget.optional,
-    widget: { ...widget, definition }
-  } as InputHandle;
-}
-
-export function convertNodeInputToWidget(node: Node<NodeState>, slot: number) {
-  if (!node.type) return;
-
-  const input = node.data.inputs[slot];
-  if (!input) {
-    throw new Error(`Input Slot ${slot} not found in Node "${node.id}"`);
-  }
-
-  const { nodes } = useFlowStore.getState();
-
-  let widget;
-  if (input.primitiveNodeId) {
-    const node = nodes.find((node) => node.id === input.primitiveNodeId);
-    if (node) {
-      widget = node.data.widgets[input.name];
-    }
-  }
-
-  if (!widget && input.widget) {
-    widget = input.widget;
-  } else {
-    throw new Error(`Input Slot ${slot} does not contain a widget or a primitive node`);
-  }
-
-  return widget;
-}
-
-interface ExchangeInputForWidgetArgs {
-  inputSlot: number;
-  sourceNode: Node<NodeState>;
-  targetNode: Node<NodeState>;
-}
-
-export function exchangeInputForWidget({
-  inputSlot,
-  sourceNode,
-  targetNode
-}: ExchangeInputForWidgetArgs) {
-  const { updateNodeState } = useFlowStore.getState();
-  const widget = convertNodeInputToWidget(sourceNode, inputSlot);
+  const widget = Object.values(node.data.widgets).find((w) => w.primitiveNodeId === id);
   if (!widget) return;
 
-  sourceNode.data.inputs = sourceNode.data.inputs.map((input) => {
-    if (input.name === widget.name) {
-      return {
-        ...input,
-        type: widget.type,
-        primitiveNodeId: targetNode.id
-      };
+  const primitiveWidget = primitive.data.widgets[widget.name];
+  if (widget?.type !== primitiveWidget?.type) return;
+
+  const updatedInputData = {
+    ...widget,
+    ...primitiveWidget,
+    primitiveNodeId: null
+  } as InputData;
+
+  updateNodeData(primitive.id, { targetNodeId: null });
+
+  updateInputData({
+    nodeId: node.id,
+    name: widget.name,
+    data: updatedInputData
+  });
+};
+
+export function addWidgetToPrimitiveNode(
+  primitiveNodeId: string,
+  updateNodeData: (nodeId: string, newState: Partial<NodeData>) => void,
+  { nodeId, widgetName }: { nodeId: string; widgetName: string }
+) {
+  const { nodeDefs, nodes, updateInputData } = useFlowStore.getState();
+  const primitive = nodes.find((node) => node.id === primitiveNodeId);
+  if (primitive?.type !== 'PrimitiveNode') return;
+  if (Object.keys(primitive.data.widgets).length > 0) return;
+
+  const node = nodes.find((node) => node.id === nodeId);
+  if (!node) return;
+
+  const widget = node.data.widgets[widgetName];
+  const definition = nodeDefs[node.type!]?.inputs?.find?.((input) => input.name == widget?.name);
+  if (!widget || !definition) return;
+
+  const outputState = { name: widget.type, type: widget.type };
+  const inputData = { ...widget, definition };
+  updateNodeData(primitive.id, {
+    targetNodeId: nodeId,
+    outputs: [outputState],
+    widgets: { [widget.name]: inputData }
+  });
+
+  updateInputData({
+    nodeId,
+    name: widgetName,
+    data: {
+      ...widget,
+      primitiveNodeId
     }
-
-    return input;
   });
 
-  // hide widget from source node (or should we remove it?)
-  updateNodeState(sourceNode.id, sourceNode.data);
-
-  // add widget to target node
-  const output = { name: widget.type, type: widget.type };
-  updateNodeState(targetNode.id, {
-    widgets: {
-      [widget.name]: {
-        ...widget,
-        hidden: false
-      }
-    },
-    outputs: [output]
-  });
+  return outputState;
 }
 
-export function removeNodeInput(node: Node<NodeState>, slot: number) {
-  const { updateNodeState } = useFlowStore.getState();
-  node.data.inputs = node.data.inputs.filter((_, i) => i !== slot);
-  updateNodeState(node.id, node.data);
+export function isWidgetHandleId(id: string) {
+  return id.split('::')[1] === 'widget';
+}
+
+export function isPrimitiveNode(node: Node<NodeData>) {
+  return node.type === 'PrimitiveNode';
 }

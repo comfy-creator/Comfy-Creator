@@ -16,7 +16,7 @@ export function createEdgeFromTemplate({ type }: { type: string }) {
     const { getActiveTheme } = useSettingsStore();
     const theme = getActiveTheme();
     const strokeColor =
-      theme.colors.types[type as keyof typeof theme.colors.types] ?? theme.colors.types['DEFAULT'];
+      theme.colors.types[type as keyof typeof theme.colors.types] || theme.colors.types['DEFAULT'];
 
     const params = { sourceX, sourceY, targetX, targetY };
     const [edgePath] = getBezierPath(params);

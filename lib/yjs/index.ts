@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
 import { YjsProvider } from './client';
-import { NodeState } from '../lib/types.ts';
+import { NodeData } from '../lib/types.ts';
 import type { Edge, Node } from 'reactflow';
 import { ComfyLocalStorage } from '../lib/localStorage.ts';
 
@@ -29,7 +29,7 @@ export const yjsProvider = new YjsProvider(
 );
 
 // TO DO: these will have to be recreated when we switch graphs-ids
-const yNodes = yjsProvider.doc.getMap<Node<NodeState>>('nodes');
+const yNodes = yjsProvider.doc.getMap<Node<NodeData>>('nodes');
 const yEdges = yjsProvider.doc.getMap<Edge>('edges');
 
 // TO DO: we may need to specify `trackedOrigins` ?

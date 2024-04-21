@@ -27,14 +27,8 @@ import ReactFlow, {
 import { useContextMenu } from '../contexts/contextmenu';
 import ControlPanel from './panels/ControlPanel';
 import { RFState, useFlowStore } from '../store/flow';
-import { NodeState } from '../lib/types';
-import {
-  PreviewImage,
-  PreviewVideo,
-  PrimitiveNode,
-  RerouteNode,
-  transformNodeDefs
-} from '../lib/nodedefs';
+import { NodeData } from '../lib/types';
+import { RerouteNode } from '../lib/nodedefs';
 import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../lib/handlers/dragDrop';
 import { ConnectionLine } from './ConnectionLIne';
@@ -50,8 +44,9 @@ import { useSettingsStore } from '../store/settings';
 import { defaultThemeConfig } from '../lib/config/themes';
 import { colorSchemeSettings } from '../lib/settings';
 import { useApiContext } from '../contexts/api';
-import { useFlow } from '../lib/hooks/useFlow';
 import ImageFeedDrawer from './Drawer/ImageFeedDrawer';
+import { useGraph } from '../lib/hooks/useGraph';
+import { isWidgetHandleId } from '../lib/utils/node';
 
 const selector = (state: RFState) => ({
   panOnDrag: state.panOnDrag,
@@ -63,10 +58,10 @@ const selector = (state: RFState) => ({
   setNodes: state.setNodes,
   setEdges: state.setEdges,
   nodeComponents: state.nodeComponents,
-  addNodeDefs: state.addNodeDefs,
+  loadNodeDefsFromApi: state.loadNodeDefsFromApi,
   nodeDefs: state.nodeDefs,
   addNode: state.addNode,
-  updateWidgetState: state.updateWidgetState,
+  updateInputData: state.updateInputData,
   hotKeysShortcut: state.hotKeysShortcut,
   hotKeysHandlers: state.hotKeysHandlers,
   addHotKeysShortcut: state.addHotKeysShortcut,
@@ -91,7 +86,7 @@ export function MainFlow() {
     setNodes,
     setEdges,
     nodeComponents,
-    addNodeDefs,
+    loadNodeDefsFromApi,
     addNode,
     hotKeysShortcut,
     hotKeysHandlers,
@@ -101,30 +96,19 @@ export function MainFlow() {
     instance,
     setInstance,
     execution,
-    updateWidgetState
+    updateInputData
   } = useFlowStore(selector);
 
-  const { getNodes, getEdges, getViewport, fitView } = useReactFlow<NodeState, string>();
+  const { getNodes, getEdges, getViewport, fitView } = useReactFlow<NodeData, string>();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
   const { loadCurrentSettings, addSetting } = useSettings();
   const { getNodeDefs, makeServerURL } = useApiContext();
-  const { saveFlow, loadFlow } = useFlow();
+  const { saveSerializedGraph, loadSerializedGraph } = useGraph();
   const viewport = getViewport();
 
   useEffect(() => {
-    getNodeDefs()
-      .then((defs) => {
-        addNodeDefs({
-          PreviewImage,
-          PreviewVideo,
-          RerouteNode,
-          PrimitiveNode,
-          ...transformNodeDefs(defs)
-        });
-
-        loadFlow();
-      })
-      .catch(console.error);
+    loadNodeDefsFromApi(getNodeDefs);
+    loadSerializedGraph();
   }, []);
 
   useEffect(() => {
@@ -135,7 +119,7 @@ export function MainFlow() {
     const { images } = execution.output;
 
     const fileView = API_URL.VIEW_FILE({ ...images?.[0] });
-    updateWidgetState({
+    updateInputData({
       name: 'image',
       nodeId: node.id,
       data: { value: makeServerURL(fileView) }
@@ -165,7 +149,8 @@ export function MainFlow() {
         edges: edges.filter(Boolean)
       };
 
-      saveFlow(flow);
+      saveSerializedGraph(flow);
+      console.log('Graph saved to local storage');
     }
   }, [nodes, edges, viewport]);
 
@@ -173,14 +158,16 @@ export function MainFlow() {
   // so we can auto-spawn a compatible node for that edge
   const onConnectEnd = useCallback(
     // ReactMouseEvent | TouchEvent instead ?
-    (event: Event) => {
-      if (event.target && event.target.className !== 'flow_input') {
-        // TODO: this logic may be wrong here? We're mixing react-events with native-events!
-        onContextMenu(event);
-      }
+    (event: MouseEvent | globalThis.TouchEvent) => {
+      // console.log(event);
+      // if (event.target && event.target.className !== 'flow_input') {
+      // TODO: this logic may be wrong here? We're mixing react-events with native-events!
+      // onContextMenu(event);
+      // }
 
+      const { nodes } = useFlowStore.getState();
       const newNodes = nodes.map((node) => {
-        const outputs = Object.entries(node.data.outputs).map(([_, output]) => ({
+        const outputs = node.data.outputs.map((output) => ({
           ...output,
           isHighlighted: false
         }));
@@ -195,13 +182,14 @@ export function MainFlow() {
           data: { ...node.data, outputs, inputs }
         };
       });
+
       setNodes(newNodes);
     },
-    [nodes, setNodes, onContextMenu]
+    [nodes]
   );
 
   const onConnectStart: OnConnectStart = useCallback(
-    (event: ReactMouseEvent | TouchEvent, params: OnConnectStartParams) => {
+    (_: ReactMouseEvent | TouchEvent, params: OnConnectStartParams) => {
       if (!params.handleId) return;
       const [_category, _index, type] = params.handleId.split(HANDLE_ID_DELIMITER);
       if (type) {
@@ -248,11 +236,6 @@ export function MainFlow() {
     [nodes, setCurrentConnectionLineType, setNodes]
   );
 
-  // Store graph state to local storage
-  const serializeFlow = useCallback(() => {
-    if (instance) saveFlow();
-  }, [instance]);
-
   // Validation connection for edge-compatability and circular loops
   const isValidConnection = useCallback(
     (connection: Connection): boolean => {
@@ -261,6 +244,7 @@ export function MainFlow() {
       const edges = getEdges();
 
       if (sourceHandle === null || targetHandle === null) return false;
+      if (isWidgetHandleId(targetHandle)) return true;
 
       // Find corresponding nodes
       const sourceNode = nodes.find((node) => node.id === source);
@@ -315,10 +299,10 @@ export function MainFlow() {
   // TO DO: this is aggressive; do not change zoom levels. We do not need to have
   // all nodes on screen at once; we merely do not want to leave too far out
   const handleMoveEnd = useCallback(
-    (event: MouseEvent | globalThis.TouchEvent) => {
+    (_: MouseEvent | globalThis.TouchEvent) => {
       const bounds = getNodesBounds(nodes);
       const viewPort = getViewport();
-      //
+
       const boundViewPort = getViewportForBounds(
         bounds,
         menuRef.current?.clientWidth || 1200,
@@ -326,7 +310,7 @@ export function MainFlow() {
         0.7,
         viewPort.zoom
       );
-      //
+
       if (
         viewPort.x > (menuRef.current?.clientWidth || 0) ||
         viewPort.y > (menuRef.current?.clientHeight || 0)

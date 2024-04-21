@@ -1,7 +1,7 @@
 import { ChangeEvent } from 'react';
 
 interface InputDialogProps {
-  value: string;
+  value?: string;
   hideDialog: () => void;
   position?: { x: number; y: number };
   onChange?: (e: ChangeEvent<HTMLInputElement>) => void;

@@ -1,44 +1,6 @@
 import { ComponentType, type MouseEvent as ReactMouseEvent, ReactNode } from 'react';
 import { EdgeProps, NodeProps, XYPosition } from 'reactflow';
 
-// This type is outdated
-// export type NodeData = {
-//   label: string;
-//   function: string;
-//   category: string;
-//   inputs: {
-//     required: Record<string, InputDef>;
-//     optional?: Record<string, InputDef>;
-//   };
-//   outputs: string[];
-// };
-
-export type InputSpec = {
-  default?: number | string;
-  min?: number;
-  max?: number;
-  step?: number;
-  round?: number | boolean;
-  display?: 'color'; // what is this?
-  multiline?: boolean;
-  image_upload?: boolean; // dumb
-};
-
-type EdgeValueSpec = undefined | string[] | InputSpec;
-
-// TO DO: when the fuck is this a 'string[]' and why? Combo type?
-// I removed 'string[]' for now
-// export type InputDef = {
-//   defaultValue?: number | string;
-//   min?: number;
-//   max?: number;
-//   step?: number;
-//   round?: number | boolean;
-//   display?: 'color'; // what is this?
-//   multiline?: boolean;
-//   image_upload?: boolean; // dumb
-// };
-
 export type EdgeType =
   | 'BOOLEAN'
   | 'INT'
@@ -62,7 +24,8 @@ export type EdgeType =
   | 'VIDEO'
   | 'ENUM'
   | 'TAESD'
-  | '*';
+  | '*'
+  | 'GROUP';
 
 // =========== Input Definitions ===========
 // Provides constraints on top of state
@@ -173,123 +136,86 @@ export type NodeDefinitions = Record<string, NodeDefinition>;
 export interface AddNodeParams {
   type: string;
   position: XYPosition;
-  config?: NodeStateConfig;
-  inputWidgetValues?: Record<string, any>;
+  defaultValues?: Record<string, any>;
 }
 
 // =========== Input States ===========
 
-export interface BaseInputState {
+export interface BaseInputData<ValueType = undefined, AnotherType = undefined>
+  extends BaseInputDef {
   name: string;
-  type: EdgeType;
-  hidden?: boolean;
-  optional?: boolean;
-  serialize?: boolean;
-  definition?: InputDef;
-  valueControl?: boolean;
+  value?: ValueType;
   isHighlighted?: boolean;
+  primitiveNodeId?: string | null;
   linkedWidgets?: string[]; // array of widget names
 }
 
-export interface OutputHandle {
+export interface OutputData {
   name: string;
   type: EdgeType;
-  hidden?: boolean;
   isHighlighted?: boolean;
 }
 
-export interface InputHandle extends BaseInputState {
-  widget?: WidgetState;
-  primitiveNodeId?: string;
+export type InputHandleData = BaseInputData;
+
+export interface BoolInputData extends BaseInputData<boolean> {}
+
+export interface IntInputData extends BaseInputData<'INT', number> {}
+
+export interface FloatInputData extends BaseInputData<'FLOAT', number> {}
+
+export interface StringInputData extends BaseInputData<'STRING', string> {}
+
+export interface EnumInputData extends BaseInputData<'ENUM', string> {}
+
+export interface GroupInputData extends BaseInputData<'GROUP'> {
+  inputs: InputData[];
 }
 
-export interface BoolInputState extends BaseInputState {
-  type: 'BOOLEAN';
-  value: boolean;
-}
+export interface ImageInputData extends BaseInputData<'IMAGE', string> {}
 
-export interface IntInputState extends BaseInputState {
-  type: 'INT';
-  value: number;
-}
+export interface VideoInputData extends BaseInputData<'VIDEO', string> {}
 
-export interface FloatInputState extends BaseInputState {
-  type: 'FLOAT';
-  value: number;
-}
+export interface PrimitiveInputData extends BaseInputData<any, '*'> {}
 
-export interface StringInputState extends BaseInputState {
-  type: 'STRING';
-  value: string;
-}
-
-export interface EnumInputState extends BaseInputState {
-  type: 'ENUM';
-  value: string;
-}
-
-export interface ImageInputState extends BaseInputState {
-  type: 'IMAGE';
-  value?: string;
-}
-
-export interface VideoInputState extends BaseInputState {
-  type: 'VIDEO';
-  value: { src: string; type: string };
-}
-
-export interface PrimitiveInputState extends BaseInputState {
-  type: '*';
-  value?: undefined
-}
-
-export type WidgetState =
-  | BoolInputState
-  | IntInputState
-  | FloatInputState
-  | StringInputState
-  | EnumInputState
-  | ImageInputState
-  | VideoInputState
-  | PrimitiveInputState;
+export type InputData =
+  | InputHandleData
+  | BoolInputData
+  | IntInputData
+  | FloatInputData
+  | StringInputData
+  | EnumInputData
+  | ImageInputData
+  | VideoInputData
+  | PrimitiveInputData
+  | GroupInputData;
 
 // =========== Entire Node State ===========
 // This is the 'data' type stored inside a node instance
 
-export type NodeState = {
+export type NodeData = {
   readonly name: string;
-  config?: NodeStateConfig;
-  inputs: InputHandle[];
-  outputs: OutputHandle[];
-  widgets: Record<string, WidgetState>;
-};
-
-export type NodeStateConfig = {
-  hideType?: boolean;
-  hideLabel?: boolean;
-  isVirtual?: boolean;
+  inputs: InputData[];
+  outputs: OutputData[];
   isOutputNode?: boolean;
-
-  // Node custom display colors
-  bgColor?: string;
-  textColor?: string;
+  targetNodeId?: string | null;
 };
 
 // =========== Node Types ===========
 // Node-definitions are converted into React components, and then registered with
 // ReactFlow as a 'NodeType'.
 
-export type NodeType = ComponentType<NodeProps<NodeState>>;
+export type NodeType = ComponentType<NodeProps<NodeData>>;
 
 export type NodeTypes = Record<string, NodeType>;
 
-export interface UpdateWidgetStateParams {
+export interface UpdateInputDataParams {
   name: string;
   nodeId: string;
-  data: Partial<WidgetState>;
+  data: Partial<InputData>;
 }
 
-export type UpdateWidgetState = (params: UpdateWidgetStateParams) => void;
+export type UpdateInputData = (params: UpdateInputDataParams) => void;
 
 export interface MenuState {
   items: IMenuType[];
@@ -338,12 +264,12 @@ export interface ComfyError extends Error {
 export type EdgeComponents = Record<string, ComponentType<EdgeProps>>;
 
 export interface IMenuType {
-  disabled?: boolean;
   label: string;
-  hasSubMenu: boolean;
-  node: Record<string, object> | string | null;
-  subMenu: IMenuType[] | null;
   isOpen?: boolean;
+  disabled?: boolean;
+  hasSubMenu: boolean;
+  subMenu: IMenuType[] | null;
+  data: Record<string, any> | null | string;
   onClick?: (event: ReactMouseEvent) => void;
 }
 
@@ -403,8 +329,8 @@ export interface LogEntry {
   timestamp: Date;
 }
 
-export interface AddValueControlWidget {
-  widget: WidgetState;
+export interface AddValueControlInput {
+  input: InputData;
   defaultValue?: string;
   options?: {
     addFilterList?: boolean;

@@ -4,7 +4,7 @@ import { RFState, useFlowStore } from '../../store/flow.ts';
 type TextProps = {
   label: string;
   disabled?: boolean;
-  value: string;
+  value?: string;
   onChange?: (value: string) => void;
 };
 
@@ -24,7 +24,7 @@ export function TextWidget({ disabled, value, onChange }: TextProps) {
       value={inputValue}
       disabled={disabled}
       className={'comfy-multiline-input'}
-      style={{ width: '100%', outline: 'none' }}
+      style={{ width: '100%', outline: 'none', borderRadius: '4px' }}
       onChange={(e) => {
         setInputValue(e.target.value);
         onChange?.(e.target.value);

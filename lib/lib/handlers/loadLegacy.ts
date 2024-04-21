@@ -1,5 +1,12 @@
-import { useFlowStore } from '../../store/flow.ts';
-import { EdgeType, InputDef, InputHandle, NodeState, OutputHandle, WidgetState } from '../types.ts';
+import {
+  EdgeType,
+  InputData,
+  InputDef,
+  InputHandleData,
+  NodeData,
+  NodeDefinition,
+  OutputData
+} from '../types.ts';
 import { Edge, Node } from 'reactflow';
 import { isWidgetInput } from '../utils/node.ts';
 
@@ -65,7 +72,7 @@ function getWidgets(node: LegacyNode, nodeDefs: any) {
     isWidgetInput(input.type === 'COMBO' ? 'ENUM' : input.type)
   );
 
-  const widgets: Record<string, WidgetState> = {};
+  const widgets: Record<string, InputData> = {};
   node.widgets_values?.forEach((value, i) => {
     const def = widgetDefs[i];
     if (isValidWidgetDef(def, i, node.widgets_values)) {
@@ -81,8 +88,8 @@ function getWidgets(node: LegacyNode, nodeDefs: any) {
   return widgets;
 }
 
-function getInputs(node: LegacyNode, widgets: Record<string, WidgetState>) {
-  const inputs: InputHandle[] = [];
+function getInputs(node: LegacyNode, widgets: Record<string, InputData>) {
+  const inputs: InputHandleData[] = [];
   if (node.inputs) {
     node.inputs.forEach((input) => {
       const type = (input.type === 'COMBO' ? 'ENUM' : input.type) as EdgeType;
@@ -101,7 +108,7 @@ function getInputs(node: LegacyNode, widgets: Record<string, WidgetState>) {
 }
 
 function getOutputs(node: LegacyNode) {
-  const outputs: OutputHandle[] = [];
+  const outputs: OutputData[] = [];
   if (node.outputs) {
     node.outputs.forEach((output) => {
       const type = (output.type === 'COMBO' ? 'ENUM' : output.type) as EdgeType;
@@ -112,18 +119,12 @@ function getOutputs(node: LegacyNode) {
   return outputs;
 }
 
-function getNodeState(node: LegacyNode, widgets: Record<string, WidgetState>) {
-  const config: NodeState['config'] = {
-    bgColor: node.bgcolor,
-    textColor: node.color
-  };
-
+function getNodeData(node: LegacyNode, widgets: Record<string, InputData>) {
   const nodeState = {
-    config,
     outputs: getOutputs(node),
     inputs: getInputs(node, widgets),
-    widgets,
-    name: node.type
+    name: node.type,
+    widgets
   };
 
   return nodeState;
@@ -131,9 +132,9 @@ function getNodeState(node: LegacyNode, widgets: Record<string, WidgetState>) {
 
 function getNode(node: LegacyNode, nodeDefs: any) {
   const widgets = getWidgets(node, nodeDefs);
-  const nodeState = getNodeState(node, widgets);
+  const nodeState = getNodeData(node, widgets);
 
-  const nodeElement: Node<NodeState> = {
+  const nodeElement: Node<NodeData> = {
     id: node.id.toString(),
     type: node.type,
     position: {
@@ -172,10 +173,11 @@ function getEdge(link: LegacyLink) {
   return edge;
 }
 
-export function loadLegacyWorkflow(workflow: LegacyWorkflow) {
-  const { nodeDefs } = useFlowStore.getState();
-
-  const nodes: Node<NodeState>[] = [];
+export function loadLegacyWorkflow(
+  workflow: LegacyWorkflow,
+  nodeDefs: Record<string, NodeDefinition>
+) {
+  const nodes: Node<NodeData>[] = [];
   const edges: Edge[] = [];
 
   workflow.nodes.forEach((node) => {

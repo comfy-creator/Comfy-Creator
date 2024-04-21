@@ -3,7 +3,7 @@ import { WidgetBackwardIcon, WidgetForwardIcon } from '../icons/WidgetDirectionI
 
 type EnumProps = {
   label: string;
-  value: string;
+  value?: string;
   disabled?: boolean;
   options: { values: string[] | (() => string[]) };
   onChange?: (value: string) => void;
@@ -65,7 +65,6 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
       <div className={'widget_input'}>
         <div className={'widget_input_item'}>
           <WidgetBackwardIcon onClick={handleBackward} />
-          <span className={'widget_input_item_text'}>{label}</span>
         </div>
 
         <div className={'widget_input_item'} style={{ gap: '5px' }}>

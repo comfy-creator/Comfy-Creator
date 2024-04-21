@@ -1,18 +1,18 @@
 import {
-  AddValueControlWidget,
-  EnumInputState,
+  AddValueControlInput,
+  EnumInputData,
+  InputData,
   InputDef,
   IntInputDef,
-  NodeState,
-  UpdateWidgetState,
-  WidgetState
-} from '../types.ts';
-import { controlAfterGenerateDef } from '../config/constants.ts';
+  NodeData,
+  UpdateInputData
+} from '../types';
+import { controlAfterGenerateDef } from '../config/constants';
 import { Node } from 'reactflow';
 
-export function createValueControlWidgets(args: AddValueControlWidget) {
-  const widgets: Record<string, WidgetState> = {};
-  const { widget, options = {}, defaultValue } = args;
+export function createValueControlInputs(args: AddValueControlInput) {
+  const widgets: Record<string, InputData> = {};
+  const { input, options = {}, defaultValue } = args;
   const name = options.controlAfterGenerateName ?? 'control_after_generate';
 
   widgets[name] = {
@@ -22,10 +22,10 @@ export function createValueControlWidgets(args: AddValueControlWidget) {
     valueControl: true,
     value: defaultValue ?? 'randomize',
     definition: controlAfterGenerateDef
-  } as EnumInputState;
+  } as EnumInputData;
 
-  const isEnumWidget = widget.type === 'ENUM';
-  if (isEnumWidget && options.addFilterList !== false) {
+  const isEnumInput = input.type === 'ENUM';
+  if (isEnumInput && options.addFilterList !== false) {
     widgets['control_filter_list'] = {
       value: '',
       type: 'STRING',
@@ -37,28 +37,29 @@ export function createValueControlWidgets(args: AddValueControlWidget) {
   return widgets;
 }
 
-export function createValueControlWidget(data: AddValueControlWidget) {
-  const widgets = createValueControlWidgets(data);
+export function createValueControlInput(data: AddValueControlInput) {
+  const widgets = createValueControlInputs(data);
   return widgets[Object.keys(widgets)[0]];
 }
 
-export function isSeedWidget(widget: WidgetState | InputDef) {
+export function isSeedInput(widget: InputData | InputDef) {
   return widget.type === 'INT' && widget.name === 'seed';
 }
 
-export function applyWidgetControl(node: Node<NodeState>, updater: UpdateWidgetState) {
+export function applyInputControl(node: Node<NodeData>, updater: UpdateInputData) {
   const {
-    data: { widgets }
+    data: { inputs }
   } = node;
+
   for (const name in widgets) {
     const widget = widgets[name];
-    if (!widget.linkedWidgets || !('value' in widget)) continue;
+    if (!widget.linkedInputs || !('value' in widget)) continue;
 
-    for (const link of widget.linkedWidgets) {
-      const linkedWidget = widgets[link];
-      if (!linkedWidget || linkedWidget.type !== 'ENUM') continue;
+    for (const link of widget.linkedInputs) {
+      const linkedInput = widgets[link];
+      if (!linkedInput || linkedInput.type !== 'ENUM') continue;
 
-      if (linkedWidget.valueControl) {
+      if (linkedInput.valueControl) {
         let value = Number(widget.value);
         if (isNaN(value)) continue;
 
@@ -72,7 +73,7 @@ export function applyWidgetControl(node: Node<NodeState>, updater: UpdateWidgetS
         min = Math.max(-1125899906842624, min);
 
         let range = (max - min) / step;
-        switch (linkedWidget.value) {
+        switch (linkedInput.value) {
           case 'increment':
             value += step;
             break;

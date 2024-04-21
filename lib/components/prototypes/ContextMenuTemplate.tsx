@@ -28,9 +28,7 @@ export function ContextMenu(prps: ContextMenuProps) {
   }, []);
 
   const onItemClick = (e: MouseEvent<HTMLDivElement>, i: number, value: IMenuType) => {
-    // console.log("[onItemClick]", value);
-
-    if (value.hasSubMenu && value.subMenu) {
+    if (value.hasSubMenu && value.subMenu?.length) {
       onSubmenuClick?.(e, prps, menuRef, menuIndex, value.subMenu);
     } else {
       if (value.onClick) {
@@ -64,7 +62,7 @@ export function ContextMenu(prps: ContextMenuProps) {
             <div
               key={index}
               onClick={(e) => (item ? onItemClick(e, index, item) : undefined)}
-              className={`rflmenu-entry submenu ${item === null ? 'separator' : (item.subMenu || item.hasSubMenu) && 'has_submenu'} ${item?.disabled && 'disabled'}`}
+              className={`rflmenu-entry submenu ${item === null ? 'separator' : item.hasSubMenu && 'has_submenu'} ${item?.disabled && 'disabled'}`}
             >
               {item?.label}
             </div>

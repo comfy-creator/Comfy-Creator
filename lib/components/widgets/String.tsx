@@ -4,7 +4,7 @@ import { ChangeEvent, useState } from 'react';
 type StringProps = {
   label: string;
   disabled?: boolean;
-  value: string;
+  value?: string;
   onChange?: (value: string) => void;
 };
 
@@ -24,7 +24,6 @@ export function StringWidget({ label, value, onChange }: StringProps) {
         className={'widget_input'}
         onClick={() => setShowDialog(true)}
       >
-        <span>{label}</span>
         <span>{inputValue}</span>
       </div>
 
