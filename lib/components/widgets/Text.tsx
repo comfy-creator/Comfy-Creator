@@ -23,7 +23,7 @@ export function TextWidget({ disabled, value, onChange }: TextProps) {
       rows={4}
       value={inputValue}
       disabled={disabled}
-      className={'comfy-multiline-input'}
+      className="comfy-multiline-input"
       style={{ width: '100%', outline: 'none', borderRadius: '4px' }}
       onChange={(e) => {
         setInputValue(e.target.value);

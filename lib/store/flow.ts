@@ -30,6 +30,7 @@ import {
   addWidgetToPrimitiveNode,
   computeInitialNodeData,
   disconnectPrimitiveNode,
+  getHandleName,
   isPrimitiveNode,
   isWidgetHandleId
 } from '../lib/utils/node';
@@ -37,7 +38,6 @@ import { createNodeComponentFromDef } from '../components/prototypes/NodeTemplat
 import {
   DEFAULT_HOTKEYS_HANDLERS,
   DEFAULT_SHORTCUT_KEYS,
-  HANDLE_ID_DELIMITER,
   HANDLE_TYPES
 } from '../lib/config/constants';
 import { createEdgeFromTemplate } from '../components/prototypes/EdgeTemplate';
@@ -247,9 +247,9 @@ export const useFlowStore = create<RFState>((set, get) => {
       const source = get().nodes.find((node) => node.id == sourceNodeId);
       const target = get().nodes.find((node) => node.id == targetNodeId);
 
-      if (!source || !target) return;
-      const [_s1, _s2, sourceHandleType] = sourceHandle?.split(HANDLE_ID_DELIMITER) || [];
-      const [_t1, _t2, targetHandleType] = targetHandle?.split(HANDLE_ID_DELIMITER) || [];
+      if (!source || !target || !sourceHandle || !targetHandle) return;
+      const _sourceHandle = source.data.outputs[getHandleName(sourceHandle)];
+      const _targetHandle = target.data.inputs[getHandleName(targetHandle)];
 
       let newConn: (Connection & { type?: string }) | undefined;
 
@@ -257,7 +257,7 @@ export const useFlowStore = create<RFState>((set, get) => {
         if (source.type == 'PrimitiveNode') {
           if (!targetNodeId) return;
 
-          const widgetData = { nodeId: targetNodeId, widgetName: targetHandleType };
+          const widgetData = { nodeId: targetNodeId, widgetName: _targetHandle.type };
           const result = addWidgetToPrimitiveNode(source.id, get().updateNodeData, widgetData);
 
           if (result) {
@@ -270,7 +270,7 @@ export const useFlowStore = create<RFState>((set, get) => {
       } else {
         newConn = {
           ...connection,
-          type: sourceHandleType === targetHandleType ? sourceHandleType : undefined
+          type: _sourceHandle.type === _targetHandle.type ? _sourceHandle.type : undefined
         };
       }
 
@@ -324,7 +324,7 @@ export const useFlowStore = create<RFState>((set, get) => {
       });
     },
 
-    addNode: ({ type, position, defaultValues = {} }: AddNodeParams) => {
+    addNode: ({ type, position, width = 210, defaultValues = {} }: AddNodeParams) => {
       const def = get().nodeDefs[type];
       if (!def) {
         throw new Error(`Node type ${type} does not exist`);
@@ -332,7 +332,7 @@ export const useFlowStore = create<RFState>((set, get) => {
 
       const id = crypto.randomUUID();
       const data = computeInitialNodeData(def, defaultValues);
-      const newNode: Node<NodeData> = { id, type, position, data };
+      const newNode: Node<NodeData> = { id, type, width, position, data };
       nodesMap.set(id, newNode);
     },
 
@@ -385,21 +385,23 @@ export const useFlowStore = create<RFState>((set, get) => {
         return;
       }
 
-      const inputs = [...node.data.inputs];
-      const index = inputs.findIndex((input) => input.name === name);
-      if (index === -1) {
+      const input = node.data.inputs[name];
+      if (!input) {
         console.error(`Input '${name}' not found in node '${nodeId}'.`);
         return;
       }
 
-      const { type, ...input } = inputs[index];
-      inputs[index] = { ...input, ...data, type } as InputData;
+      const { type, ...oldData } = input;
+      const newInput = { ...oldData, ...data, type } as InputData;
 
       nodesMap.set(nodeId, {
         ...node,
         data: {
           ...node.data,
-          inputs
+          inputs: {
+            ...node.data.inputs,
+            [name]: newInput
+          }
         }
       });
     },

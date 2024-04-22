@@ -3,12 +3,12 @@ import {
   EnumInputData,
   InputData,
   InputDef,
-  IntInputDef,
   NodeData,
   UpdateInputData
 } from '../types';
 import { controlAfterGenerateDef } from '../config/constants';
 import { Node } from 'reactflow';
+import { isWidgetType } from './node.ts';
 
 export function createValueControlInputs(args: AddValueControlInput) {
   const widgets: Record<string, InputData> = {};
@@ -51,23 +51,22 @@ export function applyInputControl(node: Node<NodeData>, updater: UpdateInputData
     data: { inputs }
   } = node;
 
-  for (const name in widgets) {
-    const widget = widgets[name];
-    if (!widget.linkedInputs || !('value' in widget)) continue;
+  for (const name in inputs) {
+    const input = inputs[name];
+    if (!isWidgetType(input.type)) continue;
 
-    for (const link of widget.linkedInputs) {
-      const linkedInput = widgets[link];
+    if (!input.linkedInputs || !('value' in input)) continue;
+
+    for (const link of input.linkedInputs) {
+      const linkedInput = Object.values(inputs).find((input) => input.name === link);
       if (!linkedInput || linkedInput.type !== 'ENUM') continue;
 
       if (linkedInput.valueControl) {
-        let value = Number(widget.value);
+        let value = Number(input.value);
         if (isNaN(value)) continue;
 
-        let {
-          min = 0,
-          step = 1,
-          max = 1125899906842624
-        } = (widget.definition as IntInputDef) ?? {};
+        // TODO: Load config from input definition
+        let { min = 0, step = 1, max = 1125899906842624 } = {};
 
         max = Math.min(1125899906842624, max);
         min = Math.max(-1125899906842624, min);
@@ -88,7 +87,7 @@ export function applyInputControl(node: Node<NodeData>, updater: UpdateInputData
         if (value < min) value = min;
         if (value > max) value = max;
 
-        updater({ nodeId: node.id, name, data: { value } });
+        updater({ nodeId: node.id, name: input.name, data: { value } });
       }
     }
   }

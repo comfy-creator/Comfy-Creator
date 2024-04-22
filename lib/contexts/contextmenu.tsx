@@ -97,6 +97,8 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
   const onContextMenu = useCallback(
     (event: ReactMouseEvent | MouseEvent | Event) => {
       event.preventDefault();
+
+      // @ts-expect-error
       const menuData = getMenuData(event, getContextMenuItems());
       if (!menuData) return;
 
