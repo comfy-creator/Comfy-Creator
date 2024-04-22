@@ -110,9 +110,9 @@ const SearchWidget = ({ handleMouseLeave, handleMouseIn, show, widgetRef, props 
     addNode({
       position,
       type: value,
-      inputWidgetValues: {}
+      defaultValues: {}
     });
-  }
+  };
 
   const style = {
     ...(props.top !== undefined ? { top: `${props.top}px` } : {}),

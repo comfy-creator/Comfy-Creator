@@ -32,13 +32,7 @@ import { RerouteNode } from '../lib/nodedefs';
 import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../lib/handlers/dragDrop';
 import { ConnectionLine } from './ConnectionLIne';
-import {
-  API_URL,
-  FLOW_MAX_ZOOM,
-  FLOW_MIN_ZOOM,
-  HANDLE_ID_DELIMITER,
-  HANDLE_TYPES
-} from '../lib/config/constants';
+import { API_URL, FLOW_MAX_ZOOM, FLOW_MIN_ZOOM, HANDLE_TYPES } from '../lib/config/constants';
 import { useSettings } from '../contexts/settings';
 import { useSettingsStore } from '../store/settings';
 import { defaultThemeConfig } from '../lib/config/themes';
@@ -46,7 +40,7 @@ import { colorSchemeSettings } from '../lib/settings';
 import { useApiContext } from '../contexts/api';
 import ImageFeedDrawer from './Drawer/ImageFeedDrawer';
 import { useGraph } from '../lib/hooks/useGraph';
-import { isWidgetHandleId } from '../lib/utils/node';
+import { getHandleName, isWidgetHandleId } from '../lib/utils/node';
 
 const selector = (state: RFState) => ({
   panOnDrag: state.panOnDrag,
@@ -167,15 +161,15 @@ export function MainFlow() {
 
       const { nodes } = useFlowStore.getState();
       const newNodes = nodes.map((node) => {
-        const outputs = node.data.outputs.map((output) => ({
-          ...output,
-          isHighlighted: false
-        }));
+        const outputs = { ...node.data.outputs };
+        for (const name in outputs) {
+          outputs[name].isHighlighted = false;
+        }
 
-        const inputs = Object.entries(node.data.inputs).map(([_, input]) => ({
-          ...input,
-          isHighlighted: false
-        }));
+        const inputs = { ...node.data.inputs };
+        for (const name in inputs) {
+          inputs[name].isHighlighted = false;
+        }
 
         return {
           ...node,
@@ -191,21 +185,30 @@ export function MainFlow() {
   const onConnectStart: OnConnectStart = useCallback(
     (_: ReactMouseEvent | TouchEvent, params: OnConnectStartParams) => {
       if (!params.handleId) return;
-      const [_category, _index, type] = params.handleId.split(HANDLE_ID_DELIMITER);
-      if (type) {
-        setCurrentConnectionLineType(type);
-      }
+      const node = nodes.find((node) => node.id === params.nodeId);
+      if (!node) return;
+
+      console.log('params', params, getHandleName(params.handleId));
+
+      const handle =
+        node.data[params.handleType === 'source' ? 'outputs' : 'inputs'][
+          getHandleName(params.handleId)
+        ];
+      console.log('handle', handle);
+      if (!handle) return;
+
+      setCurrentConnectionLineType(handle.type);
 
       let newNodes = nodes;
 
       if (params.handleType === 'target') {
         newNodes = nodes.map((node) => {
-          const outputs = Object.entries(node.data.outputs).map(([_, output]) => {
-            return {
-              ...output,
-              isHighlighted: output.type !== type
-            };
-          });
+          const outputs = { ...node.data.outputs };
+          for (const name in outputs) {
+            const output = outputs[name];
+            outputs[name].isHighlighted = output.type !== handle.type;
+          }
+
           return {
             ...node,
             data: {
@@ -216,12 +219,12 @@ export function MainFlow() {
         });
       } else if (params.handleType === 'source') {
         newNodes = nodes.map((node) => {
-          const inputs = Object.entries(node.data.inputs).map(([_, input]) => {
-            return {
-              ...input,
-              isHighlighted: input.type !== type
-            };
-          });
+          const inputs = { ...node.data.inputs };
+          for (const name in inputs) {
+            const input = inputs[name];
+            inputs[name].isHighlighted = input.type !== handle.type;
+          }
+
           return {
             ...node,
             data: {
@@ -267,15 +270,16 @@ export function MainFlow() {
 
       if (hasCycle(targetNode)) return false;
 
-      const splitOutputHandle = sourceHandle.split(HANDLE_ID_DELIMITER).slice(-1);
-      const splitInputHandle = targetHandle.split(HANDLE_ID_DELIMITER).slice(-1);
+      const outputHandle = sourceNode.data.outputs[getHandleName(sourceHandle)];
+      const inputHandle = targetNode.data.inputs[getHandleName(targetHandle)];
+      if (!outputHandle || !inputHandle) return false;
 
       if (sourceNode.type === 'RerouteNode' || targetNode.type === 'RerouteNode') {
-        return splitOutputHandle[0] != splitInputHandle[0];
+        return outputHandle.type != inputHandle.type;
       }
 
       // Ensure new connection connects compatible types
-      return splitOutputHandle[0] === splitInputHandle[0];
+      return outputHandle.type === inputHandle.type;
     },
     [getNodes, getEdges]
   );

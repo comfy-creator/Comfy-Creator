@@ -35,10 +35,10 @@ export const ToggleWidget: FC<ToggleProps> = ({ label, disabled, checked, onChan
   };
 
   return (
-    <div className={'widget_box'}>
-      <div className={'widget_input'}>
-        <div className={'widget_input_item'} onClick={handleToggle}>
-          <span className={'widget_input_item_text'}>{String(input)}</span>
+    <div className="widget_box">
+      <div className="widget_input">
+        <div className="widget_input_item" onClick={handleToggle}>
+          <span className="widget_input_item_text">{String(input)}</span>
           <ToggleCircle />
         </div>
       </div>

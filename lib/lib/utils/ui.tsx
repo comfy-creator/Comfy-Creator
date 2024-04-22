@@ -278,6 +278,8 @@ export function categorizeObjects(nodeDefs: NodeDefinitions) {
         label: item.label,
         hasSubMenu: item.hasSubMenu,
         subMenu: item.subMenu ? sort(item.subMenu) : item.subMenu,
+        // TODO: fix this
+        // @ts-expect-error
         onClick: item.data ? (e: MouseEvent) => onNodeClick(e, item.data!) : undefined
       };
     }) as IMenuType[];

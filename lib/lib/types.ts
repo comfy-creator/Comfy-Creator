@@ -135,48 +135,77 @@ export type NodeDefinitions = Record<string, NodeDefinition>;
 
 export interface AddNodeParams {
   type: string;
+  width?: number;
   position: XYPosition;
   defaultValues?: Record<string, any>;
 }
 
 // =========== Input States ===========
 
-export interface BaseInputData<ValueType = undefined, AnotherType = undefined>
-  extends BaseInputDef {
+export interface BaseInputData extends BaseInputDef {
+  value?: any;
   name: string;
-  value?: ValueType;
   isHighlighted?: boolean;
   primitiveNodeId?: string | null;
-  linkedWidgets?: string[]; // array of widget names
+  linkedInputs?: string[]; // array of input names
 }
 
 export interface OutputData {
   name: string;
+  slot: number;
   type: EdgeType;
   isHighlighted?: boolean;
 }
 
-export type InputHandleData = BaseInputData;
+export interface InputHandleData extends BaseInputData {
+  slot: number;
+}
 
-export interface BoolInputData extends BaseInputData<boolean> {}
+export interface BoolInputData extends BaseInputData {
+  type: 'BOOLEAN';
+  value: boolean;
+}
 
-export interface IntInputData extends BaseInputData<'INT', number> {}
+export interface IntInputData extends BaseInputData {
+  type: 'INT';
+  value: number;
+}
 
-export interface FloatInputData extends BaseInputData<'FLOAT', number> {}
+export interface FloatInputData extends BaseInputData {
+  type: 'FLOAT';
+  value: number;
+}
 
-export interface StringInputData extends BaseInputData<'STRING', string> {}
+export interface StringInputData extends BaseInputData {
+  type: 'STRING';
+  value: string;
+}
 
-export interface EnumInputData extends BaseInputData<'ENUM', string> {}
+export interface EnumInputData extends BaseInputData {
+  type: 'ENUM';
+  value: string;
+  // options: string[];
+}
 
-export interface GroupInputData extends BaseInputData<'GROUP'> {
+export interface GroupInputData extends BaseInputData {
+  type: 'GROUP';
   inputs: InputData[];
 }
 
-export interface ImageInputData extends BaseInputData<'IMAGE', string> {}
+export interface ImageInputData extends BaseInputData {
+  type: 'IMAGE';
+  value: string;
+}
 
-export interface VideoInputData extends BaseInputData<'VIDEO', string> {}
+export interface VideoInputData extends BaseInputData {
+  type: 'VIDEO';
+  value: string;
+}
 
-export interface PrimitiveInputData extends BaseInputData<any, '*'> {}
+export interface PrimitiveInputData extends BaseInputData {
+  type: '*';
+  value: any;
+}
 
 export type InputData =
   | InputHandleData
@@ -195,10 +224,10 @@ export type InputData =
 
 export type NodeData = {
   readonly name: string;
-  inputs: InputData[];
-  outputs: OutputData[];
   isOutputNode?: boolean;
   targetNodeId?: string | null;
+  inputs: Record<string, InputData>;
+  outputs: Record<string, OutputData>;
 };
 
 // =========== Node Types ===========
@@ -396,3 +425,5 @@ export interface ViewFileArgs {
   filename: string;
   subfolder?: string;
 }
+
+export type HandleType = 'input' | 'output';

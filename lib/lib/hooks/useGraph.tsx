@@ -3,7 +3,7 @@ import { NodeData } from '../types.ts';
 import { FLOW_KEY } from '../config/constants.ts';
 import { RFState, useFlowStore } from '../../store/flow.ts';
 import { useLogging } from '../../contexts/logging.tsx';
-import { computeInitialNodeData, isWidgetInput } from '../utils/node.ts';
+import { computeInitialNodeData, isWidgetType } from '../utils/node.ts';
 
 const selector = (state: RFState) => ({
   nodeDefs: state.nodeDefs,
@@ -28,7 +28,7 @@ export function useGraph() {
 
       if (!def) return node;
 
-      const widgets = inputs.filter((input) => isWidgetInput(input.type));
+      const widgets = Object.values(inputs).filter((input) => isWidgetType(input.type));
 
       for (const name in widgets) {
         const widget = widgets[name];

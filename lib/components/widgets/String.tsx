@@ -18,12 +18,13 @@ export function StringWidget({ label, value, onChange }: StringProps) {
   };
 
   return (
-    <div className={'widget_box'}>
+    <div className="widget_box">
       <div
+        className="widget_input"
         style={{ padding: '2px 5px' }}
-        className={'widget_input'}
         onClick={() => setShowDialog(true)}
       >
+        <span>{label}</span>
         <span>{inputValue}</span>
       </div>
 

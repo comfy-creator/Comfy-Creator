@@ -1,16 +1,13 @@
 import React, { ComponentType, ReactNode, useEffect, useRef, useState } from 'react';
 import {
-  BoolInputData,
-  EnumInputData,
   EnumInputDef,
   ImageInputData,
   InputData,
   InputDef,
-  IntInputData,
+  InputHandleData,
   NodeData,
   NodeDefinition,
   OutputData,
-  StringInputData,
   StringInputDef,
   ThemeConfig,
   UpdateInputData
@@ -28,7 +25,7 @@ import { useFlowStore } from '../../store/flow.ts';
 import { ProgressBar } from '../ProgressBar.tsx';
 import { ChevronDown } from '../icons/ChevronDown.tsx';
 import { ChevronUp } from '../icons/ChevronUp.tsx';
-import { isWidgetInput } from '../../lib/utils/node.ts';
+import { isWidgetType, makeHandleId } from '../../lib/utils/node.ts';
 
 const createWidgetFromSpec = (
   def: InputDef,
@@ -44,7 +41,7 @@ const createWidgetFromSpec = (
       return (
         <ToggleWidget
           {...commonProps}
-          checked={(data as BoolInputData).value || false}
+          checked={data.value || false}
           onChange={(checked: boolean) => updateInputData({ value: checked })}
         />
       );
@@ -54,7 +51,7 @@ const createWidgetFromSpec = (
       return (
         <NumberWidget
           {...commonProps}
-          value={(data as IntInputData).value}
+          value={data.value}
           onChange={(value: number) => updateInputData({ value })}
         />
       );
@@ -64,7 +61,7 @@ const createWidgetFromSpec = (
         return (
           <TextWidget
             {...commonProps}
-            value={(data as StringInputData).value}
+            value={data.value}
             onChange={(value: string) => updateInputData({ value })}
           />
         );
@@ -72,7 +69,7 @@ const createWidgetFromSpec = (
       return (
         <StringWidget
           {...commonProps}
-          value={(data as StringInputData).value}
+          value={data.value}
           onChange={(value: string) => updateInputData({ value })}
         />
       );
@@ -81,9 +78,10 @@ const createWidgetFromSpec = (
       return (
         <EnumWidget
           {...commonProps}
-          value={(data as EnumInputData).value}
+          value={data.value}
           onChange={(value: string) => updateInputData({ value })}
-          options={{ values: (def as EnumInputDef).options }}
+          // TODO: add options
+          options={{ values: [] }}
           multiSelect={(def as EnumInputDef).multiSelect}
         />
       );
@@ -103,7 +101,7 @@ export const createNodeComponentFromDef = (
   nodeDef: NodeDefinition,
   updateInputData: UpdateInputData
 ): ComponentType<NodeProps<NodeData>> => {
-  return ({ id, data, selected }: NodeProps<NodeData>) => {
+  return ({ type, id, data, selected }: NodeProps<NodeData>) => {
     const containerRef = useRef<HTMLDivElement>(null);
     // const labelDivRef = useRef<HTMLDivElement>(null);
 
@@ -176,28 +174,35 @@ export const createNodeComponentFromDef = (
     const inputWidgets: ReactNode[] = [];
     const isOutputNode = nodeDef.output_node || data.isOutputNode;
 
-    for (const input of inputs) {
-      if (isWidgetInput(input.type)) {
+    for (const name in inputs) {
+      const input = inputs[name];
+
+      if (isWidgetType(input.type)) {
         inputWidgets.push(
           <Widget
             nodeId={id}
             theme={theme}
             data={input}
             nodeDef={nodeDef}
-            key={`widget-${input.name}`}
+            key={input.name}
             updateInputData={updateInputData}
           />
         );
       } else {
         inputHandles.push(
-          <InputHandle key={`handle-${input.name}`} theme={theme} handle={input} />
+          <InputHandle
+            nodeId={id}
+            theme={theme}
+            key={input.name}
+            handle={input as InputHandleData}
+          />
         );
       }
     }
 
     // Generate output handles
-    const outputHandles = outputs.map((handle, i) => (
-      <OutputHandle key={i} theme={theme} handle={handle} />
+    const outputHandles = Object.values(outputs).map((handle, i) => (
+      <OutputHandle nodeId={id} key={i} theme={theme} handle={handle} />
     ));
 
     return (
@@ -255,11 +260,12 @@ export const createNodeComponentFromDef = (
 };
 
 interface InputHandleProps {
+  nodeId: string;
   theme: ThemeConfig;
-  handle: InputData;
+  handle: InputHandleData;
 }
 
-function InputHandle({ handle, theme }: InputHandleProps) {
+function InputHandle({ nodeId, handle, theme }: InputHandleProps) {
   return (
     <div className={`flow_input ${handle.isHighlighted ? 'edge_opacity' : ''}`}>
       <Handle
@@ -268,7 +274,7 @@ function InputHandle({ handle, theme }: InputHandleProps) {
             theme.colors.types[handle.type as keyof typeof theme.colors.types] ??
             theme.colors.types['DEFAULT']
         }}
-        id={`input::${handle.name}::${handle.type}`}
+        id={makeHandleId(nodeId, 'input', handle.name)}
         type="target"
         position={Position.Left}
         className={`flow_handler flow_input_output_handler left ${handle.type}`}
@@ -279,11 +285,12 @@ function InputHandle({ handle, theme }: InputHandleProps) {
 }
 
 interface OutputHandleProps {
+  nodeId: string;
   handle: OutputData;
   theme: ThemeConfig;
 }
 
-function OutputHandle({ handle, theme }: OutputHandleProps) {
+function OutputHandle({ nodeId, handle, theme }: OutputHandleProps) {
   return (
     <div className={`flow_output ${handle.isHighlighted ? 'edge_opacity' : ''}`}>
       <Handle
@@ -292,7 +299,7 @@ function OutputHandle({ handle, theme }: OutputHandleProps) {
             theme.colors.types[handle.type as keyof typeof theme.colors.types] ??
             theme.colors.types['DEFAULT']
         }}
-        id={`output::${handle.name}::${handle.type}`}
+        id={makeHandleId(nodeId, 'output', handle.name)}
         type="source"
         position={Position.Right}
         className={`flow_handler flow_input_output_handler right ${handle.type}`}
@@ -311,14 +318,13 @@ interface WidgetProps {
 }
 
 function Widget({ theme, nodeId, data, nodeDef, updateInputData }: WidgetProps) {
-  const inputDef: InputDef | undefined =
-    data.def ?? nodeDef.inputs.find((input) => input.name === data.name);
+  const inputDef = nodeDef.inputs.find((input) => input.name === data.name) ?? (data as InputDef);
   if (!inputDef) return null;
 
   const appearance = theme.colors.types;
 
   const update = (data: Partial<InputData>) => {
-    if (!data.type) return;
+    if (!data.type || !data.name) return;
     updateInputData({ nodeId, name: data.name, data });
   };
 
@@ -332,7 +338,7 @@ function Widget({ theme, nodeId, data, nodeDef, updateInputData }: WidgetProps) 
         <Handle
           type="target"
           position={Position.Left}
-          id={`widget::${data.name}::${data.type}`}
+          id={makeHandleId(nodeId, 'input', data.name)}
           className={`flow_handler left`}
           style={{ ...handleStyle }}
         />

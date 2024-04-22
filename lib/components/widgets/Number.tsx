@@ -41,14 +41,17 @@ export const NumberWidget: FC<NumberWidgetProps> = ({ label, value = 0, onChange
   };
 
   return (
-    <div className={'widget_box'}>
-      <div className={'widget_input'}>
-        <div className={'widget_input_item'}>
+    <div className="widget_box">
+      <div className="widget_input">
+        <div className="widget_input_item">
           <WidgetBackwardIcon onClick={handleClickBackward} />
+          <span className="widget_input_item_text" onClick={handleShowDialog}>
+            {label}
+          </span>
         </div>
 
-        <div className={'widget_input_item'}>
-          <span className={'widget_input_item_text'} onClick={handleShowDialog}>
+        <div className="widget_input_item">
+          <span className="widget_input_item_text" onClick={handleShowDialog}>
             {inputValue}
           </span>
           <WidgetForwardIcon onClick={handleClickForward} />

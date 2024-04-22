@@ -2,7 +2,7 @@ import { useFlowStore } from '../../store/flow';
 import { ReactFlowJsonObject } from 'reactflow';
 import { NodeData, SerializedFlow } from '../types';
 import { useApiContext } from '../../contexts/api.tsx';
-import { isWidgetInput } from '../utils/node.ts';
+import { getHandleName, isWidgetType, makeHandleId } from '../utils/node.ts';
 
 // import { applyWidgetControl } from '../utils/widgets.ts';
 
@@ -36,20 +36,30 @@ export function useWorkflow() {
       };
 
       const { inputs } = node.data;
-      const widgets = inputs.filter((input) => isWidgetInput(input.type));
+      const widgets = Object.values(inputs).filter((input) => isWidgetType(input.type));
 
-      for (let i = 0; i < inputs.length; i++) {
-        const input = inputs[i];
+      for (const name in inputs) {
+        const input = inputs[name];
+        if (!input) continue;
 
-        const handleId = `input::${i}::${input.type}`;
+        const handleId = makeHandleId(node.id, 'input', name);
         const edge = flow.edges.find(
           (edge) => edge.target === node.id && edge.targetHandle === handleId
         );
         if (!edge || !edge.source || !edge.sourceHandle) return;
 
-        const [_, slot] = edge.sourceHandle.split('::');
-        const value = [edge.source, Number(slot)] as [string, number];
-        data.inputs[input.name] = value;
+        const sourceNodeId = getHandleName(edge.sourceHandle);
+        if (edge.source !== sourceNodeId) return;
+
+        const sourceHandleName = getHandleName(edge.sourceHandle);
+        const sourceNode = flow.nodes.find((node) => node.id === sourceNodeId);
+        if (!sourceNode) return;
+
+        const sourceHandle = sourceNode.data.outputs[sourceHandleName];
+        if (!sourceHandle) return;
+
+        const value = [edge.source, sourceHandle.slot] as [string, number];
+        data.inputs[name] = value;
       }
 
       for (const name in widgets) {

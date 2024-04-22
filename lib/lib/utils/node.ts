@@ -1,4 +1,12 @@
-import { EdgeType, InputData, InputDef, NodeData, NodeDefinition } from '../types.ts';
+import {
+  EdgeType,
+  HandleType,
+  InputData,
+  InputDef,
+  InputHandleData,
+  NodeData,
+  NodeDefinition
+} from '../types.ts';
 import { WIDGET_TYPES } from '../config/constants.ts';
 import { useFlowStore } from '../../store/flow.ts';
 import { isSeedInput } from './widgets.ts';
@@ -6,14 +14,15 @@ import { Node } from 'reactflow';
 
 export function computeInitialNodeData(def: NodeDefinition, widgetValues: Record<string, any>) {
   const { display_name: name, inputs, outputs } = def;
-  const state: NodeData = { name, inputs: [], outputs: [] };
+  const state: NodeData = { name, inputs: {}, outputs: {} };
 
+  let currentSlot = 0;
   for (const input of inputs) {
-    const isWidget = isWidgetInput(input.type);
+    const isWidget = isWidgetType(input.type);
 
     if (isWidget) {
-      const inputData: InputData = inputDataFromDef(input, widgetValues);
-      state.inputs = [...state.inputs, inputData];
+      const data: InputData = inputDataFromDef(input, widgetValues);
+      state.inputs[input.name] = data;
 
       if (isSeedInput(input)) {
         // const afterGenWidget = createValueControlWidget({ widget });
@@ -32,23 +41,26 @@ export function computeInitialNodeData(def: NodeDefinition, widgetValues: Record
           // TODO: add image upload widget
         }
 
-        const data = { name: 'image', type: 'IMAGE' } as const;
-        state.inputs = [...state.inputs, { ...data, serialize: false, def: data }];
+        // TODO: add image display widget
+        state.inputs[input.name] = { name: 'imageValue', type: 'IMAGE', value: '' };
       }
 
-      state.inputs = [
-        ...state.inputs,
-        {
-          name: input.name,
-          type: input.type,
-          isHighlighted: false,
-          optional: input.optional
-        }
-      ];
+      state.inputs[input.name] = {
+        name: input.name,
+        type: input.type,
+        isHighlighted: false,
+        optional: input.optional
+      } as InputHandleData;
+
+      currentSlot += 1;
     }
   }
 
-  state.outputs = outputs.map(({ name, type }) => ({ name, type, isHighlighted: false }));
+  for (let i = 0; i < outputs.length; i++) {
+    const { name, type } = outputs[i];
+    state.outputs[name] = { slot: i, name, type, isHighlighted: false };
+  }
+
   return state;
 }
 
@@ -118,7 +130,7 @@ export function inputDataFromDef(def: InputDef, values: Record<string, any>): In
   }
 }
 
-export const isWidgetInput = (type: EdgeType) => WIDGET_TYPES.includes(type);
+export const isWidgetType = (type: EdgeType) => WIDGET_TYPES.includes(type);
 
 export const disconnectPrimitiveNode = (id: string) => {
   const { nodes, updateInputData, updateNodeData } = useFlowStore.getState();
@@ -128,10 +140,10 @@ export const disconnectPrimitiveNode = (id: string) => {
   const node = nodes.find((node) => node.id === primitive.data.targetNodeId);
   if (!node) return;
 
-  const widget = Object.values(node.data.widgets).find((w) => w.primitiveNodeId === id);
+  const widget = Object.values(node.data.inputs).find((w) => w.primitiveNodeId === id);
   if (!widget) return;
 
-  const primitiveWidget = primitive.data.widgets[widget.name];
+  const primitiveWidget = Object.values(primitive.data.inputs).find((w) => w.name === widget.name);
   if (widget?.type !== primitiveWidget?.type) return;
 
   const updatedInputData = {
@@ -157,21 +169,21 @@ export function addWidgetToPrimitiveNode(
   const { nodeDefs, nodes, updateInputData } = useFlowStore.getState();
   const primitive = nodes.find((node) => node.id === primitiveNodeId);
   if (primitive?.type !== 'PrimitiveNode') return;
-  if (Object.keys(primitive.data.widgets).length > 0) return;
 
   const node = nodes.find((node) => node.id === nodeId);
   if (!node) return;
 
-  const widget = node.data.widgets[widgetName];
+  const widget = node.data.inputs[widgetName];
   const definition = nodeDefs[node.type!]?.inputs?.find?.((input) => input.name == widget?.name);
   if (!widget || !definition) return;
 
-  const outputState = { name: widget.type, type: widget.type };
+  const outputState = { name: widget.type, type: widget.type, slot: 0 };
   const inputData = { ...widget, definition };
   updateNodeData(primitive.id, {
     targetNodeId: nodeId,
-    outputs: [outputState],
-    widgets: { [widget.name]: inputData }
+    outputs: { [outputState.name]: outputState }
+    // TODO: fix this
+    // widgets: { [widget.name]: inputData }
   });
 
   updateInputData({
@@ -187,7 +199,23 @@ export function addWidgetToPrimitiveNode(
 }
 
 export function isWidgetHandleId(id: string) {
-  return id.split('::')[1] === 'widget';
+  return isWidgetType(id.split('::')[2] as EdgeType);
+}
+
+export function makeHandleId(nodeId: string, type: HandleType, name: string) {
+  return `${nodeId}::${type}::${name}`;
+}
+
+export function getHandleNodeId(id: string) {
+  return id.split('::')[0];
+}
+
+export function getHandleType(id: string) {
+  return id.split('::')[1] as HandleType;
+}
+
+export function getHandleName(id: string) {
+  return id.split('::')[2];
 }
 
 export function isPrimitiveNode(node: Node<NodeData>) {
