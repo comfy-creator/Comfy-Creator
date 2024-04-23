@@ -184,23 +184,16 @@ export function MainFlow() {
 
   const onConnectStart: OnConnectStart = useCallback(
     (_: ReactMouseEvent | TouchEvent, params: OnConnectStartParams) => {
-      if (!params.handleId) return;
       const node = nodes.find((node) => node.id === params.nodeId);
-      if (!node) return;
+      if (!node || !params.handleId) return;
 
-      console.log('params', params, getHandleName(params.handleId));
-
-      const handle =
-        node.data[params.handleType === 'source' ? 'outputs' : 'inputs'][
-          getHandleName(params.handleId)
-        ];
-      console.log('handle', handle);
+      const handleName = getHandleName(params.handleId);
+      const handle = node.data[params.handleType === 'source' ? 'outputs' : 'inputs'][handleName];
       if (!handle) return;
 
       setCurrentConnectionLineType(handle.type);
 
       let newNodes = nodes;
-
       if (params.handleType === 'target') {
         newNodes = nodes.map((node) => {
           const outputs = { ...node.data.outputs };
