@@ -332,7 +332,13 @@ export const useFlowStore = create<RFState>((set, get) => {
 
       const id = crypto.randomUUID();
       const data = computeInitialNodeData(def, defaultValues);
-      const newNode: Node<NodeData> = { id, type, width, position, data };
+      const newNode: Node<NodeData> = {
+        id,
+        type,
+        data,
+        position,
+        style: { width: `${width}px` }
+      };
       nodesMap.set(id, newNode);
     },
 

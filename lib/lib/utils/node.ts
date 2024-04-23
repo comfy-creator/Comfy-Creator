@@ -9,10 +9,10 @@ import {
 } from '../types.ts';
 import { WIDGET_TYPES } from '../config/constants.ts';
 import { useFlowStore } from '../../store/flow.ts';
-import { isSeedInput } from './widgets.ts';
+import { createValueControlInput, isSeedInput } from './widgets.ts';
 import { Node } from 'reactflow';
 
-export function computeInitialNodeData(def: NodeDefinition, widgetValues: Record<string, any>) {
+export function computeInitialNodeData(def: NodeDefinition, defaultValues: Record<string, any>) {
   const { display_name: name, inputs, outputs } = def;
   const state: NodeData = { name, inputs: {}, outputs: {} };
 
@@ -21,19 +21,13 @@ export function computeInitialNodeData(def: NodeDefinition, widgetValues: Record
     const isWidget = isWidgetType(input.type);
 
     if (isWidget) {
-      const data: InputData = inputDataFromDef(input, widgetValues);
+      const data: InputData = inputDataFromDef(input, defaultValues[input.name]);
       state.inputs[input.name] = data;
 
       if (isSeedInput(input)) {
-        // const afterGenWidget = createValueControlWidget({ widget });
-        // state.widgets[input.name] = {
-        //   type: 'GROUP',
-        //   name: input.name,
-        //   widgets: [widget, afterGenWidget]
-        // };
-        // const afterGenWidget = createValueControlWidget({ widget });
-        // widget.linkedWidgets = [afterGenWidget.name];
-        // state.widgets[afterGenWidget.name] = afterGenWidget;
+        const nextValue = createValueControlInput({ input: data });
+        state.inputs[nextValue.name] = nextValue;
+        data.linkedInputs = [nextValue.name];
       }
     } else {
       if (input.type === 'IMAGE') {
@@ -64,9 +58,8 @@ export function computeInitialNodeData(def: NodeDefinition, widgetValues: Record
   return state;
 }
 
-export function inputDataFromDef(def: InputDef, values: Record<string, any>): InputData {
+export function inputDataFromDef(def: InputDef, value: any): InputData {
   const state = { name: def.name, optional: def.optional };
-  const value = values[def.name];
 
   switch (def.type) {
     case 'BOOLEAN':
