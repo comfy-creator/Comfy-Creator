@@ -213,7 +213,6 @@ export const useFlowStore = create<RFState>((set, get) => {
       const nextNodes = applyNodeChanges(changes, nodes);
 
       for (const change of changes) {
-        // console.log(change);
         if (change.type === 'add' || change.type === 'reset') {
           nodesMap.set(change.item.id, change.item);
         } else if (change.type === 'remove' && nodesMap.has(change.id)) {

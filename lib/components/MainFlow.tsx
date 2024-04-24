@@ -153,7 +153,6 @@ export function MainFlow() {
       };
 
       saveSerializedGraph(flow);
-      console.log('Graph saved to local storage');
     }
   }, [nodes, edges, viewport]);
 
