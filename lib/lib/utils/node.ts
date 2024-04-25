@@ -9,10 +9,10 @@ import {
 } from '../types.ts';
 import { WIDGET_TYPES } from '../config/constants.ts';
 import { useFlowStore } from '../../store/flow.ts';
-import { isSeedInput } from './widgets.ts';
-import { Node } from 'reactflow';
+import { createValueControlInput, isSeedInput } from './widgets.ts';
+import { Edge, Node } from 'reactflow';
 
-export function computeInitialNodeData(def: NodeDefinition, widgetValues: Record<string, any>) {
+export function computeInitialNodeData(def: NodeDefinition, defaultValues: Record<string, any>) {
   const { display_name: name, inputs, outputs } = def;
   const state: NodeData = { name, inputs: {}, outputs: {} };
 
@@ -21,19 +21,15 @@ export function computeInitialNodeData(def: NodeDefinition, widgetValues: Record
     const isWidget = isWidgetType(input.type);
 
     if (isWidget) {
-      const data: InputData = inputDataFromDef(input, widgetValues);
+      const data: InputData = inputDataFromDef(input, defaultValues[input.name]);
+      console.log('data', { data });
+
       state.inputs[input.name] = data;
 
       if (isSeedInput(input)) {
-        // const afterGenWidget = createValueControlWidget({ widget });
-        // state.widgets[input.name] = {
-        //   type: 'GROUP',
-        //   name: input.name,
-        //   widgets: [widget, afterGenWidget]
-        // };
-        // const afterGenWidget = createValueControlWidget({ widget });
-        // widget.linkedWidgets = [afterGenWidget.name];
-        // state.widgets[afterGenWidget.name] = afterGenWidget;
+        const nextValue = createValueControlInput({ input: data });
+        state.inputs[nextValue.name] = nextValue;
+        data.linkedInputs = [nextValue.name];
       }
     } else {
       if (input.type === 'IMAGE') {
@@ -64,9 +60,8 @@ export function computeInitialNodeData(def: NodeDefinition, widgetValues: Record
   return state;
 }
 
-export function inputDataFromDef(def: InputDef, values: Record<string, any>): InputData {
-  const state = { name: def.name, optional: def.optional };
-  const value = values[def.name];
+export function inputDataFromDef(def: InputDef, value: any): InputData {
+  const state = { def, name: def.name, optional: def.optional };
 
   switch (def.type) {
     case 'BOOLEAN':
@@ -180,10 +175,9 @@ export function addWidgetToPrimitiveNode(
   const outputState = { name: widget.type, type: widget.type, slot: 0 };
   const inputData = { ...widget, definition };
   updateNodeData(primitive.id, {
-    targetNodeId: nodeId,
-    outputs: { [outputState.name]: outputState }
-    // TODO: fix this
-    // widgets: { [widget.name]: inputData }
+    outputs: { [outputState.name]: outputState },
+    inputs: { [widget.name]: inputData },
+    targetNodeId: nodeId
   });
 
   updateInputData({
@@ -221,3 +215,38 @@ export function getHandleName(id: string) {
 export function isPrimitiveNode(node: Node<NodeData>) {
   return node.type === 'PrimitiveNode';
 }
+
+export function makeEdgeId({
+  sourceHandle,
+  targetHandle
+}: {
+  sourceHandle: string;
+  targetHandle: string;
+}) {
+  const sourceNodeId = getHandleNodeId(sourceHandle);
+  const targetNodeId = getHandleNodeId(targetHandle);
+
+  return `reactflow__edge-${sourceNodeId}${sourceHandle}-${targetNodeId}${targetHandle}`;
+}
+
+export const createEdge = ({
+  sourceHandle,
+  targetHandle,
+  type
+}: {
+  sourceHandle: string;
+  targetHandle: string;
+  type: EdgeType;
+}): Edge => {
+  const source = getHandleNodeId(sourceHandle);
+  const target = getHandleNodeId(targetHandle);
+
+  return {
+    id: makeEdgeId({ sourceHandle, targetHandle }),
+    source,
+    sourceHandle,
+    target,
+    targetHandle,
+    type
+  };
+};

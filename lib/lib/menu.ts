@@ -1,8 +1,9 @@
-import { IMenuType, NodeData } from './types.ts';
+import { EdgeType, HandleType, IMenuType, NodeData, NodeDefinitions } from './types.ts';
 import { Node } from 'reactflow';
 import { useFlowStore } from '../store/flow.ts';
 import { categorizeObjects } from './utils/ui.tsx';
 import type { MouseEvent as ReactMouseEvent } from 'react';
+import { createEdge, makeHandleId } from './utils/node.ts';
 
 export function getNodeMenuItems(node: Node<NodeData>) {
   const items: (IMenuType | null)[] = [
@@ -143,4 +144,62 @@ export function getContextMenuItems() {
       onClick: (event: ReactMouseEvent) => null
     }
   ] as (IMenuType | null)[];
+}
+
+interface GetSuggestionsData {
+  limit?: number;
+  handleId: string;
+  edgeType: EdgeType;
+  handleType: HandleType;
+  nodeDefs: NodeDefinitions;
+}
+
+export function getSuggestedNodesData({
+  nodeDefs,
+  handleId,
+  handleType,
+  edgeType,
+  limit
+}: GetSuggestionsData): IMenuType[] {
+  let suggestedNodes = Object.entries(nodeDefs).filter(
+    ([_, node]) =>
+      node[handleType === 'input' ? 'outputs' : 'inputs'].findIndex((d) => d.type === edgeType) !==
+      -1
+  );
+
+  if (limit) {
+    suggestedNodes = suggestedNodes.slice(0, limit);
+  }
+
+  return suggestedNodes.map(([type, node]) => ({
+    data: node,
+    subMenu: null,
+    disabled: false,
+    hasSubMenu: false,
+    label: node.display_name,
+    onClick: (e: ReactMouseEvent) => {
+      const { addNode } = useFlowStore.getState();
+      const position = { x: e.clientX, y: e.clientY };
+
+      const nodeId = addNode({ position, type });
+      const { setEdges, nodes } = useFlowStore.getState();
+
+      const node = nodes.find((node) => node.id === nodeId);
+      if (!node) return;
+
+      const key = handleType === 'input' ? 'outputs' : 'inputs';
+
+      const handle = Object.values(node.data[key]).find((handle) => handle.type === edgeType);
+      if (!handle) return;
+
+      const sourceHandle =
+        handleType == 'input' ? makeHandleId(node.id, 'output', handle.name) : handleId;
+      const targetHandle =
+        handleType == 'output' ? makeHandleId(node.id, 'input', handle.name) : handleId;
+
+      const edge = createEdge({ sourceHandle, targetHandle, type: edgeType });
+
+      setEdges((edges) => [...edges, edge]);
+    }
+  })) as IMenuType[];
 }

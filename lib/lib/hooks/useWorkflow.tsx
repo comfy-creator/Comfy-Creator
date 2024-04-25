@@ -1,6 +1,6 @@
 import { useFlowStore } from '../../store/flow';
 import { ReactFlowJsonObject } from 'reactflow';
-import { NodeData, SerializedFlow } from '../types';
+import { NodeData, WorkflowAPI } from '../types';
 import { useApiContext } from '../../contexts/api.tsx';
 import { getHandleName, isWidgetType, makeHandleId } from '../utils/node.ts';
 
@@ -11,25 +11,25 @@ export function useWorkflow() {
   const { runWorkflow } = useApiContext();
 
   const submitWorkflow = async () => {
-    const flow = flowToObject();
-    const prompt = flowToPrompt();
-    if (!prompt) return;
+    const flow = serializeGraph();
+    const workflow = graphToWorkflow();
+    if (!workflow) return;
 
-    await runWorkflow(prompt);
+    await runWorkflow(workflow);
 
     for (const node of flow.nodes) {
       // applyWidgetControl(node, updateInputData);
     }
   };
 
-  const flowToPrompt = () => {
-    const flow = flowToObject();
-    const prompt: SerializedFlow = {};
+  const graphToWorkflow = () => {
+    const flow = serializeGraph();
+    const workflow: WorkflowAPI = {};
 
     for (const node of flow.nodes) {
       if (!node.type) continue;
 
-      const data: SerializedFlow[0] = {
+      const data: WorkflowAPI[0] = {
         class_type: node.type,
         _meta: { title: node.data.name },
         inputs: {}
@@ -71,16 +71,16 @@ export function useWorkflow() {
         }
       }
 
-      prompt[node.id] = data;
+      workflow[node.id] = data;
     }
 
-    return prompt;
+    return workflow;
   };
 
-  const flowToObject = () => {
+  const serializeGraph = () => {
     if (!instance) throw new Error('Flow instance not found');
     return instance.toObject() as ReactFlowJsonObject<NodeData>;
   };
 
-  return { submitWorkflow, flowToPrompt, flowToObject };
+  return { submitWorkflow, graphToWorkflow, serializeGraph };
 }

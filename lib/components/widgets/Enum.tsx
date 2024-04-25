@@ -65,7 +65,7 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
       <div className="widget_input">
         <div className="widget_input_item">
           <WidgetBackwardIcon onClick={handleBackward} />
-          <span className="widget_input_item_text">{label}</span>
+          <div className="widget_input_item_text">{label}</div>
         </div>
 
         <div className="widget_input_item" style={{ gap: '5px' }}>

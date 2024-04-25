@@ -23,8 +23,6 @@ import { TextWidget } from '../widgets/Text';
 import { useSettingsStore } from '../../store/settings.ts';
 import { useFlowStore } from '../../store/flow.ts';
 import { ProgressBar } from '../ProgressBar.tsx';
-import { ChevronDown } from '../icons/ChevronDown.tsx';
-import { ChevronUp } from '../icons/ChevronUp.tsx';
 import { isWidgetType, makeHandleId } from '../../lib/utils/node.ts';
 
 const createWidgetFromSpec = (
@@ -113,7 +111,7 @@ export const createNodeComponentFromDef = (
     const { execution, updateNodeData } = useFlowStore();
     const theme = getActiveTheme();
 
-    const { NODE_TEXT_SIZE, NODE_TITLE_COLOR } = theme.colors.appearance;
+    const { NODE_TEXT_SIZE, NODE_TITLE_COLOR, NODE_TEXT_COLOR } = theme.colors.appearance;
 
     useEffect(() => {
       const node = document.querySelector(`[data-id="${id}"]`);
@@ -194,6 +192,7 @@ export const createNodeComponentFromDef = (
             nodeId={id}
             theme={theme}
             key={input.name}
+            isConnected={input.isConnected}
             handle={input as InputHandleData}
           />
         );
@@ -202,7 +201,13 @@ export const createNodeComponentFromDef = (
 
     // Generate output handles
     const outputHandles = Object.values(outputs).map((handle, i) => (
-      <OutputHandle nodeId={id} key={i} theme={theme} handle={handle} />
+      <OutputHandle
+        nodeId={id}
+        key={i}
+        theme={theme}
+        handle={handle}
+        isConnected={handle.isConnected}
+      />
     ));
 
     return (
@@ -215,7 +220,11 @@ export const createNodeComponentFromDef = (
           minHeight={minHeight}
         />
 
-        <div style={{ fontSize: NODE_TEXT_SIZE }} className={`node_container`} ref={containerRef}>
+        <div
+          style={{ fontSize: NODE_TEXT_SIZE, color: NODE_TEXT_COLOR }}
+          className="node_container"
+          ref={containerRef}
+        >
           <div className="node_label_container">
             <span className="node_label" style={{ color: NODE_TITLE_COLOR }} onClick={onClick}>
               {nodeDef.display_name}
@@ -239,16 +248,7 @@ export const createNodeComponentFromDef = (
                 <div className="widgets_container">{inputWidgets}</div>
 
                 <div className="node_footer">
-                  <>
-                    {isOutputNode && <button className="comfy-btn">Run</button>}
-
-                    <div
-                      style={{ textAlign: 'center', marginTop: '8px' }}
-                      onClick={() => setAdvanced(!advanced)}
-                    >
-                      {advanced ? <ChevronUp /> : <ChevronDown />}
-                    </div>
-                  </>
+                  {isOutputNode && <button className="comfy-btn">Run</button>}
                 </div>
               </div>
             </>
@@ -262,24 +262,30 @@ export const createNodeComponentFromDef = (
 interface InputHandleProps {
   nodeId: string;
   theme: ThemeConfig;
+  isConnected?: boolean;
   handle: InputHandleData;
 }
 
-function InputHandle({ nodeId, handle, theme }: InputHandleProps) {
+function InputHandle({ nodeId, handle, theme, isConnected }: InputHandleProps) {
+  const appearance = theme.colors.types;
+  const { NODE_TEXT_COLOR } = theme.colors.appearance;
+
+  const handleStyle = isConnected
+    ? { background: appearance[handle.type], border: '1px solid transparent' }
+    : { border: `1.5px solid ${appearance[handle.type]}`, backgroundColor: 'transparent' };
+
   return (
     <div className={`flow_input ${handle.isHighlighted ? 'edge_opacity' : ''}`}>
       <Handle
-        style={{
-          backgroundColor:
-            theme.colors.types[handle.type as keyof typeof theme.colors.types] ??
-            theme.colors.types['DEFAULT']
-        }}
-        id={makeHandleId(nodeId, 'input', handle.name)}
         type="target"
+        style={{ ...handleStyle }}
         position={Position.Left}
-        className={`flow_handler flow_input_output_handler left ${handle.type}`}
+        id={makeHandleId(nodeId, 'input', handle.name)}
+        className={`flow_handler left ${handle.type}`}
       />
-      <span className="flow_input_text">{handle.name}</span>
+      <span className="flow_input_text" style={{ color: NODE_TEXT_COLOR }}>
+        {handle.name}
+      </span>
     </div>
   );
 }
@@ -288,23 +294,29 @@ interface OutputHandleProps {
   nodeId: string;
   handle: OutputData;
   theme: ThemeConfig;
+  isConnected?: boolean;
 }
 
-function OutputHandle({ nodeId, handle, theme }: OutputHandleProps) {
+function OutputHandle({ nodeId, handle, theme, isConnected }: OutputHandleProps) {
+  const appearance = theme.colors.types;
+  const { NODE_TEXT_COLOR } = theme.colors.appearance;
+
+  const handleStyle = isConnected
+    ? { backgroundColor: appearance[handle.type], border: '1px solid transparent' }
+    : { border: `1.5px solid ${appearance[handle.type]}`, backgroundColor: 'transparent' };
+
   return (
     <div className={`flow_output ${handle.isHighlighted ? 'edge_opacity' : ''}`}>
       <Handle
-        style={{
-          backgroundColor:
-            theme.colors.types[handle.type as keyof typeof theme.colors.types] ??
-            theme.colors.types['DEFAULT']
-        }}
-        id={makeHandleId(nodeId, 'output', handle.name)}
         type="source"
         position={Position.Right}
-        className={`flow_handler flow_input_output_handler right ${handle.type}`}
+        style={{ ...handleStyle }}
+        id={makeHandleId(nodeId, 'output', handle.name)}
+        className={`flow_handler right ${handle.type}`}
       />
-      <span className="flow_output_text">{handle.name}</span>
+      <span className="flow_output_text" style={{ color: NODE_TEXT_COLOR }}>
+        {handle.name}
+      </span>
     </div>
   );
 }
@@ -322,6 +334,7 @@ function Widget({ theme, nodeId, data, nodeDef, updateInputData }: WidgetProps) 
   if (!inputDef) return null;
 
   const appearance = theme.colors.types;
+  const { NODE_TEXT_COLOR } = theme.colors.appearance;
 
   const update = (data: Partial<InputData>) => {
     if (!data.type || !data.name) return;
@@ -332,24 +345,26 @@ function Widget({ theme, nodeId, data, nodeDef, updateInputData }: WidgetProps) 
     ? { background: appearance[data.type], border: '1px solid transparent' }
     : { border: `1.5px solid ${appearance[data.type]}` };
 
+  const isMultiline = data.def?.type === 'STRING' && data.def.multiline;
+  const containerStyle = !isMultiline ? { display: 'flex', alignItems: 'center' } : {};
+
   return (
-    <div className="widget_container">
+    <div className="widget_container" style={{ ...containerStyle }}>
       <div style={{ display: 'flex', alignItems: 'center' }}>
         <Handle
           type="target"
           position={Position.Left}
-          id={makeHandleId(nodeId, 'input', data.name)}
-          className={`flow_handler left`}
           style={{ ...handleStyle }}
+          className={`flow_handler left`}
+          id={makeHandleId(nodeId, 'input', data.name)}
         />
-
         <div style={{ width: '12px' }} />
-        <div style={{ fontSize: '0.6rem' }}>{data.name}</div>
+        {isMultiline && (
+          <div style={{ fontSize: '0.6rem', color: NODE_TEXT_COLOR }}>{data.name}</div>
+        )}
       </div>
 
-      <div style={{ width: '100%', marginTop: '2px' }}>
-        {createWidgetFromSpec(inputDef, data.name, data, update)}
-      </div>
+      {createWidgetFromSpec(inputDef, data.name, data, update)}
     </div>
   );
 }

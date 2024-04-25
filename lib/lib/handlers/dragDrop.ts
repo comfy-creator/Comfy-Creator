@@ -19,6 +19,7 @@ export function dragHandler(event: DragEvent<HTMLDivElement>) {
 
 export function dropHandler({ rfInstance, setNodes, setEdges, addNode }: DropHandlerParams) {
   return async (event: DragEvent<HTMLDivElement>) => {
+    console.log('dropHandler');
     event.preventDefault();
     if (!event.dataTransfer || !rfInstance) return;
 

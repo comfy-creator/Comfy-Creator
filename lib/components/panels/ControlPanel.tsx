@@ -13,6 +13,7 @@ import { ComfyList } from '../ComfyList';
 import { useFlowStore } from '../../store/flow';
 import { loadLegacyWorkflow } from '../../lib/handlers/loadLegacy';
 import { useGraph } from '../../lib/hooks/useGraph';
+import { isLegacySerializedGraph } from '../../lib/utils';
 
 type AutoQueueMode =
   | {
@@ -52,8 +53,7 @@ const ControlPanel = () => {
   const historyButtonRef = useRef<HTMLButtonElement>(null);
   const queueSizeEl = useRef<HTMLSpanElement>(null);
   const autoQueueModeElRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const legacyFileLoadRef = useRef<HTMLInputElement>(null);
+  const loadFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const confirmClear = addSetting({
@@ -202,11 +202,11 @@ const ControlPanel = () => {
     autoQueueModeElRef.current.style.display = 'none';
   }
 
-  const fileInput = (
+  const loadFileInput = (
     <input
       id="load-workflow"
       type="file"
-      ref={fileInputRef}
+      ref={loadFileInputRef}
       accept=".json,image/png,.latent,.safetensors,image/webp"
       style={{ display: 'none' }}
       onChange={(e) => {
@@ -217,32 +217,13 @@ const ControlPanel = () => {
           reader.onload = (e) => {
             const contents = e.target?.result;
             if (typeof contents === 'string') {
-              loadSerializedGraph(JSON.parse(contents));
-            }
-          };
-          reader.readAsText(file);
-        }
-      }}
-    />
-  );
-
-  const legacyFIleLoad = (
-    <input
-      id="load-workflow-legacy"
-      type="file"
-      ref={legacyFileLoadRef}
-      accept=".json"
-      style={{ display: 'none' }}
-      onChange={(e) => {
-        const file = e.target.files?.[0];
-
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            const contents = e.target?.result;
-            if (typeof contents === 'string') {
-              const graph = JSON.parse(contents);
-              loadSerializedGraph(loadLegacyWorkflow(graph, nodeDefs));
+              const json = JSON.parse(contents);
+              if (isLegacySerializedGraph(json)) {
+                const graph = loadLegacyWorkflow(json, nodeDefs);
+                loadSerializedGraph(graph);
+              } else {
+                loadSerializedGraph(json);
+              }
             }
           };
           reader.readAsText(file);
@@ -263,8 +244,7 @@ const ControlPanel = () => {
     >
       <div className="control-panel">
         <div className="comfy-menu" ref={menuContainerEl}>
-          {fileInput}
-          {legacyFIleLoad}
+          {loadFileInput}
 
           <div
             className="drag-handle"
@@ -329,12 +309,8 @@ const ControlPanel = () => {
           <ComfyList text="Queue" show={showQueue} />
           <ComfyList text="History" show={showHistory} reverse={true} />
 
-          <button id="comfy-load-button" onClick={() => fileInputRef?.current?.click?.()}>
+          <button id="comfy-load-button" onClick={() => loadFileInputRef?.current?.click()}>
             Load
-          </button>
-
-          <button id="comfy-load-button" onClick={() => legacyFileLoadRef?.current?.click?.()}>
-            Load (Legacy)
           </button>
 
           <SaveButton promptFilename={promptFilename} />

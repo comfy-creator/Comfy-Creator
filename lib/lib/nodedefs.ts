@@ -39,7 +39,7 @@ export const PrimitiveNode: NodeDefinition = {
 
 export const RerouteNode: NodeDefinition = {
   category: 'utils',
-  output_node: true,
+  output_node: false,
   display_name: 'Reroute',
   description: 'Reroute Node',
   inputs: [{ type: '*', name: '' }],

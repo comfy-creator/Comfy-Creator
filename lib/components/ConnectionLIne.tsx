@@ -29,8 +29,8 @@ export function ConnectionLine({
 
   return (
     <g>
-      <path fill="none" stroke={strokeColor} strokeWidth={2.5} d={path} />
-      <circle cx={toX} cy={toY} fill="#fff" r={3} stroke={strokeColor} strokeWidth={3} />
+      <path fill="none" stroke={strokeColor} strokeWidth={3} d={path} />
+      <circle cx={toX} cy={toY} fill="#fff" r={3} stroke={strokeColor} strokeWidth={5} />
     </g>
   );
 }

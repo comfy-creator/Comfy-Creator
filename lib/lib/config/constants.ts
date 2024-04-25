@@ -172,5 +172,16 @@ export const API_URL = {
     `/view?filename=${filename}&subfolder=${subfolder}&type=${type}`,
   GET_USER_DATA_FILE: (file: string) => `/userdata/${encodeURIComponent(file)}`,
   STORE_USER_DATA_FILE: (file: string) => `/userdata/${encodeURIComponent(file)}`,
-  GET_OUTPUT_IMAGE: (pagination: IPagination) => `/view_all?page=${pagination.page}&page_size=${pagination.page_size}`,
+  GET_OUTPUT_IMAGE: (pagination: IPagination) =>
+    `/view_all?page=${pagination.page}&page_size=${pagination.page_size}`
+};
+
+export const EDGES_UPDATABLE = true;
+export const AUTO_PAN_ON_CONNECT = true;
+export const ELEVATE_EDGES_ON_SELECT = true;
+export const ZOOM_ON_DOUBLE_CLICK = true;
+export const MULTI_SELECT_KEY_CODE = 'Shift';
+export const REACTFLOW_PRO_OPTIONS_CONFIG = {
+  account: 'paid-pro',
+  hideAttribution: true
 };

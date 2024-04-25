@@ -54,7 +54,6 @@ export function applyInputControl(node: Node<NodeData>, updater: UpdateInputData
   for (const name in inputs) {
     const input = inputs[name];
     if (!isWidgetType(input.type)) continue;
-
     if (!input.linkedInputs || !('value' in input)) continue;
 
     for (const link of input.linkedInputs) {
