@@ -14,11 +14,14 @@ import { ContextMenu } from '../components/prototypes/ContextMenuTemplate';
 import { Node } from 'reactflow';
 import SearchWidget from '../components/SearchWidget';
 import { getContextMenuItems, getNodeMenuItems } from '../lib/menu';
-import { useFlowStore } from '../store/flow';
 
 interface IContextMenu {
   onNodeContextMenu: (event: ReactMouseEvent, node: Node) => void;
-  onContextMenu: (event: ReactMouseEvent | MouseEvent | Event) => void;
+  onContextMenu: (
+    event: ReactMouseEvent | MouseEvent | Event,
+    data?: (IMenuType | null)[],
+    title?: string
+  ) => void;
   menuRef: RefObject<HTMLDivElement>;
   onPaneClick: () => void;
 }
@@ -35,8 +38,6 @@ export function useContextMenu() {
 }
 
 export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode }>) {
-  const state = useFlowStore();
-
   const [menuProps, setMenuProps] = useState<ContextMenuProps | null>(null);
   const [nodeId, setNodeId] = useState<string | undefined>(undefined);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -95,15 +96,18 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
   }, []);
 
   const onContextMenu = useCallback(
-    (event: ReactMouseEvent | MouseEvent | Event) => {
+    (event: ReactMouseEvent | MouseEvent | Event, data?: (IMenuType | null)[], title?: string) => {
       event.preventDefault();
 
-      // @ts-expect-error
-      const menuData = getMenuData(event, getContextMenuItems());
-      if (!menuData) return;
+      if (!data) {
+        data = getContextMenuItems();
+      }
 
-      console.log('from pane context menu');
-      setMenuProps(menuData);
+      // @ts-expect-error
+      const menuProps = getMenuData(event, data, title);
+      if (!menuProps) return;
+
+      setMenuProps(() => menuProps);
     },
     [setMenuProps]
   );
@@ -122,11 +126,12 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
     [setMenuProps, setNodeId]
   );
 
-  const getMenuData = (event: ReactMouseEvent, items?: (IMenuType | null)[]) => {
+  const getMenuData = (event: ReactMouseEvent, items?: (IMenuType | null)[], title?: string) => {
     const pane = menuRef.current?.getBoundingClientRect();
     if (!pane) return;
 
     return {
+      title,
       top: event.clientY < pane.height - 200 ? event.clientY : undefined,
       left: event.clientX < pane.width - 200 ? event.clientX : undefined,
       right: event.clientX >= pane.width - 200 ? pane.width - event.clientX : undefined,

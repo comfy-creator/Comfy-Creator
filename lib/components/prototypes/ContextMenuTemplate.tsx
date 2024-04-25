@@ -50,13 +50,13 @@ export function ContextMenu(prps: ContextMenuProps) {
 
   return (
     <div className="context-menu" {...props} style={{ ...style }}>
+      {title && <div className={'rflmenu-title'}>{title}</div>}
+
       <div
         ref={menuRef}
         style={{ pointerEvents: 'none' }}
         className={'react-flow rflcontextmenu rflmenubar-panel'}
       >
-        {title && <div className={'rflmenu-title'}>{title}</div>}
-
         {items.map((item, index) => {
           return (
             <div

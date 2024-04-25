@@ -25,7 +25,7 @@ import {
 import { ComfyObjectInfo } from '../types/comfy';
 import { API_URL, DEFAULT_SERVER_PROTOCOL, DEFAULT_SERVER_URL } from '../lib/config/constants';
 import { toWsURL } from '../lib/utils';
-import { ComfyWsMessage, SerializedFlow, ViewFileArgs } from '../lib/types';
+import { ComfyWsMessage, ViewFileArgs, WorkflowAPI } from '../lib/types';
 import { ApiEventEmitter } from '../lib/apiEvent';
 import { ComfyLocalStorage } from '../lib/localStorage';
 
@@ -38,7 +38,7 @@ interface IApiContext extends IComfyApi {
   comfyClient: ComfyClient | null;
   socket: ReconnectingWebSocket | null;
   runWorkflow: (
-    serializedGraph: SerializedFlow,
+    serializedGraph: WorkflowAPI,
     workflow?: Record<string, WorkflowStep>
   ) => Promise<JobSnapshot | Error>;
   makeServerURL: (route: string) => string;
@@ -215,10 +215,7 @@ export const ApiContextProvider: React.FC<{ token?: string; children: ReactNode 
   // This is the function used to submit jobs to the server
   // ComfyUI terminology: 'queuePrompt'
   const runWorkflow = useCallback(
-    async (
-      flow: SerializedFlow,
-      workflow?: Record<string, WorkflowStep>
-    ): Promise<JobSnapshot | Error> => {
+    async (flow: WorkflowAPI): Promise<JobSnapshot | Error> => {
       if (serverProtocol === 'grpc' && comfyClient) {
         // Use gRPC server
         const request = {

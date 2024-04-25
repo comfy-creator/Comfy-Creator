@@ -1,12 +1,15 @@
 /* Put custom styles here */
 
+body {
+    font-family: Arial, sans-serif !important;
+}
+
 .context-menu {
     top: 100px;
     color: #aaf;
     z-index: 10;
     left: 100px;
     position: fixed;
-    padding: 0.3rem;
     min-width: 100px;
     font-family: Tahoma, sans-serif;
     box-shadow: 0 0 10px black !important;
@@ -129,8 +132,8 @@
 
 .flow_input_output_container {
     display: flex;
+    margin-bottom: 3px;
     align-items: flex-start;
-    margin-bottom: 10px;
     justify-content: space-between;
 }
 
@@ -192,48 +195,46 @@
 
 .widgets_container {
     width: 100%;
-    margin-top: 15px;
 }
 
 .widget_container {
     width: 100%;
     font-size: 0.5em;
-    margin-bottom: 3px;
+    margin-bottom: 2px;
     font-weight: normal;
 }
 
 .widget_box {
     width: 100%;
     display: flex;
-    padding: .5px;
     align-items: center;
     justify-content: space-between;
 }
 
 .widget_input {
-    display: flex;
-    width: 100%;
     gap: 15px;
-    border-radius: 8px;
+    width: 100%;
+    display: flex;
+    border-radius: 10px;
     align-items: center;
-    justify-content: space-between;
-    border: 1px solid var(--border-color);
-    background: var(--comfy-input-bg);
     color: var(--input-text);
+    justify-content: space-between;
+    background: var(--comfy-input-bg);
+    border: 1px solid var(--border-color);
 }
 
 .widget_input_item {
-    display: flex;
     gap: 4px;
-    margin-left: 2px;
-    margin-right: 2px;
+    display: flex;
+    color: #b2b2b2;
+    margin: 2px 5px;
+    font-size: 0.6rem;
     align-items: center;
 }
 
 .widget_input_item_text {
-    margin-bottom: 1px;
-    color: #b2b2b2;
-    font-size: 0.6rem;
+    /*color: #b2b2b2;*/
+    /*font-size: 0.6rem;*/
 }
 
 .react-flow__pane {

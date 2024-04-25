@@ -10,7 +10,7 @@ import {
 import { WIDGET_TYPES } from '../config/constants.ts';
 import { useFlowStore } from '../../store/flow.ts';
 import { createValueControlInput, isSeedInput } from './widgets.ts';
-import { Node } from 'reactflow';
+import { Edge, Node } from 'reactflow';
 
 export function computeInitialNodeData(def: NodeDefinition, defaultValues: Record<string, any>) {
   const { display_name: name, inputs, outputs } = def;
@@ -22,6 +22,8 @@ export function computeInitialNodeData(def: NodeDefinition, defaultValues: Recor
 
     if (isWidget) {
       const data: InputData = inputDataFromDef(input, defaultValues[input.name]);
+      console.log('data', { data });
+
       state.inputs[input.name] = data;
 
       if (isSeedInput(input)) {
@@ -59,7 +61,7 @@ export function computeInitialNodeData(def: NodeDefinition, defaultValues: Recor
 }
 
 export function inputDataFromDef(def: InputDef, value: any): InputData {
-  const state = { name: def.name, optional: def.optional };
+  const state = { def, name: def.name, optional: def.optional };
 
   switch (def.type) {
     case 'BOOLEAN':
@@ -173,10 +175,9 @@ export function addWidgetToPrimitiveNode(
   const outputState = { name: widget.type, type: widget.type, slot: 0 };
   const inputData = { ...widget, definition };
   updateNodeData(primitive.id, {
-    targetNodeId: nodeId,
-    outputs: { [outputState.name]: outputState }
-    // TODO: fix this
-    // widgets: { [widget.name]: inputData }
+    outputs: { [outputState.name]: outputState },
+    inputs: { [widget.name]: inputData },
+    targetNodeId: nodeId
   });
 
   updateInputData({
@@ -214,3 +215,38 @@ export function getHandleName(id: string) {
 export function isPrimitiveNode(node: Node<NodeData>) {
   return node.type === 'PrimitiveNode';
 }
+
+export function makeEdgeId({
+  sourceHandle,
+  targetHandle
+}: {
+  sourceHandle: string;
+  targetHandle: string;
+}) {
+  const sourceNodeId = getHandleNodeId(sourceHandle);
+  const targetNodeId = getHandleNodeId(targetHandle);
+
+  return `reactflow__edge-${sourceNodeId}${sourceHandle}-${targetNodeId}${targetHandle}`;
+}
+
+export const createEdge = ({
+  sourceHandle,
+  targetHandle,
+  type
+}: {
+  sourceHandle: string;
+  targetHandle: string;
+  type: EdgeType;
+}): Edge => {
+  const source = getHandleNodeId(sourceHandle);
+  const target = getHandleNodeId(targetHandle);
+
+  return {
+    id: makeEdgeId({ sourceHandle, targetHandle }),
+    source,
+    sourceHandle,
+    target,
+    targetHandle,
+    type
+  };
+};

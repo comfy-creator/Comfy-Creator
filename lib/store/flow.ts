@@ -23,8 +23,11 @@ import {
   NodeData,
   NodeDefinitions,
   NodeTypes as NodeComponents,
+  OutputData,
   UpdateInputData,
-  UpdateInputDataParams
+  UpdateInputDataParams,
+  UpdateOutputData,
+  UpdateOutputDataParams
 } from '../lib/types';
 import {
   addWidgetToPrimitiveNode,
@@ -32,7 +35,7 @@ import {
   disconnectPrimitiveNode,
   getHandleName,
   isPrimitiveNode,
-  isWidgetHandleId
+  isWidgetType
 } from '../lib/utils/node';
 import { createNodeComponentFromDef } from '../components/prototypes/NodeTemplate';
 import {
@@ -88,12 +91,13 @@ export type RFState = {
   loadNodeDefsFromApi: (fetcher: () => Promise<Record<string, ComfyObjectInfo>>) => void;
   removeNodeDefs: (typeNames: string[]) => void;
 
-  addNode: (params: AddNodeParams) => void;
+  addNode: (params: AddNodeParams) => string;
   removeNode: (nodeId: string) => void;
   addRawNode: (node: Node) => void;
 
   updateNodeData: (nodeId: string, newState: Partial<NodeData>) => void;
   updateInputData: UpdateInputData;
+  updateOutputData: UpdateOutputData;
 
   hotKeysShortcut: string[];
   addHotKeysShortcut: (keys: string[]) => void;
@@ -202,7 +206,7 @@ export const useFlowStore = create<RFState>((set, get) => {
       const nextNodes = applyNodeChanges(changes, nodes);
 
       for (const change of changes) {
-        console.log(change);
+        // console.log(change);
         if (change.type === 'add' || change.type === 'reset') {
           nodesMap.set(change.item.id, change.item);
         } else if (change.type === 'remove' && nodesMap.has(change.id)) {
@@ -253,11 +257,11 @@ export const useFlowStore = create<RFState>((set, get) => {
 
       let newConn: (Connection & { type?: string }) | undefined;
 
-      if (isWidgetHandleId(targetHandle ?? '')) {
+      if (isWidgetType(_targetHandle.type)) {
         if (source.type == 'PrimitiveNode') {
           if (!targetNodeId) return;
 
-          const widgetData = { nodeId: targetNodeId, widgetName: _targetHandle.type };
+          const widgetData = { nodeId: targetNodeId, widgetName: getHandleName(targetHandle) };
           const result = addWidgetToPrimitiveNode(source.id, get().updateNodeData, widgetData);
 
           if (result) {
@@ -275,7 +279,21 @@ export const useFlowStore = create<RFState>((set, get) => {
       }
 
       if (newConn) {
-        get().setEdges(addEdge(newConn, filterEdges));
+        const { updateInputData, updateOutputData, setEdges } = get();
+
+        updateInputData({
+          nodeId: target.id,
+          name: _targetHandle.name,
+          data: { isConnected: true }
+        });
+
+        updateOutputData({
+          nodeId: source.id,
+          name: _sourceHandle.name,
+          data: { isConnected: true }
+        });
+
+        setEdges(addEdge(newConn, filterEdges));
       }
     },
 
@@ -340,6 +358,8 @@ export const useFlowStore = create<RFState>((set, get) => {
         style: { width: `${width}px` }
       };
       nodesMap.set(id, newNode);
+
+      return id;
     },
 
     addRawNode: (node: Node<NodeData>) => nodesMap.set(node.id, node),
@@ -399,6 +419,7 @@ export const useFlowStore = create<RFState>((set, get) => {
 
       const { type, ...oldData } = input;
       const newInput = { ...oldData, ...data, type } as InputData;
+      console.log(newInput);
 
       nodesMap.set(nodeId, {
         ...node,
@@ -407,6 +428,35 @@ export const useFlowStore = create<RFState>((set, get) => {
           inputs: {
             ...node.data.inputs,
             [name]: newInput
+          }
+        }
+      });
+    },
+
+    updateOutputData: ({ nodeId, name, data }: UpdateOutputDataParams) => {
+      const node = nodesMap.get(nodeId);
+      if (!node) {
+        console.error(`Node ${nodeId} not found`);
+        return;
+      }
+
+      const output = node.data.outputs[name];
+      if (!output) {
+        console.error(`Output '${name}' not found in node '${nodeId}'.`);
+        return;
+      }
+
+      const { type, ...oldData } = output;
+      const newOutput = { ...oldData, ...data, type } as OutputData;
+      console.log(newOutput);
+
+      nodesMap.set(nodeId, {
+        ...node,
+        data: {
+          ...node.data,
+          outputs: {
+            ...node.data.outputs,
+            [name]: newOutput
           }
         }
       });
