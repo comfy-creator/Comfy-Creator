@@ -51,6 +51,7 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
   const { getSettings, storeSetting } = useApiContext();
   const [content, setContent] = useState<ReactNode>([]);
   const [openDialog, setOpenDialog] = useState<boolean>(false);
+  
 
   const storageLocation = 'browser',
     isNewUserSession = true;
@@ -126,10 +127,10 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
   const show = () => {
     setContent(() => {
       return [
-        <tr key={0} style={{ display: 'none' }}>
-          <th />
-          <th style={{ width: '33%' }} />
-        </tr>,
+        // <tr key={0} style={{ display: 'none' }}>
+        //   <th />
+        //   <th style={{ width: '33%' }} />
+        // </tr>,
         ...Object.values(settingsLookup)
           .sort((a, b) => a.name.localeCompare(b.name))
           .map((s, i) => s.render(i + 1))

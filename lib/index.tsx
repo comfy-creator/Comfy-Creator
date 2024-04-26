@@ -17,38 +17,41 @@ import 'reactflow/dist/style.css';
 
 interface GraphEditorProps {
   token?: string;
+  server?: 'local' | 'cloud';
 }
 
-function GraphEditor({ token }: GraphEditorProps) {
+function GraphEditor(props: GraphEditorProps) {
   return (
-    <ReactFlowProvider>
-      <DialogContextProvider>
-        <ErrorProvider>
-          <ToastContainer
-            position="bottom-right"
-            autoClose={5000}
-            hideProgressBar={false}
-            newestOnTop
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss={false}
-            draggable
-            pauseOnHover
-            theme="dark"
-          />
+    <div className="main-root">
+      <ReactFlowProvider>
+        <ApiContextProvider props={props}>
+          <DialogContextProvider>
+            <ErrorProvider>
+              <ToastContainer
+                position="bottom-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss={false}
+                draggable
+                pauseOnHover
+                theme="dark"
+              />
 
-          <ContextMenuProvider>
-            <ApiContextProvider token={token}>
-              <SettingsContextProvider>
-                <LoggingContextProvider>
-                  <MainFlow />
-                </LoggingContextProvider>
-              </SettingsContextProvider>
-            </ApiContextProvider>
-          </ContextMenuProvider>
-        </ErrorProvider>
-      </DialogContextProvider>
-    </ReactFlowProvider>
+              <ContextMenuProvider>
+                <SettingsContextProvider>
+                  <LoggingContextProvider>
+                    <MainFlow />
+                  </LoggingContextProvider>
+                </SettingsContextProvider>
+              </ContextMenuProvider>
+            </ErrorProvider>
+          </DialogContextProvider>
+        </ApiContextProvider>
+      </ReactFlowProvider>
+    </div>
   );
 }
 
