@@ -103,7 +103,7 @@ export function MainFlow() {
   useEffect(() => {
     loadNodeDefsFromApi(getNodeDefs);
     loadSerializedGraph();
-  }, []);
+  }, [getNodeDefs, loadNodeDefsFromApi, loadSerializedGraph]);
 
   useEffect(() => {
     if (!execution.output) return;
@@ -118,7 +118,7 @@ export function MainFlow() {
       nodeId: node.id,
       data: { value: makeServerURL(fileView) }
     });
-  }, [execution]);
+  }, [execution, makeServerURL, nodes, updateInputData]);
 
   useEffect(() => {
     const { addThemes } = useSettingsStore.getState();
@@ -132,7 +132,7 @@ export function MainFlow() {
 
     // Register Node definitions and edge types
     registerEdgeType(HANDLE_TYPES);
-  }, []);
+  }, [registerEdgeType, addSetting, loadCurrentSettings]);
 
   // save to ComfyLocalStorage as nodes, edges and viewport changes
   useEffect(() => {
@@ -146,7 +146,7 @@ export function MainFlow() {
       saveSerializedGraph(flow);
       console.log('Graph saved to local storage');
     }
-  }, [nodes, edges, viewport]);
+  }, [nodes, edges, viewport, saveSerializedGraph]);
 
   // TO DO: open the context menu if you dragged out an edge and didn't connect it,
   // so we can auto-spawn a compatible node for that edge
@@ -179,7 +179,7 @@ export function MainFlow() {
 
       setNodes(newNodes);
     },
-    [nodes]
+    [setNodes]
   );
 
   const onConnectStart: OnConnectStart = useCallback(
