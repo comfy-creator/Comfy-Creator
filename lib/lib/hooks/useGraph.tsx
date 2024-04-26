@@ -61,9 +61,7 @@ export function useGraph() {
       if (!flow.edges?.length) throw new Error('No edges found in flow');
 
       let viewport = flow.viewport;
-      if (!viewport) {
-        viewport = { x: 0, y: 0, zoom: 1 };
-      }
+      if (!viewport) viewport = { x: 0, y: 0, zoom: 1 };
 
       const nodes = recomputeNodes(flow.nodes);
 

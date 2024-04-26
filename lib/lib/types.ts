@@ -145,6 +145,8 @@ export interface AddNodeParams {
 export interface BaseInputData extends BaseInputDef {
   value?: any;
   name: string;
+  def?: InputDef;
+  isConnected?: boolean;
   isHighlighted?: boolean;
   primitiveNodeId?: string | null;
   linkedInputs?: string[]; // array of input names
@@ -154,6 +156,7 @@ export interface OutputData {
   name: string;
   slot: number;
   type: EdgeType;
+  isConnected?: boolean;
   isHighlighted?: boolean;
 }
 
@@ -244,7 +247,14 @@ export interface UpdateInputDataParams {
   data: Partial<InputData>;
 }
 
+export interface UpdateOutputDataParams {
+  name: string;
+  nodeId: string;
+  data: Partial<OutputData>;
+}
+
 export type UpdateInputData = (params: UpdateInputDataParams) => void;
+export type UpdateOutputData = (params: UpdateOutputDataParams) => void;
 
 export interface MenuState {
   items: IMenuType[];
@@ -410,7 +420,7 @@ export type ComfyWsMessage =
   | ComfyExecutingMessage
   | ComfyExecutedMessage;
 
-export interface SerializedFlow {
+export interface WorkflowAPI {
   [key: string]: {
     inputs: Record<string, string | number | boolean | [string, number]>;
     class_type: string;

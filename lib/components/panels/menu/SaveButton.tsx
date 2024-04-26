@@ -9,7 +9,7 @@ interface SaveButtonProps {
 }
 
 const SaveButton = ({ promptFilename }: SaveButtonProps) => {
-  const { flowToObject } = useWorkflow();
+  const { serializeGraph } = useWorkflow();
   const { addHotKeysHandlers } = useFlowStore();
 
   const handleClick = () => {
@@ -22,7 +22,7 @@ const SaveButton = ({ promptFilename }: SaveButtonProps) => {
       }
     }
 
-    const json = JSON.stringify(flowToObject(), null, 2);
+    const json = JSON.stringify(serializeGraph(), null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
 

@@ -12,20 +12,24 @@ export interface GetBezierPathParams {
 }
 
 export function createEdgeFromTemplate({ type }: { type: string }) {
-  return ({ sourceX, sourceY, targetX, targetY }: GetBezierPathParams) => {
+  return (params: GetBezierPathParams) => {
     const { getActiveTheme } = useSettingsStore();
     const theme = getActiveTheme();
     const strokeColor =
       theme.colors.types[type as keyof typeof theme.colors.types] || theme.colors.types['DEFAULT'];
-
-    const params = { sourceX, sourceY, targetX, targetY };
-    const [edgePath] = getBezierPath(params);
+    const [path, labelX, labelY, offsetX, offsetY] = getBezierPath(params);
 
     return (
       <BaseEdge
-        path={edgePath}
+        {...{
+          path,
+          labelX,
+          labelY,
+          offsetX,
+          offsetY
+        }}
         style={{
-          strokeWidth: 2,
+          strokeWidth: 3,
           stroke: strokeColor
         }}
       />
