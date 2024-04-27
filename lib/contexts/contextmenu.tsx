@@ -9,19 +9,21 @@ import {
   useRef,
   useState
 } from 'react';
-import { ContextMenuProps, IMenuType, NodeData } from '../lib/types';
+import {
+  ContextMenuProps,
+  IMenuType,
+  NodeData,
+  OnContextMenu,
+  OnNodeContextMenu
+} from '../lib/types';
 import { ContextMenu } from '../components/prototypes/ContextMenuTemplate';
 import { Node } from 'reactflow';
 import SearchWidget from '../components/SearchWidget';
 import { getContextMenuItems, getNodeMenuItems } from '../lib/menu';
 
 interface IContextMenu {
-  onNodeContextMenu: (event: ReactMouseEvent, node: Node) => void;
-  onContextMenu: (
-    event: ReactMouseEvent | MouseEvent | Event,
-    data?: (IMenuType | null)[],
-    title?: string
-  ) => void;
+  onNodeContextMenu: OnNodeContextMenu;
+  onContextMenu: OnContextMenu;
   menuRef: RefObject<HTMLDivElement>;
   onPaneClick: () => void;
 }

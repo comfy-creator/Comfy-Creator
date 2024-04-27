@@ -23,7 +23,7 @@ import { TextWidget } from '../widgets/Text';
 import { useSettingsStore } from '../../store/settings.ts';
 import { useFlowStore } from '../../store/flow.ts';
 import { ProgressBar } from '../ProgressBar.tsx';
-import { isWidgetType, makeHandleId } from '../../lib/utils/node.ts';
+import { isMultilineStringInput, isWidgetType, makeHandleId } from '../../lib/utils/node.ts';
 
 const createWidgetFromSpec = (
   def: InputDef,
@@ -40,6 +40,7 @@ const createWidgetFromSpec = (
         <ToggleWidget
           {...commonProps}
           checked={data.value || false}
+          disabled={data.isDisabled}
           onChange={(checked: boolean) => updateInputData({ value: checked })}
         />
       );
@@ -50,6 +51,7 @@ const createWidgetFromSpec = (
         <NumberWidget
           {...commonProps}
           value={data.value}
+          disabled={data.isDisabled}
           onChange={(value: number) => updateInputData({ value })}
         />
       );
@@ -60,6 +62,7 @@ const createWidgetFromSpec = (
           <TextWidget
             {...commonProps}
             value={data.value}
+            disabled={data.isDisabled}
             onChange={(value: string) => updateInputData({ value })}
           />
         );
@@ -68,6 +71,7 @@ const createWidgetFromSpec = (
         <StringWidget
           {...commonProps}
           value={data.value}
+          disabled={data.isDisabled}
           onChange={(value: string) => updateInputData({ value })}
         />
       );
@@ -80,6 +84,7 @@ const createWidgetFromSpec = (
           onChange={(value: string) => updateInputData({ value })}
           // TODO: add options
           options={{ values: [] }}
+          disabled={data.isDisabled}
           multiSelect={(def as EnumInputDef).multiSelect}
         />
       );
@@ -99,16 +104,15 @@ export const createNodeComponentFromDef = (
   nodeDef: NodeDefinition,
   updateInputData: UpdateInputData
 ): ComponentType<NodeProps<NodeData>> => {
-  return ({ type, id, data, selected }: NodeProps<NodeData>) => {
+  return ({ id, data, selected }: NodeProps<NodeData>) => {
     const containerRef = useRef<HTMLDivElement>(null);
-    // const labelDivRef = useRef<HTMLDivElement>(null);
 
-    const [advanced, setAdvanced] = useState(false);
+    const [advanced] = useState(false);
     const [minWidth, setMinWidth] = useState(0);
     const [minHeight, setMinHeight] = useState(0);
 
     const { getActiveTheme, activeTheme } = useSettingsStore();
-    const { execution, updateNodeData } = useFlowStore();
+    const { execution } = useFlowStore();
     const theme = getActiveTheme();
 
     const { NODE_TEXT_SIZE, NODE_TITLE_COLOR, NODE_TEXT_COLOR } = theme.colors.appearance;
@@ -333,38 +337,48 @@ function Widget({ theme, nodeId, data, nodeDef, updateInputData }: WidgetProps) 
   const inputDef = nodeDef.inputs.find((input) => input.name === data.name) ?? (data as InputDef);
   if (!inputDef) return null;
 
-  const appearance = theme.colors.types;
-  const { NODE_TEXT_COLOR } = theme.colors.appearance;
-
   const update = (data: Partial<InputData>) => {
     if (!data.type || !data.name) return;
     updateInputData({ nodeId, name: data.name, data });
   };
 
-  const handleStyle = data.primitiveNodeId
-    ? { background: appearance[data.type], border: '1px solid transparent' }
-    : { border: `1.5px solid ${appearance[data.type]}` };
-
-  const isMultiline = data.def?.type === 'STRING' && data.def.multiline;
+  const isMultiline = isMultilineStringInput(data);
   const containerStyle = !isMultiline ? { display: 'flex', alignItems: 'center' } : {};
 
   return (
     <div className="widget_container" style={{ ...containerStyle }}>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <Handle
-          type="target"
-          position={Position.Left}
-          style={{ ...handleStyle }}
-          className={`flow_handler left`}
-          id={makeHandleId(nodeId, 'input', data.name)}
-        />
-        <div style={{ width: '12px' }} />
-        {isMultiline && (
-          <div style={{ fontSize: '0.6rem', color: NODE_TEXT_COLOR }}>{data.name}</div>
-        )}
+      <WidgetHandle nodeId={nodeId} data={data} theme={theme} />
+      <div style={{ marginLeft: isMultiline ? '0px' : '10px', width: '100%' }}>
+        {createWidgetFromSpec(inputDef, data.name, data, update)}
       </div>
+    </div>
+  );
+}
 
-      {createWidgetFromSpec(inputDef, data.name, data, update)}
+export interface WidgetHandleProps {
+  nodeId: string;
+  data: InputData;
+  theme: ThemeConfig;
+}
+
+function WidgetHandle({ nodeId, data, theme }: WidgetHandleProps) {
+  const appearance = theme.colors.types;
+
+  const handleStyle = data.primitiveNodeId
+    ? { background: appearance[data.type], border: '1px solid transparent' }
+    : { border: `1.5px solid ${appearance[data.type]}`, background: 'transparent' };
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      <Handle
+        type="target"
+        position={Position.Left}
+        style={{ ...handleStyle }}
+        className={`flow_handler left`}
+        id={makeHandleId(nodeId, 'input', data.name)}
+      />
+
+      {isMultilineStringInput(data) && <div className="flow_input_text">{data.name}</div>}
     </div>
   );
 }

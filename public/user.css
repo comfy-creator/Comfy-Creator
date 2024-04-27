@@ -165,22 +165,22 @@ body {
 
 .flow_handler {
     top: unset !important;
-    width: 4px !important;
-    height: 4px !important;
+    width: 5px !important;
+    height: 5px !important;
     padding: 1px !important;
-    min-width: 4px !important;
-    min-height: 4px !important;
+    min-width: 5px !important;
+    min-height: 5px !important;
     transform: none !important;
     border-radius: 50% !important;
 }
 
 .flow_handler.right {
-    margin-right: 8px;
+    margin-right: 5px;
     right: 5px !important;
 }
 
 .flow_handler.left {
-    margin-left: 8px;
+    margin-left: 5px;
     left: 5px !important;
 }
 
@@ -217,7 +217,6 @@ body {
     display: flex;
     border-radius: 10px;
     align-items: center;
-    color: var(--input-text);
     justify-content: space-between;
     background: var(--comfy-input-bg);
     border: 1px solid var(--border-color);
@@ -232,9 +231,8 @@ body {
     align-items: center;
 }
 
-.widget_input_item_text {
-    /*color: #b2b2b2;*/
-    /*font-size: 0.6rem;*/
+.widget_input_item_disabled {
+    color: #656565 !important;
 }
 
 .react-flow__pane {
