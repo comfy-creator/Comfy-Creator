@@ -127,7 +127,7 @@ export const ApiContextProvider: React.FC<{ props?: ApiContextProviderProps; chi
   );
 
   useEffect(() => {
-    localStorage.getItem('graphId');
+    setGraphId(localStorage.getItem('graphId') || "");
   }, []);
 
   // Recreate ComfyClient as needed

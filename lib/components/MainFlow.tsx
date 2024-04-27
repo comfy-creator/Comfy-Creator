@@ -143,7 +143,7 @@ export function MainFlow() {
     registerEdgeType(HANDLE_TYPES);
   }, []);
 
-  // save to ComfyLocalStorage as nodes, edges and viewport changes
+  // save to localStorage as nodes, edges and viewport changes
   useEffect(() => {
     if (nodes.length > 0 || edges.length > 0) {
       const flow = {

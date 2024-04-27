@@ -1,6 +1,6 @@
 // The container is used to provider dependency resolution for plugins
 
-import React, { createContext, ReactNode, useState } from 'react';
+import React, { createContext, ReactNode, useEffect, useState } from 'react';
 import { createUseContextHook } from './hookCreator';
 import { ComfySettingsDialog } from '../components/dialogs/ComfySettingsDialog';
 import {
@@ -13,7 +13,6 @@ import {
 import { ComboOption } from '../types/many';
 import { useApiContext } from './api';
 import { useSettingsStore } from '../store/settings';
-import { ComfyLocalStorage } from '../lib/localStorage';
 
 interface ISettingsContext {
   show: () => void;
@@ -51,19 +50,18 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
   const { getSettings, storeSetting } = useApiContext();
   const [content, setContent] = useState<ReactNode>([]);
   const [openDialog, setOpenDialog] = useState<boolean>(false);
-  
 
   const storageLocation = 'browser',
     isNewUserSession = true;
 
   const getLocalSettings = () => {
     const values: Record<string, any> = {};
-    const keys = Object.keys(ComfyLocalStorage);
+    const keys = Object.keys(localStorage);
     let i = keys.length;
 
     while (i--) {
       if (keys[i].startsWith('Comfy.Settings.')) {
-        const item = ComfyLocalStorage.getItem(keys[i]) as string;
+        const item = localStorage.getItem(keys[i]) as string;
         try {
           values[keys[i]] = JSON.parse(item);
         } catch (e) {
@@ -105,7 +103,7 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
   };
 
   const setSettingValueAsync = async (id: string, value: any) => {
-    ComfyLocalStorage.setItem('Comfy.Settings.' + id, JSON.stringify(value)); // backwards compatibility for extensions keep setting in storage
+    localStorage.setItem('Comfy.Settings.' + id, JSON.stringify(value)); // backwards compatibility for extensions keep setting in storage
 
     const oldValue = getSettingValue(id);
     addSettingsValue(getId(id), value);
@@ -163,8 +161,8 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
 
     if (!value) {
       if (isNewUserSession) {
-        // Check if we have a ComfyLocalStorage value but not a setting value and we are a new user
-        const localValue = ComfyLocalStorage.getItem('Comfy.Settings.' + id);
+        // Check if we have a localStorage value but not a setting value and we are a new user
+        const localValue = localStorage.getItem('Comfy.Settings.' + id);
         if (localValue) {
           value = JSON.parse(localValue);
           setSettingValue(id, value); // Store on the server
