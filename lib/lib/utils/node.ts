@@ -144,6 +144,7 @@ export const disconnectPrimitiveNode = (id: string) => {
   const updatedInputData = {
     ...widget,
     ...primitiveWidget,
+    isDisabled: false,
     primitiveNodeId: null
   } as InputData;
 
@@ -185,6 +186,7 @@ export function addWidgetToPrimitiveNode(
     name: widgetName,
     data: {
       ...widget,
+      isDisabled: true,
       primitiveNodeId
     }
   });
@@ -250,3 +252,7 @@ export const createEdge = ({
     type
   };
 };
+
+export function isMultilineStringInput(input: InputData) {
+  return input.def?.type === 'STRING' && input.def.multiline;
+}

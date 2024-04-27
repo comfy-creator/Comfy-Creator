@@ -9,6 +9,7 @@ type ToggleProps = {
 
 export const ToggleWidget: FC<ToggleProps> = ({ label, disabled, checked, onChange }) => {
   const [input, setInput] = useState(checked);
+  const disabledClass = disabled ? 'widget_input_item_disabled' : '';
 
   useEffect(() => {
     setInput(input);
@@ -16,6 +17,7 @@ export const ToggleWidget: FC<ToggleProps> = ({ label, disabled, checked, onChan
   }, [input]);
 
   const handleToggle = () => {
+    if (disabled) return;
     setInput((inp) => !inp);
   };
 
@@ -38,7 +40,7 @@ export const ToggleWidget: FC<ToggleProps> = ({ label, disabled, checked, onChan
     <div className="widget_box">
       <div className="widget_input">
         <div className="widget_input_item" onClick={handleToggle}>
-          <span className="widget_input_item_text">{String(input)}</span>
+          <span className={`widget_input_item_text ${disabledClass}`}>{String(input)}</span>
           <ToggleCircle />
         </div>
       </div>

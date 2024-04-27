@@ -18,6 +18,8 @@ import {
   AddNodeParams,
   EdgeComponents,
   EdgeType,
+  ExecutionState,
+  HandleEdge,
   InputData,
   KeyboardHandler,
   NodeData,
@@ -61,11 +63,7 @@ const awareness = yjsProvider.awareness; // TO DO: use for cusor location
 type NodeCallbackType = 'afterQueued';
 
 export type RFState = {
-  execution: {
-    currentNodeId: string | null;
-    progress: { value: number; max: number } | null;
-    output: Record<string, any>;
-  };
+  execution: ExecutionState;
 
   setExecutionOutput: (output: Record<string, any>) => void;
   setCurrentExecutionNodeId: (nodeId: string | null) => void;
@@ -122,6 +120,12 @@ export type RFState = {
   ) => void;
 
   setInstance: (instance: ReactFlowInstance) => void;
+
+  isUpdatingEdge: boolean;
+  setIsUpdatingEdge: (isUpdatingEdge: boolean) => void;
+
+  currentHandleEdge: HandleEdge | null;
+  setCurrentHandleEdge: (edge: HandleEdge | null) => void;
 };
 
 export const useFlowStore = create<RFState>((set, get) => {
@@ -156,6 +160,9 @@ export const useFlowStore = create<RFState>((set, get) => {
       progress: null,
       output: {}
     },
+
+    isUpdatingEdge: false,
+    currentHandleEdge: null,
 
     // This updates y.Doc state, rather than Zustand state directly
     // The yjsObserver will propagate the y.Doc update -> Zustand store
@@ -551,6 +558,14 @@ export const useFlowStore = create<RFState>((set, get) => {
           output
         }
       }));
+    },
+
+    setIsUpdatingEdge: (isUpdatingEdge) => {
+      set({ isUpdatingEdge });
+    },
+
+    setCurrentHandleEdge: (handleEdge) => {
+      set({ currentHandleEdge: handleEdge });
     }
   };
 });

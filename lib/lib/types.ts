@@ -1,5 +1,10 @@
-import { ComponentType, type MouseEvent as ReactMouseEvent, ReactNode } from 'react';
-import { EdgeProps, NodeProps, XYPosition } from 'reactflow';
+import {
+  ComponentType,
+  type MouseEvent as ReactMouseEvent,
+  ReactNode,
+  SetStateAction
+} from 'react';
+import { ConnectionLineType, Edge, EdgeProps, Node, NodeProps, XYPosition } from 'reactflow';
 
 export type EdgeType =
   | 'BOOLEAN'
@@ -146,6 +151,7 @@ export interface BaseInputData extends BaseInputDef {
   value?: any;
   name: string;
   def?: InputDef;
+  isDisabled?: boolean;
   isConnected?: boolean;
   isHighlighted?: boolean;
   primitiveNodeId?: string | null;
@@ -437,3 +443,61 @@ export interface ViewFileArgs {
 }
 
 export type HandleType = 'input' | 'output';
+
+export interface HandleEdge {
+  handleId: string;
+  edgeType: EdgeType;
+  handleType: HandleType;
+}
+
+export type OnContextMenu = (
+  event: ReactMouseEvent | MouseEvent | Event,
+  data?: (IMenuType | null)[],
+  title?: string
+) => void;
+
+export type OnNodeContextMenu = (event: ReactMouseEvent, node: Node) => void;
+
+export interface HandleOnConnectEndParams {
+  isUpdatingEdge: boolean;
+  nodeDefs: NodeDefinitions;
+  onContextMenu: OnContextMenu;
+  currentHandleEdge: HandleEdge | null;
+
+  setCurrentHandleEdge: (edge: HandleEdge | null) => void;
+  setNodes: (nodes: Node[]) => void;
+}
+
+export interface HandleOnConnectStartParams {
+  setCurrentConnectionLineType: (type: ConnectionLineType) => void;
+  setCurrentHandleEdge: (edge: HandleEdge | null) => void;
+  setNodes: (nodes: Node[]) => void;
+  nodes: Node[];
+}
+
+export interface ValidateConnectionParams {
+  getNodes: () => Node[];
+  getEdges: () => Edge[];
+}
+
+export interface HandleEdgeUpdateStartParams {
+  setEdges: (edges: SetStateAction<Edge[]>) => void;
+  setIsUpdatingEdge: (value: boolean) => void;
+  updateOutputData: UpdateOutputData;
+  updateInputData: UpdateInputData;
+}
+
+export interface HandleEdgeUpdateParams {
+  setEdges: (edges: SetStateAction<Edge[]>) => void;
+  setIsUpdatingEdge: (value: boolean) => void;
+}
+
+export interface HandleEdgeUpdateEndParams {
+  setIsUpdatingEdge: (value: boolean) => void;
+}
+
+export interface ExecutionState {
+  output: Record<string, any>;
+  currentNodeId: string | null;
+  progress: { value: number; max: number } | null;
+}
