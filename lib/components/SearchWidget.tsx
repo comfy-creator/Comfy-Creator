@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import NodeInfo from '../../node_info.json';
-import { useFlowStore } from '../store/flow.ts';
+import { RFState, useFlowStore } from '../store/flow.ts';
 
 const data = {
   slotInTypeFilter: [
@@ -44,34 +43,41 @@ interface IProp {
   props: any;
 }
 
+const selector = (state: RFState) => ({
+  nodeDefs: state.nodeDefs,
+  addNode: state.addNode,
+});
+
+
 const SearchWidget = ({ handleMouseLeave, handleMouseIn, show, widgetRef, props }: IProp) => {
+  const { nodeDefs, addNode } = useFlowStore(selector);
   const [allData, setAllData] = useState<IDataType[]>([]);
   const [displayData, setDisplayData] = useState<IDataType[]>([]);
   const [filterCriteria, setFilterCriteria] = useState({ inType: '', outType: '' });
   const [searchValue, setSearchValue] = useState('');
 
   useEffect(() => {
-    const nodes = Object.entries(NodeInfo).map(([key]) => ({
-      label: key,
+    const nodes = Object.entries(nodeDefs).map(([key, value]) => ({
+      label: value.display_name,
       value: key,
       isGeneric: false
     }));
     setAllData(nodes);
     setDisplayData(nodes);
-  }, []);
+  }, [nodeDefs]);
 
   useEffect(() => {
     const { inType, outType } = filterCriteria;
     let newData = allData;
 
     if (inType || outType) {
-      const filteredData = Object.entries(NodeInfo)
+      const filteredData = Object.entries(nodeDefs)
         .filter(
-          ([_, value]) => !inType || Object.keys(value?.input?.required || {}).includes(inType)
+          ([_, value]) => !inType || value.inputs.map((item) => item.name).includes(inType)
         )
-        .filter(([_, value]) => !outType || ((value?.output as string[]) || []).includes(outType))
-        .map(([key]) => ({
-          label: key,
+        .filter(([_, value]) => !outType || value.outputs.map((item) => item.name).includes(outType))
+        .map(([key, value]) => ({
+          label: value.display_name,
           value: key,
           isGeneric: false
         }));
@@ -106,7 +112,6 @@ const SearchWidget = ({ handleMouseLeave, handleMouseIn, show, widgetRef, props 
   const handleClick = (e: React.MouseEvent<HTMLDivElement>, value: string) => {
     const position = { x: e.clientX, y: e.clientY };
 
-    const { addNode } = useFlowStore.getState();
     addNode({
       position,
       type: value,

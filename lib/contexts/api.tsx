@@ -27,9 +27,16 @@ import { API_URL, DEFAULT_SERVER_PROTOCOL, DEFAULT_SERVER_URL } from '../lib/con
 import { toWsURL } from '../lib/utils';
 import { ComfyWsMessage, ViewFileArgs, WorkflowAPI } from '../lib/types';
 import { ApiEventEmitter } from '../lib/apiEvent';
-import { ComfyLocalStorage } from '../lib/localStorage';
 
 type ProtocolType = 'grpc' | 'ws';
+
+interface IAppConfig {
+  apiKey: string;
+  server: 'local' | 'cloud';
+  serverUrl: string;
+  serverProtocol: ProtocolType;
+  showAdvanceSettings: boolean;
+}
 
 interface IApiContext extends IComfyApi {
   sessionId?: string;
@@ -37,6 +44,8 @@ interface IApiContext extends IComfyApi {
   requestMetadata?: Metadata;
   comfyClient: ComfyClient | null;
   socket: ReconnectingWebSocket | null;
+  appConfig: IAppConfig;
+  setConfig: (state: Partial<IAppConfig>) => void;
   runWorkflow: (
     serializedGraph: WorkflowAPI,
     workflow?: Record<string, WorkflowStep>
@@ -82,50 +91,64 @@ const pollingFallback = () => {
   return () => clearInterval(intervalId);
 };
 
-export const ApiContextProvider: React.FC<{ token?: string; children: ReactNode }> = ({
-  token,
+interface ApiContextProviderProps {
+  token?: string;
+  server?: 'local' | 'cloud';
+  serverUrl?: string;
+}
+
+export const ApiContextProvider: React.FC<{ props?: ApiContextProviderProps; children: ReactNode }> = ({
+  props,
   children
 }) => {
-  // TO DO: add possible auth in here as well?
 
   // graph editor app config
-  const appConfig = {
-    API_KEY: token || '',
-    SERVER_URL: DEFAULT_SERVER_URL,
-    SERVER_PROTOCOL: DEFAULT_SERVER_PROTOCOL
-  };
+  const [appConfig, setAppConfig] = useState<IAppConfig>({
+    apiKey: props?.token || '',
+    server: props?.server || 'local',
+    serverUrl: props?.serverUrl || DEFAULT_SERVER_URL,
+    serverProtocol: DEFAULT_SERVER_PROTOCOL,
+    // to show api settings in settings dialog
+    showAdvanceSettings: (props?.token || props?.server || props?.serverUrl) ? true : false
+  });
 
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [socket, setSocket] = useState<ReconnectingWebSocket | null>(null);
-  const [serverUrl, setServerUrl] = useState<string>(appConfig.SERVER_URL);
+  const [serverUrl, setServerUrl] = useState<string>(appConfig.serverUrl);
   const [connectionStatus, setConnectionStatus] = useState<string>(ApiStatus.CLOSED);
-  const [serverProtocol, setServerProtocol] = useState<ProtocolType>(appConfig.SERVER_PROTOCOL);
   const [requestMetadata, setRequestMetadata] = useState<Metadata | undefined>(undefined);
+
+  // graphId
+  const [graphId, setGraphId] = useState<string | undefined>(undefined);
 
   // Only used for when serverProtocol is grpc. Used to both send messages and stream results
   const [comfyClient, setComfyClient] = useState<ComfyClient>(
     createClient(ComfyDefinition, createChannel(serverUrl, FetchTransport()))
   );
 
+  useEffect(() => {
+    setGraphId(localStorage.getItem('graphId') || "");
+  }, []);
+
   // Recreate ComfyClient as needed
   useEffect(() => {
-    if (serverProtocol !== 'grpc') return;
+    if (appConfig.serverProtocol !== 'grpc') return;
 
     const channel = createChannel(serverUrl, FetchTransport());
     const newComfyClient = createClient(ComfyDefinition, channel);
     setComfyClient(newComfyClient);
     // No cleanup is explicitly required for gRPC client
-  }, [serverUrl, serverProtocol]);
+  }, [serverUrl, appConfig.serverProtocol]);
 
   // Generate session-id for websocket connections
   useEffect(() => {
-    if (serverProtocol !== 'ws') return;
+    if (appConfig.serverProtocol !== 'ws') return;
     setSessionId(crypto.randomUUID());
   }, []);
 
   // Establish a connection to local-server if we're using websockets
   useEffect(() => {
-    if (serverProtocol !== 'ws') return;
+    if (appConfig.serverProtocol !== 'ws') return;
     if (!sessionId) return;
 
     const url = `${toWsURL(serverUrl)}/ws?clientId=${sessionId}`;
@@ -165,12 +188,12 @@ export const ApiContextProvider: React.FC<{ token?: string; children: ReactNode 
       socket?.close();
       cleanupPolling();
     };
-  }, [serverUrl, sessionId, serverProtocol]);
+  }, [serverUrl, sessionId, appConfig.serverProtocol]);
 
   // Once we have a session-id, subscribe to the stream of results using grpc
   useEffect(() => {
     if (sessionId === undefined) return;
-    if (serverProtocol !== 'grpc') return;
+    if (appConfig.serverProtocol !== 'grpc') return;
 
     const abortController = new AbortController();
 
@@ -203,20 +226,28 @@ export const ApiContextProvider: React.FC<{ token?: string; children: ReactNode 
     return () => {
       abortController.abort();
     };
-  }, [comfyClient, sessionId, serverProtocol]);
+  }, [comfyClient, sessionId, appConfig.serverProtocol]);
 
   // Update metadata based on api-key / login status
   useEffect(() => {
     const metadata = new Metadata();
-    if (appConfig.API_KEY) metadata.set('api-key', appConfig.API_KEY);
+    if (appConfig.apiKey) metadata.set('api-key', appConfig.apiKey);
     setRequestMetadata(metadata);
   }, []);
+
+  // function to set appConfig
+  const setConfig = (state: Partial<IAppConfig>) => {
+    setAppConfig({
+      ...appConfig,
+      ...state
+    });
+  };
 
   // This is the function used to submit jobs to the server
   // ComfyUI terminology: 'queuePrompt'
   const runWorkflow = useCallback(
     async (flow: WorkflowAPI): Promise<JobSnapshot | Error> => {
-      if (serverProtocol === 'grpc' && comfyClient) {
+      if (appConfig.serverProtocol === 'grpc' && comfyClient) {
         // Use gRPC server
         const request = {
           workflow: flow,
@@ -225,7 +256,7 @@ export const ApiContextProvider: React.FC<{ token?: string; children: ReactNode 
           worker_wait_duration: undefined,
           request_id: crypto.randomUUID(),
           output_config: {
-            write_to_graph_id: ComfyLocalStorage.getItem('graphId') ?? undefined
+            write_to_graph_id: graphId ?? undefined
           }
         };
 
@@ -289,12 +320,12 @@ export const ApiContextProvider: React.FC<{ token?: string; children: ReactNode 
         return (await res.json()) as JobSnapshot;
       }
     },
-    [requestMetadata, serverUrl, serverProtocol, comfyClient, sessionId]
+    [requestMetadata, serverUrl, appConfig.serverProtocol, comfyClient, sessionId]
   );
 
   // putting these functions here for now cos we might want to find a way to go with the gRPC and the fetch requests
   const makeServerURL = (route: string): string => {
-    return 'http://localhost:8188' + route;
+    return appConfig.serverUrl + route;
   };
 
   const fetchApi = (route: string, options?: RequestInit) => {
@@ -305,7 +336,6 @@ export const ApiContextProvider: React.FC<{ token?: string; children: ReactNode 
       options.headers = {};
     }
 
-    console.log('fetching', makeServerURL(route), options);
     return fetch(makeServerURL(route), options);
   };
 
@@ -572,6 +602,8 @@ export const ApiContextProvider: React.FC<{ token?: string; children: ReactNode 
         comfyClient,
         requestMetadata,
         runWorkflow,
+        appConfig,
+        setConfig,
 
         // API functions
         makeServerURL,

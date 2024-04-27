@@ -1,7 +1,6 @@
 import { RefObject, useEffect, useState } from 'react';
 import { IMenuType, NodeDefinitions } from '../types.ts';
 import { useFlowStore } from '../../store/flow.ts';
-import { ComfyLocalStorage } from '../localStorage.ts';
 
 type RawInput = {
   text: string;
@@ -131,7 +130,7 @@ export function dragElement(dragEl: HTMLDivElement, addSetting: any) {
     dragEl.style.bottom = 'unset';
 
     if (savePos) {
-      ComfyLocalStorage.setItem(
+      localStorage.setItem(
         'Comfy.MenuPosition',
         JSON.stringify({
           x: dragEl.offsetLeft,
@@ -142,7 +141,7 @@ export function dragElement(dragEl: HTMLDivElement, addSetting: any) {
   }
 
   function restorePos() {
-    const pos = ComfyLocalStorage.getItem('Comfy.MenuPosition');
+    const pos = localStorage.getItem('Comfy.MenuPosition');
     if (pos) {
       const newPos = JSON.parse(pos);
       newPosX = newPos.x;

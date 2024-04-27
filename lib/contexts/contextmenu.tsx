@@ -61,10 +61,8 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
 
     if (event) {
       setSearchWidgetProps({
-        top: event.clientY < widget.height - 200 ? event.clientY : undefined,
-        left: event.clientX < widget.width - 200 ? event.clientX : undefined,
-        right: event.clientX >= widget.width - 200 ? widget.width - event.clientX : undefined,
-        bottom: event.clientY >= widget.height - 200 ? widget.height - event.clientY : undefined
+        top: event.clientY,
+        left: event.clientX,
       });
     }
     setShowSearchWidget(true);
