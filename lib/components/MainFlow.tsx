@@ -1,6 +1,6 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-import { DragEvent, useCallback, useEffect } from 'react';
+import { DragEvent, useCallback, useEffect, useRef } from 'react';
 import ReactFlow, {
   Background,
   BackgroundVariant,
@@ -144,6 +144,9 @@ export function MainFlow() {
   }, []);
 
   // save to localStorage as nodes, edges and viewport changes
+  const debounceDuration = 1000; // 1 seconds
+
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
     if (nodes.length > 0 || edges.length > 0) {
       const flow = {
@@ -152,8 +155,16 @@ export function MainFlow() {
         edges: edges.filter(Boolean)
       };
 
-      saveSerializedGraph(flow);
+      clearTimeout(debounceTimer?.current ?? "");
+      debounceTimer.current = setTimeout(() => {
+        saveSerializedGraph(flow);
+      }, debounceDuration);
     }
+
+    // Clean up function
+    return () => {
+      clearTimeout(debounceTimer?.current ?? "");
+    };
   }, [nodes, edges, viewport]);
 
   // TO DO: open the context menu if you dragged out an edge and didn't connect it,
