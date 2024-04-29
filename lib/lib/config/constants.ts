@@ -179,9 +179,12 @@ export const API_URL = {
 export const EDGES_UPDATABLE = true;
 export const AUTO_PAN_ON_CONNECT = true;
 export const ELEVATE_EDGES_ON_SELECT = true;
-export const ZOOM_ON_DOUBLE_CLICK = true;
+export const ZOOM_ON_DOUBLE_CLICK = false;
 export const MULTI_SELECT_KEY_CODE = 'Shift';
 export const REACTFLOW_PRO_OPTIONS_CONFIG = {
   account: 'paid-pro',
   hideAttribution: true
 };
+
+// Frequence we save to localStorage as nodes
+export const SAVE_GRAPH_DEBOUNCE = 1000; // 1 second

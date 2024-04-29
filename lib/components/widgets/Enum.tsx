@@ -48,31 +48,38 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
     onChange?.(value);
   }, [valueIndex]);
 
-  const handleForward = () =>
+  const handleForward = () => {
+    if (disabled) return;
     setValueIndex((i) => {
       if (i == undefined) return 0;
       return i === enumOptions.length - 1 ? 0 : i + 1;
     });
+  };
 
-  const handleBackward = () =>
+  const handleBackward = () => {
+    if (disabled) return;
+
     setValueIndex((i) => {
       if (i == undefined) return 0;
       return i === 0 ? enumOptions.length - 1 : i - 1;
     });
+  };
+
+  const disabledClass = disabled ? 'widget_input_item_disabled' : '';
 
   return (
     <div className="widget_box">
       <div className="widget_input">
         <div className="widget_input_item">
-          <WidgetBackwardIcon onClick={handleBackward} />
-          <div className="widget_input_item_text">{label}</div>
+          <WidgetBackwardIcon disabled={disabled} onClick={handleBackward} />
+          <div className={`widget_input_item_text ${disabledClass}`}>{label}</div>
         </div>
 
         <div className="widget_input_item" style={{ gap: '5px' }}>
-          <span className="widget_input_item_text">
+          <span className={`widget_input_item_text ${disabledClass}`}>
             {valueIndex != undefined ? enumOptions[valueIndex] : 'undefined'}
           </span>
-          <WidgetForwardIcon onClick={handleForward} />
+          <WidgetForwardIcon disabled={disabled} onClick={handleForward} />
         </div>
       </div>
     </div>

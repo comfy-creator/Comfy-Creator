@@ -1,5 +1,3 @@
-import './Drawer.css';
-
 interface IProps {
   open: boolean;
   onClose: () => void;
@@ -12,15 +10,17 @@ export const Drawer = (props: IProps) => {
   return (
     <>
       <div
-        className={`overlay ${!open && 'overlayHidden'} ${open && 'overlayOpen'}`}
+        className={`content-browser-overlay ${!open && 'content-browser-overlayHidden'} ${open && 'content-browser-overlayOpen'}`}
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className={`drawer ${open && 'animate'} ${!open && 'hidden'}`}>
-        <div className="header">
-          <h3 className="header_title">Image Feed</h3>
+      <div
+        className={`content-browser-drawer ${open && 'content-browser-animate'} ${!open && 'content-browser-hidden'}`}
+      >
+        <div className="content-browser-header">
+          <h3 className="content-browser-header_title">Image Feed</h3>
         </div>
-        <div className="image_list">
+        <div className="content-browser-image_list">
           {images ? (
             images.map((image, index) => <ImageWithOverlay key={index} src={image} alt="image" />)
           ) : (
@@ -42,14 +42,14 @@ interface ImageWithOverlayProps {
 const ImageWithOverlay: React.FC<ImageWithOverlayProps> = ({ src, alt }) => {
   const onRemove = () => {};
   return (
-    <div className="image-container">
-      <img src={src} alt={alt} className="image" />
-      <div className="image_overlay"></div>
-      <div className="image_overlay">
-        <a href={src} download className="download-button">
+    <div className="content-browser-image-container">
+      <img src={src} alt={alt} className="content-browser-image" />
+      <div className="content-browser-image_overlay"></div>
+      <div className="content-browser-image_overlay">
+        <a href={src} download className="content-browser-download-button">
           Download
         </a>
-        <button onClick={onRemove} className="remove-button">
+        <button onClick={onRemove} className="content-browser-remove-button">
           Remove
         </button>
       </div>

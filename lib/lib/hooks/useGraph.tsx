@@ -68,6 +68,7 @@ export function useGraph() {
       setNodes(nodes);
       setEdges(flow.edges);
       setViewport(viewport);
+      localStorage.setItem(FLOW_KEY, JSON.stringify({nodes, edges: flow.edges}))
     } catch (e) {
       log('Error loading flow', e);
       console.log('Error loading flow: ', e);

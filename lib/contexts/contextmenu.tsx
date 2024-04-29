@@ -9,19 +9,21 @@ import {
   useRef,
   useState
 } from 'react';
-import { ContextMenuProps, IMenuType, NodeData } from '../lib/types';
+import {
+  ContextMenuProps,
+  IMenuType,
+  NodeData,
+  OnContextMenu,
+  OnNodeContextMenu
+} from '../lib/types';
 import { ContextMenu } from '../components/prototypes/ContextMenuTemplate';
 import { Node } from 'reactflow';
 import SearchWidget from '../components/SearchWidget';
 import { getContextMenuItems, getNodeMenuItems } from '../lib/menu';
 
 interface IContextMenu {
-  onNodeContextMenu: (event: ReactMouseEvent, node: Node) => void;
-  onContextMenu: (
-    event: ReactMouseEvent | MouseEvent | Event,
-    data?: (IMenuType | null)[],
-    title?: string
-  ) => void;
+  onNodeContextMenu: OnNodeContextMenu;
+  onContextMenu: OnContextMenu;
   menuRef: RefObject<HTMLDivElement>;
   onPaneClick: () => void;
 }
@@ -59,10 +61,8 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
 
     if (event) {
       setSearchWidgetProps({
-        top: event.clientY < widget.height - 200 ? event.clientY : undefined,
-        left: event.clientX < widget.width - 200 ? event.clientX : undefined,
-        right: event.clientX >= widget.width - 200 ? widget.width - event.clientX : undefined,
-        bottom: event.clientY >= widget.height - 200 ? widget.height - event.clientY : undefined
+        top: event.clientY,
+        left: event.clientX,
       });
     }
     setShowSearchWidget(true);

@@ -1,16 +1,24 @@
-@import "../public/reactflow.css";
-@import "../public/appstyle.css";
-@import "../public/user.css";
+@import './reactflow.css';
+@import './appstyle.css';
+@import './user.css';
 
 :root {
-    font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-    line-height: 1.5;
-    font-weight: 400;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
 }
 
 html,
 body,
 #root {
-    height: 100%;
-    margin: 0;
+  height: 100%;
+  margin: 0;
+}
+
+.main-root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif !important;
+  line-height: 1.5;
+  font-weight: 400;
+  height: 100%;
+  width: 100%;
 }

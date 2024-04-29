@@ -47,7 +47,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    libInjectCss(),
+    // libInjectCss(),
     dts({
       include: ['lib'],
       rollupTypes: true

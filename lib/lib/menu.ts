@@ -3,7 +3,7 @@ import { Node } from 'reactflow';
 import { useFlowStore } from '../store/flow.ts';
 import { categorizeObjects } from './utils/ui.tsx';
 import type { MouseEvent as ReactMouseEvent } from 'react';
-import { createEdge, makeHandleId } from './utils/node.ts';
+import { createEdge, getHandleName, getHandleNodeId, makeHandleId } from './utils/node.ts';
 
 export function getNodeMenuItems(node: Node<NodeData>) {
   const items: (IMenuType | null)[] = [
@@ -178,7 +178,7 @@ export function getSuggestedNodesData({
     hasSubMenu: false,
     label: node.display_name,
     onClick: (e: ReactMouseEvent) => {
-      const { addNode } = useFlowStore.getState();
+      const { addNode, updateInputData, updateOutputData } = useFlowStore.getState();
       const position = { x: e.clientX, y: e.clientY };
 
       const nodeId = addNode({ position, type });
@@ -200,6 +200,19 @@ export function getSuggestedNodesData({
       const edge = createEdge({ sourceHandle, targetHandle, type: edgeType });
 
       setEdges((edges) => [...edges, edge]);
+
+      // TODO: abstract these away and avoid repetitions
+      updateInputData({
+        nodeId: getHandleNodeId(targetHandle),
+        name: getHandleName(targetHandle),
+        data: { isConnected: true }
+      });
+
+      updateOutputData({
+        nodeId: getHandleNodeId(sourceHandle),
+        name: getHandleName(sourceHandle),
+        data: { isConnected: true }
+      });
     }
   })) as IMenuType[];
 }
