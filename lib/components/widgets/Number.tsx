@@ -28,7 +28,7 @@ export const NumberWidget: FC<NumberWidgetProps> = ({ label, disabled, value = 0
 
   const handleClickBackward = () => {
     if (disabled) return;
-    
+
     setInputValue((value) => {
       return isNaN(value) ? 0 : value > 0 ? value - 1 : value;
     });

@@ -30,7 +30,8 @@ export type EdgeType =
   | 'ENUM'
   | 'TAESD'
   | '*'
-  | 'GROUP';
+  | 'GROUP'
+  | 'FILEPICKER';
 
 // =========== Input Definitions ===========
 // Provides constraints on top of state
@@ -85,6 +86,10 @@ export interface ImageInputDef extends BaseInputDef {
   readonly defaultValue?: string;
 }
 
+export interface FilePickerInputDef extends BaseInputDef {
+  readonly type: 'FILEPICKER';
+}
+
 export interface VideoInputDef extends BaseInputDef {
   readonly type: 'VIDEO';
   readonly defaultValue?: { src: string; type: string };
@@ -102,6 +107,7 @@ export type InputDef =
   | EnumInputDef
   | ImageInputDef
   | VideoInputDef
+  | FilePickerInputDef
   | AnyInputDef;
 
 // =========== Output Definition ===========
@@ -216,6 +222,10 @@ export interface PrimitiveInputData extends BaseInputData {
   value: any;
 }
 
+export interface FilePickerInputData extends BaseInputData {
+  type: 'FILEPICKER';
+}
+
 export type InputData =
   | InputHandleData
   | BoolInputData
@@ -226,6 +236,7 @@ export type InputData =
   | ImageInputData
   | VideoInputData
   | PrimitiveInputData
+  | FilePickerInputData
   | GroupInputData;
 
 // =========== Entire Node State ===========

@@ -46,6 +46,15 @@ export const RerouteNode: NodeDefinition = {
   outputs: [{ type: '*', name: '' }]
 };
 
+export const FilePicker: NodeDefinition = {
+  category: 'utils',
+  output_node: false,
+  display_name: 'File Picker',
+  description: 'File Picker Node',
+  inputs: [{ type: 'FILEPICKER', name: 'file' }],
+  outputs: [{ type: 'STRING', name: 'STRING' }]
+};
+
 function buildInput(type: string, name: string, options: any, optional: boolean) {
   let data;
   if (Array.isArray(type)) {

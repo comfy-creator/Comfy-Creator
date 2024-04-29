@@ -103,15 +103,8 @@ export const DEFAULT_HOTKEYS_HANDLERS = {
   }
 };
 
-export const WIDGET_TYPES: EdgeType[] = [
-  'INT',
-  'STRING',
-  'BOOLEAN',
-  'FLOAT',
-  'ENUM'
-  // 'IMAGE',
-  // 'VIDEO'
-];
+export const WIDGET_TYPES: EdgeType[] = ['INT', 'STRING', 'BOOLEAN', 'FLOAT', 'ENUM', 'FILEPICKER'];
+export const DISPLAY_TYPES: EdgeType[] = ['IMAGE', 'VIDEO'];
 
 export const HANDLE_TYPES: EdgeType[] = [
   'CLIP',

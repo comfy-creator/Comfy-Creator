@@ -14,6 +14,7 @@ import { LoggingContextProvider } from './contexts/logging';
 import './index.css';
 import 'react-toastify/dist/ReactToastify.css';
 import 'reactflow/dist/style.css';
+import 'viewerjs/dist/viewer.css';
 
 interface GraphEditorProps {
   token?: string;

@@ -7,7 +7,7 @@ import {
   NodeData,
   NodeDefinition
 } from '../types.ts';
-import { WIDGET_TYPES } from '../config/constants.ts';
+import { DISPLAY_TYPES, WIDGET_TYPES } from '../config/constants.ts';
 import { useFlowStore } from '../../store/flow.ts';
 import { createValueControlInput, isSeedInput } from './widgets.ts';
 import { Edge, Node } from 'reactflow';
@@ -120,12 +120,19 @@ export function inputDataFromDef(def: InputDef, value: any): InputData {
         value: value ?? def.defaultValue ?? {}
       };
 
+    case 'FILEPICKER':
+      return {
+        ...state,
+        type: def.type
+      };
+
     default:
       throw new Error(`Unsupported input type: ${(def as InputDef).type}`);
   }
 }
 
 export const isWidgetType = (type: EdgeType) => WIDGET_TYPES.includes(type);
+export const isDisplayType = (type: EdgeType) => DISPLAY_TYPES.includes(type);
 
 export const disconnectPrimitiveNode = (id: string) => {
   const { nodes, updateInputData, updateNodeData } = useFlowStore.getState();

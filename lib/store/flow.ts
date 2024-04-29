@@ -48,6 +48,7 @@ import {
 import { createEdgeFromTemplate } from '../components/prototypes/EdgeTemplate';
 import { yjsProvider } from '../yjs';
 import {
+  FilePicker,
   PreviewImage,
   PreviewVideo,
   PrimitiveNode,
@@ -330,7 +331,14 @@ export const useFlowStore = create<RFState>((set, get) => {
 
     loadNodeDefsFromApi: async (fetcher) => {
       const nodes = transformNodeDefs(await fetcher());
-      const allNodeDefs = { PreviewImage, PreviewVideo, RerouteNode, PrimitiveNode, ...nodes };
+      const allNodeDefs = {
+        PreviewImage,
+        PreviewVideo,
+        RerouteNode,
+        PrimitiveNode,
+        FilePicker,
+        ...nodes
+      };
       get().addNodeDefs(allNodeDefs);
     },
 
@@ -425,7 +433,29 @@ export const useFlowStore = create<RFState>((set, get) => {
 
       const { type, ...oldData } = input;
       const newInput = { ...oldData, ...data, type } as InputData;
-      console.log(newInput);
+
+      if (isPrimitiveNode(node) && node.data.targetNodeId) {
+        const targetNode = nodesMap.get(node.data.targetNodeId);
+
+        if (targetNode) {
+          const targetInput = targetNode.data.inputs[name];
+          if (targetInput) {
+            nodesMap.set(targetNode.id, {
+              ...targetNode,
+              data: {
+                ...targetNode.data,
+                inputs: {
+                  ...targetNode.data.inputs,
+                  [name]: {
+                    ...targetNode.data.inputs[name],
+                    value: newInput.value
+                  }
+                }
+              }
+            });
+          }
+        }
+      }
 
       nodesMap.set(nodeId, {
         ...node,

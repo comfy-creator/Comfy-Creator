@@ -11,7 +11,7 @@ import {
   StringInputDef,
   ThemeConfig,
   UpdateInputData
-} from '../../lib/types.ts';
+} from '../../lib/types';
 import { toast } from 'react-toastify';
 import { Handle, NodeProps, NodeResizeControl, Position } from 'reactflow';
 import { NumberWidget } from '../widgets/Number';
@@ -20,20 +20,27 @@ import { ToggleWidget } from '../widgets/Toggle';
 import { EnumWidget } from '../widgets/Enum';
 import { ImageWidget } from '../widgets/Image';
 import { TextWidget } from '../widgets/Text';
-import { useSettingsStore } from '../../store/settings.ts';
-import { useFlowStore } from '../../store/flow.ts';
-import { ProgressBar } from '../ProgressBar.tsx';
-import { isMultilineStringInput, isWidgetType, makeHandleId } from '../../lib/utils/node.ts';
+import { useSettingsStore } from '../../store/settings';
+import { useFlowStore } from '../../store/flow';
+import { ProgressBar } from '../ProgressBar';
+import {
+  isDisplayType,
+  isMultilineStringInput,
+  isWidgetType,
+  makeHandleId
+} from '../../lib/utils/node';
+import { FilePickerWidget } from '../widgets/FilePicker';
 
 const createWidgetFromSpec = (
   def: InputDef,
   label: string,
   data: InputData,
-  updateInputData: (newState: Partial<InputData>) => void
+  updateInputData?: (newState: Partial<InputData>) => void
 ) => {
   const commonProps = { label };
   if (data.type !== def.type) return;
 
+  const updateData = { name: data.name, type: data.type };
   switch (data.type) {
     case 'BOOLEAN':
       return (
@@ -41,7 +48,7 @@ const createWidgetFromSpec = (
           {...commonProps}
           checked={data.value || false}
           disabled={data.isDisabled}
-          onChange={(checked: boolean) => updateInputData({ value: checked })}
+          onChange={(checked: boolean) => updateInputData?.({ ...updateData, value: checked })}
         />
       );
 
@@ -52,7 +59,7 @@ const createWidgetFromSpec = (
           {...commonProps}
           value={data.value}
           disabled={data.isDisabled}
-          onChange={(value: number) => updateInputData({ value })}
+          onChange={(value: number) => updateInputData?.({ ...updateData, value })}
         />
       );
 
@@ -63,7 +70,7 @@ const createWidgetFromSpec = (
             {...commonProps}
             value={data.value}
             disabled={data.isDisabled}
-            onChange={(value: string) => updateInputData({ value })}
+            onChange={(value: string) => updateInputData?.({ ...updateData, value })}
           />
         );
       }
@@ -72,7 +79,7 @@ const createWidgetFromSpec = (
           {...commonProps}
           value={data.value}
           disabled={data.isDisabled}
-          onChange={(value: string) => updateInputData({ value })}
+          onChange={(value: string) => updateInputData?.({ ...updateData, value })}
         />
       );
 
@@ -81,7 +88,7 @@ const createWidgetFromSpec = (
         <EnumWidget
           {...commonProps}
           value={data.value}
-          onChange={(value: string) => updateInputData({ value })}
+          onChange={(value: string) => updateInputData?.({ ...updateData, value })}
           // TODO: add options
           options={{ values: [] }}
           disabled={data.isDisabled}
@@ -90,6 +97,8 @@ const createWidgetFromSpec = (
       );
     case 'IMAGE':
       return <ImageWidget {...commonProps} value={(data as ImageInputData).value} />;
+    case 'FILEPICKER':
+      return <FilePickerWidget />;
 
     // case 'VIDEO':
     // return <VideoWidget {...commonProps} value={data.value} />;
@@ -105,6 +114,7 @@ export const createNodeComponentFromDef = (
   updateInputData: UpdateInputData
 ): ComponentType<NodeProps<NodeData>> => {
   return ({ id, data, selected }: NodeProps<NodeData>) => {
+    const nodeRef = useRef<HTMLDivElement | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
     const [advanced] = useState(false);
@@ -121,45 +131,47 @@ export const createNodeComponentFromDef = (
       const node = document.querySelector(`[data-id="${id}"]`);
       if (!node) return;
 
-      setMinWidth(node.clientWidth);
-      setMinHeight(node.clientHeight);
+      nodeRef.current = node as HTMLDivElement;
     }, []);
 
     useEffect(() => {
-      const node = document.querySelector(`[data-id="${id}"]`);
-      const container = node?.querySelector('.node_container') as HTMLDivElement;
-      if (!container) return;
+      if (!nodeRef.current) return;
+
+      setMinWidth(nodeRef.current.clientWidth);
+      setMinHeight(nodeRef.current.clientHeight);
+    }, [nodeRef]);
+
+    useEffect(() => {
+      if (!nodeRef.current) return;
+      if (!containerRef.current) return;
 
       const { getActiveTheme } = useSettingsStore.getState();
       const appearance = getActiveTheme().colors.appearance;
 
-      container.style.backgroundColor = appearance.NODE_BG_COLOR;
-      container.style.color = appearance.NODE_TEXT_COLOR;
+      containerRef.current.style.backgroundColor = appearance.NODE_BG_COLOR;
+      containerRef.current.style.color = appearance.NODE_TEXT_COLOR;
     }, [activeTheme]);
 
     useEffect(() => {
-      const node = document.querySelector(`[data-id="${id}"]`) as HTMLDivElement;
-      if (!node) return;
-
+      if (!nodeRef.current) return;
       const { currentNodeId } = execution;
 
       if (currentNodeId === id) {
-        node.classList.add('executing');
+        nodeRef.current.classList.add('executing');
       } else {
-        if (node.classList.contains('executing')) {
-          node.classList.remove('executing');
+        if (nodeRef.current.classList.contains('executing')) {
+          nodeRef.current.classList.remove('executing');
         }
       }
     }, [execution]);
 
     useEffect(() => {
-      const node = document.querySelector(`[data-id="${id}"]`) as HTMLDivElement;
-      if (!node) return;
+      if (!nodeRef.current) return;
 
       if (selected) {
-        node.classList.add('selected');
+        nodeRef.current.classList.add('selected');
       } else {
-        node.classList.remove('selected');
+        nodeRef.current.classList.remove('selected');
       }
     }, [selected]);
 
@@ -174,6 +186,7 @@ export const createNodeComponentFromDef = (
 
     const inputHandles: ReactNode[] = [];
     const inputWidgets: ReactNode[] = [];
+    const displayWidgets: ReactNode[] = [];
     const isOutputNode = nodeDef.output_node || data.isOutputNode;
 
     for (const name in inputs) {
@@ -200,6 +213,10 @@ export const createNodeComponentFromDef = (
             handle={input as InputHandleData}
           />
         );
+      }
+
+      if (isDisplayType(input.type)) {
+        displayWidgets.push(<DisplayWidget nodeDef={nodeDef} key={input.name} data={input} />);
       }
     }
 
@@ -250,6 +267,7 @@ export const createNodeComponentFromDef = (
                 </div>
 
                 <div className="widgets_container">{inputWidgets}</div>
+                <div className="widgets_container">{displayWidgets}</div>
 
                 <div className="node_footer">
                   {isOutputNode && <button className="comfy-btn">Run</button>}
@@ -379,6 +397,22 @@ function WidgetHandle({ nodeId, data, theme }: WidgetHandleProps) {
       />
 
       {isMultilineStringInput(data) && <div className="flow_input_text">{data.name}</div>}
+    </div>
+  );
+}
+
+interface DisplayProps {
+  data: InputData;
+  nodeDef: NodeDefinition;
+}
+
+function DisplayWidget({ data, nodeDef }: DisplayProps) {
+  const inputDef = nodeDef.inputs.find((input) => input.name === data.name) ?? (data as InputDef);
+  if (!inputDef) return null;
+
+  return (
+    <div className="widget_container">
+      <div style={{ width: '100%' }}>{createWidgetFromSpec(inputDef, data.name, data)}</div>
     </div>
   );
 }
