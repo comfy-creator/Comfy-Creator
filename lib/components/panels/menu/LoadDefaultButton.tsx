@@ -1,7 +1,10 @@
 import { useGraph } from '../../../lib/hooks/useGraph';
 import { defaultEdges, defaultNodes } from '../../../default-graph';
+import { uuidv4 } from 'lib0/random';
+import { RFState, useFlowStore } from '../../../store/flow';
 
 const LoadDefaultButton = () => {
+
   const { loadSerializedGraph } = useGraph();
 
   const handleClick = () => {
@@ -9,12 +12,13 @@ const LoadDefaultButton = () => {
 
     if (value) {
       const graph = {
+        index: uuidv4(),
+        label: 'Default',
         nodes: defaultNodes,
-        edges: defaultEdges,
-        viewport: { x: 1, y: 1, zoom: 1 }
+        edges: defaultEdges
       };
 
-      loadSerializedGraph(graph);
+      loadSerializedGraph([graph], true);
     }
   };
 

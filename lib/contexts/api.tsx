@@ -5,8 +5,7 @@ import { createChannel, createClient, FetchTransport, Metadata } from 'nice-grpc
 import {
   ComfyClient,
   ComfyDefinition,
-  JobSnapshot,
-  WorkflowStep
+  JobSnapshot
 } from '../autogen_web_ts/comfy_request.v1';
 import {
   ComfyHistoryItems,
@@ -27,6 +26,7 @@ import { API_URL, DEFAULT_SERVER_PROTOCOL, DEFAULT_SERVER_URL } from '../lib/con
 import { toWsURL } from '../lib/utils';
 import { ComfyWsMessage, ViewFileArgs, WorkflowAPI } from '../lib/types';
 import { ApiEventEmitter } from '../lib/apiEvent';
+import { uuidv4 } from 'lib0/random';
 
 type ProtocolType = 'grpc' | 'ws';
 
@@ -46,10 +46,7 @@ interface IApiContext extends IComfyApi {
   socket: ReconnectingWebSocket | null;
   appConfig: IAppConfig;
   setConfig: (state: Partial<IAppConfig>) => void;
-  runWorkflow: (
-    serializedGraph: WorkflowAPI,
-    workflow?: Record<string, WorkflowStep>
-  ) => Promise<JobSnapshot | Error>;
+  runWorkflow: (serializedGraph: WorkflowAPI, reqId?: string) => Promise<JobSnapshot | Error>;
   makeServerURL: (route: string) => string;
   getOutputImages: (pagination: IPagination) => Promise<IGetOutputImagesResponse>;
 }
@@ -128,6 +125,8 @@ export const ApiContextProvider: React.FC<{
   useEffect(() => {
     setGraphId(localStorage.getItem('graphId') || '');
   }, []);
+
+  console.log('App config>>', appConfig)
 
   // Recreate ComfyClient as needed
   useEffect(() => {
@@ -245,7 +244,7 @@ export const ApiContextProvider: React.FC<{
   // This is the function used to submit jobs to the server
   // ComfyUI terminology: 'queuePrompt'
   const runWorkflow = useCallback(
-    async (flow: WorkflowAPI): Promise<JobSnapshot | Error> => {
+    async (flow: WorkflowAPI, reqId?: string): Promise<JobSnapshot | Error> => {
       if (appConfig.serverProtocol === 'grpc' && comfyClient) {
         // Use gRPC server
         const request = {
@@ -253,7 +252,7 @@ export const ApiContextProvider: React.FC<{
           serializedGraph: flow,
           inputFiles: [],
           worker_wait_duration: undefined,
-          request_id: crypto.randomUUID(),
+          request_id: reqId ?? uuidv4(),
           output_config: {
             write_to_graph_id: graphId ?? undefined
           }

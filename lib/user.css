@@ -299,3 +299,64 @@ button.comfy-settings-btn {
     background-color: #0e8c00;
     transition: width 0.3s ease-in-out;
 }
+
+
+/*Graphs*/
+.graphs_container {
+    margin: 20px 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    
+}
+
+.graph_container {
+    padding: 3px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 7px;
+    cursor: pointer;
+}
+
+.graph_title_container {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.graph_title {
+    margin: 1px 0;
+    color: #b2b2b2;
+    font-size: 0.9rem;
+}
+
+.add_graph_icon {
+    font-size: 1.2rem;
+    color: #b2b2b2;
+    cursor: pointer;
+}
+
+.graph_label {
+    margin: 1px 0;
+    color: #b2b2b2;
+    font-size: 0.8rem;
+}
+
+.graph_actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 1.1rem;
+    
+}
+
+.graph_selected {
+    border-radius: 5px;
+    background-color: #2e2e2e;
+    border: 2px solid #b2b2b2;
+}

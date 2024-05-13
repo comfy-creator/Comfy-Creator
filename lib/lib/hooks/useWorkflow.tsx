@@ -1,21 +1,29 @@
 import { useFlowStore } from '../../store/flow';
 import { ReactFlowJsonObject } from 'reactflow';
 import { NodeData, WorkflowAPI } from '../types';
-import { useApiContext } from '../../contexts/api.tsx';
-import { getHandleName, isWidgetType, makeHandleId } from '../utils/node.ts';
+import { useApiContext } from '../../contexts/api';
+import { getHandleName, isWidgetType, makeHandleId } from '../utils/node';
+import { uuidv4 } from 'lib0/random';
+import { useGraphContext } from '../../contexts/graph';
 
 // import { applyWidgetControl } from '../utils/widgets.ts';
 
 export function useWorkflow() {
-  const { instance, updateInputData } = useFlowStore();
+  const { instance, nodes, edges } = useFlowStore();
+  const { addGraphRun } = useGraphContext();
   const { runWorkflow } = useApiContext();
 
   const submitWorkflow = async () => {
     const flow = serializeGraph();
     const workflow = graphToWorkflow();
+
     if (!workflow) return;
 
-    await runWorkflow(workflow);
+    const runId = uuidv4();
+
+    await runWorkflow(workflow, runId);
+    
+    addGraphRun(runId);
 
     for (const node of flow.nodes) {
       // applyWidgetControl(node, updateInputData);
