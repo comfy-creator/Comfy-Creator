@@ -122,7 +122,7 @@ export const createNodeComponentFromDef = (
     const [minHeight, setMinHeight] = useState(0);
 
     const { getActiveTheme, activeTheme } = useSettingsStore();
-    const { execution } = useFlowStore();
+    const { executions } = useFlowStore();
     const theme = getActiveTheme();
 
     const { NODE_TEXT_SIZE, NODE_TITLE_COLOR, NODE_TEXT_COLOR } = theme.colors.appearance;
@@ -152,18 +152,18 @@ export const createNodeComponentFromDef = (
       containerRef.current.style.color = appearance.NODE_TEXT_COLOR;
     }, [activeTheme]);
 
-    useEffect(() => {
-      if (!nodeRef.current) return;
-      const { currentNodeId } = execution;
+    // useEffect(() => {
+    //   if (!nodeRef.current) return;
+    //   const { currentNodeId } = execution;
 
-      if (currentNodeId === id) {
-        nodeRef.current.classList.add('executing');
-      } else {
-        if (nodeRef.current.classList.contains('executing')) {
-          nodeRef.current.classList.remove('executing');
-        }
-      }
-    }, [execution]);
+    //   if (currentNodeId === id) {
+    //     nodeRef.current.classList.add('executing');
+    //   } else {
+    //     if (nodeRef.current.classList.contains('executing')) {
+    //       nodeRef.current.classList.remove('executing');
+    //     }
+    //   }
+    // }, [execution]);
 
     useEffect(() => {
       if (!nodeRef.current) return;
@@ -258,7 +258,7 @@ export const createNodeComponentFromDef = (
             </>
           ) : (
             <>
-              {execution.currentNodeId === id && <ProgressBar />}
+              {/* {execution.currentNodeId === id && <ProgressBar />} */}
 
               <div className="flow_content">
                 <div className="flow_input_output_container">

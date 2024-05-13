@@ -130,7 +130,12 @@ export const HANDLE_ID_DELIMITER = '::';
 
 export const CONVERTABLE_WIDGET_TYPES: EdgeType[] = ['STRING', 'ENUM', 'INT', 'FLOAT', 'BOOLEAN'];
 
-export const FLOW_KEY = 'flow';
+export const GRAPHS_KEY = 'graphs';
+export const CURRENT_GRAPH_INDEX = 'currentGraphIndex';
+
+export const SNAPSHOT_KEY = 'snapshot';
+export const CURRENT_SNAPSHOT_INDEX = 'currentSnapshotIndex';
+
 export const FLOW_PADDING = 5; // in pixels
 export const FLOW_MIN_ZOOM = 0.5;
 export const FLOW_MAX_ZOOM = 2;
@@ -181,3 +186,27 @@ export const REACTFLOW_PRO_OPTIONS_CONFIG = {
 
 // Frequence we save to localStorage as nodes
 export const SAVE_GRAPH_DEBOUNCE = 1000; // 1 second
+
+// indexDB config
+export const INDEX_DB_NAME = 'ComfyGraphStorage';
+export const INDEX_DB_OJECT_NAME = 'comfy-graph-editor';
+
+
+export const outputNodeTypesName = {
+  MODEL: 'Model Output',
+  CONDITIONING: 'Conditioning Data',
+  LATENT: 'Latent Space Data',
+  VAE: 'VAE Output',
+  IMAGE: 'Image Data',
+  CLIP: 'CLIP Text Embedding',
+  CLIP_VISION: 'CLIP Image Embedding',
+  CLIP_VISION_OUTPUT: 'CLIP Vision Output',
+  STYLE_MODEL: 'Style Model Output',
+  CONTROL_NET: 'ControlNet Output',
+  UPSCALE_MODEL: 'Upscale Model Output',
+  SAMPLER: 'Sampler Output',
+  SIGMAS: 'Sigma Values',
+  PHOTOMAKER: 'PhotoMaker Output',
+  MASK: 'Mask Data',
+  VIDEO: 'Video Data'
+};

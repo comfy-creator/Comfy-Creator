@@ -41,8 +41,10 @@ import {
 } from '../lib/utils/node';
 import { createNodeComponentFromDef } from '../components/prototypes/NodeTemplate';
 import {
+  CURRENT_GRAPH_INDEX,
   DEFAULT_HOTKEYS_HANDLERS,
   DEFAULT_SHORTCUT_KEYS,
+  GRAPHS_KEY,
   HANDLE_TYPES
 } from '../lib/config/constants';
 import { createEdgeFromTemplate } from '../components/prototypes/EdgeTemplate';
@@ -54,8 +56,9 @@ import {
   PrimitiveNode,
   RerouteNode,
   transformNodeDefs
-} from '../lib/nodedefs.ts';
-import { ComfyObjectInfo } from '../types/comfy.ts';
+} from '../lib/nodedefs';
+import { ComfyObjectInfo } from '../types/comfy';
+import DB, { IGraphData } from './database';
 
 const nodesMap = yjsProvider.doc.getMap<Node<NodeData>>('nodes');
 const edgesMap = yjsProvider.doc.getMap<Edge>('edges');
@@ -63,12 +66,18 @@ const awareness = yjsProvider.awareness; // TO DO: use for cusor location
 
 type NodeCallbackType = 'afterQueued';
 
-export type RFState = {
-  execution: ExecutionState;
+export interface IGraphSnapshot {
+  index: string;
+  nodes: Node<NodeData>[];
+  edges: Edge[];
+}
 
-  setExecutionOutput: (output: Record<string, any>) => void;
-  setCurrentExecutionNodeId: (nodeId: string | null) => void;
-  setExecutionProgress: (value: number | null, max?: number) => void;
+export type RFState = {
+  executions: ExecutionState[];
+
+  setExecutionOutput: (executionId: string, output: Record<string, any>) => void;
+  setCurrentExecutionNodeId: (executionId: string, nodeId: string | null) => void;
+  setExecutionProgress: (executionId: string, value: number | null, max?: number) => void;
 
   instance: ReactFlowInstance | null;
 
@@ -77,8 +86,8 @@ export type RFState = {
 
   nodes: Node<NodeData>[];
   edges: Edge[];
-  setNodes: (nodes: React.SetStateAction<Node<NodeData>[]>) => void;
-  setEdges: (edges: React.SetStateAction<Edge[]>) => void;
+  setNodes: (nodes: React.SetStateAction<Node<NodeData>[]>, selectGraph?: boolean) => void;
+  setEdges: (edges: React.SetStateAction<Edge[]>, selectGraph?: boolean) => void;
 
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
@@ -156,11 +165,7 @@ export const useFlowStore = create<RFState>((set, get) => {
 
     edges: [],
 
-    execution: {
-      currentNodeId: null,
-      progress: null,
-      output: {}
-    },
+    executions: [],
 
     isUpdatingEdge: false,
     currentHandleEdge: null,
@@ -184,6 +189,28 @@ export const useFlowStore = create<RFState>((set, get) => {
           nodesMap.delete(node.id);
         }
       }
+
+      // save to db
+      DB.getItem(GRAPHS_KEY).then(async (res) => {
+        const currentGraphIndex = ((await DB.getItem(CURRENT_GRAPH_INDEX)) as string) || '';
+        const fetchedGraphs = (res || []) as IGraphData[];
+
+        const graphs = fetchedGraphs.map((graph) => {
+          if (currentGraphIndex === graph.index) {
+            console.log('Caught hfhfg in node');
+
+            return {
+              ...graph,
+              nodes: [...nodesMap.values()],
+              edges: [...edgesMap.values()]
+            };
+          } else {
+            return graph;
+          }
+        });
+        // save to DB
+        DB.setItem(GRAPHS_KEY, graphs);
+      });
     },
 
     setEdges: (edgesOrUpdater) => {
@@ -204,6 +231,26 @@ export const useFlowStore = create<RFState>((set, get) => {
           edgesMap.delete(edge.id);
         }
       }
+
+      // save to db
+      DB.getItem(GRAPHS_KEY).then(async (res) => {
+        const currentGraphIndex = ((await DB.getItem(CURRENT_GRAPH_INDEX)) as string) || '';
+        const fetchedGraphs = (res || []) as IGraphData[];
+
+        const graphs = fetchedGraphs.map((graph) => {
+          if (currentGraphIndex === graph.index) {
+            return {
+              ...graph,
+              nodes: [...nodesMap.values()],
+              edges: [...edgesMap.values()]
+            };
+          } else {
+            return graph;
+          }
+        });
+        // save to DB
+        DB.setItem(GRAPHS_KEY, graphs);
+      });
     },
 
     // This is a handler for ReactFlow to call when it wants to update state; ReactFlow
@@ -231,6 +278,26 @@ export const useFlowStore = create<RFState>((set, get) => {
           nodesMap.set(change.id, nextNodes.find((n) => n.id === change.id)!);
         }
       }
+
+      // save to db
+      DB.getItem(GRAPHS_KEY).then(async (res) => {
+        const currentGraphIndex = ((await DB.getItem(CURRENT_GRAPH_INDEX)) as string) || '';
+        const fetchedGraphs = (res || []) as IGraphData[];
+
+        const graphs = fetchedGraphs.map((graph) => {
+          if (currentGraphIndex === graph.index) {
+            return {
+              ...graph,
+              nodes: [...nodesMap.values()],
+              edges: [...edgesMap.values()]
+            };
+          } else {
+            return graph;
+          }
+        });
+        // save to DB
+        DB.setItem(GRAPHS_KEY, graphs);
+      });
     },
 
     onEdgesChange: (changes: EdgeChange[]) => {
@@ -246,6 +313,26 @@ export const useFlowStore = create<RFState>((set, get) => {
           edgesMap.set(change.id, nextEdges.find((n) => n.id === change.id)!);
         }
       }
+
+      // save to db
+      DB.getItem(GRAPHS_KEY).then(async (res) => {
+        const currentGraphIndex = ((await DB.getItem(CURRENT_GRAPH_INDEX)) as string) || '';
+        const fetchedGraphs = (res || []) as IGraphData[];
+
+        const graphs = fetchedGraphs.map((graph) => {
+          if (currentGraphIndex === graph.index) {
+            return {
+              ...graph,
+              nodes: [...nodesMap.values()],
+              edges: [...edgesMap.values()]
+            };
+          } else {
+            return graph;
+          }
+        });
+        // save to DB
+        DB.setItem(GRAPHS_KEY, graphs);
+      });
     },
 
     onConnect: (connection: Connection) => {
@@ -398,17 +485,6 @@ export const useFlowStore = create<RFState>((set, get) => {
       const node = nodesMap.get(nodeId);
       if (!node) return;
 
-      console.log({ prev: node });
-      console.log({
-        new: {
-          ...node,
-          data: {
-            ...node.data,
-            ...newState
-          }
-        }
-      });
-
       nodesMap.set(nodeId, {
         ...node,
         data: {
@@ -556,37 +632,39 @@ export const useFlowStore = create<RFState>((set, get) => {
       set({ instance });
     },
 
-    setCurrentExecutionNodeId: (nodeId) => {
-      set((state) => ({
-        execution: {
-          ...state.execution,
-          currentNodeId: nodeId
-        }
-      }));
+    setCurrentExecutionNodeId: (executionId, nodeId) => {
+      set((state) => {
+        const executions = state.executions.map((execution) =>
+          execution.id === executionId ? { ...execution, currentNodeId: nodeId } : execution
+        );
+
+        return { ...state, executions };
+      });
     },
 
-    setExecutionProgress(value, max) {
-      set((state) => ({
-        execution: {
-          ...state.execution,
-          progress:
-            value === null
-              ? null
-              : {
-                  value,
-                  max: max ?? 0
-                }
-        }
-      }));
+    setExecutionProgress: (executionId, value, max) => {
+      set((state) => {
+        const executions = state.executions.map((execution) =>
+          execution.id === executionId
+            ? {
+                ...execution,
+                progress: value === null ? null : { value, max: max ?? 0 }
+              }
+            : execution
+        );
+
+        return { ...state, executions };
+      });
     },
 
-    setExecutionOutput: (output) => {
-      set((state) => ({
-        execution: {
-          ...state.execution,
-          output
-        }
-      }));
+    setExecutionOutput: (executionId, output) => {
+      set((state) => {
+        const executions = state.executions.map((execution) =>
+          execution.id === executionId ? { ...execution, output } : execution
+        );
+
+        return { ...state, executions };
+      });
     },
 
     setIsUpdatingEdge: (isUpdatingEdge) => {

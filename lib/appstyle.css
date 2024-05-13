@@ -288,7 +288,7 @@ span.drag-handle::after {
 }
 
 button.comfy-queue-btn {
-    margin: 6px 0 !important;
+    margin: 0 !important;
 }
 
 .comfy-modal.comfy-settings,

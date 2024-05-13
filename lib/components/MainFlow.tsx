@@ -23,11 +23,14 @@ import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../lib/handlers/dragDrop';
 import { ConnectionLine } from './ConnectionLIne';
 import {
+  API_URL,
   AUTO_PAN_ON_CONNECT,
+  CURRENT_SNAPSHOT_INDEX,
   EDGES_UPDATABLE,
   ELEVATE_EDGES_ON_SELECT,
   FLOW_MAX_ZOOM,
   FLOW_MIN_ZOOM,
+  GRAPHS_KEY,
   HANDLE_TYPES,
   MULTI_SELECT_KEY_CODE,
   REACTFLOW_PRO_OPTIONS_CONFIG,
@@ -51,6 +54,8 @@ import {
   handleEdgeUpdateEnd,
   handleEdgeUpdateStart
 } from '../lib/handlers/edge.ts';
+import { IGraphData } from '../store/database.ts';
+import { useGraphContext } from '../contexts/graph.tsx';
 
 const selector = (state: RFState) => ({
   panOnDrag: state.panOnDrag,
@@ -77,7 +82,7 @@ const selector = (state: RFState) => ({
   instance: state.instance,
   setInstance: state.setInstance,
   addRawNode: state.addRawNode,
-  execution: state.execution,
+  executions: state.executions,
   isUpdatingEdge: state.isUpdatingEdge,
   setIsUpdatingEdge: state.setIsUpdatingEdge,
   currentHandleEdge: state.currentHandleEdge,
@@ -105,7 +110,7 @@ export function MainFlow() {
     registerEdgeType,
     instance,
     setInstance,
-    execution,
+    executions,
     updateInputData,
     updateOutputData,
     isUpdatingEdge,
@@ -113,6 +118,8 @@ export function MainFlow() {
     currentHandleEdge,
     setCurrentHandleEdge
   } = useFlowStore(selector);
+
+  const { currentStateGraphRunIndex, addNewGraph } = useGraphContext();
 
   const { getNodes, getEdges, getViewport, fitView } = useReactFlow<NodeData, string>();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
@@ -125,22 +132,22 @@ export function MainFlow() {
   useEffect(() => {
     loadNodeDefsFromApi(getNodeDefs);
     loadSerializedGraph();
-  }, [getNodeDefs, loadNodeDefsFromApi, loadSerializedGraph]);
+  }, []);
 
-  useEffect(() => {
-    if (!execution.output) return;
+  // useEffect(() => {
+  //   if (!execution.output) return;
 
-    const node = nodes.find((node) => node.id === execution.currentNodeId);
-    if (node?.id !== execution.currentNodeId) return;
-    const { images } = execution.output;
+  //   const node = nodes.find((node) => node.id === execution.currentNodeId);
+  //   if (node?.id !== execution.currentNodeId) return;
+  //   const { images } = execution.output;
 
-    const fileView = API_URL.VIEW_FILE({ ...images?.[0] });
-    updateInputData({
-      name: 'image',
-      nodeId: node.id,
-      data: { value: makeServerURL(fileView) }
-    });
-  }, [execution, nodes, updateInputData, makeServerURL]);
+  //   const fileView = API_URL.VIEW_FILE({ ...images?.[0] });
+  //   updateInputData({
+  //     name: 'image',
+  //     nodeId: node.id,
+  //     data: { value: makeServerURL(fileView) }
+  //   });
+  // }, [execution, nodes, updateInputData, makeServerURL]);
 
   useEffect(() => {
     const { addThemes } = useSettingsStore.getState();
@@ -154,27 +161,33 @@ export function MainFlow() {
 
     // Register Node definitions and edge types
     registerEdgeType(HANDLE_TYPES);
-  }, [registerEdgeType, addSetting, loadCurrentSettings]);
+  }, []);
 
   useEffect(() => {
-    if (nodes.length > 0 || edges.length > 0) {
-      const flow = {
-        viewport: getViewport(),
-        nodes: nodes.filter(Boolean),
-        edges: edges.filter(Boolean)
-      };
+    (async () => {
+      const graphs = [] as IGraphData[];
 
-      clearTimeout(debounceTimer?.current ?? '');
-      debounceTimer.current = setTimeout(() => {
-        saveSerializedGraph(flow);
-      }, SAVE_GRAPH_DEBOUNCE);
-    }
+      if (graphs.length > 0) {
+        const newGraphs = graphs.map((graph) => {
+          return {
+            ...graph,
+            nodes: graph.nodes.filter(Boolean),
+            edges: graph.edges.filter(Boolean)
+          };
+        });
+
+        clearTimeout(debounceTimer?.current ?? '');
+        debounceTimer.current = setTimeout(() => {
+          saveSerializedGraph(newGraphs);
+        }, SAVE_GRAPH_DEBOUNCE);
+      }
+    })();
 
     // Clean up function
     return () => {
       clearTimeout(debounceTimer?.current ?? '');
     };
-  }, [nodes, edges, getViewport, saveSerializedGraph]);
+  }, []);
 
   // TO DO: open the context menu if you dragged out an edge and didn't connect it,
   // so we can auto-spawn a compatible node for that edge
@@ -286,8 +299,18 @@ export function MainFlow() {
       onNodesChange={onNodesChange}
       onEdgesChange={onEdgesChange}
       connectionMode={ConnectionMode.Loose}
-      onConnectStart={onConnectStart}
-      onConnectEnd={onConnectEnd}
+      onConnectStart={(...props) => {
+        if (currentStateGraphRunIndex.length > 0) {
+          addNewGraph('', { nodes, edges }, true, true);
+        }
+        onConnectStart(...props);
+      }}
+      onConnectEnd={(...props) => {
+        if (currentStateGraphRunIndex.length > 0) {
+          addNewGraph('', { nodes, edges }, true, true);
+        }
+        onConnectEnd(...props);
+      }}
       isValidConnection={isValidConnection}
       onInit={setInstance}
       nodeTypes={nodeComponents}

@@ -3,8 +3,13 @@ import { ComfyWsMessage } from './types.ts';
 
 export const ApiEventEmitter = new EventTarget();
 
+interface EventType {
+  detail: ComfyWsMessage;
+  runId: string;
+}
+
 ApiEventEmitter.addEventListener('comfyMessage', (event) => {
-  const { detail } = event as { detail: ComfyWsMessage };
+  const { detail, runId } = event as unknown as EventType;
   if (!detail) {
     console.error(`No detail found in event: ${event}`);
   }
@@ -14,18 +19,18 @@ ApiEventEmitter.addEventListener('comfyMessage', (event) => {
     useFlowStore.getState();
 
   if ('node' in data && data.node) {
-    setCurrentExecutionNodeId(data.node);
+    setCurrentExecutionNodeId(runId, data.node);
   }
 
   if (type === 'progress') {
-    setExecutionProgress(data.value, data.max);
+    setExecutionProgress(runId, data.value, data.max);
   } else {
     if (type === 'executed') {
       // setCurrentExecutionNodeId(null);
-      setExecutionOutput(data.output);
+      setExecutionOutput(runId, data.output);
     }
 
-    setExecutionProgress(null);
+    setExecutionProgress(runId, null);
   }
 
   console.log('Received message:', detail);

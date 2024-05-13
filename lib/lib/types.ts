@@ -508,6 +508,7 @@ export interface HandleEdgeUpdateEndParams {
 }
 
 export interface ExecutionState {
+  id?: string; // as the runID
   output: Record<string, any>;
   currentNodeId: string | null;
   progress: { value: number; max: number } | null;

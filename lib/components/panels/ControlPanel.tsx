@@ -14,6 +14,10 @@ import { useFlowStore } from '../../store/flow';
 import { loadLegacyWorkflow } from '../../lib/handlers/loadLegacy';
 import { useGraph } from '../../lib/hooks/useGraph';
 import { isLegacySerializedGraph } from '../../lib/utils';
+import GraphRuns from './menu/GraphRuns';
+import { uuidv4 } from 'lib0/random.js';
+import Graphs from './menu/Graphs';
+import NewGraphButton from './menu/NewGraphButton';
 
 type AutoQueueMode =
   | {
@@ -220,9 +224,29 @@ const ControlPanel = () => {
               const json = JSON.parse(contents);
               if (isLegacySerializedGraph(json)) {
                 const graph = loadLegacyWorkflow(json, nodeDefs);
-                loadSerializedGraph(graph);
+                loadSerializedGraph(
+                  [
+                    {
+                      index: uuidv4(),
+                      label: 'Workflow',
+                      nodes: graph.nodes,
+                      edges: graph.edges
+                    }
+                  ],
+                  true
+                );
               } else {
-                loadSerializedGraph(json);
+                loadSerializedGraph(
+                  [
+                    {
+                      index: uuidv4(),
+                      label: 'Workflow',
+                      nodes: json?.nodes || [],
+                      edges: json?.edges || []
+                    }
+                  ],
+                  true
+                );
               }
             }
           };
@@ -255,59 +279,20 @@ const ControlPanel = () => {
               width: '100%',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between'
+              justifyContent: 'space-between',
+              padding: '0 5px',
+              marginBottom: '10px'
             }}
           >
             <span className="drag-handle" />
-            <span ref={queueSizeEl} />
             <button className="comfy-settings-btn" onClick={showSettings}>
               ⚙️
             </button>
           </div>
 
           <button id="queue-button" className="comfy-queue-btn" onClick={submitWorkflow}>
-            Run All
+            Run Graph
           </button>
-
-          <ExtraOptions
-            setAutoQueueEnabled={setAutoQueueEnabled}
-            setBatchCount={setBatchCount}
-            batchCount={batchCount}
-            autoQueueEnabled={autoQueueEnabled}
-            autoQueueModeElRef={autoQueueModeElRef}
-            autoQueueModeEl={autoQueueModeEl}
-          />
-
-          <div className="comfy-menu-btns">
-            <button id="queue-front-button" onClick={submitWorkflow}>
-              Queue Front
-            </button>
-
-            <button
-              id="comfy-view-queue-button"
-              ref={queueButtonRef}
-              onClick={() => {
-                setShowHistory(false);
-                setShowQueue((i) => !i);
-              }}
-            >
-              {showQueue ? 'Close' : 'View Queue'}
-            </button>
-
-            <button
-              id="comfy-view-history-button"
-              ref={historyButtonRef}
-              onClick={() => {
-                setShowQueue(false);
-                setShowHistory((i) => !i);
-              }}
-            >
-              {showHistory ? 'Close' : 'View History'}
-            </button>
-          </div>
-
-          <ComfyList text="Queue" show={showQueue} />
-          <ComfyList text="History" show={showHistory} reverse={true} />
 
           <button id="comfy-load-button" onClick={() => loadFileInputRef?.current?.click()}>
             Load
@@ -316,17 +301,9 @@ const ControlPanel = () => {
           <SaveButton promptFilename={promptFilename} />
           <DevSaveButton promptFilename={promptFilename} />
 
-          <button
-            id="comfy-refresh-button"
-            onClick={() => {
-              /*app.refreshComboInNodes()*/
-            }}
-          >
-            Refresh
-          </button>
-
-          <ClearButton confirmClear={confirmClear} />
           <LoadDefaultButton />
+          <Graphs />
+          <GraphRuns />
         </div>
       </div>
     </Draggable>
