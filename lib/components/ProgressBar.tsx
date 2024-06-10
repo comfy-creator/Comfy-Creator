@@ -1,10 +1,12 @@
 import React from 'react';
 import { useFlowStore } from '../store/flow.ts';
 
-export function ProgressBar() {
-  const {
-    execution: { progress }
-  } = useFlowStore();
+export function ProgressBar(props: { node_id: string }): JSX.Element | null {
+  // TO DO: make this progress bar actually useful; it needs to pull state for the specified node
+  const progress = { value: 1, max: 1 };
+  // const {
+  //   execution: { progress }
+  // } = useFlowStore();
 
   if (!progress) return null;
   const percentage = (progress.value / progress.max) * 100;
