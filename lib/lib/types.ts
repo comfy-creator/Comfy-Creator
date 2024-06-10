@@ -166,14 +166,14 @@ export interface BaseInputData extends BaseInputDef {
 
 export interface OutputData {
   name: string;
-  slot: number;
+  slot?: number;
   type: EdgeType;
   isConnected?: boolean;
   isHighlighted?: boolean;
 }
 
 export interface InputHandleData extends BaseInputData {
-  slot: number;
+  slot?: number;
 }
 
 export interface BoolInputData extends BaseInputData {

@@ -13,7 +13,8 @@ export const defaultNodes: Node<NodeData>[] = [
           isHighlighted: false,
           optional: false,
           isConnected: true,
-          type: 'MODEL'
+          type: 'MODEL',
+          slot: 0
         },
         seed: {
           def: {
@@ -270,7 +271,6 @@ export const defaultNodes: Node<NodeData>[] = [
           def: {
             type: 'STRING',
             multiline: true,
-            dynamicPrompts: true,
             name: 'text',
             optional: false
           },
@@ -325,7 +325,6 @@ export const defaultNodes: Node<NodeData>[] = [
           def: {
             type: 'STRING',
             multiline: true,
-            dynamicPrompts: true,
             name: 'text',
             optional: false
           },
