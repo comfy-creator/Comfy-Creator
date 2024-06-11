@@ -2,11 +2,7 @@ import React, { createContext, ReactNode, useCallback, useEffect, useState } fro
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import { createUseContextHook } from './hookCreator';
 import { createChannel, createClient, FetchTransport, Metadata } from 'nice-grpc-web';
-import {
-  ComfyClient,
-  ComfyDefinition,
-  JobSnapshot
-} from '../autogen_web_ts/comfy_request.v1';
+import { ComfyClient, ComfyDefinition, JobSnapshot } from '../autogen_web_ts/comfy_request.v1';
 import {
   ComfyHistoryItems,
   ComfyItemURLType,
@@ -24,7 +20,7 @@ import {
 import { ComfyObjectInfo } from '../types/comfy';
 import { API_URL, DEFAULT_SERVER_PROTOCOL, DEFAULT_SERVER_URL } from '../lib/config/constants';
 import { toWsURL } from '../lib/utils';
-import { ComfyWsMessage, ViewFileArgs, WorkflowAPI } from '../lib/types';
+import { ComfyWsMessage, ViewFileArgs, Workflow } from '../lib/types';
 import { ApiEventEmitter } from '../lib/apiEvent';
 import { uuidv4 } from 'lib0/random';
 
@@ -46,7 +42,7 @@ interface IApiContext extends IComfyApi {
   socket: ReconnectingWebSocket | null;
   appConfig: IAppConfig;
   setConfig: (state: Partial<IAppConfig>) => void;
-  runWorkflow: (serializedGraph: WorkflowAPI, reqId?: string) => Promise<JobSnapshot | Error>;
+  runWorkflow: (serializedGraph: Workflow, reqId?: string) => Promise<JobSnapshot | Error>;
   makeServerURL: (route: string) => string;
   getOutputImages: (pagination: IPagination) => Promise<IGetOutputImagesResponse>;
 }
@@ -126,7 +122,7 @@ export const ApiContextProvider: React.FC<{
     setGraphId(localStorage.getItem('graphId') || '');
   }, []);
 
-  console.log('App config>>', appConfig)
+  console.log('App config>>', appConfig);
 
   // Recreate ComfyClient as needed
   useEffect(() => {
@@ -244,7 +240,7 @@ export const ApiContextProvider: React.FC<{
   // This is the function used to submit jobs to the server
   // ComfyUI terminology: 'queuePrompt'
   const runWorkflow = useCallback(
-    async (flow: WorkflowAPI, reqId?: string): Promise<JobSnapshot | Error> => {
+    async (flow: Workflow, reqId?: string): Promise<JobSnapshot | Error> => {
       if (appConfig.serverProtocol === 'grpc' && comfyClient) {
         // Use gRPC server
         const request = {

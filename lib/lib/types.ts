@@ -513,3 +513,18 @@ export interface ExecutionState {
   currentNodeId: string | null;
   progress: { value: number; max: number } | null;
 }
+
+export type WorkflowOutput = [string, string];
+export type WorkflowInput = string | number | boolean | [string, string];
+
+interface WorkflowData {
+  type: string;
+  inputs: { [name: string]: WorkflowInput };
+
+  // do we need outputs?
+  outputs: { [name: string]: WorkflowOutput };
+}
+
+export interface Workflow {
+  [id: string]: WorkflowData;
+}

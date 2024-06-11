@@ -1,28 +1,28 @@
 import { useFlowStore } from '../../store/flow';
 import { ReactFlowJsonObject } from 'reactflow';
-import { NodeData, WorkflowAPI } from '../types';
+import { NodeData, Workflow, WorkflowInput, WorkflowOutput } from '../types';
 import { useApiContext } from '../../contexts/api';
-import { getHandleName, isWidgetType, makeHandleId } from '../utils/node';
+import { getHandleName, makeHandleId } from '../utils/node';
 import { uuidv4 } from 'lib0/random';
 import { useGraphContext } from '../../contexts/graph';
 
 // import { applyWidgetControl } from '../utils/widgets.ts';
 
 export function useWorkflow() {
-  const { instance, nodes, edges } = useFlowStore();
+  const { instance } = useFlowStore();
   const { addGraphRun } = useGraphContext();
   const { runWorkflow } = useApiContext();
 
   const submitWorkflow = async () => {
     const flow = serializeGraph();
-    const workflow = graphToWorkflow();
+    const workflow = serializeGraphToWorkflow();
 
     if (!workflow) return;
 
     const runId = uuidv4();
 
     await runWorkflow(workflow, runId);
-    
+
     addGraphRun(runId);
 
     for (const node of flow.nodes) {
@@ -30,56 +30,72 @@ export function useWorkflow() {
     }
   };
 
-  const graphToWorkflow = () => {
-    const flow = serializeGraph();
-    const workflow: WorkflowAPI = {};
+  const serializeGraphToWorkflow = () => {
+    if (!instance) throw new Error('Flow instance not found');
+    const { nodes, edges }: ReactFlowJsonObject<NodeData> = instance.toObject();
+    const workflow: Workflow = {};
 
-    for (const node of flow.nodes) {
-      if (!node.type) continue;
+    for (const node of nodes) {
+      if (!node.data || !node.type) continue;
+      const inputs: Record<string, WorkflowInput> = {};
+      const outputs: Record<string, WorkflowOutput> = {};
 
-      const data: WorkflowAPI[0] = {
-        class_type: node.type,
-        _meta: { title: node.data.name },
-        inputs: {}
-      };
+      for (const input of Object.values(node.data.inputs)) {
+        switch (input.type) {
+          case 'INT':
+          case 'FLOAT':
+            {
+              const value = Number(input.value);
+              if (isNaN(value)) {
+                throw new Error('Invalid number input value');
+              }
+              inputs[input.name] = value;
+            }
+            break;
+          case 'BOOLEAN':
+            {
+              if (typeof input.value == 'string') {
+                inputs[input.name] = input.value === 'true';
+              } else if (typeof input.value == 'boolean') {
+                inputs[input.name] = input.value;
+              } else {
+                throw new Error('Invalid boolean input value');
+              }
+            }
+            break;
+          case 'ENUM':
+          case 'STRING':
+            inputs[input.name] = input.value;
+            break;
+          default: {
+            const handleId = makeHandleId(node.id, 'input', input.name);
+            const edge = edges.find((edge) => edge.targetHandle == handleId);
+            if (!edge) {
+              throw new Error(`Missing edge for input "${input.name}" on node "${node.id}"`);
+            }
 
-      const { inputs } = node.data;
-      const widgets = Object.values(inputs).filter((input) => isWidgetType(input.type));
+            const source = nodes.find((node) => node.id == edge.source);
+            if (!source) {
+              throw new Error(`Missing source node for input "${input.name}" on node "${node.id}"`);
+            }
 
-      for (const name in inputs) {
-        const input = inputs[name];
-        if (!input) continue;
+            const handle = source.data.outputs[getHandleName(edge.sourceHandle!)];
+            if (!handle) {
+              throw new Error(
+                `Missing source handle for input "${input.name}" on node "${node.id}"`
+              );
+            }
 
-        const handleId = makeHandleId(node.id, 'input', name);
-        const edge = flow.edges.find(
-          (edge) => edge.target === node.id && edge.targetHandle === handleId
-        );
-        if (!edge || !edge.source || !edge.sourceHandle) return;
-
-        const sourceNodeId = getHandleName(edge.sourceHandle);
-        if (edge.source !== sourceNodeId) return;
-
-        const sourceHandleName = getHandleName(edge.sourceHandle);
-        const sourceNode = flow.nodes.find((node) => node.id === sourceNodeId);
-        if (!sourceNode) return;
-
-        const sourceHandle = sourceNode.data.outputs[sourceHandleName];
-        if (!sourceHandle) return;
-
-        const value = [edge.source, sourceHandle.slot] as [string, number];
-        data.inputs[name] = value;
-      }
-
-      for (const name in widgets) {
-        const widget = widgets[name];
-        if (widget.serialize === false) continue;
-
-        if ('value' in widget) {
-          data.inputs[name] = widget.value as any;
+            inputs[input.name] = [edge.source, handle.name];
+          }
         }
       }
 
-      workflow[node.id] = data;
+      for (const value of Object.values(node.data.outputs)) {
+        outputs[value.name] = [node.id, value.name];
+      }
+
+      workflow[node.id] = { type: node.type, inputs, outputs };
     }
 
     return workflow;
@@ -90,5 +106,5 @@ export function useWorkflow() {
     return instance.toObject() as ReactFlowJsonObject<NodeData>;
   };
 
-  return { submitWorkflow, graphToWorkflow, serializeGraph };
+  return { submitWorkflow, serializeGraphToWorkflow, serializeGraph };
 }

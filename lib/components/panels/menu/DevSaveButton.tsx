@@ -9,7 +9,7 @@ interface DevSaveButtonProps {
 }
 
 const DevSaveButton = ({ promptFilename }: DevSaveButtonProps) => {
-  const { graphToWorkflow } = useWorkflow();
+  const { serializeGraphToWorkflow } = useWorkflow();
   const { addHotKeysHandlers } = useFlowStore();
 
   const handleClick = () => {
@@ -22,7 +22,7 @@ const DevSaveButton = ({ promptFilename }: DevSaveButtonProps) => {
       }
     }
 
-    const json = JSON.stringify(graphToWorkflow(), null, 2);
+    const json = JSON.stringify(serializeGraphToWorkflow(), null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
 
