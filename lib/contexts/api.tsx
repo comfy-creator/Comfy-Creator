@@ -18,10 +18,10 @@ import {
   UserConfigResponse
 } from '../types/api';
 import { ComfyObjectInfo } from '../types/comfy';
-import { API_URL, DEFAULT_SERVER_PROTOCOL, DEFAULT_SERVER_URL } from '../lib/config/constants';
-import { toWsURL } from '../lib/utils';
-import { ComfyWsMessage, ViewFileArgs, Workflow } from '../lib/types';
-import { ApiEventEmitter } from '../lib/apiEvent';
+import { API_URL, DEFAULT_SERVER_PROTOCOL, DEFAULT_SERVER_URL } from '../config/constants';
+import { toWsURL } from '../utils';
+import { ComfyWsMessage, ViewFileArgs, Workflow } from '../types/types';
+import { ApiEventEmitter } from '../api/apiEvent';
 import { uuidv4 } from 'lib0/random';
 
 type ProtocolType = 'grpc' | 'ws';

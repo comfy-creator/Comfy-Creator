@@ -11,7 +11,7 @@ import {
   StringInputDef,
   ThemeConfig,
   UpdateInputData
-} from '../../lib/types';
+} from '../../types/types';
 import { toast } from 'react-toastify';
 import { Handle, NodeProps, NodeResizeControl, Position } from 'reactflow';
 import { NumberWidget } from '../widgets/Number';
@@ -28,7 +28,7 @@ import {
   isMultilineStringInput,
   isWidgetType,
   makeHandleId
-} from '../../lib/utils/node';
+} from '../../utils/node';
 import { FilePickerWidget } from '../widgets/FilePicker';
 
 const createWidgetFromSpec = (

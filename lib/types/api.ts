@@ -1,5 +1,5 @@
 import { ComfyObjectInfo } from './comfy';
-import { ViewFileArgs } from '../lib/types.ts';
+import { ViewFileArgs } from './types.ts';
 // import { SerializedGraph } from '../../autogen_web_ts/serialized_graph.v1';
 
 export type EmbeddingsResponse = string[];

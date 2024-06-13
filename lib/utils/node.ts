@@ -6,9 +6,9 @@ import {
   InputHandleData,
   NodeData,
   NodeDefinition
-} from '../types.ts';
+} from '../types/types.ts';
 import { DISPLAY_TYPES, WIDGET_TYPES } from '../config/constants.ts';
-import { useFlowStore } from '../../store/flow.ts';
+import { useFlowStore } from '../store/flow.ts';
 import { createValueControlInput, isSeedInput } from './widgets.ts';
 import { Edge, Node } from 'reactflow';
 

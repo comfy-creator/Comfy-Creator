@@ -1,7 +1,7 @@
 import { DragEvent } from 'react';
 import { getFileAsDataURL, getFileKind } from '../utils/file.ts';
 import { Edge, Node, ReactFlowInstance } from 'reactflow';
-import { AddNodeParams } from '../types.ts';
+import { AddNodeParams } from '../types/types.ts';
 
 interface DropHandlerParams {
   setNodes: (nodes: Node[]) => void;

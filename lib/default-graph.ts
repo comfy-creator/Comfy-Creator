@@ -1,5 +1,5 @@
 import { Edge, Node } from 'reactflow';
-import { NodeData } from './lib/types.ts';
+import { NodeData } from './types/types.ts';
 
 export const defaultNodes: Node<NodeData>[] = [
   {

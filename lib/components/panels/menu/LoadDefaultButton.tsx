@@ -1,10 +1,9 @@
-import { useGraph } from '../../../lib/hooks/useGraph';
+import { useGraph } from '../../../hooks/useGraph';
 import { defaultEdges, defaultNodes } from '../../../default-graph';
 import { uuidv4 } from 'lib0/random';
 import { RFState, useFlowStore } from '../../../store/flow';
 
 const LoadDefaultButton = () => {
-
   const { loadSerializedGraph } = useGraph();
 
   const handleClick = () => {

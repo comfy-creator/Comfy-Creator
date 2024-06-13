@@ -1,4 +1,4 @@
-import { useWorkflow } from '../../../lib/hooks/useWorkflow.tsx';
+import { useWorkflow } from '../../../hooks/useWorkflow.tsx';
 import { useEffect } from 'react';
 import { useFlowStore } from '../../../store/flow';
 

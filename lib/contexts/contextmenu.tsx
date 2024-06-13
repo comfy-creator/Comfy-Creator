@@ -15,11 +15,11 @@ import {
   NodeData,
   OnContextMenu,
   OnNodeContextMenu
-} from '../lib/types';
+} from '../types/types';
 import { ContextMenu } from '../components/prototypes/ContextMenuTemplate';
 import { Node } from 'reactflow';
 import SearchWidget from '../components/SearchWidget';
-import { getContextMenuItems, getNodeMenuItems } from '../lib/menu';
+import { getContextMenuItems, getNodeMenuItems } from '../utils/menu';
 
 interface IContextMenu {
   onNodeContextMenu: OnNodeContextMenu;
@@ -62,7 +62,7 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
     if (event) {
       setSearchWidgetProps({
         top: event.clientY,
-        left: event.clientX,
+        left: event.clientX
       });
     }
     setShowSearchWidget(true);

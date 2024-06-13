@@ -18,9 +18,9 @@ import ReactFlow, {
 import { useContextMenu } from '../contexts/contextmenu';
 import ControlPanel from './panels/ControlPanel';
 import { RFState, useFlowStore } from '../store/flow';
-import { NodeData } from '../lib/types';
+import { NodeData } from '../types/types.ts';
 import ReactHotkeys from 'react-hot-keys';
-import { dragHandler, dropHandler } from '../lib/handlers/dragDrop';
+import { dragHandler, dropHandler } from '../handlers/dragDrop.ts';
 import { ConnectionLine } from './ConnectionLIne';
 import {
   API_URL,
@@ -36,24 +36,20 @@ import {
   REACTFLOW_PRO_OPTIONS_CONFIG,
   SAVE_GRAPH_DEBOUNCE,
   ZOOM_ON_DOUBLE_CLICK
-} from '../lib/config/constants';
+} from '../config/constants.ts';
 import { useSettings } from '../contexts/settings';
 import { useSettingsStore } from '../store/settings';
-import { defaultThemeConfig } from '../lib/config/themes';
-import { colorSchemeSettings } from '../lib/settings';
+import { defaultThemeConfig } from '../config/themes.ts';
+import { colorSchemeSettings } from './settings.tsx';
 import { useApiContext } from '../contexts/api';
 import ImageFeedDrawer from './Drawer/ImageFeedDrawer';
-import { useGraph } from '../lib/hooks/useGraph';
+import { useGraph } from '../hooks/useGraph';
 import {
   handleOnConnectEnd,
   handleOnConnectStart,
   validateConnection
-} from '../lib/handlers/connect.ts';
-import {
-  handleEdgeUpdate,
-  handleEdgeUpdateEnd,
-  handleEdgeUpdateStart
-} from '../lib/handlers/edge.ts';
+} from '../handlers/connect.ts';
+import { handleEdgeUpdate, handleEdgeUpdateEnd, handleEdgeUpdateStart } from '../handlers/edge.ts';
 import { IGraphData } from '../store/database.ts';
 import { useGraphContext } from '../contexts/graph.tsx';
 

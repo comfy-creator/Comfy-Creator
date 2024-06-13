@@ -1,5 +1,5 @@
 import { useFlowStore } from '../store/flow.ts';
-import { ComfyWsMessage } from './types.ts';
+import { ComfyWsMessage } from '../types/types.ts';
 
 export const ApiEventEmitter = new EventTarget();
 

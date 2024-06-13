@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Node, useReactFlow } from 'reactflow';
-import { NodeData } from '../lib/types';
-import { CURRENT_GRAPH_INDEX, GRAPHS_KEY } from '../lib/config/constants';
+import { NodeData } from '../types/types';
+import { CURRENT_GRAPH_INDEX, GRAPHS_KEY } from '../config/constants';
 import { RFState, useFlowStore } from '../store/flow';
 import { useLogging } from '../contexts/logging';
-import { computeInitialNodeData, isWidgetType } from '../lib/utils/node';
+import { computeInitialNodeData, isWidgetType } from '../utils/node';
 import { uuidv4 } from 'lib0/random.js';
 import DB, { IGraphData } from '../store/database';
 import { useGraphContext } from '../contexts/graph';

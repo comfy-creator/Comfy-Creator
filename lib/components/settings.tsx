@@ -1,4 +1,4 @@
-import { Theme } from '../components/Theme';
+import { Theme } from './Theme';
 import { useSettingsStore } from '../store/settings';
 
 const { setActiveTheme, getActiveTheme } = useSettingsStore.getState();

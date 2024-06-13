@@ -4,7 +4,7 @@ import {
   HandleEdgeUpdateEndParams,
   HandleEdgeUpdateParams,
   HandleEdgeUpdateStartParams
-} from '../types.ts';
+} from '../types/types.ts';
 
 export function handleEdgeUpdateStart({
   setIsUpdatingEdge,

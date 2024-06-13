@@ -1,6 +1,6 @@
-import { EdgeType, InputDef, ViewFileArgs } from '../types.ts';
-import { useFlowStore } from '../../store/flow.ts';
-import { IPagination } from '../../types/api.ts';
+import { EdgeType, InputDef, ViewFileArgs } from '../types/types.ts';
+import { useFlowStore } from '../store/flow.ts';
+import { IPagination } from '../types/api.ts';
 
 export const SUPPORTED_IMAGE_TYPES = [
   'image/png',
@@ -190,7 +190,6 @@ export const SAVE_GRAPH_DEBOUNCE = 1000; // 1 second
 // indexDB config
 export const INDEX_DB_NAME = 'ComfyGraphStorage';
 export const INDEX_DB_OJECT_NAME = 'comfy-graph-editor';
-
 
 export const outputNodeTypesName = {
   MODEL: 'Model Output',

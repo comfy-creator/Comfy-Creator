@@ -30,7 +30,7 @@ import {
   UpdateInputDataParams,
   UpdateOutputData,
   UpdateOutputDataParams
-} from '../lib/types';
+} from '../types/types';
 import {
   addWidgetToPrimitiveNode,
   computeInitialNodeData,
@@ -38,7 +38,7 @@ import {
   getHandleName,
   isPrimitiveNode,
   isWidgetType
-} from '../lib/utils/node';
+} from '../utils/node';
 import { createNodeComponentFromDef } from '../components/prototypes/NodeTemplate';
 import {
   CURRENT_GRAPH_INDEX,
@@ -46,7 +46,7 @@ import {
   DEFAULT_SHORTCUT_KEYS,
   GRAPHS_KEY,
   HANDLE_TYPES
-} from '../lib/config/constants';
+} from '../config/constants';
 import { createEdgeFromTemplate } from '../components/prototypes/EdgeTemplate';
 import { yjsProvider } from '../yjs';
 import {
@@ -56,7 +56,7 @@ import {
   PrimitiveNode,
   RerouteNode,
   transformNodeDefs
-} from '../lib/nodedefs';
+} from '../utils/nodedefs';
 import { ComfyObjectInfo } from '../types/comfy';
 import DB, { IGraphData } from './database';
 

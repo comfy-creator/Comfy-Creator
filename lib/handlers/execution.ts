@@ -1,6 +1,6 @@
 import { API_URL } from '../config/constants.ts';
 import { Node } from 'reactflow';
-import { ExecutionState, NodeData, UpdateInputData } from '../types.ts';
+import { ExecutionState, NodeData, UpdateInputData } from '../types/types.ts';
 
 export function handleOnExecute({
   nodes,

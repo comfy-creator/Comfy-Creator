@@ -1,4 +1,4 @@
-import { NodeDefinition } from './types.ts';
+import { NodeDefinition } from '../types/types.ts';
 
 export const PreviewImage: NodeDefinition = {
   category: 'image',

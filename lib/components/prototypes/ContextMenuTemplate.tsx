@@ -1,4 +1,4 @@
-import { ContextMenuProps, IMenuType } from '../../lib/types.ts';
+import { ContextMenuProps, IMenuType } from '../../types/types.ts';
 import { MouseEvent, useEffect, useRef } from 'react';
 
 export function ContextMenu(prps: ContextMenuProps) {

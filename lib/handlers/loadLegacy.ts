@@ -1,4 +1,11 @@
-import { EdgeType, InputData, InputDef, NodeData, NodeDefinition, OutputData } from '../types.ts';
+import {
+  EdgeType,
+  InputData,
+  InputDef,
+  NodeData,
+  NodeDefinition,
+  OutputData
+} from '../types/types.ts';
 import { Edge, Node } from 'reactflow';
 import { isWidgetType } from '../utils/node.ts';
 

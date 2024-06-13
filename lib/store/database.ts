@@ -1,5 +1,5 @@
-import { INDEX_DB_NAME, INDEX_DB_OJECT_NAME } from '../lib/config/constants';
-import { NodeData } from '../lib/types';
+import { INDEX_DB_NAME, INDEX_DB_OJECT_NAME } from '../config/constants';
+import { NodeData } from '../types/types';
 import { Edge, Node } from 'reactflow';
 
 export interface IGraphData {
@@ -24,7 +24,7 @@ let version = 1;
 
 export enum Stores {
   Graphs = 'graphs',
-  Runs = 'runs',
+  Runs = 'runs'
 }
 
 export const initDB = (): Promise<boolean> => {
@@ -57,14 +57,12 @@ export const initDB = (): Promise<boolean> => {
   });
 };
 
-
 const setItem = (key: string, value: any) => {
   const transaction = db?.transaction(INDEX_DB_OJECT_NAME, 'readwrite');
   const objectStore = transaction?.objectStore(INDEX_DB_OJECT_NAME);
   const request = objectStore?.put({ key, value }) as IDBRequest<IDBValidKey>;
 
-  request.onsuccess = (event: Event) => {
-  };
+  request.onsuccess = (event: Event) => {};
 
   request.onerror = (event: Event) => {
     console.log('Error: ' + (event.target as IDBRequest).error);
@@ -75,7 +73,7 @@ const getItem = (key: string) => {
   return new Promise(async (resolve, reject) => {
     const transaction = db?.transaction(INDEX_DB_OJECT_NAME, 'readonly');
     const objectStore = transaction?.objectStore(INDEX_DB_OJECT_NAME);
-    const request = objectStore?.get(key) as IDBRequest<any>;    
+    const request = objectStore?.get(key) as IDBRequest<any>;
 
     request.onsuccess = (event: Event) => {
       const result = (event.target as IDBRequest).result;

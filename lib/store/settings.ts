@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { SettingsLookup, ThemeConfig } from '../lib/types.ts';
+import { SettingsLookup, ThemeConfig } from '../types/types.ts';
 
 interface SettingsStore {
   activeTheme: string;

@@ -1,20 +1,21 @@
-"use client";
+'use client';
 import * as Y from 'yjs';
 import { YjsProvider } from './client';
-import { NodeData } from '../lib/types.ts';
+import { NodeData } from '../types/types.ts';
 import type { Edge, Node } from 'reactflow';
 
 // TO DO: load this from .env
 const CONNECT_URL = 'http://localhost:8000';
 
 // TODO: fetch a local graphId from local storage, if it exists
-let graphId = typeof window !== 'undefined' &&  localStorage.getItem('graphId');
+let graphId = typeof window !== 'undefined' && localStorage.getItem('graphId');
 if (!graphId) {
   graphId = crypto.randomUUID();
   typeof window !== 'undefined' && localStorage.setItem('graphId', graphId);
 }
 
-const firebaseAuthToken =  typeof window !== 'undefined' ? localStorage.getItem('firebaseAuthToken') : '';
+const firebaseAuthToken =
+  typeof window !== 'undefined' ? localStorage.getItem('firebaseAuthToken') : '';
 
 // If a pre-existing graphId does not exist, this will remain a new (empty) document,
 // otherwise the server may be able to load an existing document from a Pulsar topic.

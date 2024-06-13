@@ -5,8 +5,8 @@ import {
   InputDef,
   NodeData,
   UpdateInputData
-} from '../types';
-import { controlAfterGenerateDef } from '../config/constants';
+} from '../types/types.ts';
+import { controlAfterGenerateDef } from '../config/constants.ts';
 import { Node } from 'reactflow';
 import { isWidgetType } from './node.ts';
 

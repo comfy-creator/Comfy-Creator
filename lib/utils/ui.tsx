@@ -1,6 +1,6 @@
 import { RefObject, useEffect, useState } from 'react';
-import { IMenuType, NodeDefinitions } from '../types.ts';
-import { useFlowStore } from '../../store/flow.ts';
+import { IMenuType, NodeDefinitions } from '../types/types.ts';
+import { useFlowStore } from '../store/flow.ts';
 
 type RawInput = {
   text: string;

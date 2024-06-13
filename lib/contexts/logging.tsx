@@ -1,6 +1,6 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { createUseContextHook } from './hookCreator';
-import { LogEntry } from '../lib/types';
+import { LogEntry } from '../types/types';
 import { useSettings } from './settings';
 import { LoggingDialog } from '../components/dialogs/LoggingDialog';
 

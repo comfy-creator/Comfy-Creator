@@ -8,10 +8,10 @@ import {
   GRAPHS_KEY,
   SNAPSHOT_KEY,
   outputNodeTypesName
-} from '../lib/config/constants';
+} from '../config/constants';
 import { RFState, useFlowStore } from '../store/flow';
 import { uuidv4 } from 'lib0/random.js';
-import { NodeData } from '../lib/types';
+import { NodeData } from '../types/types';
 
 interface IGraphContext {
   selectGraph: (index: string) => void;

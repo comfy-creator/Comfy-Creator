@@ -1,10 +1,10 @@
-import { useFlowStore } from '../../store/flow';
+import { useFlowStore } from '../store/flow';
 import { ReactFlowJsonObject } from 'reactflow';
-import { NodeData, Workflow, WorkflowInput, WorkflowOutput } from '../types';
-import { useApiContext } from '../../contexts/api';
+import { NodeData, Workflow, WorkflowInput, WorkflowOutput } from '../types/types';
+import { useApiContext } from '../contexts/api';
 import { getHandleName, makeHandleId } from '../utils/node';
 import { uuidv4 } from 'lib0/random';
-import { useGraphContext } from '../../contexts/graph';
+import { useGraphContext } from '../contexts/graph';
 
 // import { applyWidgetControl } from '../utils/widgets.ts';
 

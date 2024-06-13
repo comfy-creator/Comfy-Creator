@@ -1,5 +1,5 @@
-import { getSuggestedNodesData } from '../menu.ts';
-import { useFlowStore } from '../../store/flow.ts';
+import { getSuggestedNodesData } from '../utils/menu.ts';
+import { useFlowStore } from '../store/flow.ts';
 import type { MouseEvent as ReactMouseEvent, TouchEvent } from 'react';
 import { Connection, getOutgoers, Node, OnConnectStartParams } from 'reactflow';
 import { getHandleName, isPrimitiveNode, isWidgetType } from '../utils/node.ts';
@@ -7,7 +7,7 @@ import {
   HandleOnConnectEndParams,
   HandleOnConnectStartParams,
   ValidateConnectionParams
-} from '../types.ts';
+} from '../types/types.ts';
 
 export function handleOnConnectEnd({
   nodeDefs,
