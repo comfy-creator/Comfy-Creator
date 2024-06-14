@@ -1,7 +1,7 @@
 'use client';
 import * as Y from 'yjs';
 import { YjsProvider } from './client';
-import { NodeData } from '../types/types.ts';
+import { NodeData } from '../types/types';
 import type { Edge, Node } from 'reactflow';
 
 // TO DO: load this from .env

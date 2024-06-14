@@ -95,8 +95,10 @@ const createWidgetFromSpec = (
           multiSelect={(def as EnumInputDef).multiSelect}
         />
       );
+
     case 'IMAGE':
       return <ImageWidget {...commonProps} value={(data as ImageInputData).value} />;
+
     case 'FILEPICKER':
       return <FilePickerWidget />;
 

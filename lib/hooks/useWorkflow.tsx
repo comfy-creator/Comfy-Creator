@@ -1,5 +1,5 @@
 import { useFlowStore } from '../store/flow';
-import { ReactFlowJsonObject } from 'reactflow';
+import { ReactFlowInstance, ReactFlowJsonObject } from 'reactflow';
 import { NodeData, Workflow, WorkflowInput, WorkflowOutput } from '../types/types';
 import { useApiContext } from '../contexts/api';
 import { getHandleName, makeHandleId } from '../utils/node';
@@ -108,3 +108,54 @@ export function useWorkflow() {
 
   return { submitWorkflow, serializeGraphToWorkflow, serializeGraph };
 }
+
+// NEW
+const serializeGraph = (
+  instance: ReactFlowInstance<NodeData, string>,
+  minimize_payload: boolean = false
+) => {
+  const { nodes, edges, viewport } = instance.toObject();
+
+  const lightweightNodes = nodes.map((node) => {
+    if (minimize_payload) {
+      // Ignore all properties other than id and data
+      return { id: node.id, data: node.data };
+    } else {
+      const { selected, dragging, resizing, parentNode, ...remainder } = node;
+      return remainder;
+    }
+  });
+
+  return { nodes: lightweightNodes, edges, viewport };
+};
+
+export type Node<T, U extends string> = {
+  id: string;
+  position: XYPosition;
+  data: T;
+  type?: U;
+  sourcePosition?: Position;
+  targetPosition?: Position;
+  hidden?: boolean;
+  selected?: boolean;
+  dragging?: boolean;
+  draggable?: boolean;
+  selectable?: boolean;
+  connectable?: boolean;
+  resizing?: boolean;
+  deletable?: boolean;
+  dragHandle?: string;
+  width?: number | null;
+  height?: number | null;
+  /** @deprecated - use `parentId` instead */
+  parentNode?: string;
+  parentId?: string;
+  zIndex?: number;
+  extent?: 'parent' | CoordinateExtent;
+  expandParent?: boolean;
+  positionAbsolute?: XYPosition;
+  ariaLabel?: string;
+  focusable?: boolean;
+  style?: React.CSSProperties;
+  className?: string;
+};
