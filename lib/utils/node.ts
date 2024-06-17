@@ -205,20 +205,16 @@ export function isWidgetHandleId(id: string) {
   return isWidgetType(id.split('::')[2] as EdgeType);
 }
 
-export function makeHandleId(nodeId: string, type: HandleType, name: string) {
-  return `${nodeId}::${type}::${name}`;
+export function makeHandleId(nodeId: string, name: string) {
+  return `${nodeId}::${name}`;
 }
 
 export function getHandleNodeId(id: string) {
   return id.split('::')[0];
 }
 
-export function getHandleType(id: string) {
-  return id.split('::')[1] as HandleType;
-}
-
 export function getHandleName(id: string) {
-  return id.split('::')[2];
+  return id.split('::')[1];
 }
 
 export function isPrimitiveNode(node: Node<NodeData>) {
@@ -235,7 +231,7 @@ export function makeEdgeId({
   const sourceNodeId = getHandleNodeId(sourceHandle);
   const targetNodeId = getHandleNodeId(targetHandle);
 
-  return `reactflow__edge-${sourceNodeId}${sourceHandle}-${targetNodeId}${targetHandle}`;
+  return `${sourceNodeId}::${sourceHandle}-${targetNodeId}::${targetHandle}`;
 }
 
 export const createEdge = ({

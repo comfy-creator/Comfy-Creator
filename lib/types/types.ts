@@ -51,23 +51,6 @@ export type EdgeType =
 // A[conditioning] -> B[conditioning], the A-node will compute conditioning (CLIP text
 // encode), and then pass it as an input into B-node (K-sampler).
 
-// =========== Entire Node State ===========
-// This is the 'data' type stored inside a node instance
-
-export type NodeData = {
-  display_name: string;
-  inputs: Record<string, InputData>;
-  outputs: Record<string, OutputData>;
-};
-
-// =========== Node Types ===========
-// Node-definitions are converted into React components, and then registered with
-// ReactFlow as a 'NodeType'.
-
-export type NodeType = ComponentType<NodeProps<NodeData>>;
-
-export type NodeTypes = Record<string, NodeType>;
-
 export interface UpdateInputDataParams {
   name: string;
   nodeId: string;
@@ -195,15 +178,6 @@ export interface LogEntry {
   timestamp: Date;
 }
 
-export interface AddValueControlInput {
-  input: InputData;
-  defaultValue?: string;
-  options?: {
-    addFilterList?: boolean;
-    controlAfterGenerateName?: string;
-  };
-}
-
 export type MessageType = 'status' | 'progress' | 'executing' | 'executed';
 
 export interface ComfyStatusMessage {
@@ -246,16 +220,6 @@ export type ComfyWsMessage =
   | ComfyProgressMessage
   | ComfyExecutingMessage
   | ComfyExecutedMessage;
-
-export interface WorkflowAPI {
-  [key: string]: {
-    inputs: Record<string, string | number | boolean | [string, number]>;
-    class_type: string;
-    _meta: {
-      title: string;
-    };
-  };
-}
 
 export interface ViewFileArgs {
   type: string;
@@ -301,22 +265,6 @@ export interface ValidateConnectionParams {
   getEdges: () => Edge[];
 }
 
-export interface HandleEdgeUpdateStartParams {
-  setEdges: (edges: SetStateAction<Edge[]>) => void;
-  setIsUpdatingEdge: (value: boolean) => void;
-  updateOutputData: UpdateOutputData;
-  updateInputData: UpdateInputData;
-}
-
-export interface HandleEdgeUpdateParams {
-  setEdges: (edges: SetStateAction<Edge[]>) => void;
-  setIsUpdatingEdge: (value: boolean) => void;
-}
-
-export interface HandleEdgeUpdateEndParams {
-  setIsUpdatingEdge: (value: boolean) => void;
-}
-
 export interface ExecutionState {
   id?: string; // as the runID
   output: Record<string, any>;
@@ -324,59 +272,84 @@ export interface ExecutionState {
   progress: { value: number; max: number } | null;
 }
 
-export type WorkflowOutput = [string, string];
-export type WorkflowInput = string | number | boolean | [string, string];
-
-interface WorkflowData {
-  type: string;
-  inputs: { [name: string]: WorkflowInput };
-
-  // do we need outputs?
-  outputs: { [name: string]: WorkflowOutput };
-}
-
-export interface Workflow {
-  [id: string]: WorkflowData;
-}
-
 // ======== New definitions =========
 
+// =========== Node Types ===========
+// Node-definitions are converted into React components, and then registered with
+// ReactFlow as a 'NodeType'.
+
+export type NodeType = ComponentType<NodeProps<NodeData>>;
+
+export type NodeTypes = Record<string, NodeType>;
+
+// Removes Reactflow's Node-type's 'position' as a required property
+export type MinimalNode<T = any, U extends string | undefined = any> = Omit<
+  Node<T, U>,
+  'position'
+> & {
+  position?: { x: number; y: number };
+};
+
+// When ReactFlow serializes a graph, the properties inside of node.data and node.edge
+// will be serialized. For Node<T, U>, U is a identifier for a custom node inside of
+// React Flow's `nodeTyes` map.
+
 export interface SerializedGraph {
-  nodes: Node[];
-  edges: Edge[];
+  nodes: MinimalNode<NodeData>[];
+  edges?: Edge<string>[];
   viewport?: Viewport;
 }
 
-export interface HandleDef {
-  readonly display_name: string;
-  readonly edge_type: EdgeType;
-  readonly widgets?: WidgetDef[];
-  readonly optional?: boolean; // assumed false if undefined
-  // readonly serialize?: boolean; // assumed true if undefined
+// This encapsulates an entire node's state; it is the 'data' property stored inside
+// a node instance.
+export type NodeData = {
+  display_name?: string;
+  inputs: Record<string, HandleState>; // key is used to reference value
+  outputs: Record<string, HandleState>; // key is used to reference value
+};
+
+export interface HandleState {
+  display_name?: string;
+  edge_type?: string; // TO DO: maybe replace with something like a class?
+  value?: ConstantValue | RefValue; // state is stored in the handle component, not the widget
+  widgets?: WidgetState[];
+  optional?: boolean; // assumed false if it's undefined. Does not apply to outputs
+  // serialize?: boolean; // assumed true if undefined
 }
 
-export interface WidgetDef {
-  readonly display_name: string;
-  readonly widget_type: string; // namespaced component like core_extension_1.BoolToggle
-  readonly props: Record<string, any>;
+export interface WidgetState {
+  display_name: string;
+  widget_type: string; // namespaced component like core_extension_1.BoolToggle
+  props: Record<string, any>;
 }
 
 export type NodeDefinition = Readonly<{
-  display_name: string;
-  description: string;
+  display_name: Record<string, string>;
+  description: Record<string, string>;
   category: string;
-  input_handles: HandleDef[];
-  output_handles: HandleDef[];
-  widgets: WidgetDef[];
+
+  // Takes its own interface, and produces a new interface
+  factory: (inputs: Record<string, HandleState>) => {
+    inputs: Record<string, HandleState>;
+    outputs: Record<string, HandleState>;
+    widgets: Record<string, WidgetState>;
+  };
 }>;
 
 // The key is the name of the node-type
 export type NodeDefinitions = Record<string, NodeDefinition>;
 
+// Per node, per handle, each handle must resolve to one of these:
+// A serialized constant
+type SingleValue = string | number | boolean | object | Uint8Array;
+export type ConstantValue = SingleValue | SingleValue[];
+// A reference to another node handle's output (a value which is not yet computed)
+export type RefValue = { nodeId: string; handleName: string };
+
 // Do we need this???????
-export interface AddNodeParams {
-  type: string;
-  width?: number;
-  position: XYPosition;
-  defaultValues?: Record<string, any>;
-}
+// export interface AddNodeParams {
+//   type: string;
+//   width?: number;
+//   position: XYPosition;
+//   defaultValues?: Record<string, any>;
+// }

@@ -11,6 +11,7 @@ export interface GetBezierPathParams {
   curvature?: number;
 }
 
+// This only changes the styling of react flow's default edge component
 export function createEdgeFromTemplate({ type }: { type: string }) {
   return (params: GetBezierPathParams) => {
     const { getActiveTheme } = useSettingsStore();
