@@ -9,10 +9,10 @@ type ModelLoaderProps = {
   multiSelect?: boolean;
 };
 
-export const ModelLoader = (
+export const ModelLoader: React.FC = (
   nodeDef: NodeDefinition,
   updateInputData: UpdateInputData
-): React.FC => {
+) => {
   const nodeRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 

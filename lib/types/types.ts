@@ -306,6 +306,7 @@ export type NodeData = {
   display_name?: string;
   inputs: Record<string, HandleState>; // key is used to reference value
   outputs: Record<string, HandleState>; // key is used to reference value
+  widgets: Record<string, WidgetState>;
 };
 
 export interface HandleState {

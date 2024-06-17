@@ -5,10 +5,9 @@ import { getHandleName, makeHandleId } from '../utils/node';
 import { uuidv4 } from 'lib0/random';
 import { useGraphContext } from '../contexts/graph';
 
-// import { applyWidgetControl } from '../utils/widgets.ts';
-
 // Second argument returned is a list of missing required input handles
 // If any are missing, you should _not_ submit the workflow, as it is incomplete
+//
 // If you minimize the payload, a lot of information is lost and it will be
 // difficult to reconstruct the original graph visually in the UI
 export const serializeGraph = (
