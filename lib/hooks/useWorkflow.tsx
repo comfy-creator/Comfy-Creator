@@ -1,5 +1,4 @@
-import { useFlowStore } from '../store/flow';
-import { ReactFlowJsonObject } from 'reactflow';
+import { ReactFlowJsonObject, useReactFlow } from 'reactflow';
 import { NodeData, Workflow, WorkflowInput, WorkflowOutput } from '../types/types';
 import { useApiContext } from '../contexts/api';
 import { getHandleName, makeHandleId } from '../utils/node';
@@ -9,7 +8,7 @@ import { useGraphContext } from '../contexts/graph';
 // import { applyWidgetControl } from '../utils/widgets.ts';
 
 export function useWorkflow() {
-  const { instance } = useFlowStore();
+  const rflInstance = useReactFlow();
   const { addGraphRun } = useGraphContext();
   const { runWorkflow } = useApiContext();
 
@@ -31,8 +30,8 @@ export function useWorkflow() {
   };
 
   const serializeGraphToWorkflow = () => {
-    if (!instance) throw new Error('Flow instance not found');
-    const { nodes, edges }: ReactFlowJsonObject<NodeData> = instance.toObject();
+    if (!rflInstance) throw new Error('Flow instance not found');
+    const { nodes, edges }: ReactFlowJsonObject<NodeData> = rflInstance.toObject();
     const workflow: Workflow = {};
 
     for (const node of nodes) {
@@ -102,8 +101,8 @@ export function useWorkflow() {
   };
 
   const serializeGraph = () => {
-    if (!instance) throw new Error('Flow instance not found');
-    return instance.toObject() as ReactFlowJsonObject<NodeData>;
+    if (!rflInstance) throw new Error('Flow instance not found');
+    return rflInstance.toObject() as ReactFlowJsonObject<NodeData>;
   };
 
   return { submitWorkflow, serializeGraphToWorkflow, serializeGraph };

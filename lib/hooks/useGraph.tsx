@@ -15,14 +15,13 @@ const selector = (state: RFState) => ({
   setNodes: state.setNodes,
   setEdges: state.setEdges,
   nodeDefs: state.nodeDefs,
-  instance: state.instance
 });
 
 export function useGraph() {
   const { setGraphs, setCurrentGraphIndex, currentStateGraphIndex } = useGraphContext();
 
-  const { instance, nodeDefs, nodes, edges, setEdges, setNodes } = useFlowStore(selector);
-  const { setViewport } = useReactFlow<NodeData, string>();
+  const { nodeDefs, nodes, edges, setEdges, setNodes } = useFlowStore(selector);
+  const { setViewport, toObject } = useReactFlow<NodeData, string>();
 
   const { log } = useLogging();
 
@@ -130,7 +129,7 @@ export function useGraph() {
   const saveSerializedGraph = (graphs?: IGraphData[]) => {
     let currentGraphIndex = currentStateGraphIndex;
     if (!graphs) {
-      const flow = instance?.toObject();
+      const flow = toObject();
       currentGraphIndex = currentGraphIndex ?? uuidv4();
 
       graphs = [

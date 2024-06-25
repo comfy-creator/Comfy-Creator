@@ -11,7 +11,6 @@ import {
   OnConnect,
   OnEdgesChange,
   OnNodesChange,
-  ReactFlowInstance
 } from 'reactflow';
 import { create } from 'zustand';
 import {
@@ -79,8 +78,6 @@ export type RFState = {
   setCurrentExecutionNodeId: (executionId: string, nodeId: string | null) => void;
   setExecutionProgress: (executionId: string, value: number | null, max?: number) => void;
 
-  instance: ReactFlowInstance | null;
-
   panOnDrag: boolean;
   setPanOnDrag: (panOnDrag: boolean) => void;
 
@@ -129,8 +126,6 @@ export type RFState = {
     value: (node: Node<NodeData>, ...v: any[]) => any
   ) => void;
 
-  setInstance: (instance: ReactFlowInstance) => void;
-
   isUpdatingEdge: boolean;
   setIsUpdatingEdge: (isUpdatingEdge: boolean) => void;
 
@@ -157,7 +152,6 @@ export const useFlowStore = create<RFState>((set, get) => {
 
   // === Return the store object ===
   return {
-    instance: null,
     panOnDrag: true,
     setPanOnDrag: (panOnDrag) => set({ panOnDrag }),
 
@@ -626,10 +620,6 @@ export const useFlowStore = create<RFState>((set, get) => {
           }
         };
       });
-    },
-
-    setInstance: (instance) => {
-      set({ instance });
     },
 
     setCurrentExecutionNodeId: (executionId, nodeId) => {
