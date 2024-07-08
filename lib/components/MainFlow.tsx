@@ -75,8 +75,6 @@ const selector = (state: RFState) => ({
   setCurrentConnectionLineType: state.setCurrentConnectionLineType,
   edgeComponents: state.edgeComponents,
   registerEdgeType: state.registerEdgeType,
-  instance: state.instance,
-  setInstance: state.setInstance,
   addRawNode: state.addRawNode,
   executions: state.executions,
   isUpdatingEdge: state.isUpdatingEdge,
@@ -104,8 +102,6 @@ export function MainFlow() {
     setCurrentConnectionLineType,
     edgeComponents,
     registerEdgeType,
-    instance,
-    setInstance,
     executions,
     updateInputData,
     updateOutputData,
@@ -117,7 +113,7 @@ export function MainFlow() {
 
   const { currentStateGraphRunIndex, addNewGraph } = useGraphContext();
 
-  const { getNodes, getEdges, getViewport, fitView } = useReactFlow<NodeData, string>();
+  const { getNodes, getEdges, getViewport, fitView, screenToFlowPosition } = useReactFlow<NodeData, string>();
   const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
   const { loadCurrentSettings, addSetting } = useSettings();
   const { getNodeDefs, makeServerURL } = useApiContext();
@@ -219,8 +215,8 @@ export function MainFlow() {
 
   const onDrop = useCallback(
     (event: DragEvent<HTMLDivElement>) =>
-      dropHandler({ rfInstance: instance, addNode, setNodes, setEdges })(event),
-    [instance, addNode, setNodes, setEdges]
+      dropHandler({ screenToFlowPosition, addNode, setNodes, setEdges })(event),
+    [screenToFlowPosition, addNode, setNodes, setEdges]
   );
 
   const handleKeyPress = useCallback(
@@ -308,7 +304,6 @@ export function MainFlow() {
         onConnectEnd(...props);
       }}
       isValidConnection={isValidConnection}
-      onInit={setInstance}
       nodeTypes={nodeComponents}
       ref={menuRef}
       onDrop={onDrop}

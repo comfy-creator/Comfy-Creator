@@ -1,12 +1,12 @@
 import { DragEvent } from 'react';
 import { getFileAsDataURL, getFileKind } from '../utils/file.ts';
-import { Edge, Node, ReactFlowInstance } from 'reactflow';
+import { Edge, Node, XYPosition } from 'reactflow';
 import { AddNodeParams } from '../types/types.ts';
 
 interface DropHandlerParams {
   setNodes: (nodes: Node[]) => void;
   setEdges: (edges: Edge[]) => void;
-  rfInstance: ReactFlowInstance | null;
+  screenToFlowPosition: (position: XYPosition) => XYPosition;
   addNode: (node: AddNodeParams) => void;
 }
 
@@ -17,11 +17,11 @@ export function dragHandler(event: DragEvent<HTMLDivElement>) {
   event.dataTransfer.dropEffect = 'move';
 }
 
-export function dropHandler({ rfInstance, setNodes, setEdges, addNode }: DropHandlerParams) {
+export function dropHandler({ screenToFlowPosition, setNodes, setEdges, addNode }: DropHandlerParams) {
   return async (event: DragEvent<HTMLDivElement>) => {
     console.log('dropHandler');
     event.preventDefault();
-    if (!event.dataTransfer || !rfInstance) return;
+    if (!event.dataTransfer || !screenToFlowPosition) return;
 
     let i = 0;
     for (const file of event.dataTransfer.files) {
@@ -29,7 +29,7 @@ export function dropHandler({ rfInstance, setNodes, setEdges, addNode }: DropHan
 
       // TODO: compute position in a better way
       const xy = { x: event.clientX + i * 100, y: event.clientY + i * 100 };
-      const position = rfInstance.screenToFlowPosition(xy);
+      const position = screenToFlowPosition(xy);
 
       switch (kind) {
         case 'image':
