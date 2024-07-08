@@ -1,27 +1,15 @@
-async function fetchData() {
-   try {
-      const response = await fetch('http://localhost:8080/checkpoints', { method: 'GET' });
-      if (response.ok) {
-         const data = await response.json();
-         //  Object.values(data).forEach((item: any) => {
-         //     console.log(item.components);
-         //  });
-         console.log(data);
-      } else {
-         console.error('Failed to fetch data:', response.status, response.statusText);
-      }
-   } catch (error) {
-      console.error('Error fetching data:', error);
-   }
-}
-
-async function generateImages() {
+async function* generateImages() {
    const requestBody = {
-      models: { citron_anime_treasure_v10: 4 },
-      positive_prompt: 'beautiful anime woman',
-      negative_prompt: 'watermark, low quality, worst quality, ugly',
-      random_seed: 44,
-      aspect_ratio: [512, 512]
+      models: {
+         citron_anime_treasure_v10: 4,
+         break_domain_xl_v05g: 1
+         // sd3_medium_incl_clips_t5xxlfp8: 1
+      },
+      positive_prompt:
+         'anime style, a badass man swinging a massive broadsword above his head, detailed, epic masterpiece, highly detailed',
+      negative_prompt: 'watermark, low quality, worst quality, ugly, text',
+      random_seed: 53,
+      aspect_ratio: '9/16'
    };
 
    try {
@@ -30,6 +18,8 @@ async function generateImages() {
          headers: { 'Content-Type': 'application/json' },
          body: JSON.stringify(requestBody)
       });
+
+      console.log('first received');
 
       if (!response.ok) {
          throw new Error(`HTTP error! status: ${response.status}`);
@@ -41,18 +31,37 @@ async function generateImages() {
 
       const reader = response.body.getReader();
 
-      // eslint-disable-next-line no-constant-condition
       while (true) {
          const { done, value } = await reader.read();
+
+         if (value) {
+            const stringValue = new TextDecoder().decode(value);
+            try {
+               const jsonValue = JSON.parse(stringValue);
+               yield jsonValue;
+            } catch (parseError) {
+               console.error('Failed to parse JSON:', parseError);
+            }
+         }
+
          if (done) break;
-         console.log(new TextDecoder().decode(value));
       }
    } catch (error) {
       console.error('Failed to generate images:', error);
+      throw error;
    }
 }
 
-generateImages();
+// Invoke generate-images and collect results
+(async () => {
+   try {
+      for await (const chunk of generateImages()) {
+         console.log(chunk);
+      }
+   } catch (error) {
+      console.error('Error in image generation:', error);
+   }
+})();
 
 // fetchData();
 
