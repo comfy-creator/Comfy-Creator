@@ -6,15 +6,15 @@ export const defaultNodes: Node<NodeData>[] = [
     id: '881c17fc-14ea-4c1e-a0a6-6632762060a9',
     type: 'KSampler',
     data: {
-      name: 'KSampler',
+      display_name: 'KSampler',
       inputs: {
         model: {
-          name: 'model',
+          display_name: 'model',
           isHighlighted: false,
           optional: false,
           isConnected: true,
-          type: 'MODEL',
-          slot: 0
+          edge_type: 'MODEL',
+          // slot: 0
         },
         seed: {
           def: {
@@ -25,18 +25,18 @@ export const defaultNodes: Node<NodeData>[] = [
             name: 'seed',
             optional: false
           },
-          name: 'seed',
+          display_name: 'seed',
           optional: false,
-          type: 'INT',
+          edge_type: 'INT',
           value: 0,
-          linkedInputs: ['control_after_generate'],
+          // linkedInputs: ['control_after_generate'],
           isHighlighted: false
         },
         control_after_generate: {
-          name: 'control_after_generate',
-          type: 'ENUM',
-          serialize: true,
-          valueControl: true,
+          display_name: 'control_after_generate',
+          edge_type: 'ENUM',
+          // serialize: true,
+          // valueControl: true,
           value: 'randomize',
           def: {
             type: 'ENUM',
@@ -57,9 +57,9 @@ export const defaultNodes: Node<NodeData>[] = [
             name: 'steps',
             optional: false
           },
-          name: 'steps',
+          display_name: 'steps',
           optional: false,
-          type: 'INT',
+          edge_type: 'INT',
           value: 20,
           isHighlighted: false
         },
@@ -74,9 +74,9 @@ export const defaultNodes: Node<NodeData>[] = [
             name: 'cfg',
             optional: false
           },
-          name: 'cfg',
+          display_name: 'cfg',
           optional: false,
-          type: 'FLOAT',
+          edge_type: 'FLOAT',
           value: 8,
           isHighlighted: false
         },
@@ -112,9 +112,9 @@ export const defaultNodes: Node<NodeData>[] = [
             name: 'sampler_name',
             optional: false
           },
-          name: 'sampler_name',
+          display_name: 'sampler_name',
           optional: false,
-          type: 'ENUM',
+          edge_type: 'ENUM',
           value: 'euler',
           isHighlighted: false
         },
@@ -127,30 +127,30 @@ export const defaultNodes: Node<NodeData>[] = [
             name: 'scheduler',
             optional: false
           },
-          name: 'scheduler',
+          display_name: 'scheduler',
           optional: false,
-          type: 'ENUM',
+          edge_type: 'ENUM',
           value: 'normal',
           isHighlighted: false
         },
         positive: {
-          name: 'positive',
-          type: 'CONDITIONING',
+          display_name: 'positive',
+          edge_type: 'CONDITIONING',
           isHighlighted: false,
           optional: false
         },
         negative: {
-          name: 'negative',
-          type: 'CONDITIONING',
+          display_name: 'negative',
+          edge_type: 'CONDITIONING',
           isHighlighted: false,
           optional: false
         },
         latent_image: {
-          name: 'latent_image',
+          display_name: 'latent_image',
           isHighlighted: false,
           optional: false,
           isConnected: true,
-          type: 'LATENT'
+          edge_type: 'LATENT'
         },
         denoise: {
           def: {
@@ -162,9 +162,9 @@ export const defaultNodes: Node<NodeData>[] = [
             name: 'denoise',
             optional: false
           },
-          name: 'denoise',
+          display_name: 'denoise',
           optional: false,
-          type: 'FLOAT',
+          edge_type: 'FLOAT',
           value: 1,
           isHighlighted: false
         }
@@ -172,10 +172,10 @@ export const defaultNodes: Node<NodeData>[] = [
       outputs: {
         LATENT: {
           slot: 0,
-          name: 'LATENT',
+          display_name: 'LATENT',
           isHighlighted: false,
           isConnected: true,
-          type: 'LATENT'
+          edge_type: 'LATENT'
         }
       }
     },
@@ -202,7 +202,7 @@ export const defaultNodes: Node<NodeData>[] = [
     id: '42ff016d-c4d0-497c-b1c6-8c582d276f0f',
     type: 'CheckpointLoaderSimple',
     data: {
-      name: 'Load Checkpoint',
+      display_name: 'Load Checkpoint',
       inputs: {
         ckpt_name: {
           def: {
@@ -213,9 +213,9 @@ export const defaultNodes: Node<NodeData>[] = [
             name: 'ckpt_name',
             optional: false
           },
-          name: 'ckpt_name',
+          display_name: 'ckpt_name',
           optional: false,
-          type: 'ENUM',
+          edge_type: 'ENUM',
           value: 'DreamShaper_8_pruned.safetensors',
           isHighlighted: false
         }
@@ -223,24 +223,24 @@ export const defaultNodes: Node<NodeData>[] = [
       outputs: {
         MODEL: {
           slot: 0,
-          name: 'MODEL',
+          display_name: 'MODEL',
           isHighlighted: false,
           isConnected: true,
-          type: 'MODEL'
+          edge_type: 'MODEL'
         },
         CLIP: {
           slot: 1,
-          name: 'CLIP',
+          display_name: 'CLIP',
           isHighlighted: false,
           isConnected: true,
-          type: 'CLIP'
+          edge_type: 'CLIP'
         },
         VAE: {
           slot: 2,
-          name: 'VAE',
+          display_name: 'VAE',
           isHighlighted: false,
           isConnected: true,
-          type: 'VAE'
+          edge_type: 'VAE'
         }
       }
     },
@@ -265,7 +265,7 @@ export const defaultNodes: Node<NodeData>[] = [
     id: '2bfcd7ba-a780-4118-87af-6faaa86b7b37',
     type: 'CLIPTextEncode',
     data: {
-      name: 'CLIP Text Encode (Prompt)',
+      display_name: 'CLIP Text Encode (Prompt)',
       inputs: {
         text: {
           def: {
@@ -274,24 +274,24 @@ export const defaultNodes: Node<NodeData>[] = [
             name: 'text',
             optional: false
           },
-          name: 'text',
+          display_name: 'text',
           optional: false,
-          type: 'STRING',
+          edge_type: 'STRING',
           isHighlighted: false
         },
         clip: {
-          name: 'clip',
+          display_name: 'clip',
           isHighlighted: false,
           optional: false,
           isConnected: true,
-          type: 'CLIP'
+          edge_type: 'CLIP'
         }
       },
       outputs: {
         CONDITIONING: {
           slot: 0,
-          name: 'CONDITIONING',
-          type: 'CONDITIONING',
+          display_name: 'CONDITIONING',
+          edge_type: 'CONDITIONING',
           isHighlighted: false
         }
       }
@@ -319,7 +319,7 @@ export const defaultNodes: Node<NodeData>[] = [
     id: '05219e03-63a0-45d5-8235-85727c868d58',
     type: 'CLIPTextEncode',
     data: {
-      name: 'CLIP Text Encode (Prompt)',
+      display_name: 'CLIP Text Encode (Prompt)',
       inputs: {
         text: {
           def: {
@@ -328,24 +328,24 @@ export const defaultNodes: Node<NodeData>[] = [
             name: 'text',
             optional: false
           },
-          name: 'text',
+          display_name: 'text',
           optional: false,
-          type: 'STRING',
+          edge_type: 'STRING',
           isHighlighted: false
         },
         clip: {
-          name: 'clip',
+          display_name: 'clip',
           isHighlighted: false,
           optional: false,
           isConnected: true,
-          type: 'CLIP'
+          edge_type: 'CLIP'
         }
       },
       outputs: {
         CONDITIONING: {
           slot: 0,
-          name: 'CONDITIONING',
-          type: 'CONDITIONING',
+          display_name: 'CONDITIONING',
+          edge_type: 'CONDITIONING',
           isHighlighted: false
         }
       }
@@ -373,30 +373,30 @@ export const defaultNodes: Node<NodeData>[] = [
     id: 'b98d2e5e-e069-436a-bbe4-350a820f6133',
     type: 'VAEDecode',
     data: {
-      name: 'VAE Decode',
+      display_name: 'VAE Decode',
       inputs: {
         samples: {
-          name: 'samples',
+          display_name: 'samples',
           isHighlighted: false,
           optional: false,
           isConnected: true,
-          type: 'LATENT'
+          edge_type: 'LATENT'
         },
         vae: {
-          name: 'vae',
+          display_name: 'vae',
           isHighlighted: false,
           optional: false,
           isConnected: true,
-          type: 'VAE'
+          edge_type: 'VAE'
         }
       },
       outputs: {
         IMAGE: {
           slot: 0,
-          name: 'IMAGE',
+          display_name: 'IMAGE',
           isHighlighted: false,
           isConnected: true,
-          type: 'IMAGE'
+          edge_type: 'IMAGE'
         }
       }
     },
@@ -421,14 +421,14 @@ export const defaultNodes: Node<NodeData>[] = [
     id: '4f88cc9b-c3cc-46ff-813f-921c0847a193',
     type: 'SaveImage',
     data: {
-      name: 'Save Image',
+      display_name: 'Save Image',
       inputs: {
         images: {
-          name: 'images',
+          display_name: 'images',
           isHighlighted: false,
           optional: false,
           isConnected: true,
-          type: 'IMAGE'
+          edge_type: 'IMAGE'
         },
         filename_prefix: {
           def: {
@@ -437,9 +437,9 @@ export const defaultNodes: Node<NodeData>[] = [
             name: 'filename_prefix',
             optional: false
           },
-          name: 'filename_prefix',
+          display_name: 'filename_prefix',
           optional: false,
-          type: 'STRING',
+          edge_type: 'STRING',
           value: 'ComfyUI',
           isHighlighted: false
         }
@@ -467,7 +467,7 @@ export const defaultNodes: Node<NodeData>[] = [
     id: '94efbdb3-fa28-419e-924b-b6842075061f',
     type: 'EmptyLatentImage',
     data: {
-      name: 'Empty Latent Image',
+      display_name: 'Empty Latent Image',
       inputs: {
         width: {
           def: {
@@ -479,9 +479,9 @@ export const defaultNodes: Node<NodeData>[] = [
             name: 'width',
             optional: false
           },
-          name: 'width',
+          display_name: 'width',
           optional: false,
-          type: 'INT',
+          edge_type: 'INT',
           value: 512,
           isHighlighted: false
         },
@@ -495,9 +495,9 @@ export const defaultNodes: Node<NodeData>[] = [
             name: 'height',
             optional: false
           },
-          name: 'height',
+          display_name: 'height',
           optional: false,
-          type: 'INT',
+          edge_type: 'INT',
           value: 512,
           isHighlighted: false
         },
@@ -510,9 +510,9 @@ export const defaultNodes: Node<NodeData>[] = [
             name: 'batch_size',
             optional: false
           },
-          name: 'batch_size',
+          display_name: 'batch_size',
           optional: false,
-          type: 'INT',
+          edge_type: 'INT',
           value: 1,
           isHighlighted: false
         }
@@ -520,10 +520,10 @@ export const defaultNodes: Node<NodeData>[] = [
       outputs: {
         LATENT: {
           slot: 0,
-          name: 'LATENT',
+          display_name: 'LATENT',
           isHighlighted: false,
           isConnected: true,
-          type: 'LATENT'
+          edge_type: 'LATENT'
         }
       }
     },

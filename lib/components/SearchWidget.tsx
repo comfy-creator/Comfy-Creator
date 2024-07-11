@@ -30,7 +30,7 @@ const data = {
 };
 
 interface IDataType {
-  label: string;
+  label: string | Record<string, string>;
   value: string;
   isGeneric?: boolean;
 }
@@ -73,9 +73,9 @@ const SearchWidget = ({ handleMouseLeave, handleMouseIn, show, widgetRef, props 
     if (inType || outType) {
       const filteredData = Object.entries(nodeDefs)
         .filter(
-          ([_, value]) => !inType || value.inputs.map((item) => item.name).includes(inType)
+          ([_, value]) => !inType || Object.entries(value.inputs).map(([_, item]) => item.display_name).includes(inType)
         )
-        .filter(([_, value]) => !outType || value.outputs.map((item) => item.name).includes(outType))
+        .filter(([_, value]) => !outType || Object.entries(value.outputs).map(([_, item]) => item.display_name).includes(outType))
         .map(([key, value]) => ({
           label: value.display_name,
           value: key,
@@ -115,7 +115,6 @@ const SearchWidget = ({ handleMouseLeave, handleMouseIn, show, widgetRef, props 
     addNode({
       position,
       type: value,
-      defaultValues: {}
     });
   };
 
@@ -161,7 +160,7 @@ const SearchWidget = ({ handleMouseLeave, handleMouseIn, show, widgetRef, props 
             className={`react-flow lite-search-item ${item.isGeneric ? 'generic_type' : ''}`}
             onClick={(e) => handleClick(e, item.value)}
           >
-            {item.label}
+            {item.label as string}
           </div>
         ))}
       </div>

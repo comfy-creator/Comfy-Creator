@@ -17,7 +17,7 @@ export function handleOnExecute({
 
   const fileView = API_URL.VIEW_FILE({ ...images?.[0] });
   updateInputData({
-    name: 'image',
+    display_name: 'image',
     nodeId: node.id,
     data: { value: fileView }
   });

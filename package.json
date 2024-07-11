@@ -1,6 +1,6 @@
 {
   "name": "@comfy-creator/graph-editor",
-  "version": "0.2.5",
+  "version": "0.2.12",
   "private": false,
   "type": "module",
   "files": [

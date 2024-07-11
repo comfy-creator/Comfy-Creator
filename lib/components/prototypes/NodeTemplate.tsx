@@ -1,14 +1,8 @@
 import React, { ComponentType, ReactNode, useEffect, useRef, useState } from 'react';
 import {
-  EnumInputDef,
-  ImageInputData,
-  InputData,
-  InputDef,
-  InputHandleData,
+  HandleState,
   NodeData,
   NodeDefinition,
-  OutputData,
-  StringInputDef,
   ThemeConfig,
   UpdateInputData
 } from '../../types/types';
@@ -32,21 +26,21 @@ import {
 import { FilePickerWidget } from '../widgets/FilePicker';
 
 const createWidgetFromSpec = (
-  def: InputDef,
+  def: HandleState,
   label: string,
-  data: InputData,
-  updateInputData?: (newState: Partial<InputData>) => void
+  data: HandleState,
+  updateInputData?: (newState: Partial<HandleState>) => void
 ) => {
   const commonProps = { label };
-  if (data.type !== def.type) return;
+  if (data.edge_type !== def.edge_type) return;
 
-  const updateData = { name: data.name, type: data.type };
-  switch (data.type) {
+  const updateData = { display_name: data.display_name, edge_type: data.edge_type };
+  switch (data.edge_type) {
     case 'BOOLEAN':
       return (
         <ToggleWidget
           {...commonProps}
-          checked={data.value || false}
+          checked={data.value as boolean || false}
           disabled={data.isDisabled}
           onChange={(checked: boolean) => updateInputData?.({ ...updateData, value: checked })}
         />
@@ -57,18 +51,18 @@ const createWidgetFromSpec = (
       return (
         <NumberWidget
           {...commonProps}
-          value={data.value}
+          value={data.value as number}
           disabled={data.isDisabled}
           onChange={(value: number) => updateInputData?.({ ...updateData, value })}
         />
       );
 
     case 'STRING':
-      if ((def as StringInputDef).multiline) {
+      if ((def).isMultiline) {
         return (
           <TextWidget
             {...commonProps}
-            value={data.value}
+            value={data.value as string}
             disabled={data.isDisabled}
             onChange={(value: string) => updateInputData?.({ ...updateData, value })}
           />
@@ -77,7 +71,7 @@ const createWidgetFromSpec = (
       return (
         <StringWidget
           {...commonProps}
-          value={data.value}
+          value={data.value as string}
           disabled={data.isDisabled}
           onChange={(value: string) => updateInputData?.({ ...updateData, value })}
         />
@@ -87,17 +81,17 @@ const createWidgetFromSpec = (
       return (
         <EnumWidget
           {...commonProps}
-          value={data.value}
+          value={data.value as string}
           onChange={(value: string) => updateInputData?.({ ...updateData, value })}
           // TODO: add options
           options={{ values: [] }}
           disabled={data.isDisabled}
-          multiSelect={(def as EnumInputDef).multiSelect}
+          multiSelect={(def).isMultiSelect}
         />
       );
 
     case 'IMAGE':
-      return <ImageWidget {...commonProps} value={(data as ImageInputData).value} />;
+      return <ImageWidget {...commonProps} value={(data).value as string} />;
 
     case 'FILEPICKER':
       return <FilePickerWidget />;
@@ -106,7 +100,7 @@ const createWidgetFromSpec = (
     // return <VideoWidget {...commonProps} value={data.value} />;
 
     default:
-      console.warn(`Unsupported data type: ${(data as InputData).type}`);
+      console.warn(`Unsupported data type: ${(data as HandleState).edge_type}`);
       return null;
   }
 };
@@ -189,19 +183,19 @@ export const createNodeComponentFromDef = (
     const inputHandles: ReactNode[] = [];
     const inputWidgets: ReactNode[] = [];
     const displayWidgets: ReactNode[] = [];
-    const isOutputNode = nodeDef.output_node || data.isOutputNode;
+    const isOutputNode = nodeDef.output_node || data.output_node;
 
     for (const name in inputs) {
       const input = inputs[name];
 
-      if (isWidgetType(input.type)) {
+      if (isWidgetType(input.edge_type)) {
         inputWidgets.push(
           <Widget
             nodeId={id}
             theme={theme}
             data={input}
             nodeDef={nodeDef}
-            key={input.name}
+            key={input.display_name}
             updateInputData={updateInputData}
           />
         );
@@ -210,15 +204,15 @@ export const createNodeComponentFromDef = (
           <InputHandle
             nodeId={id}
             theme={theme}
-            key={input.name}
-            isConnected={input.isConnected}
-            handle={input as InputHandleData}
+            key={input.display_name}
+            // isConnected={input.isConnected}
+            handle={input as HandleState}
           />
         );
       }
 
-      if (isDisplayType(input.type)) {
-        displayWidgets.push(<DisplayWidget nodeDef={nodeDef} key={input.name} data={input} />);
+      if (isDisplayType(input.edge_type)) {
+        displayWidgets.push(<DisplayWidget nodeDef={nodeDef} key={input.display_name} data={input} />);
       }
     }
 
@@ -229,7 +223,7 @@ export const createNodeComponentFromDef = (
         key={i}
         theme={theme}
         handle={handle}
-        isConnected={handle.isConnected}
+        // isConnected={handle.isConnected}
       />
     ));
 
@@ -287,7 +281,7 @@ interface InputHandleProps {
   nodeId: string;
   theme: ThemeConfig;
   isConnected?: boolean;
-  handle: InputHandleData;
+  handle: HandleState;
 }
 
 function InputHandle({ nodeId, handle, theme, isConnected }: InputHandleProps) {
@@ -295,8 +289,8 @@ function InputHandle({ nodeId, handle, theme, isConnected }: InputHandleProps) {
   const { NODE_TEXT_COLOR } = theme.colors.appearance;
 
   const handleStyle = isConnected
-    ? { background: appearance[handle.type], border: '1px solid transparent' }
-    : { border: `1.5px solid ${appearance[handle.type]}`, backgroundColor: 'transparent' };
+    ? { background: appearance[handle.edge_type], border: '1px solid transparent' }
+    : { border: `1.5px solid ${appearance[handle.edge_type]}`, backgroundColor: 'transparent' };
 
   return (
     <div className={`flow_input ${handle.isHighlighted ? 'edge_opacity' : ''}`}>
@@ -304,11 +298,11 @@ function InputHandle({ nodeId, handle, theme, isConnected }: InputHandleProps) {
         type="target"
         style={{ ...handleStyle }}
         position={Position.Left}
-        id={makeHandleId(nodeId, 'input', handle.name)}
-        className={`flow_handler left ${handle.type}`}
+        id={makeHandleId(nodeId, handle.display_name)}
+        className={`flow_handler left ${handle.edge_type}`}
       />
       <span className="flow_input_text" style={{ color: NODE_TEXT_COLOR }}>
-        {handle.name}
+        {handle.display_name}
       </span>
     </div>
   );
@@ -316,7 +310,7 @@ function InputHandle({ nodeId, handle, theme, isConnected }: InputHandleProps) {
 
 interface OutputHandleProps {
   nodeId: string;
-  handle: OutputData;
+  handle: HandleState;
   theme: ThemeConfig;
   isConnected?: boolean;
 }
@@ -326,8 +320,8 @@ function OutputHandle({ nodeId, handle, theme, isConnected }: OutputHandleProps)
   const { NODE_TEXT_COLOR } = theme.colors.appearance;
 
   const handleStyle = isConnected
-    ? { backgroundColor: appearance[handle.type], border: '1px solid transparent' }
-    : { border: `1.5px solid ${appearance[handle.type]}`, backgroundColor: 'transparent' };
+    ? { backgroundColor: appearance[handle.edge_type], border: '1px solid transparent' }
+    : { border: `1.5px solid ${appearance[handle.edge_type]}`, backgroundColor: 'transparent' };
 
   return (
     <div className={`flow_output ${handle.isHighlighted ? 'edge_opacity' : ''}`}>
@@ -335,11 +329,11 @@ function OutputHandle({ nodeId, handle, theme, isConnected }: OutputHandleProps)
         type="source"
         position={Position.Right}
         style={{ ...handleStyle }}
-        id={makeHandleId(nodeId, 'output', handle.name)}
-        className={`flow_handler right ${handle.type}`}
+        id={makeHandleId(nodeId, handle.display_name)}
+        className={`flow_handler right ${handle.edge_type}`}
       />
       <span className="flow_output_text" style={{ color: NODE_TEXT_COLOR }}>
-        {handle.name}
+        {handle.display_name}
       </span>
     </div>
   );
@@ -347,19 +341,19 @@ function OutputHandle({ nodeId, handle, theme, isConnected }: OutputHandleProps)
 
 interface WidgetProps {
   nodeId: string;
-  data: InputData;
+  data: HandleState;
   theme: ThemeConfig;
   nodeDef: NodeDefinition;
   updateInputData: UpdateInputData;
 }
 
 function Widget({ theme, nodeId, data, nodeDef, updateInputData }: WidgetProps) {
-  const inputDef = nodeDef.inputs.find((input) => input.name === data.name) ?? (data as InputDef);
+  const inputDef = nodeDef.inputs[data.display_name] ?? (data);
   if (!inputDef) return null;
 
-  const update = (data: Partial<InputData>) => {
-    if (!data.type || !data.name) return;
-    updateInputData({ nodeId, name: data.name, data });
+  const update = (data: Partial<HandleState>) => {
+    if (!data.edge_type || !data.display_name) return;
+    updateInputData({ nodeId, display_name: data.display_name, data });
   };
 
   const isMultiline = isMultilineStringInput(data);
@@ -369,7 +363,7 @@ function Widget({ theme, nodeId, data, nodeDef, updateInputData }: WidgetProps) 
     <div className="widget_container" style={{ ...containerStyle }}>
       <WidgetHandle nodeId={nodeId} data={data} theme={theme} />
       <div style={{ marginLeft: isMultiline ? '0px' : '10px', width: '100%' }}>
-        {createWidgetFromSpec(inputDef, data.name, data, update)}
+        {createWidgetFromSpec(inputDef, data.display_name, data, update)}
       </div>
     </div>
   );
@@ -377,7 +371,7 @@ function Widget({ theme, nodeId, data, nodeDef, updateInputData }: WidgetProps) 
 
 export interface WidgetHandleProps {
   nodeId: string;
-  data: InputData;
+  data: HandleState;
   theme: ThemeConfig;
 }
 
@@ -385,8 +379,8 @@ function WidgetHandle({ nodeId, data, theme }: WidgetHandleProps) {
   const appearance = theme.colors.types;
 
   const handleStyle = data.primitiveNodeId
-    ? { background: appearance[data.type], border: '1px solid transparent' }
-    : { border: `1.5px solid ${appearance[data.type]}`, background: 'transparent' };
+    ? { background: appearance[data.edge_type], border: '1px solid transparent' }
+    : { border: `1.5px solid ${appearance[data.edge_type]}`, background: 'transparent' };
 
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -395,26 +389,26 @@ function WidgetHandle({ nodeId, data, theme }: WidgetHandleProps) {
         position={Position.Left}
         style={{ ...handleStyle }}
         className={`flow_handler left`}
-        id={makeHandleId(nodeId, 'input', data.name)}
+        id={makeHandleId(nodeId, data.display_name)}
       />
 
-      {isMultilineStringInput(data) && <div className="flow_input_text">{data.name}</div>}
+      {isMultilineStringInput(data) && <div className="flow_input_text">{data.display_name}</div>}
     </div>
   );
 }
 
 interface DisplayProps {
-  data: InputData;
+  data: HandleState;
   nodeDef: NodeDefinition;
 }
 
 function DisplayWidget({ data, nodeDef }: DisplayProps) {
-  const inputDef = nodeDef.inputs.find((input) => input.name === data.name) ?? (data as InputDef);
+  const inputDef = nodeDef.inputs[data.display_name] ?? (data as HandleState);
   if (!inputDef) return null;
 
   return (
     <div className="widget_container">
-      <div style={{ width: '100%' }}>{createWidgetFromSpec(inputDef, data.name, data)}</div>
+      <div style={{ width: '100%' }}>{createWidgetFromSpec(inputDef, data.display_name, data)}</div>
     </div>
   );
 }

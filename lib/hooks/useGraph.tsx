@@ -35,7 +35,7 @@ export function useGraph() {
 
       if (!def) return node;
 
-      const widgets = Object.values(inputs).filter((input) => isWidgetType(input.type));
+      const widgets = Object.values(inputs).filter((input) => isWidgetType(input.edge_type));
 
       for (const name in widgets) {
         const widget = widgets[name];
@@ -48,7 +48,7 @@ export function useGraph() {
         ...node,
         data: {
           ...node.data,
-          ...computeInitialNodeData(def, values)
+          ...computeInitialNodeData(def)
         }
       };
     });

@@ -1,5 +1,5 @@
-import { ReactFlowJsonObject, useReactFlow } from 'reactflow';
-import { NodeData, Workflow, WorkflowInput, WorkflowOutput } from '../types/types';
+import { ReactFlowInstance, ReactFlowJsonObject, useReactFlow } from 'reactflow';
+import { HandleState, NodeData, RefValue, SerializedGraph } from '../types/types';
 import { useApiContext } from '../contexts/api';
 import { getHandleName, makeHandleId } from '../utils/node';
 import { uuidv4 } from 'lib0/random';
@@ -10,7 +10,7 @@ import { useGraphContext } from '../contexts/graph';
 //
 // If you minimize the payload, a lot of information is lost and it will be
 // difficult to reconstruct the original graph visually in the UI
-export const serializeGraph = (
+export const newSerializeGraph = (
    instance: ReactFlowInstance<NodeData, string>,
    minimize_payload: boolean = false
 ): [SerializedGraph, Record<string, string[]> | undefined] => {
@@ -54,7 +54,7 @@ export const serializeGraph = (
                      nodeId: sourceNode.id,
                      handleName: edge.sourceHandle
                   };
-                  inputs[handle_name] = { value: ref }; // we reference another value
+                  inputs[handle_name] = { ...handle_state, value: ref }; // we reference another value
                }
             } else {
                if (!handle_state.optional) {
@@ -75,7 +75,7 @@ export const serializeGraph = (
                {
                   const value = Number(handle_state.value);
                   if (!isNaN(value)) {
-                     inputs[handle_name] = { value };
+                     inputs[handle_name] = { ...handle_state, value };
                   } else {
                      console.error('Invalid number input value');
                   }
@@ -85,9 +85,9 @@ export const serializeGraph = (
             case 'BOOLEAN':
                {
                   if (typeof handle_state.value == 'string') {
-                     inputs[handle_name] = { value: handle_state.value === 'true' };
+                     inputs[handle_name] = { ...handle_state, value: handle_state.value === 'true' };
                   } else if (typeof handle_state.value == 'boolean') {
-                     inputs[handle_name] = { value: handle_state.value };
+                     inputs[handle_name] = { ...handle_state, value: handle_state.value };
                   } else {
                      throw new Error('Invalid boolean input value');
                   }
@@ -96,11 +96,11 @@ export const serializeGraph = (
 
             case 'ENUM':
             case 'STRING':
-               inputs[handle_name] = { value: handle_state.value };
+               inputs[handle_name] = { ...handle_state, value: handle_state.value };
                break;
 
             default: {
-               inputs[handle_name] = { value: handle_state.value };
+               inputs[handle_name] = { ...handle_state, value: handle_state.value };
             }
          }
       }
@@ -109,7 +109,7 @@ export const serializeGraph = (
       // a node's output handle's value is being held constant
       for (const [handle_name, handle_state] of Object.entries(node.data.outputs)) {
          if (handle_state.value !== undefined) {
-            outputs[handle_name] = { value: handle_state.value };
+            outputs[handle_name] = { ...handle_state, value: handle_state.value };
          }
       }
 
@@ -117,13 +117,13 @@ export const serializeGraph = (
          // Only include the essential properties for each node
          serializedGraph.nodes.push({
             id: node.id,
-            data: { inputs, outputs }
+            data: { inputs, outputs, widgets: {} },
             // position: node.position // note: the server doesn't really need this, but react flow wants it
          });
       } else {
          // Remove some non-essential properties but keep more than the minimized version
          const { selected, dragging, resizing, parentNode, ...essentialProps } = node;
-         serializedGraph.nodes.push({ ...essentialProps, data: { inputs, outputs } });
+         serializedGraph.nodes.push({ ...essentialProps, data: { inputs, outputs, widgets: {} } });
       }
    }
 
@@ -140,7 +140,7 @@ export function useWorkflow() {
    const { runWorkflow } = useApiContext();
 
    const submitWorkflow = async () => {
-      const [serializedGraph, missingInputHandles] = serializeGraph(instance, false);
+      const [serializedGraph, missingInputHandles] = newSerializeGraph(rflInstance, false);
       if (missingInputHandles) return missingInputHandles;
 
       const runId = uuidv4();
@@ -162,15 +162,15 @@ export function useWorkflow() {
    const serializeGraphToWorkflow = () => {
       if (!rflInstance) throw new Error('Flow instance not found');
       const { nodes, edges }: ReactFlowJsonObject<NodeData> = rflInstance.toObject();
-      const workflow: Workflow = {};
+      const workflow: Record<string, any> = {};
 
       for (const node of nodes) {
          if (!node.data || !node.type) continue;
-         const inputs: Record<string, WorkflowInput> = {};
-         const outputs: Record<string, WorkflowOutput> = {};
+         const inputs: Record<string, any> = {};
+         const outputs: Record<string, any> = {};
 
          for (const input of Object.values(node.data.inputs)) {
-            switch (input.type) {
+            switch (input.edge_type) {
                case 'INT':
                case 'FLOAT':
                   {
@@ -178,15 +178,15 @@ export function useWorkflow() {
                      if (isNaN(value)) {
                         throw new Error('Invalid number input value');
                      }
-                     inputs[input.name] = value;
+                     inputs[input.display_name] = value;
                   }
                   break;
                case 'BOOLEAN':
                   {
                      if (typeof input.value == 'string') {
-                        inputs[input.name] = input.value === 'true';
+                        inputs[input.display_name] = input.value === 'true';
                      } else if (typeof input.value == 'boolean') {
-                        inputs[input.name] = input.value;
+                        inputs[input.display_name] = input.value;
                      } else {
                         throw new Error('Invalid boolean input value');
                      }
@@ -194,36 +194,36 @@ export function useWorkflow() {
                   break;
                case 'ENUM':
                case 'STRING':
-                  inputs[input.name] = input.value;
+                  inputs[input.display_name] = input.value;
                   break;
                default: {
-                  const handleId = makeHandleId(node.id, 'input', input.name);
+                  const handleId = makeHandleId(node.id, input.display_name);
                   const edge = edges.find((edge) => edge.targetHandle == handleId);
                   if (!edge) {
-                     throw new Error(`Missing edge for input "${input.name}" on node "${node.id}"`);
+                     throw new Error(`Missing edge for input "${input.display_name}" on node "${node.id}"`);
                   }
 
                   const source = nodes.find((node) => node.id == edge.source);
                   if (!source) {
                      throw new Error(
-                        `Missing source node for input "${input.name}" on node "${node.id}"`
+                        `Missing source node for input "${input.display_name}" on node "${node.id}"`
                      );
                   }
 
                   const handle = source.data.outputs[getHandleName(edge.sourceHandle!)];
                   if (!handle) {
                      throw new Error(
-                        `Missing source handle for input "${input.name}" on node "${node.id}"`
+                        `Missing source handle for input "${input.display_name}" on node "${node.id}"`
                      );
                   }
 
-                  inputs[input.name] = [edge.source, handle.name];
+                  inputs[input.display_name] = [edge.source, handle.display_name];
                }
             }
          }
 
          for (const value of Object.values(node.data.outputs)) {
-            outputs[value.name] = [node.id, value.name];
+            outputs[value.display_name] = [node.id, value.display_name];
          }
 
          workflow[node.id] = { type: node.type, inputs, outputs };

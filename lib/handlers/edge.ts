@@ -1,17 +1,12 @@
 import { Connection, Edge, updateEdge } from 'reactflow';
 import { getHandleName, getHandleNodeId } from '../utils/node.ts';
-import {
-  HandleEdgeUpdateEndParams,
-  HandleEdgeUpdateParams,
-  HandleEdgeUpdateStartParams
-} from '../types/types.ts';
 
 export function handleEdgeUpdateStart({
   setIsUpdatingEdge,
   updateOutputData,
   updateInputData,
   setEdges
-}: HandleEdgeUpdateStartParams) {
+}: any) {
   return (_: any, edge: Edge) => {
     setIsUpdatingEdge(true);
     if (!edge.sourceHandle || !edge.targetHandle) return;
@@ -24,17 +19,17 @@ export function handleEdgeUpdateStart({
 
     updateInputData({ nodeId: targetNode, name: targetHandle, data: { isConnected: false } });
     updateOutputData({ nodeId: sourceNode, name: sourceHandle, data: { isConnected: false } });
-    setEdges((eds) => eds.filter((e) => e.id !== edge.id));
+    setEdges((eds: Edge[]) => eds.filter((e) => e.id !== edge.id));
   };
 }
 
-export function handleEdgeUpdate({ setIsUpdatingEdge, setEdges }: HandleEdgeUpdateParams) {
+export function handleEdgeUpdate({ setIsUpdatingEdge, setEdges }: any) {
   return (oldEdge: Edge, newConnection: Connection) => {
-    setEdges((eds) => updateEdge(oldEdge, newConnection, eds));
+    setEdges((eds: Edge[]) => updateEdge(oldEdge, newConnection, eds));
     setIsUpdatingEdge(false);
   };
 }
 
-export function handleEdgeUpdateEnd({ setIsUpdatingEdge }: HandleEdgeUpdateEndParams) {
+export function handleEdgeUpdateEnd({ setIsUpdatingEdge }: any) {
   return (_: any) => setIsUpdatingEdge(false);
 }
