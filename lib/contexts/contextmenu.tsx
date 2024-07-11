@@ -10,14 +10,13 @@ import {
   useState
 } from 'react';
 import {
+  AppNode,
   ContextMenuProps,
   IMenuType,
-  NodeData,
   OnContextMenu,
   OnNodeContextMenu
 } from '../types/types';
 import { ContextMenu } from '../components/prototypes/ContextMenuTemplate';
-import { Node } from 'reactflow';
 import SearchWidget from '../components/SearchWidget';
 import { getContextMenuItems, getNodeMenuItems } from '../utils/menu';
 
@@ -113,7 +112,7 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
   );
 
   const onNodeContextMenu = useCallback(
-    (event: ReactMouseEvent, node: Node<NodeData>) => {
+    (event: ReactMouseEvent, node: AppNode) => {
       event.preventDefault();
       event.stopPropagation();
 

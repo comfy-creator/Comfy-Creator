@@ -1,10 +1,10 @@
 import { DragEvent } from 'react';
 import { getFileAsDataURL, getFileKind } from '../utils/file';
-import { Edge, Node, XYPosition } from 'reactflow';
-import { AddNodeParams } from '../types/types';
+import { Edge, XYPosition } from '@xyflow/react';
+import { AddNodeParams, AppNode } from '../types/types';
 
 interface DropHandlerParams {
-   setNodes: (nodes: Node[]) => void;
+   setNodes: (nodes: AppNode[]) => void;
    setEdges: (edges: Edge[]) => void;
    screenToFlowPosition: (position: XYPosition) => XYPosition;
    addNode: (node: AddNodeParams) => void;

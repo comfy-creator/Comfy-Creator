@@ -1,5 +1,6 @@
 import React, { ComponentType, ReactNode, useEffect, useRef, useState } from 'react';
 import {
+  AppNode,
   HandleState,
   NodeData,
   NodeDefinition,
@@ -7,7 +8,7 @@ import {
   UpdateInputData
 } from '../../types/types';
 import { toast } from 'react-toastify';
-import { Handle, NodeProps, NodeResizeControl, Position } from 'reactflow';
+import { Handle, NodeProps, NodeResizeControl, Position } from '@xyflow/react';
 import { NumberWidget } from '../widgets/Number';
 import { StringWidget } from '../widgets/String';
 import { ToggleWidget } from '../widgets/Toggle';
@@ -108,8 +109,8 @@ const createWidgetFromSpec = (
 export const createNodeComponentFromDef = (
   nodeDef: NodeDefinition,
   updateInputData: UpdateInputData
-): ComponentType<NodeProps<NodeData>> => {
-  return ({ id, data, selected }: NodeProps<NodeData>) => {
+): ComponentType<NodeProps<AppNode>> => {
+  return ({ id, data, selected }: NodeProps<AppNode>) => {
     const nodeRef = useRef<HTMLDivElement | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 

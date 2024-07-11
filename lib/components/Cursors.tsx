@@ -1,4 +1,4 @@
-import { EdgeLabelRenderer, useViewport } from 'reactflow';
+import { EdgeLabelRenderer, useViewport } from '@xyflow/react';
 
 export type Cursor = {
   id: string;

@@ -1,6 +1,5 @@
-import { HandleState, NodeData, UpdateInputData, WidgetState } from '../types/types';
+import { AppNode, UpdateInputData, WidgetState } from '../types/types';
 import { controlAfterGenerateDef } from '../config/constants';
-import { Node } from 'reactflow';
 import { isWidgetType } from './node';
 
 export function createValueControlInputs(args: any) {
@@ -43,7 +42,7 @@ export function isSeedInput(widget: WidgetState) {
    return widget.widget_type === 'INT' && widget.display_name === 'seed';
 }
 
-export function applyInputControl(node: Node<NodeData>, updater: UpdateInputData) {
+export function applyInputControl(node: AppNode, updater: UpdateInputData) {
    const {
       data: { inputs }
    } = node;

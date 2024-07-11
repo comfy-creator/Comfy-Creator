@@ -1,4 +1,4 @@
-import { BaseEdge, getBezierPath, Position } from 'reactflow';
+import { BaseEdge, getBezierPath, Position } from '@xyflow/react';
 import { useSettingsStore } from '../../store/settings';
 
 export interface GetBezierPathParams {

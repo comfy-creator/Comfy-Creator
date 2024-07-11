@@ -6,14 +6,14 @@ import { ToastContainer } from 'react-toastify';
 import { ContextMenuProvider } from './contexts/contextmenu';
 import { ApiContextProvider } from './contexts/api';
 import { SettingsContextProvider } from './contexts/settings';
-import { ReactFlowProvider, useEdges } from 'reactflow';
+import { ReactFlowProvider } from '@xyflow/react';
 import { DialogContextProvider } from './contexts/dialog';
 import { ErrorProvider } from './contexts/error';
 import { LoggingContextProvider } from './contexts/logging';
 
 import './index.css';
 import 'react-toastify/dist/ReactToastify.css';
-import 'reactflow/dist/style.css';
+import '@xyflow/react/dist/style.css';
 import 'viewerjs/dist/viewer.css';
 import { initDB } from './store/database';
 import { GraphContextProvider } from './contexts/graph';

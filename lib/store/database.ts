@@ -1,18 +1,18 @@
 import { INDEX_DB_NAME, INDEX_DB_OJECT_NAME } from '../config/constants';
-import { NodeData } from '../types/types';
-import { Edge, Node } from 'reactflow';
+import { AppNode } from '../types/types';
+import { Edge } from '@xyflow/react';
 
 export interface IGraphData {
   index: string;
   label: string;
-  nodes: Node<NodeData>[];
+  nodes: AppNode[];
   edges: Edge[];
 }
 
 export interface IGraphRun {
   index: string;
   label: string;
-  nodes: Node<NodeData>[];
+  nodes: AppNode[];
   edges: Edge[];
 }
 

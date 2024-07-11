@@ -1,13 +1,12 @@
 import { API_URL } from '../config/constants';
-import { Node } from 'reactflow';
-import { ExecutionState, NodeData, UpdateInputData } from '../types/types';
+import { AppNode, ExecutionState, UpdateInputData } from '../types/types';
 
 export function handleOnExecute({
    nodes,
    execution,
    updateInputData
 }: {
-   nodes: Node<NodeData>[];
+   nodes: AppNode[];
    execution: ExecutionState;
    updateInputData: UpdateInputData;
 }) {

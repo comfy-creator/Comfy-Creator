@@ -1,11 +1,10 @@
-import { EdgeType, HandleType, IMenuType, NodeData, NodeDefinitions } from '../types/types';
-import { Node } from 'reactflow';
+import { AppNode, EdgeType, HandleType, IMenuType, NodeDefinitions } from '../types/types';
 import { useFlowStore } from '../store/flow';
 import { categorizeObjects } from './ui';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import { createEdge, getHandleName, getHandleNodeId, makeHandleId } from './node';
 
-export function getNodeMenuItems(node: Node<NodeData>) {
+export function getNodeMenuItems(node: AppNode) {
    const items: (IMenuType | null)[] = [
       // { label: 'Inputs', hasSubMenu: true, disabled: true, subMenu: null, data: null },
       // { label: 'Outputs', hasSubMenu: true, disabled: true, subMenu: null, data: null },

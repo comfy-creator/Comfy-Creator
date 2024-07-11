@@ -1,4 +1,4 @@
-import { Connection, Edge, updateEdge } from 'reactflow';
+import { Connection, Edge, reconnectEdge } from '@xyflow/react';
 import { getHandleName, getHandleNodeId } from '../utils/node';
 
 export function handleEdgeUpdateStart({
@@ -25,7 +25,7 @@ export function handleEdgeUpdateStart({
 
 export function handleEdgeUpdate({ setIsUpdatingEdge, setEdges }: any) {
    return (oldEdge: Edge, newConnection: Connection) => {
-      setEdges((eds: Edge[]) => updateEdge(oldEdge, newConnection, eds));
+      setEdges((eds: Edge[]) => reconnectEdge(oldEdge, newConnection, eds));
       setIsUpdatingEdge(false);
    };
 }

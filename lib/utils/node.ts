@@ -1,8 +1,8 @@
-import { EdgeType, HandleState, HandleType, NodeData, NodeDefinition } from '../types/types';
+import { AppNode, EdgeType, HandleState, NodeData, NodeDefinition } from '../types/types';
 import { DISPLAY_TYPES, WIDGET_TYPES } from '../config/constants';
 import { useFlowStore } from '../store/flow';
 import { createValueControlInput, isSeedInput } from './widgets';
-import { Edge, Node } from 'reactflow';
+import { Edge } from '@xyflow/react';
 
 export function computeInitialNodeData(def: NodeDefinition) {
    const { display_name, inputs, outputs } = def;
@@ -149,7 +149,7 @@ export function getHandleName(id: string) {
    return id.split('::')[1];
 }
 
-export function isPrimitiveNode(node: Node<NodeData>) {
+export function isPrimitiveNode(node: AppNode) {
    return node.type === 'PrimitiveNode';
 }
 

@@ -1,12 +1,14 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
 import { DragEvent, useCallback, useEffect, useRef } from 'react';
-import ReactFlow, {
+import {
+   ReactFlow,
    Background,
    BackgroundVariant,
    ConnectionLineType,
    ConnectionMode,
    Controls,
+   Edge,
    getNodesBounds,
    getViewportForBounds,
    NodeResizer,
@@ -14,23 +16,20 @@ import ReactFlow, {
    OnConnectStart,
    Panel,
    useReactFlow
-} from 'reactflow';
+} from '@xyflow/react';
 import { useContextMenu } from '../contexts/contextmenu';
 import ControlPanel from './panels/ControlPanel';
 import { RFState, useFlowStore } from '../store/flow';
-import { NodeData } from '../types/types';
+import { AppNode } from '../types/types';
 import ReactHotkeys from 'react-hot-keys';
 import { dragHandler, dropHandler } from '../handlers/dragDrop';
 import { ConnectionLine } from './ConnectionLIne';
 import {
-   API_URL,
    AUTO_PAN_ON_CONNECT,
-   CURRENT_SNAPSHOT_INDEX,
    EDGES_UPDATABLE,
    ELEVATE_EDGES_ON_SELECT,
    FLOW_MAX_ZOOM,
    FLOW_MIN_ZOOM,
-   GRAPHS_KEY,
    HANDLE_TYPES,
    MULTI_SELECT_KEY_CODE,
    REACTFLOW_PRO_OPTIONS_CONFIG,
@@ -110,8 +109,8 @@ export function MainFlow() {
    const { currentStateGraphRunIndex, addNewGraph } = useGraphContext();
 
    const { getNodes, getEdges, getViewport, fitView, screenToFlowPosition } = useReactFlow<
-      NodeData,
-      string
+      AppNode,
+      Edge
    >();
    const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
    const { loadCurrentSettings, addSetting } = useSettings();
@@ -229,7 +228,7 @@ export function MainFlow() {
    // TO DO: this is aggressive; do not change zoom levels. We do not need to have
    // all nodes on screen at once; we merely do not want to leave too far out
    const onMoveEnd = useCallback(
-      (_: MouseEvent | globalThis.TouchEvent) => {
+      (_: MouseEvent | globalThis.TouchEvent | null) => {
          const bounds = getNodesBounds(nodes);
          const viewPort = getViewport();
 
@@ -238,7 +237,8 @@ export function MainFlow() {
             menuRef.current?.clientWidth || 1200,
             menuRef.current?.clientHeight || 800,
             0.7,
-            viewPort.zoom
+            viewPort.zoom,
+            0
          );
 
          if (
@@ -281,7 +281,7 @@ export function MainFlow() {
          edges={edges}
          onConnect={onConnect}
          panOnDrag={panOnDrag}
-         edgesUpdatable={EDGES_UPDATABLE}
+         edgesReconnectable={EDGES_UPDATABLE}
          autoPanOnConnect={AUTO_PAN_ON_CONNECT}
          onPaneClick={onPaneClick}
          elevateEdgesOnSelect={ELEVATE_EDGES_ON_SELECT}
@@ -308,9 +308,9 @@ export function MainFlow() {
          onDrop={onDrop}
          onDragOver={onDragOver}
          onMoveEnd={onMoveEnd}
-         onEdgeUpdateEnd={onEdgeUpdateEnd}
-         onEdgeUpdate={onEdgeUpdate}
-         onEdgeUpdateStart={onEdgeUpdateStart}
+         onReconnectEnd={onEdgeUpdateEnd}
+         onReconnect={onEdgeUpdate}
+         onReconnectStart={onEdgeUpdateStart}
          maxZoom={FLOW_MAX_ZOOM}
          minZoom={FLOW_MIN_ZOOM}
          edgesFocusable={false}

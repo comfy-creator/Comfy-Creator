@@ -2,7 +2,6 @@ import {
    ComponentType,
    type MouseEvent as ReactMouseEvent,
    ReactNode,
-   SetStateAction
 } from 'react';
 import {
    ConnectionLineType,
@@ -11,8 +10,9 @@ import {
    Node,
    NodeProps,
    XYPosition,
-   Viewport
-} from 'reactflow';
+   Viewport,
+   EdgeTypes
+} from '@xyflow/react';
 
 export type EdgeType =
    | 'BOOLEAN'
@@ -110,7 +110,7 @@ export interface ComfyError extends Error {
    };
 }
 
-export type EdgeComponents = Record<string, ComponentType<EdgeProps>>;
+export type EdgeComponents = EdgeTypes;
 
 export interface IMenuType {
    label: string;
@@ -241,7 +241,7 @@ export type OnContextMenu = (
    title?: string
 ) => void;
 
-export type OnNodeContextMenu = (event: ReactMouseEvent, node: Node) => void;
+export type OnNodeContextMenu = (event: ReactMouseEvent, node: AppNode) => void;
 
 export interface HandleOnConnectEndParams {
    isUpdatingEdge: boolean;
@@ -250,18 +250,18 @@ export interface HandleOnConnectEndParams {
    currentHandleEdge: HandleEdge | null;
 
    setCurrentHandleEdge: (edge: HandleEdge | null) => void;
-   setNodes: (nodes: Node[]) => void;
+   setNodes: (nodes: AppNode[]) => void;
 }
 
 export interface HandleOnConnectStartParams {
    setCurrentConnectionLineType: (type: ConnectionLineType) => void;
    setCurrentHandleEdge: (edge: HandleEdge | null) => void;
-   setNodes: (nodes: Node[]) => void;
-   nodes: Node[];
+   setNodes: (nodes: AppNode[]) => void;
+   nodes: AppNode[];
 }
 
 export interface ValidateConnectionParams {
-   getNodes: () => Node[];
+   getNodes: () => AppNode[];
    getEdges: () => Edge[];
 }
 
@@ -278,15 +278,12 @@ export interface ExecutionState {
 // Node-definitions are converted into React components, and then registered with
 // ReactFlow as a 'NodeType'.
 
-export type NodeType = ComponentType<NodeProps<NodeData>>;
+export type NodeType = ComponentType<NodeProps<AppNode>>;
 
 export type NodeTypes = Record<string, NodeType>;
 
 // Removes Reactflow's Node-type's 'position' as a required property
-export type MinimalNode<T = any, U extends string | undefined = any> = Omit<
-   Node<T, U>,
-   'position'
-> & {
+export type MinimalNode = Omit<AppNode, 'position'> & {
    position?: { x: number; y: number };
 };
 
@@ -295,8 +292,8 @@ export type MinimalNode<T = any, U extends string | undefined = any> = Omit<
 // React Flow's `nodeTyes` map.
 
 export interface SerializedGraph {
-   nodes: MinimalNode<NodeData>[];
-   edges?: Edge<string>[];
+   nodes: MinimalNode[];
+   edges?: Edge[];
    viewport?: Viewport;
 }
 
@@ -306,6 +303,8 @@ export interface AddNodeParams {
    position: XYPosition;
    defaultValues?: Record<string, any>;
 }
+
+export type AppNode = Node<NodeData>;
 
 // This encapsulates an entire node's state; it is the 'data' property stored inside
 // a node instance.
