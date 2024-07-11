@@ -3,25 +3,32 @@
    "version": "0.3.0",
    "private": false,
    "type": "module",
-   "files": [
-      "dist"
-   ],
-   "main": "dist/index.js",
+   "engines": {
+      "node": ">=20.0.0"
+   },
+   "main": "dist/index.cjs.js",
+   "module": "dist/index.es.js",
    "types": "dist/index.d.ts",
    "exports": {
       ".": {
-         "import": "./dist/index.js"
+         "import": "./dist/index.es.js",
+         "require": "./dist/index.cjs.js"
       },
       "./css": {
          "default": "./dist/assets/style.css"
       }
    },
+   "files": [
+      "dist"
+   ],
    "sideEffects": [
       "**/*.css"
    ],
    "scripts": {
       "dev": "vite",
-      "build": "tsc --p tsconfig-build.json && vite build",
+      "clean": "rimraf dist",
+      "build": "yarn clean && vite build",
+      "pack": "yarn build && yarn pack",
       "prepublishOnly": "yarn run build",
       "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
    },
@@ -58,6 +65,8 @@
       "eslint-plugin-react-hooks": "^4.6.0",
       "eslint-plugin-react-refresh": "^0.4.5",
       "prettier": "^3.2.5",
+      "rimraf": "^6.0.1",
+      "rollup-plugin-dts": "^6.1.1",
       "typescript": "^5.3.3",
       "vite": "^5.0.12",
       "vite-plugin-dts": "^3.8.3",
@@ -65,7 +74,7 @@
       "vite-plugin-lib-inject-css": "^2.0.1"
    },
    "peerDependencies": {
-      "react": "^16.8 || ^17 || ^18",
-      "react-dom": "^16.8 || ^17 || ^18"
+      "react": "^16.8 || ^17 || >=18",
+      "react-dom": "^16.8 || ^17 || >=18"
    }
 }

@@ -1,7 +1,7 @@
-import { EdgeType, HandleState, HandleType, NodeData, NodeDefinition } from '../types/types.ts';
-import { DISPLAY_TYPES, WIDGET_TYPES } from '../config/constants.ts';
-import { useFlowStore } from '../store/flow.ts';
-import { createValueControlInput, isSeedInput } from './widgets.ts';
+import { EdgeType, HandleState, HandleType, NodeData, NodeDefinition } from '../types/types';
+import { DISPLAY_TYPES, WIDGET_TYPES } from '../config/constants';
+import { useFlowStore } from '../store/flow';
+import { createValueControlInput, isSeedInput } from './widgets';
 import { Edge, Node } from 'reactflow';
 
 export function computeInitialNodeData(def: NodeDefinition) {
@@ -26,7 +26,10 @@ export function computeInitialNodeData(def: NodeDefinition) {
 
          if (isSeedInput({ widget_type: input.edge_type, display_name: input.display_name })) {
             const nextValue = createValueControlInput({ input: data });
-            state.inputs[nextValue.display_name] = {display_name: nextValue.display_name, edge_type: nextValue.widget_type};
+            state.inputs[nextValue.display_name] = {
+               display_name: nextValue.display_name,
+               edge_type: nextValue.widget_type
+            };
             // data.linkedInputs = [nextValue.name];
          }
       } else {
@@ -72,7 +75,9 @@ export const disconnectPrimitiveNode = (id: string) => {
    const widget = Object.values(node.data.inputs).find((w) => w.primitiveNodeId === id);
    if (!widget) return;
 
-   const primitiveWidget = Object.values(primitive.data.inputs).find((w) => w.display_name === widget.display_name);
+   const primitiveWidget = Object.values(primitive.data.inputs).find(
+      (w) => w.display_name === widget.display_name
+   );
    if (widget?.edge_type !== primitiveWidget?.edge_type) return;
 
    const updatedInputData = {

@@ -1,56 +1,56 @@
 import { useState } from 'react';
-import { RFState, useFlowStore } from '../../store/flow.ts';
+import { RFState, useFlowStore } from '../../store/flow';
 
 type TextProps = {
-  label: string;
-  value?: string;
-  disabled?: boolean;
-  onChange?: (value: string) => void;
+   label: string;
+   value?: string;
+   disabled?: boolean;
+   onChange?: (value: string) => void;
 };
 
 const selector = (state: RFState) => ({
-  nodes: state.nodes,
-  setNodes: state.setNodes,
-  setPanOnDrag: state.setPanOnDrag
+   nodes: state.nodes,
+   setNodes: state.setNodes,
+   setPanOnDrag: state.setPanOnDrag
 });
 
 export function TextWidget({ disabled, value, onChange }: TextProps) {
-  const { setPanOnDrag, setNodes, nodes } = useFlowStore(selector);
-  const [inputValue, setInputValue] = useState(value);
+   const { setPanOnDrag, setNodes, nodes } = useFlowStore(selector);
+   const [inputValue, setInputValue] = useState(value);
 
-  return (
-    <textarea
-      rows={4}
-      value={inputValue}
-      disabled={disabled}
-      className="comfy-multiline-input"
-      style={{ width: '100%', borderRadius: '4px' }}
-      onChange={(e) => {
-        setInputValue(e.target.value);
-        onChange?.(e.target.value);
-      }}
-      onMouseEnter={(e) => {
-        e.stopPropagation();
-        const newNodes = nodes.map((node) => {
-          return {
-            ...node,
-            draggable: false
-          };
-        });
-        setNodes(newNodes);
-        setPanOnDrag(false);
-      }}
-      onMouseLeave={(e) => {
-        e.stopPropagation();
-        const newNodes = nodes.map((node) => {
-          return {
-            ...node,
-            draggable: true
-          };
-        });
-        setNodes(newNodes);
-        setPanOnDrag(true);
-      }}
-    />
-  );
+   return (
+      <textarea
+         rows={4}
+         value={inputValue}
+         disabled={disabled}
+         className="comfy-multiline-input"
+         style={{ width: '100%', borderRadius: '4px' }}
+         onChange={(e) => {
+            setInputValue(e.target.value);
+            onChange?.(e.target.value);
+         }}
+         onMouseEnter={(e) => {
+            e.stopPropagation();
+            const newNodes = nodes.map((node) => {
+               return {
+                  ...node,
+                  draggable: false
+               };
+            });
+            setNodes(newNodes);
+            setPanOnDrag(false);
+         }}
+         onMouseLeave={(e) => {
+            e.stopPropagation();
+            const newNodes = nodes.map((node) => {
+               return {
+                  ...node,
+                  draggable: true
+               };
+            });
+            setNodes(newNodes);
+            setPanOnDrag(true);
+         }}
+      />
+   );
 }

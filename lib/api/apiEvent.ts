@@ -1,37 +1,37 @@
-import { useFlowStore } from '../store/flow.ts';
-import { ComfyWsMessage } from '../types/types.ts';
+import { useFlowStore } from '../store/flow';
+import { ComfyWsMessage } from '../types/types';
 
 export const ApiEventEmitter = new EventTarget();
 
 interface EventType {
-  detail: ComfyWsMessage;
-  runId: string;
+   detail: ComfyWsMessage;
+   runId: string;
 }
 
 ApiEventEmitter.addEventListener('comfyMessage', (event) => {
-  const { detail, runId } = event as unknown as EventType;
-  if (!detail) {
-    console.error(`No detail found in event: ${event}`);
-  }
+   const { detail, runId } = event as unknown as EventType;
+   if (!detail) {
+      console.error(`No detail found in event: ${event}`);
+   }
 
-  const { type, data } = detail;
-  const { setExecutionProgress, setCurrentExecutionNodeId, setExecutionOutput } =
-    useFlowStore.getState();
+   const { type, data } = detail;
+   const { setExecutionProgress, setCurrentExecutionNodeId, setExecutionOutput } =
+      useFlowStore.getState();
 
-  if ('node' in data && data.node) {
-    setCurrentExecutionNodeId(runId, data.node);
-  }
+   if ('node' in data && data.node) {
+      setCurrentExecutionNodeId(runId, data.node);
+   }
 
-  if (type === 'progress') {
-    setExecutionProgress(runId, data.value, data.max);
-  } else {
-    if (type === 'executed') {
-      // setCurrentExecutionNodeId(null);
-      setExecutionOutput(runId, data.output);
-    }
+   if (type === 'progress') {
+      setExecutionProgress(runId, data.value, data.max);
+   } else {
+      if (type === 'executed') {
+         // setCurrentExecutionNodeId(null);
+         setExecutionOutput(runId, data.output);
+      }
 
-    setExecutionProgress(runId, null);
-  }
+      setExecutionProgress(runId, null);
+   }
 
-  console.log('Received message:', detail);
+   console.log('Received message:', detail);
 });
