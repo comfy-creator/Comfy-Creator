@@ -163,7 +163,7 @@ export function getSuggestedNodesData({
 }: GetSuggestionsData): IMenuType[] {
   let suggestedNodes = Object.entries(nodeDefs).filter(
     ([_, node]) =>
-      node[handleType === 'input' ? 'outputs' : 'inputs'].findIndex((d) => d.type === edgeType) !==
+      Object.entries(node[handleType === 'input' ? 'outputs' : 'inputs']).findIndex(([_, d]) => d.edge_type === edgeType) !==
       -1
   );
 
@@ -189,13 +189,13 @@ export function getSuggestedNodesData({
 
       const key = handleType === 'input' ? 'outputs' : 'inputs';
 
-      const handle = Object.values(node.data[key]).find((handle) => handle.type === edgeType);
+      const handle = Object.values(node.data[key]).find((handle) => handle.edge_type === edgeType);
       if (!handle) return;
 
       const sourceHandle =
-        handleType == 'input' ? makeHandleId(node.id, 'output', handle.name) : handleId;
+        handleType == 'input' ? makeHandleId(node.id, handle.display_name) : handleId;
       const targetHandle =
-        handleType == 'output' ? makeHandleId(node.id, 'input', handle.name) : handleId;
+        handleType == 'output' ? makeHandleId(node.id, handle.display_name) : handleId;
 
       const edge = createEdge({ sourceHandle, targetHandle, type: edgeType });
 
@@ -204,13 +204,13 @@ export function getSuggestedNodesData({
       // TODO: abstract these away and avoid repetitions
       updateInputData({
         nodeId: getHandleNodeId(targetHandle),
-        name: getHandleName(targetHandle),
+        display_name: getHandleName(targetHandle),
         data: { isConnected: true }
       });
 
       updateOutputData({
         nodeId: getHandleNodeId(sourceHandle),
-        name: getHandleName(sourceHandle),
+        display_name: getHandleName(sourceHandle),
         data: { isConnected: true }
       });
     }

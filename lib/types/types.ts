@@ -52,15 +52,15 @@ export type EdgeType =
 // encode), and then pass it as an input into B-node (K-sampler).
 
 export interface UpdateInputDataParams {
-   name: string;
+   display_name: string;
    nodeId: string;
-   data: Partial<InputData>;
+   data: Partial<HandleState>;
 }
 
 export interface UpdateOutputDataParams {
-   name: string;
+   display_name: string;
    nodeId: string;
-   data: Partial<OutputData>;
+   data: Partial<HandleState>;
 }
 
 export type UpdateInputData = (params: UpdateInputDataParams) => void;
@@ -300,18 +300,40 @@ export interface SerializedGraph {
    viewport?: Viewport;
 }
 
+export interface AddNodeParams {
+   type: string;
+   width?: number;
+   position: XYPosition;
+   defaultValues?: Record<string, any>;
+}
+
 // This encapsulates an entire node's state; it is the 'data' property stored inside
 // a node instance.
 export type NodeData = {
    display_name?: string;
+   output_node?: boolean;
+
+   isOutputNode?: boolean;
+   targetNodeId?: string | null;
+
    inputs: Record<string, HandleState>; // key is used to reference value
    outputs: Record<string, HandleState>; // key is used to reference value
-   widgets: Record<string, WidgetState>;
+   widgets?: Record<string, WidgetState>;
 };
 
 export interface HandleState {
-   display_name?: string;
-   edge_type?: string; // TO DO: maybe replace with something like a class?
+   display_name: string;
+   edge_type: EdgeType; // TO DO: maybe replace with something like a class?
+
+   // Extra data
+   isDisabled?: boolean;
+   isConnected?: boolean;
+   isHighlighted?: boolean;
+   isMultiline?: boolean;
+   isMultiSelect?: boolean;
+   primitiveNodeId?: string | null;
+   slot?: number;
+   def?: Record<string, any>;
 
    // Oneof: ref or value
    ref?: RefValue;
@@ -324,17 +346,21 @@ export interface HandleState {
 
 export interface WidgetState {
    display_name: string;
-   widget_type: string; // namespaced component like core_extension_1.BoolToggle
-   props: Record<string, any>;
+   widget_type: EdgeType; // namespaced component like core_extension_1.BoolToggle
+   props?: Record<string, any>;
 }
 
 export type NodeDefinition = Readonly<{
-   display_name: Record<string, string>;
-   description: Record<string, string>;
+   display_name: string;
+   description: string;
    category: string;
+   output_node?: boolean;
 
    // Takes its own interface, and produces a new interface
-   factory: (inputs: Record<string, HandleState>) => {
+   inputs: Record<string, HandleState>;
+   outputs: Record<string, HandleState>;
+   widgets?: Record<string, WidgetState>;
+   factory?: (inputs: Record<string, HandleState>) => {
       inputs: Record<string, HandleState>;
       outputs: Record<string, HandleState>;
       widgets: Record<string, WidgetState>;

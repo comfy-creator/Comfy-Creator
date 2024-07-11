@@ -1,10 +1,9 @@
 import {
   EdgeType,
-  InputData,
-  InputDef,
+  HandleState,
   NodeData,
   NodeDefinition,
-  OutputData
+  WidgetState,
 } from '../types/types.ts';
 import { Edge, Node } from 'reactflow';
 import { isWidgetType } from '../utils/node.ts';
@@ -67,11 +66,11 @@ function isValidWidgetDef(def: any, i: number, widgets_values: any[]) {
 
 function getWidgets(node: LegacyNode, nodeDefs: any) {
   const definition = nodeDefs[node.type];
-  const widgetDefs = definition.inputs.filter((input: InputDef | { type: 'COMBO' }) =>
-    isWidgetType(input.type === 'COMBO' ? 'ENUM' : input.type)
+  const widgetDefs = definition.inputs.filter((input: HandleState | { edge_type: 'COMBO' }) =>
+    isWidgetType(input.edge_type === 'COMBO' ? 'ENUM' : input.edge_type)
   );
 
-  const widgets: Record<string, InputData> = {};
+  const widgets: Record<string, WidgetState> = {};
   node.widgets_values?.forEach((value, i) => {
     const def = widgetDefs[i];
     if (isValidWidgetDef(def, i, node.widgets_values)) {
@@ -87,10 +86,10 @@ function getWidgets(node: LegacyNode, nodeDefs: any) {
   return widgets;
 }
 
-function getInputs(node: LegacyNode, widgets: Record<string, InputData>) {
+function getInputs(node: LegacyNode, widgets: Record<string, WidgetState>) {
   if (!node.inputs?.length) return {};
 
-  const inputs: Record<string, InputData> = {};
+  const inputs: Record<string, HandleState> = {};
 
   let currentSlot = 0;
   for (let i = 0; i < node.inputs.length; i++) {
@@ -99,9 +98,9 @@ function getInputs(node: LegacyNode, widgets: Record<string, InputData>) {
 
     if (!isWidgetType(type)) {
       inputs[input.name] = {
-        type,
-        name: input.name,
-        slot: currentSlot
+        edge_type: type,
+        display_name: input.name,
+        // slot: currentSlot
       };
 
       currentSlot += 1;
@@ -114,17 +113,21 @@ function getInputs(node: LegacyNode, widgets: Record<string, InputData>) {
 function getOutputs(node: LegacyNode) {
   if (!node.outputs?.length) return {};
 
-  const outputs: Record<string, OutputData> = {};
+  const outputs: Record<string, HandleState> = {};
   for (let i = 0; i < node.outputs.length; i++) {
     const output = node.outputs[i];
     const type = (output.type === 'COMBO' ? 'ENUM' : output.type) as EdgeType;
-    outputs[output.name] = { type: type, name: output.name, slot: i };
+    outputs[output.name] = {
+      edge_type: type,
+      display_name: output.name,
+      // slot: i
+    };
   }
 
   return outputs;
 }
 
-function getNodeData(node: LegacyNode, widgets: Record<string, InputData>) {
+function getNodeData(node: LegacyNode, widgets: Record<string, WidgetState>) {
   const nodeState = {
     outputs: getOutputs(node),
     inputs: getInputs(node, widgets),

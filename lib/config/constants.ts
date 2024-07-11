@@ -1,4 +1,4 @@
-import { EdgeType, InputDef, ViewFileArgs } from '../types/types.ts';
+import { EdgeType, HandleState, ViewFileArgs } from '../types/types.ts';
 import { useFlowStore } from '../store/flow.ts';
 import { IPagination } from '../types/api.ts';
 
@@ -140,8 +140,8 @@ export const FLOW_PADDING = 5; // in pixels
 export const FLOW_MIN_ZOOM = 0.5;
 export const FLOW_MAX_ZOOM = 2;
 
-export const controlAfterGenerateDef: InputDef = {
-  type: 'ENUM',
+export const controlAfterGenerateDef: HandleState | any = {
+  edge_type: 'ENUM',
   serialize: false,
   valueControl: true,
   defaultValue: 'randomize',

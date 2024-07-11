@@ -14,17 +14,15 @@ import {
 } from 'reactflow';
 import { create } from 'zustand';
 import {
-  AddNodeParams,
   EdgeComponents,
   EdgeType,
   ExecutionState,
   HandleEdge,
-  InputData,
   KeyboardHandler,
   NodeData,
   NodeDefinitions,
+  AddNodeParams,
   NodeTypes as NodeComponents,
-  OutputData,
   UpdateInputData,
   UpdateInputDataParams,
   UpdateOutputData,
@@ -345,25 +343,25 @@ export const useFlowStore = create<RFState>((set, get) => {
 
       let newConn: (Connection & { type?: string }) | undefined;
 
-      if (isWidgetType(_targetHandle.type)) {
-        if (source.type == 'PrimitiveNode') {
-          if (!targetNodeId) return;
+      if (isWidgetType(_targetHandle.edge_type!)) {
+         if (source.type == 'PrimitiveNode') {
+            if (!targetNodeId) return;
 
-          const widgetData = { nodeId: targetNodeId, widgetName: getHandleName(targetHandle) };
-          const result = addWidgetToPrimitiveNode(source.id, get().updateNodeData, widgetData);
+            const widgetData = { nodeId: targetNodeId, widgetName: getHandleName(targetHandle) };
+            const result = addWidgetToPrimitiveNode(source.id, get().updateNodeData, widgetData);
 
-          if (result) {
-            newConn = {
-              ...connection,
-              type: result.type
-            };
-          }
-        }
+            if (result) {
+               newConn = {
+                  ...connection,
+                  type: result.edge_type
+               };
+            }
+         }
       } else {
-        newConn = {
-          ...connection,
-          type: _sourceHandle.type === _targetHandle.type ? _sourceHandle.type : undefined
-        };
+         newConn = {
+            ...connection,
+            type: _sourceHandle.edge_type === _targetHandle.edge_type ? _sourceHandle.edge_type : undefined
+         };
       }
 
       if (newConn) {
@@ -371,13 +369,13 @@ export const useFlowStore = create<RFState>((set, get) => {
 
         updateInputData({
           nodeId: target.id,
-          name: _targetHandle.name,
+          display_name: _targetHandle.display_name,
           data: { isConnected: true }
         });
 
         updateOutputData({
           nodeId: source.id,
-          name: _sourceHandle.name,
+          display_name: _sourceHandle.display_name,
           data: { isConnected: true }
         });
 
@@ -437,14 +435,14 @@ export const useFlowStore = create<RFState>((set, get) => {
       });
     },
 
-    addNode: ({ type, position, width = 210, defaultValues = {} }: AddNodeParams) => {
+    addNode: ({ type, position, width = 210 }: AddNodeParams) => {
       const def = get().nodeDefs[type];
       if (!def) {
         throw new Error(`Node type ${type} does not exist`);
       }
 
       const id = crypto.randomUUID();
-      const data = computeInitialNodeData(def, defaultValues);
+      const data = computeInitialNodeData(def);
       const newNode: Node<NodeData> = {
         id,
         type,
@@ -488,27 +486,27 @@ export const useFlowStore = create<RFState>((set, get) => {
       });
     },
 
-    updateInputData: ({ nodeId, name, data }: UpdateInputDataParams) => {
+    updateInputData: ({ nodeId, display_name, data }: UpdateInputDataParams) => {
       const node = nodesMap.get(nodeId);
       if (!node) {
         console.error(`Node ${nodeId} not found`);
         return;
       }
 
-      const input = node.data.inputs[name];
+      const input = node.data.inputs[display_name];
       if (!input) {
-        console.error(`Input '${name}' not found in node '${nodeId}'.`);
+        console.error(`Input '${display_name}' not found in node '${nodeId}'.`);
         return;
       }
 
-      const { type, ...oldData } = input;
-      const newInput = { ...oldData, ...data, type } as InputData;
+      const { edge_type, ...oldData } = input;
+      const newInput = { ...oldData, ...data, edge_type };
 
       if (isPrimitiveNode(node) && node.data.targetNodeId) {
         const targetNode = nodesMap.get(node.data.targetNodeId);
 
         if (targetNode) {
-          const targetInput = targetNode.data.inputs[name];
+          const targetInput = targetNode.data.inputs[display_name];
           if (targetInput) {
             nodesMap.set(targetNode.id, {
               ...targetNode,
@@ -516,8 +514,8 @@ export const useFlowStore = create<RFState>((set, get) => {
                 ...targetNode.data,
                 inputs: {
                   ...targetNode.data.inputs,
-                  [name]: {
-                    ...targetNode.data.inputs[name],
+                  [display_name]: {
+                    ...targetNode.data.inputs[display_name],
                     value: newInput.value
                   }
                 }
@@ -533,27 +531,27 @@ export const useFlowStore = create<RFState>((set, get) => {
           ...node.data,
           inputs: {
             ...node.data.inputs,
-            [name]: newInput
+            [display_name]: newInput
           }
         }
       });
     },
 
-    updateOutputData: ({ nodeId, name, data }: UpdateOutputDataParams) => {
+    updateOutputData: ({ nodeId, display_name, data }: UpdateOutputDataParams) => {
       const node = nodesMap.get(nodeId);
       if (!node) {
         console.error(`Node ${nodeId} not found`);
         return;
       }
 
-      const output = node.data.outputs[name];
+      const output = node.data.outputs[display_name];
       if (!output) {
-        console.error(`Output '${name}' not found in node '${nodeId}'.`);
+        console.error(`Output '${display_name}' not found in node '${nodeId}'.`);
         return;
       }
 
-      const { type, ...oldData } = output;
-      const newOutput = { ...oldData, ...data, type } as OutputData;
+      const { edge_type, ...oldData } = output;
+      const newOutput = { ...oldData, ...data, edge_type };
       console.log(newOutput);
 
       nodesMap.set(nodeId, {
@@ -562,7 +560,7 @@ export const useFlowStore = create<RFState>((set, get) => {
           ...node.data,
           outputs: {
             ...node.data.outputs,
-            [name]: newOutput
+            [display_name]: newOutput
           }
         }
       });

@@ -4,13 +4,13 @@ export const PreviewImage: NodeDefinition = {
   category: 'image',
   display_name: 'Preview Image',
   description: 'Preview Image',
-  inputs: [
-    {
-      name: 'image',
-      type: 'IMAGE'
-    }
-  ],
-  outputs: [],
+  inputs: {
+    ['image']: {
+      display_name: 'image',
+      edge_type: 'IMAGE'
+    },
+  },
+  outputs: {},
   output_node: true
 };
 
@@ -18,23 +18,23 @@ export const PreviewVideo: NodeDefinition = {
   category: 'video',
   display_name: 'Preview Video',
   description: 'Preview Video',
-  inputs: [
-    {
-      name: 'video',
-      type: 'VIDEO'
+  inputs: {
+    ['video']: {
+      display_name: 'video',
+      edge_type: 'VIDEO'
     }
-  ],
-  outputs: [],
+  },
+  outputs: {},
   output_node: true
 };
 
 export const PrimitiveNode: NodeDefinition = {
-  inputs: [],
+  inputs: {},
   category: 'utils',
   output_node: false,
   display_name: 'Primitive',
   description: 'Primitive Node',
-  outputs: [{ type: '*', name: 'connect widget to input' }]
+  outputs: { '*': { edge_type: '*', display_name: 'connect widget to input' } }
 };
 
 export const RerouteNode: NodeDefinition = {
@@ -42,8 +42,8 @@ export const RerouteNode: NodeDefinition = {
   output_node: false,
   display_name: 'Reroute',
   description: 'Reroute Node',
-  inputs: [{ type: '*', name: '' }],
-  outputs: [{ type: '*', name: '' }]
+  inputs: {'*': { edge_type: '*', display_name: '' } },
+  outputs: {'*': { edge_type: '*', display_name: '' } }
 };
 
 export const FilePicker: NodeDefinition = {
@@ -51,28 +51,28 @@ export const FilePicker: NodeDefinition = {
   output_node: false,
   display_name: 'File Picker',
   description: 'File Picker Node',
-  inputs: [{ type: 'FILEPICKER', name: 'file' }],
-  outputs: [{ type: 'STRING', name: 'STRING' }]
+  inputs: { 'FILEPICKER': { edge_type: 'FILEPICKER', display_name: 'file' } },
+  outputs: { 'STRING': { edge_type: 'STRING', display_name: 'STRING' } }
 };
 
 function buildInput(type: string, name: string, options: any, optional: boolean) {
   let data;
   if (Array.isArray(type)) {
     data = {
-      type: 'ENUM',
+      edge_type: 'ENUM',
       multiSelect: false,
       defaultValue: type[0],
       options: type
     };
   } else {
     data = {
-      type,
+      edge_type: type,
       defaultValue: options?.default,
       ...options
     };
   }
 
-  return { ...data, name, optional };
+  return { ...data, display_name: name, optional };
 }
 
 export function transformNodeDefs(nodeInfo: Record<string, any>) {
@@ -82,8 +82,8 @@ export function transformNodeDefs(nodeInfo: Record<string, any>) {
     const node = nodeInfo[name];
 
     const def: NodeDefinition = {
-      inputs: [],
-      outputs: [],
+      inputs: {},
+      outputs: {},
       category: node.category,
       description: node.description,
       output_node: node.output_node,
@@ -96,7 +96,7 @@ export function transformNodeDefs(nodeInfo: Record<string, any>) {
     for (const name in node.input.required) {
       const [type, options] = node.input.required[name as keyof typeof node.input.required] as any;
       const input = buildInput(type, name, options, false);
-      def.inputs.push(input);
+      def.inputs[input.name] = input;
     }
 
     // for (const name in node.input.optional) {
@@ -110,7 +110,7 @@ export function transformNodeDefs(nodeInfo: Record<string, any>) {
 
     for (const name in node.output) {
       const output = node.output[name as keyof typeof node.output] as any;
-      def.outputs.push({ name: output, type: output });
+      def.outputs[output.name] = { display_name: output, edge_type: output };
     }
 
     defs[name] = def;

@@ -20,7 +20,7 @@ import {
 import { ComfyObjectInfo } from '../types/comfy';
 import { API_URL, DEFAULT_SERVER_PROTOCOL, DEFAULT_SERVER_URL } from '../config/constants';
 import { toWsURL } from '../utils';
-import { ComfyWsMessage, ViewFileArgs, Workflow, SerializedGraph } from '../types/types';
+import { ComfyWsMessage, ViewFileArgs, SerializedGraph } from '../types/types';
 import { ApiEventEmitter } from '../api/apiEvent';
 import { uuidv4 } from 'lib0/random';
 
@@ -243,7 +243,7 @@ export const ApiContextProvider: React.FC<{
     async (flow: SerializedGraph, reqId?: string): Promise<JobSnapshot | Error> => {
       if (appConfig.serverProtocol === 'grpc' && comfyClient) {
         // Use gRPC server
-        const request = {
+        const request: any = {
           workflow: flow,
           serializedGraph: flow,
           inputFiles: [],
