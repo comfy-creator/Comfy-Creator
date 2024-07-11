@@ -1,18 +1,13 @@
 {
    "name": "@cozy-creator/graph-editor",
-   "version": "0.3.0",
+   "version": "0.3.7",
    "private": false,
    "type": "module",
-   "engines": {
-      "node": ">=20.0.0"
-   },
-   "main": "dist/index.cjs.js",
-   "module": "dist/index.es.js",
+   "main": "dist/index.js",
    "types": "dist/index.d.ts",
    "exports": {
       ".": {
-         "import": "./dist/index.es.js",
-         "require": "./dist/index.cjs.js"
+         "import": "./dist/index.js"
       },
       "./css": {
          "default": "./dist/assets/style.css"
@@ -27,7 +22,7 @@
    "scripts": {
       "dev": "vite",
       "clean": "rimraf dist",
-      "build": "yarn clean && vite build",
+      "build": "yarn clean && tsc --p tsconfig-build.json && vite build",
       "pack": "yarn build && yarn pack",
       "prepublishOnly": "yarn run build",
       "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
@@ -48,6 +43,7 @@
       "react-toastify": "^10.0.4",
       "reactflow": "^11.10.3",
       "reconnecting-websocket": "^4.4.0",
+      "rollup-plugin-dts": "^6.1.1",
       "socket.io-client": "^4.7.4",
       "tsup": "^8.0.2",
       "viewerjs": "^1.11.6",
@@ -65,8 +61,6 @@
       "eslint-plugin-react-hooks": "^4.6.0",
       "eslint-plugin-react-refresh": "^0.4.5",
       "prettier": "^3.2.5",
-      "rimraf": "^6.0.1",
-      "rollup-plugin-dts": "^6.1.1",
       "typescript": "^5.3.3",
       "vite": "^5.0.12",
       "vite-plugin-dts": "^3.8.3",
