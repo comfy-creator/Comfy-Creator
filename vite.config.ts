@@ -1,31 +1,39 @@
+import { resolve } from 'path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import path from 'path';
-import dts from 'rollup-plugin-dts';
+import dts from 'vite-plugin-dts';
 
+// const { peerDependencies } = JSON.parse(fs.readFileSync(`./package.json`, 'utf8'));
+
+// https://vitejs.dev/config/
 export default defineConfig({
    build: {
+      target: 'ESNext',
       lib: {
-         entry: path.resolve(__dirname, 'lib/index.tsx'), // Adjust this to your entry file
+         entry: resolve(__dirname, 'lib/index.tsx'),
          name: 'GraphEditor',
-         fileName: (format) => `index.${format}.js`,
-         formats: ['es', 'cjs']
+         fileName: 'index',
+         formats: ['es']
       },
+      emptyOutDir: true,
+      cssCodeSplit: false,
       rollupOptions: {
-         external: ['react', 'react-dom'],
+         external: ['react', 'react-dom', 'react/jsx-runtime'],
          output: {
+            assetFileNames: 'assets/[name][extname]',
+            entryFileNames: '[name].js',
             globals: {
                react: 'React',
-               'react-dom': 'ReactDOM'
+               'react-dom': 'ReactDOM',
+               'react/jsx-runtime': 'jsxRuntime'
             }
-         },
-         plugins: [
-            dts({
-               tsconfig: path.resolve(__dirname, 'tsconfig-build.json')
-            })
-         ]
-      },
-      sourcemap: true // Enable source maps
+         }
+      }
    },
-   plugins: [react()]
+   plugins: [
+      react(),
+      dts({
+         rollupTypes: true
+      })
+   ]
 });
