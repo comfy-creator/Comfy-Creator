@@ -3,8 +3,6 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
 
-// const { peerDependencies } = JSON.parse(fs.readFileSync(`./package.json`, 'utf8'));
-
 // https://vitejs.dev/config/
 export default defineConfig({
    build: {
@@ -13,10 +11,8 @@ export default defineConfig({
          entry: resolve(__dirname, 'lib/index.tsx'),
          name: 'GraphEditor',
          fileName: 'index',
-         formats: ['es']
+         formats: ['cjs']
       },
-      emptyOutDir: true,
-      cssCodeSplit: false,
       rollupOptions: {
          external: ['react', 'react-dom', 'react/jsx-runtime'],
          output: {
@@ -33,7 +29,10 @@ export default defineConfig({
    plugins: [
       react(),
       dts({
-         rollupTypes: true
+         include: ['lib'],
+         compilerOptions: {
+            declarationMap: true,
+         }
       })
    ]
 });
