@@ -1,5 +1,5 @@
 import { ReactNode, createContext, useEffect, useState } from 'react';
-import { Node, Edge } from 'reactflow';
+import { Node, Edge } from '@xyflow/react';
 import { createUseContextHook } from './hookCreator';
 import DB, { IGraphData, IGraphRun } from '../store/database';
 import {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Node, useReactFlow } from 'reactflow';
-import { NodeData } from '../types/types';
+import { Edge, Node, useReactFlow } from '@xyflow/react';
+import { AppNode, NodeData } from '../types/types';
 import { CURRENT_GRAPH_INDEX, GRAPHS_KEY } from '../config/constants';
 import { RFState, useFlowStore } from '../store/flow';
 import { useLogging } from '../contexts/logging';
@@ -21,7 +21,7 @@ export function useGraph() {
   const { setGraphs, setCurrentGraphIndex, currentStateGraphIndex } = useGraphContext();
 
   const { nodeDefs, nodes, edges, setEdges, setNodes } = useFlowStore(selector);
-  const { setViewport, toObject } = useReactFlow<NodeData, string>();
+  const { setViewport, toObject } = useReactFlow<AppNode, Edge>();
 
   const { log } = useLogging();
 

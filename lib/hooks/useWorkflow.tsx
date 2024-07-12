@@ -1,5 +1,5 @@
-import { ReactFlowInstance, ReactFlowJsonObject, useReactFlow } from 'reactflow';
-import { HandleState, NodeData, RefValue, SerializedGraph } from '../types/types';
+import { ReactFlowInstance, ReactFlowJsonObject, useReactFlow, Edge } from '@xyflow/react';
+import { AppNode, HandleState, NodeData, RefValue, SerializedGraph } from '../types/types';
 import { useApiContext } from '../contexts/api';
 import { getHandleName, makeHandleId } from '../utils/node';
 import { uuidv4 } from 'lib0/random';
@@ -11,7 +11,7 @@ import { useGraphContext } from '../contexts/graph';
 // If you minimize the payload, a lot of information is lost and it will be
 // difficult to reconstruct the original graph visually in the UI
 export const newSerializeGraph = (
-   instance: ReactFlowInstance<NodeData, string>,
+   instance: ReactFlowInstance<AppNode, Edge>,
    minimize_payload: boolean = false
 ): [SerializedGraph, Record<string, string[]> | undefined] => {
    const { nodes, edges, viewport } = instance.toObject();
@@ -122,7 +122,7 @@ export const newSerializeGraph = (
          });
       } else {
          // Remove some non-essential properties but keep more than the minimized version
-         const { selected, dragging, resizing, parentNode, ...essentialProps } = node;
+         const { selected, dragging, resizing, parentId, ...essentialProps } = node;
          serializedGraph.nodes.push({ ...essentialProps, data: { inputs, outputs, widgets: {} } });
       }
    }
@@ -135,7 +135,7 @@ export const newSerializeGraph = (
 };
 
 export function useWorkflow() {
-   const rflInstance = useReactFlow();
+   const rflInstance = useReactFlow<AppNode, Edge>();
    const { addGraphRun } = useGraphContext();
    const { runWorkflow } = useApiContext();
 
@@ -161,7 +161,7 @@ export function useWorkflow() {
 
    const serializeGraphToWorkflow = () => {
       if (!rflInstance) throw new Error('Flow instance not found');
-      const { nodes, edges }: ReactFlowJsonObject<NodeData> = rflInstance.toObject();
+      const { nodes, edges }: ReactFlowJsonObject<AppNode> = rflInstance.toObject();
       const workflow: Record<string, any> = {};
 
       for (const node of nodes) {
@@ -234,7 +234,7 @@ export function useWorkflow() {
 
    const serializeGraph = () => {
       if (!rflInstance) throw new Error('Flow instance not found');
-      return rflInstance.toObject() as ReactFlowJsonObject<NodeData>;
+      return rflInstance.toObject() as ReactFlowJsonObject<AppNode>;
    };
 
    return { submitWorkflow, serializeGraphToWorkflow, serializeGraph };

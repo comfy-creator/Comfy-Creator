@@ -1,4 +1,4 @@
-import { ConnectionLineComponentProps, getBezierPath } from 'reactflow';
+import { ConnectionLineComponentProps, getBezierPath } from '@xyflow/react';
 import { useFlowStore } from '../store/flow';
 import { useSettingsStore } from '../store/settings';
 

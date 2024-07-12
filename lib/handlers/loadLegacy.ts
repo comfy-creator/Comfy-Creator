@@ -1,5 +1,5 @@
 import { EdgeType, HandleState, NodeData, NodeDefinition, WidgetState } from '../types/types';
-import { Edge, Node } from 'reactflow';
+import { Edge, Node } from '@xyflow/react';
 import { isWidgetType } from '../utils/node';
 
 interface LegacyWorkflow {

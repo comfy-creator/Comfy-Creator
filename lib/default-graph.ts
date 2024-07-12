@@ -1,4 +1,4 @@
-import { Edge, Node } from 'reactflow';
+import { Edge, Node } from '@xyflow/react';
 import { NodeData } from './types/types';
 
 export const defaultNodes: Node<NodeData>[] = [
@@ -198,10 +198,6 @@ export const defaultNodes: Node<NodeData>[] = [
       height: 321,
       draggable: true,
       selected: false,
-      positionAbsolute: {
-         x: 35.62682663610016,
-         y: 234.34947926690558
-      },
       dragging: false,
       resizing: false
    },
@@ -261,10 +257,6 @@ export const defaultNodes: Node<NodeData>[] = [
       width: 210,
       height: 142,
       selected: false,
-      positionAbsolute: {
-         x: -524.5148450863094,
-         y: 343.923553743409
-      },
       dragging: false,
       draggable: true
    },
@@ -314,10 +306,6 @@ export const defaultNodes: Node<NodeData>[] = [
       width: 258,
       height: 149,
       selected: false,
-      positionAbsolute: {
-         x: -254.2870414303351,
-         y: 413.6737740842252
-      },
       dragging: false,
       draggable: true,
       resizing: false
@@ -368,10 +356,6 @@ export const defaultNodes: Node<NodeData>[] = [
       width: 270,
       height: 154,
       selected: false,
-      positionAbsolute: {
-         x: -259.45715181004306,
-         y: 235.35963371416824
-      },
       dragging: false,
       draggable: true,
       resizing: false
@@ -417,10 +401,6 @@ export const defaultNodes: Node<NodeData>[] = [
       width: 210,
       height: 99,
       selected: false,
-      positionAbsolute: {
-         x: 325.55914983513196,
-         y: 235.50289226310696
-      },
       dragging: false,
       draggable: true
    },
@@ -463,10 +443,6 @@ export const defaultNodes: Node<NodeData>[] = [
       width: 210,
       height: 131,
       selected: false,
-      positionAbsolute: {
-         x: 582.2598663203869,
-         y: 236.25529804940433
-      },
       dragging: false,
       draggable: true
    },
@@ -544,10 +520,6 @@ export const defaultNodes: Node<NodeData>[] = [
       width: 210,
       height: 158,
       selected: false,
-      positionAbsolute: {
-         x: -228.92461921525174,
-         y: 586.0829463194012
-      },
       dragging: false
    }
 ];

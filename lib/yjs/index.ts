@@ -1,8 +1,8 @@
 'use client';
 import * as Y from 'yjs';
 import { YjsProvider } from './client';
-import { NodeData } from '../types/types';
-import type { Edge, Node } from 'reactflow';
+import { AppNode } from '../types/types';
+import type { Edge } from '@xyflow/react';
 
 // TO DO: load this from .env
 const CONNECT_URL = 'http://localhost:8000';
@@ -29,7 +29,7 @@ export const yjsProvider = new YjsProvider(
 );
 
 // TO DO: these will have to be recreated when we switch graphs-ids
-const yNodes = yjsProvider.doc.getMap<Node<NodeData>>('nodes');
+const yNodes = yjsProvider.doc.getMap<AppNode>('nodes');
 const yEdges = yjsProvider.doc.getMap<Edge>('edges');
 
 // TO DO: we may need to specify `trackedOrigins` ?

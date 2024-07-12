@@ -11,7 +11,7 @@ import {
   OnConnect,
   OnEdgesChange,
   OnNodesChange,
-} from 'reactflow';
+} from '@xyflow/react';
 import { create } from 'zustand';
 import {
   EdgeComponents,
@@ -26,7 +26,8 @@ import {
   UpdateInputData,
   UpdateInputDataParams,
   UpdateOutputData,
-  UpdateOutputDataParams
+  UpdateOutputDataParams,
+  AppNode
 } from '../types/types';
 import {
   addWidgetToPrimitiveNode,
@@ -57,7 +58,7 @@ import {
 import { ComfyObjectInfo } from '../types/comfy';
 import DB, { IGraphData } from './database';
 
-const nodesMap = yjsProvider.doc.getMap<Node<NodeData>>('nodes');
+const nodesMap = yjsProvider.doc.getMap<AppNode>('nodes');
 const edgesMap = yjsProvider.doc.getMap<Edge>('edges');
 const awareness = yjsProvider.awareness; // TO DO: use for cusor location
 
@@ -65,70 +66,70 @@ type NodeCallbackType = 'afterQueued';
 
 export interface IGraphSnapshot {
   index: string;
-  nodes: Node<NodeData>[];
+  nodes: AppNode[];
   edges: Edge[];
 }
 
 export type RFState = {
-  executions: ExecutionState[];
+   executions: ExecutionState[];
 
-  setExecutionOutput: (executionId: string, output: Record<string, any>) => void;
-  setCurrentExecutionNodeId: (executionId: string, nodeId: string | null) => void;
-  setExecutionProgress: (executionId: string, value: number | null, max?: number) => void;
+   setExecutionOutput: (executionId: string, output: Record<string, any>) => void;
+   setCurrentExecutionNodeId: (executionId: string, nodeId: string | null) => void;
+   setExecutionProgress: (executionId: string, value: number | null, max?: number) => void;
 
-  panOnDrag: boolean;
-  setPanOnDrag: (panOnDrag: boolean) => void;
+   panOnDrag: boolean;
+   setPanOnDrag: (panOnDrag: boolean) => void;
 
-  nodes: Node<NodeData>[];
-  edges: Edge[];
-  setNodes: (nodes: React.SetStateAction<Node<NodeData>[]>, selectGraph?: boolean) => void;
-  setEdges: (edges: React.SetStateAction<Edge[]>, selectGraph?: boolean) => void;
+   nodes: AppNode[];
+   edges: Edge[];
+   setNodes: (nodes: React.SetStateAction<AppNode[]>, selectGraph?: boolean) => void;
+   setEdges: (edges: React.SetStateAction<Edge[]>, selectGraph?: boolean) => void;
 
-  onNodesChange: OnNodesChange;
-  onEdgesChange: OnEdgesChange;
-  onConnect: OnConnect;
+   onNodesChange: OnNodesChange<AppNode>;
+   onEdgesChange: OnEdgesChange;
+   onConnect: OnConnect;
 
-  nodeDefs: NodeDefinitions;
-  nodeComponents: NodeComponents;
-  addNodeDefs: (defs: NodeDefinitions) => void;
-  loadNodeDefsFromApi: (fetcher: () => Promise<Record<string, ComfyObjectInfo>>) => void;
-  removeNodeDefs: (typeNames: string[]) => void;
+   nodeDefs: NodeDefinitions;
+   nodeComponents: NodeComponents;
+   addNodeDefs: (defs: NodeDefinitions) => void;
+   loadNodeDefsFromApi: (fetcher: () => Promise<Record<string, ComfyObjectInfo>>) => void;
+   removeNodeDefs: (typeNames: string[]) => void;
 
-  addNode: (params: AddNodeParams) => string;
-  removeNode: (nodeId: string) => void;
-  addRawNode: (node: Node) => void;
+   addNode: (params: AddNodeParams) => string;
+   removeNode: (nodeId: string) => void;
+   addRawNode: (node: AppNode) => void;
 
-  updateNodeData: (nodeId: string, newState: Partial<NodeData>) => void;
-  updateInputData: UpdateInputData;
-  updateOutputData: UpdateOutputData;
+   updateNodeData: (nodeId: string, newState: Partial<NodeData>) => void;
+   updateInputData: UpdateInputData;
+   updateOutputData: UpdateOutputData;
 
-  hotKeysShortcut: string[];
-  addHotKeysShortcut: (keys: string[]) => void;
+   hotKeysShortcut: string[];
+   addHotKeysShortcut: (keys: string[]) => void;
 
-  hotKeysHandlers: Record<string, KeyboardHandler>;
-  addHotKeysHandlers: (handler: Record<string, KeyboardHandler>) => void;
+   hotKeysHandlers: Record<string, KeyboardHandler>;
+   addHotKeysHandlers: (handler: Record<string, KeyboardHandler>) => void;
 
-  currentConnectionLineType?: string;
-  setCurrentConnectionLineType: (type: string) => void;
+   currentConnectionLineType?: string;
+   setCurrentConnectionLineType: (type: string) => void;
 
-  edgeComponents: EdgeComponents;
-  registerEdgeType: (defs: EdgeType[]) => void;
+   edgeComponents: EdgeComponents;
+   registerEdgeType: (defs: EdgeType[]) => void;
 
-  destroy: () => void;
+   destroy: () => void;
 
-  nodeCallbacks: {
-    [key in NodeCallbackType]?: (node: Node<NodeData>, ...v: any[]) => any;
-  };
-  registerNodeCallback: (
-    type: NodeCallbackType,
-    value: (node: Node<NodeData>, ...v: any[]) => any
-  ) => void;
+   nodeCallbacks: {
+      [key in NodeCallbackType]?: (node: Node<NodeData>, ...v: any[]) => any;
+   };
+   registerNodeCallback: (
+      type: NodeCallbackType,
+      value: (node: AppNode, ...v: any[]) => any
+   ) => void;
 
-  isUpdatingEdge: boolean;
-  setIsUpdatingEdge: (isUpdatingEdge: boolean) => void;
+   isUpdatingEdge: boolean;
+   setIsUpdatingEdge: (isUpdatingEdge: boolean) => void;
 
-  currentHandleEdge: HandleEdge | null;
-  setCurrentHandleEdge: (edge: HandleEdge | null) => void;
+   currentHandleEdge: HandleEdge | null;
+   setCurrentHandleEdge: (edge: HandleEdge | null) => void;
 };
 
 export const useFlowStore = create<RFState>((set, get) => {
@@ -248,12 +249,12 @@ export const useFlowStore = create<RFState>((set, get) => {
     // This is a handler for ReactFlow to call when it wants to update state; ReactFlow
     // does not mutate state directly. We must apply it manually. We apply the changes
     // to our y.Doc, which will be propagated by yjsObserver -> this Zustand store
-    onNodesChange: (changes: NodeChange[]) => {
+    onNodesChange: (changes: NodeChange<AppNode>[]) => {
       const nodes = Array.from(nodesMap.values());
       const nextNodes = applyNodeChanges(changes, nodes);
 
       for (const change of changes) {
-        if (change.type === 'add' || change.type === 'reset') {
+        if (change.type === 'add' || change.type === 'replace') {
           nodesMap.set(change.item.id, change.item);
         } else if (change.type === 'remove' && nodesMap.has(change.id)) {
           const deletedNode = nodesMap.get(change.id)!;
@@ -297,7 +298,7 @@ export const useFlowStore = create<RFState>((set, get) => {
       const nextEdges = applyEdgeChanges(changes, edges);
 
       for (const change of changes) {
-        if (change.type === 'add' || change.type === 'reset') {
+        if (change.type === 'add' || change.type === 'replace') {
           edgesMap.set(change.item.id, change.item);
         } else if (change.type === 'remove' && edgesMap.has(change.id)) {
           edgesMap.delete(change.id);

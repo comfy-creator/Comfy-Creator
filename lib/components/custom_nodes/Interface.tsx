@@ -1,7 +1,7 @@
-import { Edge, Node } from 'reactflow';
-import { EdgeType } from '../../types/types';
+import { Edge } from '@xyflow/react';
+import { AppNode, EdgeType } from '../../types/types';
 
-const handleEdgeValidation = (nodeId: string, nodes: Node[], edges: Edge[]) => {
+const handleEdgeValidation = (nodeId: string, nodes: AppNode[], edges: Edge[]) => {
   const incomingEdges = edges.filter((edge) => edge.target === nodeId);
   const outgoingEdges = edges.filter((edge) => edge.source === nodeId);
   const node = nodes.find((n) => n.id === nodeId);
@@ -12,7 +12,7 @@ const handleEdgeValidation = (nodeId: string, nodes: Node[], edges: Edge[]) => {
   // Validate and modify input handles
   incomingEdges.forEach((edge) => {
     const handle = node.data.inputs[edge.targetHandle!];
-    if (!isCompatible(handle.type, edge.type as EdgeType)) {
+    if (!isCompatible(handle.edge_type, edge.type as EdgeType)) {
       // Disconnect edge
       disconnectEdge(edge.id);
       // Modify handle if necessary
@@ -43,6 +43,6 @@ const updateHandleType = (nodeId: string, handleId: string, newType: EdgeType) =
   // Logic to update handle type
 };
 
-const updateGraphState = (nodes: Node[], edges: Edge[]) => {
+const updateGraphState = (nodes: AppNode[], edges: Edge[]) => {
   // Logic to update the state and trigger re-render
 };

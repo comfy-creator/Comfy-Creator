@@ -1,7 +1,6 @@
 import { getSuggestedNodesData } from '../utils/menu';
 import { useFlowStore } from '../store/flow';
-import type { MouseEvent as ReactMouseEvent, TouchEvent } from 'react';
-import { Connection, getOutgoers, Node, OnConnectStartParams } from 'reactflow';
+import { Connection, Edge, getOutgoers, Node, OnConnectStartParams } from '@xyflow/react';
 import { getHandleName, isPrimitiveNode, isWidgetType } from '../utils/node';
 import {
    HandleOnConnectEndParams,
@@ -69,7 +68,7 @@ export function handleOnConnectStart({
    setCurrentHandleEdge,
    setCurrentConnectionLineType
 }: HandleOnConnectStartParams) {
-   return (_: ReactMouseEvent | TouchEvent, params: OnConnectStartParams) => {
+   return (_: MouseEvent | TouchEvent, params: OnConnectStartParams) => {
       const node = nodes.find((node) => node.id === params.nodeId);
       if (!node || !params.handleId) return;
 
@@ -80,10 +79,10 @@ export function handleOnConnectStart({
       const handleType = params.handleType === 'source' ? 'output' : 'input';
       setCurrentHandleEdge({
          handleId: params.handleId,
-         edgeType: handle.type,
+         edgeType: handle.edge_type,
          handleType
       });
-      setCurrentConnectionLineType(handle.type);
+      // setCurrentConnectionLineType(handle.edge_type);
 
       let newNodes = nodes;
       if (params.handleType === 'target') {
@@ -91,7 +90,7 @@ export function handleOnConnectStart({
             const outputs = { ...node.data.outputs };
             for (const name in outputs) {
                const output = outputs[name];
-               outputs[name].isHighlighted = output.type !== handle.type;
+               outputs[name].isHighlighted = output.edge_type !== handle.edge_type;
             }
 
             return {
@@ -107,7 +106,7 @@ export function handleOnConnectStart({
             const inputs = { ...node.data.inputs };
             for (const name in inputs) {
                const input = inputs[name];
-               inputs[name].isHighlighted = input.type !== handle.type;
+               inputs[name].isHighlighted = input.edge_type !== handle.edge_type;
             }
 
             return {
@@ -125,7 +124,7 @@ export function handleOnConnectStart({
 }
 
 export function validateConnection({ getEdges, getNodes }: ValidateConnectionParams) {
-   return (connection: Connection): boolean => {
+   return (connection: Connection | Edge): boolean => {
       const { source, target, sourceHandle, targetHandle } = connection;
       const nodes = getNodes();
       const edges = getEdges();
@@ -141,7 +140,7 @@ export function validateConnection({ getEdges, getNodes }: ValidateConnectionPar
       if (target === source) return false;
 
       if (
-         isWidgetType(targetNode.data.inputs[getHandleName(targetHandle)]?.type) &&
+         isWidgetType(targetNode.data.inputs[getHandleName(targetHandle!)]?.edge_type) &&
          isPrimitiveNode(sourceNode)
       ) {
          return true;
@@ -160,15 +159,15 @@ export function validateConnection({ getEdges, getNodes }: ValidateConnectionPar
 
       if (hasCycle(targetNode)) return false;
 
-      const outputHandle = sourceNode.data.outputs[getHandleName(sourceHandle)];
-      const inputHandle = targetNode.data.inputs[getHandleName(targetHandle)];
+      const outputHandle = sourceNode.data.outputs[getHandleName(sourceHandle!)];
+      const inputHandle = targetNode.data.inputs[getHandleName(targetHandle!)];
       if (!outputHandle || !inputHandle) return false;
 
       if (sourceNode.type === 'RerouteNode' || targetNode.type === 'RerouteNode') {
-         return outputHandle.type != inputHandle.type;
+         return outputHandle.edge_type != inputHandle.edge_type;
       }
 
       // Ensure new connection connects compatible types
-      return outputHandle.type === inputHandle.type;
+      return outputHandle.edge_type === inputHandle.edge_type;
    };
 }
