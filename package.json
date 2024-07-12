@@ -1,13 +1,17 @@
 {
    "name": "@cozy-creator/graph-editor",
-   "version": "0.3.8",
+   "version": "0.3.13",
    "private": false,
    "type": "module",
+   "source": "lib/index.tsx",
    "main": "dist/index.js",
+   "module": "dist/index.js",
    "types": "dist/index.d.ts",
    "exports": {
       ".": {
-         "import": "./dist/index.js"
+         "import": "./dist/index.js",
+         "types": "./dist/index.d.ts",
+         "require": "./dist/index.js"
       },
       "./css": {
          "default": "./dist/assets/style.css"
