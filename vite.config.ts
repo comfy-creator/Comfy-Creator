@@ -11,27 +11,41 @@ export default defineConfig({
          entry: resolve(__dirname, 'lib/index.tsx'),
          name: 'GraphEditor',
          fileName: 'index',
-         formats: ['cjs']
       },
       rollupOptions: {
          external: ['react', 'react-dom', 'react/jsx-runtime'],
-         output: {
-            assetFileNames: 'assets/[name][extname]',
-            entryFileNames: '[name].js',
-            globals: {
-               react: 'React',
-               'react-dom': 'ReactDOM',
-               'react/jsx-runtime': 'jsxRuntime'
+         output: [
+            {
+               assetFileNames: 'umd/assets/[name][extname]',
+               entryFileNames: 'umd/[name].js',
+               globals: {
+                  react: 'React',
+                  'react-dom': 'ReactDOM',
+                  'react/jsx-runtime': 'jsxRuntime'
+               },
+               format: 'umd',
+               name: 'GraphEditor'
+            },
+            {
+               assetFileNames: 'esm/assets/[name][extname]',
+               entryFileNames: 'esm/[name].js',
+               globals: {
+                  react: 'React',
+                  'react-dom': 'ReactDOM',
+                  'react/jsx-runtime': 'jsxRuntime'
+               },
+               format: 'esm'
             }
-         }
+         ]
       }
    },
    plugins: [
       react(),
       dts({
+         outDir: ['dist/umd', 'dist/esm'],
          include: ['lib'],
          compilerOptions: {
-            declarationMap: true,
+            declarationMap: true
          }
       })
    ]

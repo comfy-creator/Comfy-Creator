@@ -1,20 +1,20 @@
 {
    "name": "@cozy-creator/graph-editor",
-   "version": "0.3.13",
+   "version": "0.3.15",
    "private": false,
    "type": "module",
    "source": "lib/index.tsx",
-   "main": "dist/index.js",
-   "module": "dist/index.js",
-   "types": "dist/index.d.ts",
+   "main": "dist/umd/index.js",
+   "module": "dist/esm/index.js",
+   "types": "dist/esm/index.d.ts",
    "exports": {
       ".": {
-         "import": "./dist/index.js",
-         "types": "./dist/index.d.ts",
-         "require": "./dist/index.js"
+         "import": "./dist/esm/index.js",
+         "types": "./dist/esm/index.d.ts",
+         "require": "./dist/umd/index.js"
       },
       "./css": {
-         "default": "./dist/assets/style.css"
+         "default": "./dist/esm/assets/style.css"
       }
    },
    "files": [
