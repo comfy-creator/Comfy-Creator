@@ -106,7 +106,6 @@ export const ApiContextProvider: React.FC<{
 
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [socket, setSocket] = useState<ReconnectingWebSocket | null>(null);
-  const [serverUrl, setServerUrl] = useState<string>(appConfig.serverUrl);
   const [connectionStatus, setConnectionStatus] = useState<string>(ApiStatus.CLOSED);
   const [requestMetadata, setRequestMetadata] = useState<Metadata | undefined>(undefined);
 
@@ -115,24 +114,22 @@ export const ApiContextProvider: React.FC<{
 
   // Only used for when serverProtocol is grpc. Used to both send messages and stream results
   const [comfyClient, setComfyClient] = useState<ComfyClient>(
-    createClient(ComfyDefinition, createChannel(serverUrl, FetchTransport()))
+    createClient(ComfyDefinition, createChannel(appConfig.serverUrl, FetchTransport()))
   );
 
   useEffect(() => {
     setGraphId(localStorage.getItem('graphId') || '');
   }, []);
 
-  console.log('App config>>', appConfig);
-
   // Recreate ComfyClient as needed
   useEffect(() => {
     if (appConfig.serverProtocol !== 'grpc') return;
 
-    const channel = createChannel(serverUrl, FetchTransport());
+    const channel = createChannel(appConfig.serverUrl, FetchTransport());
     const newComfyClient = createClient(ComfyDefinition, channel);
     setComfyClient(newComfyClient);
     // No cleanup is explicitly required for gRPC client
-  }, [serverUrl, appConfig.serverProtocol]);
+  }, [appConfig.serverUrl, appConfig.serverProtocol]);
 
   // Generate session-id for websocket connections
   useEffect(() => {
@@ -145,7 +142,7 @@ export const ApiContextProvider: React.FC<{
     if (appConfig.serverProtocol !== 'ws') return;
     if (!sessionId) return;
 
-    const url = `${toWsURL(serverUrl)}/ws?clientId=${sessionId}`;
+    const url = `${toWsURL(appConfig.serverUrl)}/ws?clientId=${sessionId}`;
     const socketOptions = { maxReconnectionDelay: 300 };
     const newSocket = new ReconnectingWebSocket(url, undefined, socketOptions);
     newSocket.binaryType = 'arraybuffer';
@@ -182,7 +179,7 @@ export const ApiContextProvider: React.FC<{
       socket?.close();
       cleanupPolling();
     };
-  }, [serverUrl, sessionId, appConfig.serverProtocol]);
+  }, [appConfig.serverUrl, sessionId, appConfig.serverProtocol]);
 
   // Once we have a session-id, subscribe to the stream of results using grpc
   useEffect(() => {
@@ -314,16 +311,16 @@ export const ApiContextProvider: React.FC<{
         return (await res.json()) as JobSnapshot;
       }
     },
-    [requestMetadata, serverUrl, appConfig.serverProtocol, comfyClient, sessionId]
+    [requestMetadata, appConfig.serverUrl, appConfig.serverProtocol, comfyClient, sessionId]
   );
 
   // Putting these functions here for now because we might want to find a way to go
   // with the gRPC and the fetch requests
   const makeServerURL = useCallback(
     (route: string): string => {
-      return serverUrl + route;
+      return appConfig.serverUrl + route;
     },
-    [serverUrl]
+    [appConfig.serverUrl]
   );
 
   const fetchApi = (route: string, options?: RequestInit) => {
