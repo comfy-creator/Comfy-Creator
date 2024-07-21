@@ -44,8 +44,6 @@ export const DEFAULT_HOTKEYS_HANDLERS = {
       alert('Hey man, you clicked on ctrl+s');
    },
    'ctrl+o': () => {
-      // alert('Hey man, you clicked on ctrl+o');
-
       const { addNode } = useFlowStore.getState();
       addNode({
          position: { x: 200, y: 200 },
@@ -56,9 +54,6 @@ export const DEFAULT_HOTKEYS_HANDLERS = {
       alert('Hey man, you clicked on ctrl+a');
    },
    'ctrl+m': () => {
-      // alert('Hey man, you clicked on ctrl+m');
-
-      // console.log('ddss');
       const { addNode } = useFlowStore.getState();
       addNode({
          position: { x: 200, y: 200 },
@@ -209,3 +204,8 @@ export const outputNodeTypesName = {
    MASK: 'Mask Data',
    VIDEO: 'Video Data'
 };
+
+export const NODE_GROUP_NAME = 'Group';
+
+// transform point
+export const TRANSFORM_POINT = 1.7;

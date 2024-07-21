@@ -3,6 +3,7 @@ import { useFlowStore } from '../store/flow';
 import { categorizeObjects } from './ui';
 import type { MouseEvent as ReactMouseEvent } from 'react';
 import { createEdge, getHandleName, getHandleNodeId, makeHandleId } from './node';
+import { NODE_GROUP_NAME } from '../config/constants';
 
 export function getNodeMenuItems(node: AppNode) {
    const items: (IMenuType | null)[] = [
@@ -91,10 +92,15 @@ export function getContextMenuItems() {
          data: null,
          subMenu: [],
          isOpen: false,
-         disabled: true,
+         disabled: false,
          hasSubMenu: false,
          label: 'Add Group',
-         onClick: (event: ReactMouseEvent) => null
+         onClick: (event: ReactMouseEvent) => {
+            console.log('Click>>')
+            const position = { x: event.clientX, y: event.clientY };
+
+            state.addNode({ position, type: NODE_GROUP_NAME });
+         }
       },
       {
          data: null,

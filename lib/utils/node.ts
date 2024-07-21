@@ -20,7 +20,6 @@ export function computeInitialNodeData(def: NodeDefinition) {
             display_name: input.display_name,
             optional: input.optional
          };
-         console.log('data', { data });
 
          state.inputs[input.display_name] = data;
 

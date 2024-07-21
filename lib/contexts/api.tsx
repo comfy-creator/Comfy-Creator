@@ -122,8 +122,6 @@ export const ApiContextProvider: React.FC<{
     setGraphId(localStorage.getItem('graphId') || '');
   }, []);
 
-  console.log('App config>>', appConfig);
-
   // Recreate ComfyClient as needed
   useEffect(() => {
     if (appConfig.serverProtocol !== 'grpc') return;

@@ -37,7 +37,6 @@ const SaveButton = ({ promptFilename }: SaveButtonProps) => {
    };
 
    useEffect(() => {
-      console.log('Swjs');
       addHotKeysHandlers({ 'ctrl+g': handleClick });
    }, []);
 
