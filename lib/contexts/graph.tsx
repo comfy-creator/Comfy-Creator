@@ -100,7 +100,8 @@ export const GraphContextProvider: React.FC<{
 
    const selectGraph = async (index: string) => {
       const graphs = ((await DB.getItem(GRAPHS_KEY)) || stateGraphs || []) as IGraphData[];
-      const currentGraph = graphs.find((graph) => graph.index === index) || graphs[0];
+      console.log('Graphs>>', graphs)
+      const currentGraph = (graphs || [])?.find((graph) => graph.index === index) || graphs[0];
       if (currentGraph) {
          setEdges(currentGraph?.edges || []);
          setNodes(currentGraph?.nodes || []);

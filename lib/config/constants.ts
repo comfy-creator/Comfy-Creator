@@ -144,7 +144,7 @@ export const controlAfterGenerateDef: HandleState | any = {
    options: ['fixed', 'increment', 'decrement', 'randomize']
 };
 
-export const DEFAULT_SERVER_URL = 'http://localhost:8188';
+export const DEFAULT_SERVER_URL = 'http://localhost:8881';
 export const DEFAULT_SERVER_PROTOCOL = 'ws' as const;
 
 // export const DEFAULT_SERVER_URL = 'http://localhost:30031';
@@ -154,6 +154,8 @@ export const API_URL = {
    WS: '/ws',
    GET_EMBEDDINGS: '/embeddings',
    GET_NODE_DEFS: '/object_info',
+   GET_REACT_COMPONENTS: '/react-components',
+   GENERATE: '/generate',
    GET_HISTORY: (maxItems: number) => `/history?max_items=${maxItems}`,
    GET_SYSTEM_STATS: '/system_stats',
    GET_USER_CONFIG: '/users',

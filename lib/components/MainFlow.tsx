@@ -1,7 +1,6 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-import { DragEvent, RefObject, useCallback, useEffect, useRef } from 'react';
-
+import { DragEvent, useCallback, useEffect, useRef, useState } from 'react';
 import {
    ReactFlow,
    Background,
@@ -17,7 +16,6 @@ import {
    OnConnectStart,
    Panel,
    useReactFlow,
-   Rect
 } from '@xyflow/react';
 import { useContextMenu } from '../contexts/contextmenu';
 import ControlPanel from './panels/ControlPanel';
@@ -34,9 +32,7 @@ import {
    FLOW_MIN_ZOOM,
    HANDLE_TYPES,
    MULTI_SELECT_KEY_CODE,
-   NODE_GROUP_NAME,
    REACTFLOW_PRO_OPTIONS_CONFIG,
-   SAVE_GRAPH_DEBOUNCE,
    ZOOM_ON_DOUBLE_CLICK
 } from '../config/constants';
 import { useSettings } from '../contexts/settings';
@@ -48,10 +44,7 @@ import ImageFeedDrawer from './Drawer/ImageFeedDrawer';
 import { useGraph } from '../hooks/useGraph';
 import { handleOnConnectEnd, handleOnConnectStart, validateConnection } from '../handlers/connect';
 import { handleEdgeUpdate, handleEdgeUpdateEnd, handleEdgeUpdateStart } from '../handlers/edge';
-import DB, { IGraphData } from '../store/database';
 import { useGraphContext } from '../contexts/graph';
-import React from 'react';
-import { isNodeInGroup } from '../handlers/helpers';
 
 const selector = (state: RFState) => ({
    panOnDrag: state.panOnDrag,
@@ -80,7 +73,8 @@ const selector = (state: RFState) => ({
    isUpdatingEdge: state.isUpdatingEdge,
    setIsUpdatingEdge: state.setIsUpdatingEdge,
    currentHandleEdge: state.currentHandleEdge,
-   setCurrentHandleEdge: state.setCurrentHandleEdge
+   setCurrentHandleEdge: state.setCurrentHandleEdge,
+   addNodeDefComponent: state.addNodeDefComponent
 });
 
 export function MainFlow() {
@@ -108,7 +102,8 @@ export function MainFlow() {
       isUpdatingEdge,
       setIsUpdatingEdge,
       currentHandleEdge,
-      setCurrentHandleEdge
+      setCurrentHandleEdge,
+      addNodeDefComponent
    } = useFlowStore(selector);
 
    const { currentStateGraphRunIndex, addNewGraph } = useGraphContext();
@@ -119,14 +114,24 @@ export function MainFlow() {
    >();
    const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
    const { loadCurrentSettings, addSetting } = useSettings();
-   const { getNodeDefs } = useApiContext();
+   const { getNodeDefs, getNodeComponents } = useApiContext();
    const { saveSerializedGraph, loadSerializedGraph } = useGraph();
 
    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+   const [Component, setComponent] = useState<any>(null);
 
    useEffect(() => {
       loadNodeDefsFromApi(getNodeDefs);
       loadSerializedGraph();
+      
+      getNodeComponents().then(async (res: any) => {
+         for (const key in res) {
+            const blob = new Blob([res[key]], { type: 'text/javascript' });
+            const moduleUrl = URL.createObjectURL(blob);
+            const { component } = await loadMicrofrontend(key, moduleUrl);
+            addNodeDefComponent(key, component.default || component);
+         }
+      });
    }, []);
 
    // useEffect(() => {
@@ -349,7 +354,6 @@ export function MainFlow() {
       >
          <ReactHotkeys keyName={hotKeysShortcut.join(',')} onKeyDown={handleKeyPress}>
             <Background color={'var(--tr-odd-bg-color)'} variant={BackgroundVariant.Lines} />
-
             <Controls />
             <NodeResizer />
             <NodeToolbar />
@@ -361,3 +365,33 @@ export function MainFlow() {
       </ReactFlow>
    );
 }
+
+const loadMicrofrontend = (
+   id: string,
+   url: string
+): Promise<{ component: any }> => {
+   return new Promise((resolve, reject) => {
+      const scriptId = `${id}Node`;
+      const existingScript = document.getElementById(scriptId);
+
+      const handleLoad = () => {
+         if (window[id as any]) {
+            resolve({ component: window[id as any] });
+         } else {
+            reject(new Error(`component ${id} did not load correctly`));
+         }
+      };
+
+      if (existingScript) {
+         existingScript.addEventListener('load', handleLoad);
+         return () => existingScript.removeEventListener('load', handleLoad);
+      } else {
+         const script = document.createElement('script');
+         script.id = scriptId;
+         script.src = url;
+         script.onload = handleLoad;
+         script.onerror = () => reject(new Error(`Failed to load script for component ${id}`));
+         document.body.appendChild(script);
+      }
+   });
+};
