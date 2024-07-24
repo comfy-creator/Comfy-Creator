@@ -11,7 +11,7 @@ import { DialogContextProvider } from './contexts/dialog';
 import { ErrorProvider } from './contexts/error';
 import { LoggingContextProvider } from './contexts/logging';
 
-import './index.css';
+import './styles/index.css';
 import 'react-toastify/dist/ReactToastify.css';
 import '@xyflow/react/dist/style.css';
 import 'viewerjs/dist/viewer.css';
