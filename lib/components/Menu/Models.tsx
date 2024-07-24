@@ -30,7 +30,7 @@ const Models = () => {
     return (
         <div className="models">
             <h2>Models</h2>
-            <h4>Your Images that has been generated</h4>
+            <h4>Models available for you to choose for your workflow</h4>
 
             <div className='models_main'>
                 <div className="tabs">

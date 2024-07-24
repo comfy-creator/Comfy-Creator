@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import { Button, Modal } from 'antd';
+import { Modal } from 'antd';
 import './menu.module.scss';
 import { BookmarkIcon } from '@radix-ui/react-icons';
-import Gallery from './Gallery';
+import ImageFeed from './ImageFeed';
 import Models from './Models';
 
 const Tabs = [
    {
       id: 1,
-      name: 'Gallery',
+      name: 'Image feed',
       active: true
    },
    {
@@ -72,7 +72,7 @@ const Menu = () => {
                </div>
                <div className="menu_modal_content">
                   {activeTab?.id === 1 ? (
-                     <Gallery />
+                     <ImageFeed />
                   ) : activeTab?.id === 2 ? (
                      <Models />
                   ) : null}

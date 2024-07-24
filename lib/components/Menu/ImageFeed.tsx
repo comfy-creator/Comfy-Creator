@@ -1,12 +1,12 @@
 import React from 'react'
 
-const Gallery = () => {
+const ImageFeed = () => {
   return (
-    <div className="gallery">
-        <h2>Gallery</h2>
+    <div className="image_feed">
+        <h2>Image Feed</h2>
         <h4>Your Images that has been generated</h4>
 
-        <div className="gallery-container">
+        <div className="image_feed-container">
             <ImageWithOverlay src="https://via.placeholder.com/150" alt="image" />
             <ImageWithOverlay src="https://via.placeholder.com/150" alt="image" />
             <ImageWithOverlay src="https://via.placeholder.com/150" alt="image" />
@@ -21,7 +21,7 @@ const Gallery = () => {
   )
 }
 
-export default Gallery
+export default ImageFeed
 
 
 interface ImageWithOverlayProps {
