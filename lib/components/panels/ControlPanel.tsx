@@ -17,7 +17,7 @@ import { isLegacySerializedGraph } from '../../utils';
 import GraphRuns from './menu/GraphRuns';
 import { uuidv4 } from 'lib0/random.js';
 import Graphs from './menu/Graphs';
-import NewGraphButton from './menu/NewGraphButton';
+import UndoRedo from './UndoRedo';
 
 type AutoQueueMode =
   | {
@@ -302,6 +302,7 @@ const ControlPanel = () => {
           <DevSaveButton promptFilename={promptFilename} />
 
           <LoadDefaultButton />
+          <UndoRedo />
           <Graphs />
           <GraphRuns />
         </div>

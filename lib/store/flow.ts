@@ -10,7 +10,7 @@ import {
   NodeChange,
   OnConnect,
   OnEdgesChange,
-  OnNodesChange,
+  OnNodesChange
 } from '@xyflow/react';
 import { create } from 'zustand';
 import {
@@ -47,6 +47,7 @@ import {
 } from '../config/constants';
 import { createEdgeFromTemplate } from '../components/prototypes/EdgeTemplate';
 import { yjsProvider } from '../yjs';
+import * as Y from 'yjs';
 import {
   FilePicker,
   PreviewImage,
@@ -61,6 +62,7 @@ import DB, { IGraphData } from './database';
 const nodesMap = yjsProvider.doc.getMap<AppNode>('nodes');
 const edgesMap = yjsProvider.doc.getMap<Edge>('edges');
 const awareness = yjsProvider.awareness; // TO DO: use for cusor location
+const undoManager = new Y.UndoManager([nodesMap, edgesMap], { captureTimeout: 1000 });
 
 type NodeCallbackType = 'afterQueued';
 
@@ -130,6 +132,10 @@ export type RFState = {
 
    currentHandleEdge: HandleEdge | null;
    setCurrentHandleEdge: (edge: HandleEdge | null) => void;
+
+   undoManager: Y.UndoManager;
+   undo: () => void;
+   redo: () => void;
 };
 
 export const useFlowStore = create<RFState>((set, get) => {
@@ -334,7 +340,12 @@ export const useFlowStore = create<RFState>((set, get) => {
           !(edge.target === connection.target && edge.targetHandle === connection.targetHandle)
       );
 
-      const { targetHandle, sourceHandle, source: sourceNodeId, target: targetNodeId } = connection;
+      const {
+        targetHandle,
+        sourceHandle,
+        source: sourceNodeId,
+        target: targetNodeId
+      } = connection;
       const source = get().nodes.find((node) => node.id == sourceNodeId);
       const target = get().nodes.find((node) => node.id == targetNodeId);
 
@@ -345,24 +356,27 @@ export const useFlowStore = create<RFState>((set, get) => {
       let newConn: (Connection & { type?: string }) | undefined;
 
       if (isWidgetType(_targetHandle.edge_type!)) {
-         if (source.type == 'PrimitiveNode') {
-            if (!targetNodeId) return;
+        if (source.type == 'PrimitiveNode') {
+          if (!targetNodeId) return;
 
-            const widgetData = { nodeId: targetNodeId, widgetName: getHandleName(targetHandle) };
-            const result = addWidgetToPrimitiveNode(source.id, get().updateNodeData, widgetData);
+          const widgetData = { nodeId: targetNodeId, widgetName: getHandleName(targetHandle) };
+          const result = addWidgetToPrimitiveNode(source.id, get().updateNodeData, widgetData);
 
-            if (result) {
-               newConn = {
-                  ...connection,
-                  type: result.edge_type
-               };
-            }
-         }
+          if (result) {
+            newConn = {
+              ...connection,
+              type: result.edge_type
+            };
+          }
+        }
       } else {
-         newConn = {
-            ...connection,
-            type: _sourceHandle.edge_type === _targetHandle.edge_type ? _sourceHandle.edge_type : undefined
-         };
+        newConn = {
+          ...connection,
+          type:
+            _sourceHandle.edge_type === _targetHandle.edge_type
+              ? _sourceHandle.edge_type
+              : undefined
+        };
       }
 
       if (newConn) {
@@ -582,7 +596,9 @@ export const useFlowStore = create<RFState>((set, get) => {
       set((state) => {
         return {
           hotKeysHandlers: { ...state.hotKeysHandlers, ...handler },
-          hotKeysShortcut: Array.from(new Set([...state.hotKeysShortcut, Object.keys(handler)[0]]))
+          hotKeysShortcut: Array.from(
+            new Set([...state.hotKeysShortcut, Object.keys(handler)[0]])
+          )
         };
       });
     },
@@ -636,9 +652,9 @@ export const useFlowStore = create<RFState>((set, get) => {
         const executions = state.executions.map((execution) =>
           execution.id === executionId
             ? {
-                ...execution,
-                progress: value === null ? null : { value, max: max ?? 0 }
-              }
+              ...execution,
+              progress: value === null ? null : { value, max: max ?? 0 }
+            }
             : execution
         );
 
@@ -662,6 +678,22 @@ export const useFlowStore = create<RFState>((set, get) => {
 
     setCurrentHandleEdge: (handleEdge) => {
       set({ currentHandleEdge: handleEdge });
+    },
+
+    // undo manager to manage undo and redo
+    undoManager,
+
+    undo: () => {
+      const { undoManager } = get();
+      if (undoManager && undoManager.canUndo()) {
+        undoManager.undo();
+      }
+    },
+    redo: () => {
+      const { undoManager } = get();
+      if (undoManager && undoManager.canRedo()) {
+        undoManager.redo();
+      }
     }
   };
 });
