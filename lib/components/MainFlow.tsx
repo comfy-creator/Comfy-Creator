@@ -1,6 +1,7 @@
 // Note: SOURCE = output, TARGET = input. Yes; this is confusing
 
-import { DragEvent, useCallback, useEffect, useRef } from 'react';
+import { DragEvent, RefObject, useCallback, useEffect, useRef } from 'react';
+
 import {
    ReactFlow,
    Background,
@@ -15,14 +16,15 @@ import {
    NodeToolbar,
    OnConnectStart,
    Panel,
-   useReactFlow
+   useReactFlow,
+   Rect
 } from '@xyflow/react';
 import { useContextMenu } from '../contexts/contextmenu';
 import ControlPanel from './panels/ControlPanel';
 import { RFState, useFlowStore } from '../store/flow';
 import { AppNode } from '../types/types';
 import ReactHotkeys from 'react-hot-keys';
-import { dragHandler, dropHandler } from '../handlers/dragDrop';
+import { dragHandler, dropHandler, useDragNode } from '../handlers/dragDrop';
 import { ConnectionLine } from './ConnectionLIne';
 import {
    AUTO_PAN_ON_CONNECT,
@@ -32,6 +34,7 @@ import {
    FLOW_MIN_ZOOM,
    HANDLE_TYPES,
    MULTI_SELECT_KEY_CODE,
+   NODE_GROUP_NAME,
    REACTFLOW_PRO_OPTIONS_CONFIG,
    SAVE_GRAPH_DEBOUNCE,
    ZOOM_ON_DOUBLE_CLICK
@@ -45,8 +48,10 @@ import ImageFeedDrawer from './Drawer/ImageFeedDrawer';
 import { useGraph } from '../hooks/useGraph';
 import { handleOnConnectEnd, handleOnConnectStart, validateConnection } from '../handlers/connect';
 import { handleEdgeUpdate, handleEdgeUpdateEnd, handleEdgeUpdateStart } from '../handlers/edge';
-import { IGraphData } from '../store/database';
+import DB, { IGraphData } from '../store/database';
 import { useGraphContext } from '../contexts/graph';
+import React from 'react';
+import { isNodeInGroup } from '../handlers/helpers';
 
 const selector = (state: RFState) => ({
    panOnDrag: state.panOnDrag,
@@ -114,7 +119,7 @@ export function MainFlow() {
    >();
    const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
    const { loadCurrentSettings, addSetting } = useSettings();
-   const { getNodeDefs, makeServerURL } = useApiContext();
+   const { getNodeDefs } = useApiContext();
    const { saveSerializedGraph, loadSerializedGraph } = useGraph();
 
    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -153,31 +158,32 @@ export function MainFlow() {
       registerEdgeType(HANDLE_TYPES);
    }, []);
 
-   useEffect(() => {
-      (async () => {
-         const graphs = [] as IGraphData[];
+   // useEffect(() => {
+   //    (async () => {
+   //       DB.getItem()
+   //       const graphs = [] as IGraphData[];
 
-         if (graphs.length > 0) {
-            const newGraphs = graphs.map((graph) => {
-               return {
-                  ...graph,
-                  nodes: graph.nodes.filter(Boolean),
-                  edges: graph.edges.filter(Boolean)
-               };
-            });
+   //       if (graphs.length > 0) {
+   //          const newGraphs = graphs.map((graph) => {
+   //             return {
+   //                ...graph,
+   //                nodes: graph.nodes.filter(Boolean),
+   //                edges: graph.edges.filter(Boolean)
+   //             };
+   //          });
 
-            clearTimeout(debounceTimer?.current ?? '');
-            debounceTimer.current = setTimeout(() => {
-               saveSerializedGraph(newGraphs);
-            }, SAVE_GRAPH_DEBOUNCE);
-         }
-      })();
+   //          clearTimeout(debounceTimer?.current ?? '');
+   //          debounceTimer.current = setTimeout(() => {
+   //             saveSerializedGraph(newGraphs);
+   //          }, SAVE_GRAPH_DEBOUNCE);
+   //       }
+   //    })();
 
-      // Clean up function
-      return () => {
-         clearTimeout(debounceTimer?.current ?? '');
-      };
-   }, []);
+   //    // Clean up function
+   //    return () => {
+   //       clearTimeout(debounceTimer?.current ?? '');
+   //    };
+   // }, []);
 
    // TO DO: open the context menu if you dragged out an edge and didn't connect it,
    // so we can auto-spawn a compatible node for that edge
@@ -275,6 +281,8 @@ export function MainFlow() {
       [edges]
    );
 
+   const { onNodeDrag, onMouseUp } = useDragNode();
+
    return (
       <ReactFlow
          nodes={nodes}
@@ -307,6 +315,10 @@ export function MainFlow() {
          ref={menuRef}
          onDrop={onDrop}
          onDragOver={onDragOver}
+         onNodeDrag={(e, node, nodes) => {
+            onNodeDrag({ nodes: nodes as AppNode[] });
+         }}
+         onNodeDragStop={onMouseUp}
          onMoveEnd={onMoveEnd}
          onReconnectEnd={onEdgeUpdateEnd}
          onReconnect={onEdgeUpdate}
