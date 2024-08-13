@@ -8,16 +8,16 @@ const ImageFeedDrawer: React.FC = () => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  useEffect(() => {
-    getOutputImages({ page, page_size: pageSize }).then((res) => {
-      const files = res?.files || [];
-      const images = files.map((file) => {
-        const filename = file.split('/').pop();
-        return makeServerURL(`/view?filename=${filename}`);
-      });
-      setImages(images);
-    })
-  }, [page, pageSize]);
+  // useEffect(() => {
+  //   getOutputImages({ page, page_size: pageSize }).then((res) => {
+  //     const files = res?.files || [];
+  //     const images = files.map((file) => {
+  //       const filename = file.split('/').pop();
+  //       return makeServerURL(`/view?filename=${filename}`);
+  //     });
+  //     setImages(images);
+  //   })
+  // }, [page, pageSize]);
 
   const [open, setOpen] = useState(false);
 

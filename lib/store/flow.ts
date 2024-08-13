@@ -136,6 +136,7 @@ export type RFState = {
 
    addNodeToGroup: (node: AppNode, group: AppNode) => void;
    removeNodeFromGroup: (node: AppNode) => void;
+   addNodeDefComponent: (key: string, Component: any) => void;
 };
 
 export const useFlowStore = create<RFState>((set, get) => {
@@ -369,7 +370,7 @@ export const useFlowStore = create<RFState>((set, get) => {
          set((state) => {
             const components = Object.entries(defs).reduce((components, [type, def]) => {
                if (type === NODE_GROUP_NAME) {
-                  components[NODE_GROUP_NAME] = GroupNode;
+                  // components[NODE_GROUP_NAME] = GroupNode;
                } else {
                   components[type] = createNodeComponentFromDef(def, updateInputData);
                }
@@ -383,8 +384,20 @@ export const useFlowStore = create<RFState>((set, get) => {
          });
       },
 
+      addNodeDefComponent: (key: string, Component: any) => {
+         set((state) => {
+            const component = {
+               [key]: Component,
+            }
+
+            return {
+               nodeComponents: { ...state.nodeComponents, ...component }
+            };
+         });
+      },
+
       loadNodeDefsFromApi: async (fetcher) => {
-         const nodes = transformNodeDefs(await fetcher());
+         const nodes = {};
          const allNodeDefs = {
             PreviewImage,
             PreviewVideo,
