@@ -1,7 +1,10 @@
-import { DragEvent } from 'react';
+import { DragEvent, useCallback, useEffect, useRef } from 'react';
 import { getFileAsDataURL, getFileKind } from '../utils/file';
-import { Edge, XYPosition } from '@xyflow/react';
+import { Edge, XYPosition, getNodesBounds } from '@xyflow/react';
 import { AddNodeParams, AppNode } from '../types/types';
+import { useFlowStore } from '../store/flow';
+import { NODE_GROUP_NAME } from '../config/constants';
+import { isNodeInGroup } from './helpers';
 
 interface DropHandlerParams {
    setNodes: (nodes: AppNode[]) => void;
@@ -24,7 +27,6 @@ export function dropHandler({
    addNode
 }: DropHandlerParams) {
    return async (event: DragEvent<HTMLDivElement>) => {
-      console.log('dropHandler');
       event.preventDefault();
       if (!event.dataTransfer || !screenToFlowPosition) return;
 
@@ -78,5 +80,94 @@ export function dropHandler({
 
          i += 1;
       }
+   };
+}
+
+export function useDragNode() {
+   const mousedownRef = useRef(false);
+   const draggingRef = useRef(false);
+   const movingOnGroupId = useRef<string | null>(null);
+   const selectedNodesRef = useRef<AppNode[]>([]);
+
+   const { removeNodeFromGroup, addNodeToGroup } = useFlowStore.getState();
+
+   const onMouseUp = useCallback(() => {
+      mousedownRef.current = false;
+      const selectedNodes = selectedNodesRef.current;
+
+      if (draggingRef.current) {
+         draggingRef.current = false;
+
+         if (selectedNodes.length === 0) {
+            return;
+         }
+
+         const { nodes } = useFlowStore.getState();
+
+         const movingOnGroupNode = nodes.find((n) => n.id === movingOnGroupId.current);
+
+         selectedNodes.forEach((node) => {
+            if (node.parentId && node.parentId === movingOnGroupId.current) {
+               return;
+            }
+
+            if (!node.parentId && movingOnGroupNode) {
+               addNodeToGroup(node, movingOnGroupNode);
+               return;
+            }
+
+            if (node.parentId && !movingOnGroupId) {
+               removeNodeFromGroup(node);
+               return;
+            }
+         });
+      }
+   }, []);
+
+   const onMouseDown = useCallback((ev: MouseEvent) => {
+      mousedownRef.current = true;
+   }, []);
+
+   useEffect(() => {
+      document.body.addEventListener('mousedown', onMouseDown, true);
+      document.body.addEventListener('mouseup', onMouseUp, true);
+
+      return () => {
+         document.body.removeEventListener('mousedown', onMouseDown, true);
+         document.body.removeEventListener('mouseup', onMouseUp, true);
+      };
+   }, [onMouseDown, onMouseUp]);
+
+   const onNodeDrag = useCallback((param: { nodes: AppNode[] }) => {
+      if (mousedownRef.current && param.nodes.length > 0) {
+         if (param.nodes.find((n) => n.type === NODE_GROUP_NAME)) {
+            return;
+         }
+         draggingRef.current = true;
+
+         const { nodes } = useFlowStore.getState();
+
+         selectedNodesRef.current = param.nodes;
+
+         const nodesBound = getNodesBounds(param.nodes);
+
+         const groupNodes = nodes.filter((n) => n.type === NODE_GROUP_NAME);
+         const groupNode = groupNodes.find((n) => {
+            const groupBound = getNodesBounds([n]);
+            const ret = isNodeInGroup(groupBound, nodesBound);
+            return ret;
+         });
+
+         if (groupNode) {
+            movingOnGroupId.current = groupNode.id;
+         } else {
+            movingOnGroupId.current = null;
+         }
+      }
+   }, []);
+
+   return {
+      onNodeDrag,
+      onMouseUp
    };
 }
