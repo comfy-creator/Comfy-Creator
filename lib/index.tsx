@@ -10,6 +10,7 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { DialogContextProvider } from './contexts/dialog';
 import { ErrorProvider } from './contexts/error';
 import { LoggingContextProvider } from './contexts/logging';
+import * as RFlow from "@xyflow/react"
 
 import './styles/index.css';
 import 'react-toastify/dist/ReactToastify.css';
@@ -27,6 +28,11 @@ function GraphEditor(props: GraphEditorProps) {
   const [isDBReady, setIsDBReady] = useState(false);
 
   useEffect(() => {
+    // Set window variable
+    window.React = React;
+    window['@xyflow/react'] = RFlow;
+    window.ReactFlow = RFlow;
+
     initDB().then((res) => {
       setIsDBReady(res);
     });
@@ -71,3 +77,11 @@ function GraphEditor(props: GraphEditorProps) {
 }
 
 export default GraphEditor;
+
+declare global {
+   interface Window {
+      React?: any;
+      ReactFlow?: any;
+      '@xyflow/react'?: any;
+   }
+}

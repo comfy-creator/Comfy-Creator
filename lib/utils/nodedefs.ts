@@ -1,4 +1,14 @@
+import { NODE_GROUP_NAME } from '../config/constants';
 import { NodeDefinition } from '../types/types';
+
+export const Group: NodeDefinition = {
+   category: '',
+   display_name: NODE_GROUP_NAME,
+   description: NODE_GROUP_NAME,
+   inputs: {},
+   outputs: {},
+   output_node: false
+};
 
 export const PreviewImage: NodeDefinition = {
    category: 'image',
