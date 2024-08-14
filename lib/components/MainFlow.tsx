@@ -96,7 +96,6 @@ export function MainFlow() {
       setCurrentConnectionLineType,
       edgeComponents,
       registerEdgeType,
-      executions,
       updateInputData,
       updateOutputData,
       isUpdatingEdge,
@@ -114,7 +113,8 @@ export function MainFlow() {
    >();
    const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
    const { loadCurrentSettings, addSetting } = useSettings();
-   const { getNodeDefs, getNodeComponents } = useApiContext();
+   const { getNodeDefs, appConfig, getNodeComponents } = useApiContext();
+   
    const { saveSerializedGraph, loadSerializedGraph } = useGraph();
 
    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -133,6 +133,7 @@ export function MainFlow() {
          }
       });
    }, []);
+   }, [appConfig.serverUrl, appConfig.server]);
 
    // useEffect(() => {
    //   if (!execution.output) return;
