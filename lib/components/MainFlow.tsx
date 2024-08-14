@@ -40,7 +40,6 @@ import { useSettingsStore } from '../store/settings';
 import { defaultThemeConfig } from '../config/themes';
 import { colorSchemeSettings } from './settings';
 import { useApiContext } from '../contexts/api';
-import ImageFeedDrawer from './Drawer/ImageFeedDrawer';
 import { useGraph } from '../hooks/useGraph';
 import { handleOnConnectEnd, handleOnConnectStart, validateConnection } from '../handlers/connect';
 import { handleEdgeUpdate, handleEdgeUpdateEnd, handleEdgeUpdateStart } from '../handlers/edge';
@@ -360,7 +359,6 @@ export function MainFlow() {
             <NodeToolbar />
             <Panel position="top-right">
                <ControlPanel />
-               <ImageFeedDrawer />
             </Panel>
          </ReactHotkeys>
       </ReactFlow>

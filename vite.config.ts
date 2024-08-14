@@ -11,6 +11,7 @@ export default defineConfig({
          entry: resolve(__dirname, 'lib/index.tsx'),
          name: 'GraphEditor',
          fileName: 'index',
+         formats: ['cjs']
       },
       rollupOptions: {
          external: ['react', 'react-dom', 'react/jsx-runtime'],
@@ -42,10 +43,9 @@ export default defineConfig({
    plugins: [
       react(),
       dts({
-         outDir: ['dist/umd', 'dist/esm'],
          include: ['lib'],
          compilerOptions: {
-            declarationMap: true
+            declarationMap: true,
          }
       })
    ]
