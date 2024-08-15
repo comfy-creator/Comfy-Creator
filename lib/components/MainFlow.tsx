@@ -15,7 +15,7 @@ import {
    NodeToolbar,
    OnConnectStart,
    Panel,
-   useReactFlow,
+   useReactFlow
 } from '@xyflow/react';
 import { useContextMenu } from '../contexts/contextmenu';
 import ControlPanel from './panels/ControlPanel';
@@ -113,7 +113,7 @@ export function MainFlow() {
    const { onContextMenu, onNodeContextMenu, onPaneClick, menuRef } = useContextMenu();
    const { loadCurrentSettings, addSetting } = useSettings();
    const { getNodeDefs, appConfig, getNodeComponents } = useApiContext();
-   
+
    const { saveSerializedGraph, loadSerializedGraph } = useGraph();
 
    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
@@ -122,7 +122,7 @@ export function MainFlow() {
    useEffect(() => {
       loadNodeDefsFromApi(getNodeDefs);
       loadSerializedGraph();
-      
+
       getNodeComponents().then(async (res: any) => {
          for (const key in res) {
             const blob = new Blob([res[key]], { type: 'text/javascript' });
@@ -131,7 +131,6 @@ export function MainFlow() {
             addNodeDefComponent(key, component.default || component);
          }
       });
-   }, []);
    }, [appConfig.serverUrl, appConfig.server]);
 
    // useEffect(() => {
@@ -365,10 +364,7 @@ export function MainFlow() {
    );
 }
 
-const loadMicrofrontend = (
-   id: string,
-   url: string
-): Promise<{ component: any }> => {
+const loadMicrofrontend = (id: string, url: string): Promise<{ component: any }> => {
    return new Promise((resolve, reject) => {
       const scriptId = `${id}Node`;
       const existingScript = document.getElementById(scriptId);
