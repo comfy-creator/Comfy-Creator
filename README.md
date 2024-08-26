@@ -18,9 +18,8 @@ import { GraphEditor } from '@cozy-creator/graph-editor';
 
 If you modify this and want to use it as a dependency without publishing to npm, you can build a `.tgz` file and use it locally. In the root of this repo:
 
-1. Run `yarn build` to build the library into a `/dist` folder.
-2. Run `yarn pack` to pack the `/dist` folder into a `.tgz` file for distribution.
-3. Use the `.tgz` file as a local dependency in another repository; install it using:
+1. Run `yarn run pack` to build the library into a `/dist` folder, and then pack the results into a `.tgz` file for distribution.
+2. Use the `.tgz` file as a local dependency in another repository; install it using:
 
 ```bash
 yarn add file:/path/to/your/library.tgz
