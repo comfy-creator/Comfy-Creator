@@ -44,8 +44,6 @@ export const DEFAULT_HOTKEYS_HANDLERS = {
       alert('Hey man, you clicked on ctrl+s');
    },
    'ctrl+o': () => {
-      // alert('Hey man, you clicked on ctrl+o');
-
       const { addNode } = useFlowStore.getState();
       addNode({
          position: { x: 200, y: 200 },
@@ -56,9 +54,6 @@ export const DEFAULT_HOTKEYS_HANDLERS = {
       alert('Hey man, you clicked on ctrl+a');
    },
    'ctrl+m': () => {
-      // alert('Hey man, you clicked on ctrl+m');
-
-      // console.log('ddss');
       const { addNode } = useFlowStore.getState();
       addNode({
          position: { x: 200, y: 200 },
@@ -149,7 +144,7 @@ export const controlAfterGenerateDef: HandleState | any = {
    options: ['fixed', 'increment', 'decrement', 'randomize']
 };
 
-export const DEFAULT_SERVER_URL = 'http://localhost:8188';
+export const DEFAULT_SERVER_URL = 'http://localhost:8881';
 export const DEFAULT_SERVER_PROTOCOL = 'ws' as const;
 
 // export const DEFAULT_SERVER_URL = 'http://localhost:30031';
@@ -159,6 +154,8 @@ export const API_URL = {
    WS: '/ws',
    GET_EMBEDDINGS: '/embeddings',
    GET_NODE_DEFS: '/object_info',
+   GET_REACT_COMPONENTS: '/react-components',
+   GENERATE: '/generate',
    GET_HISTORY: (maxItems: number) => `/history?max_items=${maxItems}`,
    GET_SYSTEM_STATS: '/system_stats',
    GET_USER_CONFIG: '/users',
@@ -209,3 +206,8 @@ export const outputNodeTypesName = {
    MASK: 'Mask Data',
    VIDEO: 'Video Data'
 };
+
+export const NODE_GROUP_NAME = 'Group';
+
+// transform point
+export const TRANSFORM_POINT = 1.7;

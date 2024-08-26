@@ -18,6 +18,7 @@ import GraphRuns from './menu/GraphRuns';
 import { uuidv4 } from 'lib0/random.js';
 import Graphs from './menu/Graphs';
 import NewGraphButton from './menu/NewGraphButton';
+import Menu from '../Menu';
 
 type AutoQueueMode =
   | {
@@ -302,6 +303,7 @@ const ControlPanel = () => {
           <DevSaveButton promptFilename={promptFilename} />
 
           <LoadDefaultButton />
+          <Menu />
           <Graphs />
           <GraphRuns />
         </div>

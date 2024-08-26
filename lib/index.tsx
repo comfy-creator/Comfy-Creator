@@ -10,8 +10,9 @@ import { ReactFlowProvider } from '@xyflow/react';
 import { DialogContextProvider } from './contexts/dialog';
 import { ErrorProvider } from './contexts/error';
 import { LoggingContextProvider } from './contexts/logging';
+import * as RFlow from '@xyflow/react';
 
-import './index.css';
+import './styles/index.css';
 import 'react-toastify/dist/ReactToastify.css';
 import '@xyflow/react/dist/style.css';
 import 'viewerjs/dist/viewer.css';
@@ -19,55 +20,68 @@ import { initDB } from './store/database';
 import { GraphContextProvider } from './contexts/graph';
 
 interface GraphEditorProps {
-  token?: string;
-  server?: 'local' | 'cloud';
+   token?: string;
+   server?: 'local' | 'cloud';
 }
 
 function GraphEditor(props: GraphEditorProps) {
-  const [isDBReady, setIsDBReady] = useState(false);
+   const [isDBReady, setIsDBReady] = useState(false);
 
-  useEffect(() => {
-    initDB().then((res) => {
-      setIsDBReady(res);
-    });
-  }, []);
+   useEffect(() => {
+      // Set window variable
+      window.React = React;
+      window['@xyflow/react'] = RFlow;
+      window.ReactFlow = RFlow;
 
-  return isDBReady ? (
-    <div className="main-root">
-      <ReactFlowProvider>
-        <ApiContextProvider props={props}>
-          <DialogContextProvider>
-            <ErrorProvider>
-              <ToastContainer
-                position="bottom-right"
-                autoClose={5000}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss={false}
-                draggable
-                pauseOnHover
-                theme="dark"
-              />
+      initDB().then((res) => {
+         setIsDBReady(res);
+      });
+   }, []);
 
-              <ContextMenuProvider>
-                <GraphContextProvider>
-                  <SettingsContextProvider>
-                    <LoggingContextProvider>
-                      <MainFlow />
-                    </LoggingContextProvider>
-                  </SettingsContextProvider>
-                </GraphContextProvider>
-              </ContextMenuProvider>
-            </ErrorProvider>
-          </DialogContextProvider>
-        </ApiContextProvider>
-      </ReactFlowProvider>
-    </div>
-  ) : (
-    <div>Loading...</div>
-  );
+   return isDBReady ? (
+      <div className="main-root">
+         <ReactFlowProvider>
+            <ApiContextProvider props={props}>
+               <DialogContextProvider>
+                  <ErrorProvider>
+                     <ToastContainer
+                        position="bottom-right"
+                        autoClose={5000}
+                        hideProgressBar={false}
+                        newestOnTop
+                        closeOnClick
+                        rtl={false}
+                        pauseOnFocusLoss={false}
+                        draggable
+                        pauseOnHover
+                        theme="dark"
+                     />
+
+                     <ContextMenuProvider>
+                        <GraphContextProvider>
+                           <SettingsContextProvider>
+                              <LoggingContextProvider>
+                                 <MainFlow />
+                              </LoggingContextProvider>
+                           </SettingsContextProvider>
+                        </GraphContextProvider>
+                     </ContextMenuProvider>
+                  </ErrorProvider>
+               </DialogContextProvider>
+            </ApiContextProvider>
+         </ReactFlowProvider>
+      </div>
+   ) : (
+      <div>Loading...</div>
+   );
 }
 
 export default GraphEditor;
+
+declare global {
+   interface Window {
+      React?: any;
+      ReactFlow?: any;
+      '@xyflow/react'?: any;
+   }
+}

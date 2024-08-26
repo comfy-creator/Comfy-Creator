@@ -1,4 +1,7 @@
 /* this CSS contains only the basic CSS needed to run the app and use it */
+.react-flow__panel > button {
+    color: #000 !important;
+}
 
 .react-flow.rflcontextmenu .rflmenu-title img {
     margin-top: 2px;

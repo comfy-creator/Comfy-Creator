@@ -37,19 +37,21 @@ import {
    isPrimitiveNode,
    isWidgetType
 } from '../utils/node';
-import { createNodeComponentFromDef } from '../components/prototypes/NodeTemplate';
+import { createNodeComponentFromDef, GroupNode } from '../components/prototypes/NodeTemplate';
 import {
    CURRENT_GRAPH_INDEX,
    DEFAULT_HOTKEYS_HANDLERS,
    DEFAULT_SHORTCUT_KEYS,
    GRAPHS_KEY,
-   HANDLE_TYPES
+   HANDLE_TYPES,
+   NODE_GROUP_NAME
 } from '../config/constants';
 import { createEdgeFromTemplate } from '../components/prototypes/EdgeTemplate';
 import { yjsProvider } from '../yjs';
 import { Transaction, YMapEvent } from 'yjs';
 import {
    FilePicker,
+   Group,
    PreviewImage,
    PreviewVideo,
    PrimitiveNode,
@@ -58,6 +60,7 @@ import {
 } from '../utils/nodedefs';
 import { ComfyObjectInfo } from '../types/comfy';
 import DB, { IGraphData } from './database';
+import { getNodePositionInGroup, getNodePositionOutOfGroup } from '../handlers/helpers';
 
 const nodesMap = yjsProvider.doc.getMap<AppNode>('nodes');
 const edgesMap = yjsProvider.doc.getMap<Edge>('edges');
@@ -131,22 +134,61 @@ export type RFState = {
 
    currentHandleEdge: HandleEdge | null;
    setCurrentHandleEdge: (edge: HandleEdge | null) => void;
+
+   addNodeToGroup: (node: AppNode, group: AppNode) => void;
+   removeNodeFromGroup: (node: AppNode) => void;
+   addNodeDefComponent: (key: string, Component: any) => void;
 };
 
 export const useFlowStore = create<RFState>((set, get) => {
    // Propagate changes from Yjs doc -> our Zustand state
-   const yjsNodesObserver = (
-      _event: YMapEvent<AppNode> | undefined = undefined,
-      _tx: Transaction | undefined = undefined
-   ) => {
-      // console.log(Array.from(nodesMap.values()));
+   const yjsNodesObserver = () => {
       set({ nodes: Array.from(nodesMap.values()) });
+
+      // save to db
+      DB.getItem(GRAPHS_KEY).then(async (res) => {
+         const currentGraphIndex = ((await DB.getItem(CURRENT_GRAPH_INDEX)) as string) || '';
+         const fetchedGraphs = (res || []) as IGraphData[];
+
+         const graphs = fetchedGraphs.map((graph) => {
+            if (currentGraphIndex === graph.index) {
+               return {
+                  ...graph,
+                  nodes: [...nodesMap.values()],
+                  edges: [...edgesMap.values()]
+               };
+            } else {
+               return graph;
+            }
+         });
+         // save to DB
+         DB.setItem(GRAPHS_KEY, graphs);
+      });
    };
    yjsNodesObserver();
    nodesMap.observe(yjsNodesObserver);
 
    const yjsEdgesObserver = () => {
       set({ edges: Array.from(edgesMap.values()) });
+      // save to db
+      DB.getItem(GRAPHS_KEY).then(async (res) => {
+         const currentGraphIndex = ((await DB.getItem(CURRENT_GRAPH_INDEX)) as string) || '';
+         const fetchedGraphs = (res || []) as IGraphData[];
+
+         const graphs = fetchedGraphs.map((graph) => {
+            if (currentGraphIndex === graph.index) {
+               return {
+                  ...graph,
+                  nodes: [...nodesMap.values()],
+                  edges: [...edgesMap.values()]
+               };
+            } else {
+               return graph;
+            }
+         });
+         // save to DB
+         DB.setItem(GRAPHS_KEY, graphs);
+      });
    };
    yjsEdgesObserver();
    nodesMap.observe(yjsEdgesObserver);
@@ -186,28 +228,6 @@ export const useFlowStore = create<RFState>((set, get) => {
                nodesMap.delete(node.id);
             }
          }
-
-         // save to db
-         DB.getItem(GRAPHS_KEY).then(async (res) => {
-            const currentGraphIndex = ((await DB.getItem(CURRENT_GRAPH_INDEX)) as string) || '';
-            const fetchedGraphs = (res || []) as IGraphData[];
-
-            const graphs = fetchedGraphs.map((graph) => {
-               if (currentGraphIndex === graph.index) {
-                  console.log('Caught hfhfg in node');
-
-                  return {
-                     ...graph,
-                     nodes: [...nodesMap.values()],
-                     edges: [...edgesMap.values()]
-                  };
-               } else {
-                  return graph;
-               }
-            });
-            // save to DB
-            DB.setItem(GRAPHS_KEY, graphs);
-         });
       },
 
       setEdges: (edgesOrUpdater) => {
@@ -228,26 +248,6 @@ export const useFlowStore = create<RFState>((set, get) => {
                edgesMap.delete(edge.id);
             }
          }
-
-         // save to db
-         DB.getItem(GRAPHS_KEY).then(async (res) => {
-            const currentGraphIndex = ((await DB.getItem(CURRENT_GRAPH_INDEX)) as string) || '';
-            const fetchedGraphs = (res || []) as IGraphData[];
-
-            const graphs = fetchedGraphs.map((graph) => {
-               if (currentGraphIndex === graph.index) {
-                  return {
-                     ...graph,
-                     nodes: [...nodesMap.values()],
-                     edges: [...edgesMap.values()]
-                  };
-               } else {
-                  return graph;
-               }
-            });
-            // save to DB
-            DB.setItem(GRAPHS_KEY, graphs);
-         });
       },
 
       // This is a handler for ReactFlow to call when it wants to update state; ReactFlow
@@ -275,26 +275,6 @@ export const useFlowStore = create<RFState>((set, get) => {
                nodesMap.set(change.id, nextNodes.find((n) => n.id === change.id)!);
             }
          }
-
-         // save to db
-         DB.getItem(GRAPHS_KEY).then(async (res) => {
-            const currentGraphIndex = ((await DB.getItem(CURRENT_GRAPH_INDEX)) as string) || '';
-            const fetchedGraphs = (res || []) as IGraphData[];
-
-            const graphs = fetchedGraphs.map((graph) => {
-               if (currentGraphIndex === graph.index) {
-                  return {
-                     ...graph,
-                     nodes: [...nodesMap.values()],
-                     edges: [...edgesMap.values()]
-                  };
-               } else {
-                  return graph;
-               }
-            });
-            // save to DB
-            DB.setItem(GRAPHS_KEY, graphs);
-         });
       },
 
       onEdgesChange: (changes: EdgeChange[]) => {
@@ -310,26 +290,6 @@ export const useFlowStore = create<RFState>((set, get) => {
                edgesMap.set(change.id, nextEdges.find((n) => n.id === change.id)!);
             }
          }
-
-         // save to db
-         DB.getItem(GRAPHS_KEY).then(async (res) => {
-            const currentGraphIndex = ((await DB.getItem(CURRENT_GRAPH_INDEX)) as string) || '';
-            const fetchedGraphs = (res || []) as IGraphData[];
-
-            const graphs = fetchedGraphs.map((graph) => {
-               if (currentGraphIndex === graph.index) {
-                  return {
-                     ...graph,
-                     nodes: [...nodesMap.values()],
-                     edges: [...edgesMap.values()]
-                  };
-               } else {
-                  return graph;
-               }
-            });
-            // save to DB
-            DB.setItem(GRAPHS_KEY, graphs);
-         });
       },
 
       onConnect: (connection: Connection) => {
@@ -410,7 +370,11 @@ export const useFlowStore = create<RFState>((set, get) => {
 
          set((state) => {
             const components = Object.entries(defs).reduce((components, [type, def]) => {
-               components[type] = createNodeComponentFromDef(def, updateInputData);
+               if (type === NODE_GROUP_NAME) {
+                  // components[NODE_GROUP_NAME] = GroupNode;
+               } else {
+                  components[type] = createNodeComponentFromDef(def, updateInputData);
+               }
                return components;
             }, {} as NodeComponents);
 
@@ -421,14 +385,27 @@ export const useFlowStore = create<RFState>((set, get) => {
          });
       },
 
+      addNodeDefComponent: (key: string, Component: any) => {
+         set((state) => {
+            const component = {
+               [key]: Component
+            };
+
+            return {
+               nodeComponents: { ...state.nodeComponents, ...component }
+            };
+         });
+      },
+
       loadNodeDefsFromApi: async (fetcher) => {
-         const nodes = transformNodeDefs(await fetcher());
+         const nodes = {};
          const allNodeDefs = {
             PreviewImage,
             PreviewVideo,
             RerouteNode,
             PrimitiveNode,
             FilePicker,
+            Group,
             ...nodes
          };
          get().addNodeDefs(allNodeDefs);
@@ -461,7 +438,7 @@ export const useFlowStore = create<RFState>((set, get) => {
             type,
             data,
             position,
-            style: { width: `${width}px` }
+            style: { width: type === NODE_GROUP_NAME ? `400px` : `${width}px` }
          };
          nodesMap.set(id, newNode);
 
@@ -565,7 +542,6 @@ export const useFlowStore = create<RFState>((set, get) => {
 
          const { edge_type, ...oldData } = output;
          const newOutput = { ...oldData, ...data, edge_type };
-         console.log(newOutput);
 
          nodesMap.set(nodeId, {
             ...node,
@@ -676,6 +652,47 @@ export const useFlowStore = create<RFState>((set, get) => {
 
       setCurrentHandleEdge: (handleEdge) => {
          set({ currentHandleEdge: handleEdge });
+      },
+
+      addNodeToGroup: (node: AppNode, group: AppNode) => {
+         const anode = nodesMap.get(node.id);
+         if (!anode) return;
+
+         nodesMap.set(anode.id, {
+            ...anode,
+            parentId: group.id
+         });
+
+         const position = getNodePositionInGroup(node, group);
+         get().onNodesChange([
+            {
+               type: 'position',
+               position,
+               id: node.id
+            }
+         ]);
+      },
+      removeNodeFromGroup: (node: AppNode) => {
+         if (!node.parentId) {
+            return;
+         }
+
+         const groupNode = nodesMap.get(node.id);
+
+         if (groupNode) {
+            nodesMap.set(node.id, {
+               ...node,
+               parentId: undefined
+            });
+            const position = getNodePositionOutOfGroup(node, groupNode);
+            get().onNodesChange([
+               {
+                  type: 'position',
+                  position,
+                  id: node.id
+               }
+            ]);
+         }
       }
    };
 });
