@@ -37,7 +37,7 @@ import {
    isPrimitiveNode,
    isWidgetType
 } from '../utils/node';
-import { createNodeComponentFromDef, GroupNode } from '../components/prototypes/NodeTemplate';
+import { createNodeComponentFromDef } from '../components/prototypes/NodeTemplate';
 import {
    CURRENT_GRAPH_INDEX,
    DEFAULT_HOTKEYS_HANDLERS,
@@ -49,7 +49,7 @@ import {
 import { createEdgeFromTemplate } from '../components/prototypes/EdgeTemplate';
 import { yjsProvider } from '../yjs';
 import { Transaction, YMapEvent } from 'yjs';
-import { AllNodeDefs, transformNodeDefs } from '../utils/nodedefs';
+import { AllNodeDefs, transformNodeDefs } from '../config/nodeDefs';
 import { ComfyObjectInfo } from '../types/comfy';
 import DB, { IGraphData } from './database';
 import { getNodePositionInGroup, getNodePositionOutOfGroup } from '../handlers/helpers';
