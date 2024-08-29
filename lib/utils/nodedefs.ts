@@ -1,68 +1,341 @@
 import { NODE_GROUP_NAME } from '../config/constants';
 import { NodeDefinition } from '../types/types';
 
-export const Group: NodeDefinition = {
-   category: '',
-   display_name: NODE_GROUP_NAME,
-   description: NODE_GROUP_NAME,
-   inputs: {},
-   outputs: {},
-   output_node: false
+export const LoadImage: NodeDefinition = {
+   category: 'image',
+   display_name: 'Load Image',
+   description: 'Load Image',
+   inputs: {
+      ['file']: {
+         display_name: 'file',
+         edge_type: 'STRING',
+         widget: {
+            type: 'FILEPICKER',
+            multiple_files: true,
+            file_extensions: ['.png', '.jpg', '.jpeg', '.bmp', '.webp', '.avif']
+         }
+      }
+   },
+   outputs: {
+      ['image']: {
+         display_name: 'image',
+         edge_type: 'IMAGE'
+      }
+   }
 };
 
-export const PreviewImage: NodeDefinition = {
+export const SaveImage: NodeDefinition = {
    category: 'image',
-   display_name: 'Preview Image',
-   description: 'Preview Image',
+   display_name: 'Save Image',
+   description: 'Save Image',
+   inputs: {
+      ['image']: {
+         display_name: 'image',
+         edge_type: 'IMAGE'
+      },
+      ['temporary']: {
+         display_name: 'temp?',
+         edge_type: 'BOOLEAN',
+         widget: {
+            type: 'TOGGLE',
+            checked: true
+         }
+      }
+   },
+   outputs: {
+      ['url']: {
+         display_name: 'url',
+         edge_type: 'STRING'
+      }
+   }
+};
+
+export const LoadVideo: NodeDefinition = {
+   category: 'video',
+   display_name: 'Load Video',
+   description: 'Load Video',
+   inputs: {
+      ['file']: {
+         display_name: 'file',
+         edge_type: 'STRING',
+         widget: {
+            type: 'FILEPICKER',
+            multiple_files: true,
+            file_extensions: ['.mp4', '.webm', '.mov']
+         }
+      }
+   },
+   outputs: {
+      ['video']: {
+         display_name: 'video',
+         edge_type: 'VIDEO'
+      }
+   }
+};
+
+export const SaveVideo: NodeDefinition = {
+   category: 'video',
+   display_name: 'Save Video',
+   description: 'Save Video',
+   inputs: {
+      ['video']: {
+         display_name: 'video',
+         edge_type: 'VIDEO'
+      },
+      ['temporary']: {
+         display_name: 'temp?',
+         edge_type: 'BOOLEAN',
+         widget: {
+            type: 'TOGGLE',
+            checked: true
+         }
+      }
+   },
+   outputs: {
+      ['url']: {
+         display_name: 'url',
+         edge_type: 'STRING'
+      }
+   }
+};
+
+export const TextEncoder: NodeDefinition = {
+   category: 'text',
+   display_name: 'Text Encoder',
+   description: 'Encodes text prompt as an embedding',
+   inputs: {
+      ['text']: {
+         display_name: 'text',
+         edge_type: 'STRING',
+         widget: {
+            type: 'TEXT',
+            multiline: true
+         }
+      }
+   },
+   outputs: {
+      ['embedding']: {
+         display_name: 'embedding',
+         edge_type: 'EMBEDDING'
+      }
+   }
+};
+
+export const FeatureExtractor: NodeDefinition = {
+   category: 'feature',
+   display_name: 'ControlNet Feature Extractor',
+   description: 'Feature Extractor',
+   inputs: {
+      ['image']: {
+         display_name: 'image',
+         edge_type: 'IMAGE'
+      },
+      feature: {
+         display_name: 'feature type',
+         edge_type: 'ENUM',
+         widget: {
+            type: 'DROPDOWN',
+            options: ['open-pose stick figure', 'depth map']
+         }
+      }
+   },
+   outputs: {
+      ['image']: {
+         display_name: 'image',
+         edge_type: 'IMAGE'
+      }
+   }
+};
+
+export const IPAdapterEmbedding: NodeDefinition = {
+   category: 'feature',
+   display_name: 'IP Adapter Embedding',
+   description: 'IP Adapter Embedding',
    inputs: {
       ['image']: {
          display_name: 'image',
          edge_type: 'IMAGE'
       }
    },
-   outputs: {},
-   output_node: true
+   outputs: {
+      ['embedding']: {
+         display_name: 'embedding',
+         edge_type: 'EMBEDDING'
+      }
+   }
 };
 
-export const PreviewVideo: NodeDefinition = {
-   category: 'video',
-   display_name: 'Preview Video',
-   description: 'Preview Video',
+export const ImageGenerator: NodeDefinition = {
+   category: 'image',
+   display_name: 'Image Generator',
+   description: 'Image Generator',
    inputs: {
-      ['video']: {
-         display_name: 'video',
-         edge_type: 'VIDEO'
+      ['postive_embedding']: {
+         display_name: 'positive embedding',
+         edge_type: 'EMBEDDING'
+         // widget: {
+         //    type: 'TEXT',
+         //    multiline: true
+         // }
+      },
+      ['negative_embedding']: {
+         display_name: 'negative embedding',
+         edge_type: 'EMBEDDING',
+         optional: true
+      },
+      ['openpose_image']: {
+         display_name: 'openpose image',
+         edge_type: 'IMAGE',
+         optional: true
+      },
+      ['depth_image']: {
+         display_name: 'depth image',
+         edge_type: 'IMAGE',
+         optional: true
+      },
+      ['ipadapter_embedding']: {
+         display_name: 'ipadapter embedding',
+         edge_type: 'EMBEDDING',
+         optional: true
       }
    },
-   outputs: {},
-   output_node: true
+   outputs: {
+      ['image']: {
+         display_name: 'image',
+         edge_type: 'IMAGE'
+      }
+   }
 };
 
-export const PrimitiveNode: NodeDefinition = {
-   inputs: {},
-   category: 'utils',
-   output_node: false,
-   display_name: 'Primitive',
-   description: 'Primitive Node',
-   outputs: { '*': { edge_type: '*', display_name: 'connect widget to input' } }
+export const ImageRegen: NodeDefinition = {
+   category: 'image',
+   display_name: 'Image Regen',
+   description: 'Remakes a portion of a given image',
+   inputs: {
+      ['image']: {
+         display_name: 'image',
+         edge_type: 'IMAGE'
+      },
+      ['mask']: {
+         display_name: 'mask',
+         edge_type: 'MASK',
+         optional: true
+      },
+      ['prompt']: {
+         display_name: 'prompt',
+         edge_type: 'EMBEDDING',
+         widget: {
+            type: 'TEXT',
+            multiline: true
+         }
+      },
+      ['strength']: {
+         display_name: 'strength',
+         edge_type: 'FLOAT',
+         widget: {
+            type: 'SLIDER',
+            value: 0.5,
+            min: 0,
+            max: 1,
+            unit: '%'
+         }
+      }
+   },
+   outputs: {
+      ['image']: {
+         display_name: 'image',
+         edge_type: 'IMAGE'
+      }
+   }
 };
 
-export const RerouteNode: NodeDefinition = {
-   category: 'utils',
-   output_node: false,
-   display_name: 'Reroute',
-   description: 'Reroute Node',
-   inputs: { '*': { edge_type: '*', display_name: '' } },
-   outputs: { '*': { edge_type: '*', display_name: '' } }
+export const SelectObject: NodeDefinition = {
+   category: 'masking',
+   display_name: 'Select Object',
+   description: 'Select Object',
+   inputs: {
+      ['image']: {
+         display_name: 'image',
+         edge_type: 'IMAGE'
+      },
+      prompt: {
+         display_name: 'prompt',
+         edge_type: 'STRING',
+         widget: {
+            type: 'TEXT',
+            multiline: true
+         }
+      }
+   },
+   outputs: {
+      ['mask']: {
+         display_name: 'mask',
+         edge_type: 'MASK'
+      }
+   }
 };
 
-export const FilePicker: NodeDefinition = {
-   category: 'utils',
-   output_node: false,
-   display_name: 'File Picker',
-   description: 'File Picker Node',
-   inputs: { FILEPICKER: { edge_type: 'FILEPICKER', display_name: 'file' } },
-   outputs: { STRING: { edge_type: 'STRING', display_name: 'STRING' } }
+export const RemoveBackground: NodeDefinition = {
+   category: 'masking',
+   display_name: 'Remove Background',
+   description: 'Remove Background',
+   inputs: {
+      ['image']: {
+         display_name: 'image',
+         edge_type: 'IMAGE'
+      }
+   },
+   outputs: {
+      ['image']: {
+         display_name: 'foreground',
+         edge_type: 'IMAGE'
+      },
+      ['mask']: {
+         display_name: 'foreground mask',
+         edge_type: 'MASK'
+      }
+   }
+};
+
+export const IC_Light: NodeDefinition = {
+   category: 'image',
+   display_name: 'Relight Foreground',
+   description: 'Generates a new background and relights the foreground',
+   inputs: {
+      ['foreground']: {
+         display_name: 'foreground layer',
+         edge_type: 'IMAGE'
+      },
+      ['prompt']: {
+         display_name: 'prompt',
+         edge_type: 'EMBEDDING',
+         widget: {
+            type: 'TEXT',
+            multiline: true
+         }
+      }
+   },
+   outputs: {
+      ['image']: {
+         display_name: 'image',
+         edge_type: 'IMAGE'
+      }
+   }
+};
+
+export const AllNodeDefs = {
+   LoadImage,
+   SaveImage,
+   LoadVideo,
+   SaveVideo,
+   TextEncoder,
+   FeatureExtractor,
+   IPAdapterEmbedding,
+   ImageGenerator,
+   ImageRegen,
+   SelectObject,
+   RemoveBackground,
+   IC_Light
 };
 
 function buildInput(type: string, name: string, options: any, optional: boolean) {
@@ -96,7 +369,6 @@ export function transformNodeDefs(nodeInfo: Record<string, any>) {
          outputs: {},
          category: node.category,
          description: node.description,
-         output_node: node.output_node,
          display_name: node.display_name
       };
 
@@ -130,3 +402,35 @@ export function transformNodeDefs(nodeInfo: Record<string, any>) {
 
    return defs;
 }
+
+// Old node defs; these concepts might get scrapped
+
+export const Group: NodeDefinition = {
+   category: '',
+   display_name: NODE_GROUP_NAME,
+   description: NODE_GROUP_NAME,
+   inputs: {},
+   outputs: {}
+};
+
+export const CompositeImages: NodeDefinition = {
+   category: 'image',
+   display_name: 'Composite Images',
+   description: 'Composite Images',
+   inputs: {
+      ['foreground']: {
+         display_name: 'foreground',
+         edge_type: 'IMAGE'
+      },
+      ['background']: {
+         display_name: 'background',
+         edge_type: 'IMAGE'
+      }
+   },
+   outputs: {
+      ['image']: {
+         display_name: 'image',
+         edge_type: 'IMAGE'
+      }
+   }
+};

@@ -1,8 +1,4 @@
-import {
-   ComponentType,
-   type MouseEvent as ReactMouseEvent,
-   ReactNode,
-} from 'react';
+import { ComponentType, type MouseEvent as ReactMouseEvent, ReactNode } from 'react';
 import {
    ConnectionLineType,
    Edge,
@@ -13,33 +9,6 @@ import {
    Viewport,
    EdgeTypes
 } from '@xyflow/react';
-
-export type EdgeType =
-   | 'BOOLEAN'
-   | 'INT'
-   | 'FLOAT'
-   | 'STRING'
-   | 'MODEL'
-   | 'CONDITIONING'
-   | 'LATENT'
-   | 'VAE'
-   | 'IMAGE'
-   | 'CLIP'
-   | 'CLIP_VISION'
-   | 'CLIP_VISION_OUTPUT'
-   | 'STYLE_MODEL'
-   | 'CONTROL_NET'
-   | 'UPSCALE_MODEL'
-   | 'SAMPLER'
-   | 'SIGMAS'
-   | 'PHOTOMAKER'
-   | 'MASK'
-   | 'VIDEO'
-   | 'ENUM'
-   | 'TAESD'
-   | '*'
-   | 'GROUP'
-   | 'FILEPICKER';
 
 // =========== Output Definition ===========
 // Note that outputs do not hold any state; on the client we either
@@ -278,6 +247,28 @@ export interface ExecutionState {
 // Node-definitions are converted into React components, and then registered with
 // ReactFlow as a 'NodeType'.
 
+export type EdgeType =
+   | 'BOOLEAN'
+   | 'INT'
+   | 'FLOAT'
+   | 'STRING'
+   | 'IMAGE'
+   | 'EMBEDDING'
+   | 'ENUM'
+   | 'MASK'
+   | 'VIDEO'
+   | 'LORA'
+   | 'CONTROL_NET';
+
+export type WidgetType =
+   | 'TOGGLE'
+   | 'NUMBER'
+   | 'TEXT'
+   | 'FILEPICKER'
+   | 'DROPDOWN'
+   | 'SLIDER'
+   | 'COLOR';
+
 export type NodeType = ComponentType<NodeProps<AppNode>>;
 
 export type NodeTypes = Record<string, NodeType>;
@@ -317,52 +308,49 @@ export type NodeData = {
 
    inputs: Record<string, HandleState>; // key is used to reference value
    outputs: Record<string, HandleState>; // key is used to reference value
-   widgets?: Record<string, WidgetState>;
+   widgets?: Record<string, WidgetDefinition>;
 };
 
 export interface HandleState {
    display_name: string;
    edge_type: EdgeType; // TO DO: maybe replace with something like a class?
 
-   // Extra data
-   isDisabled?: boolean;
-   isConnected?: boolean;
-   isHighlighted?: boolean;
-   isMultiline?: boolean;
-   isMultiSelect?: boolean;
-   primitiveNodeId?: string | null;
-   slot?: number;
-   def?: Record<string, any>;
+   // set to 'hidden' if you do not want to display the default widget for that handle-type
+   widget?: WidgetDefinition | 'hidden';
 
-   // Oneof: ref or value
+   optional?: boolean; // assumed false if it's undefined. Does not apply to output-handles
+   // serialize?: boolean; // assumed true if undefined
+
+   // Oneof: ref or value. This is the value that will be serialized
    ref?: RefValue;
    value?: ConstantValue; // state is stored in the handle component, not the widget
 
-   widgets?: WidgetState[];
-   optional?: boolean; // assumed false if it's undefined. Does not apply to outputs
-   // serialize?: boolean; // assumed true if undefined
+   // Extra data from react-flow
+   isDisabled?: boolean;
+   isConnected?: boolean;
+   isHighlighted?: boolean;
 }
 
-export interface WidgetState {
-   display_name: string;
-   widget_type: EdgeType; // namespaced component like core_extension_1.BoolToggle
-   props?: Record<string, any>;
+export interface WidgetDefinition {
+   type: WidgetType;
+
+   // these are the props that are passed to the widget
+   [key: string]: any;
 }
 
 export type NodeDefinition = Readonly<{
-   display_name: string;
-   description: string;
+   display_name: string | Record<string, string>;
+   description: string | Record<string, string>;
    category: string;
-   output_node?: boolean;
 
    // Takes its own interface, and produces a new interface
    inputs: Record<string, HandleState>;
    outputs: Record<string, HandleState>;
-   widgets?: Record<string, WidgetState>;
+   extra_widgets?: Record<string, WidgetDefinition>;
    factory?: (inputs: Record<string, HandleState>) => {
       inputs: Record<string, HandleState>;
       outputs: Record<string, HandleState>;
-      widgets: Record<string, WidgetState>;
+      extra_widgets?: Record<string, WidgetDefinition>;
    };
 }>;
 

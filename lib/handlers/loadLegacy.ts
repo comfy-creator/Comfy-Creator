@@ -1,4 +1,4 @@
-import { EdgeType, HandleState, NodeData, NodeDefinition, WidgetState } from '../types/types';
+import { EdgeType, HandleState, NodeData, NodeDefinition, WidgetDefinition } from '../types/types';
 import { Edge, Node } from '@xyflow/react';
 import { isWidgetType } from '../utils/node';
 
@@ -64,7 +64,7 @@ function getWidgets(node: LegacyNode, nodeDefs: any) {
       isWidgetType(input.edge_type === 'COMBO' ? 'ENUM' : input.edge_type)
    );
 
-   const widgets: Record<string, WidgetState> = {};
+   const widgets: Record<string, WidgetDefinition> = {};
    node.widgets_values?.forEach((value, i) => {
       const def = widgetDefs[i];
       if (isValidWidgetDef(def, i, node.widgets_values)) {
@@ -80,7 +80,7 @@ function getWidgets(node: LegacyNode, nodeDefs: any) {
    return widgets;
 }
 
-function getInputs(node: LegacyNode, widgets: Record<string, WidgetState>) {
+function getInputs(node: LegacyNode, widgets: Record<string, WidgetDefinition>) {
    if (!node.inputs?.length) return {};
 
    const inputs: Record<string, HandleState> = {};
@@ -121,7 +121,7 @@ function getOutputs(node: LegacyNode) {
    return outputs;
 }
 
-function getNodeData(node: LegacyNode, widgets: Record<string, WidgetState>) {
+function getNodeData(node: LegacyNode, widgets: Record<string, WidgetDefinition>) {
    const nodeState = {
       outputs: getOutputs(node),
       inputs: getInputs(node, widgets),

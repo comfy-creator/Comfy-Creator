@@ -49,15 +49,7 @@ import {
 import { createEdgeFromTemplate } from '../components/prototypes/EdgeTemplate';
 import { yjsProvider } from '../yjs';
 import { Transaction, YMapEvent } from 'yjs';
-import {
-   FilePicker,
-   Group,
-   PreviewImage,
-   PreviewVideo,
-   PrimitiveNode,
-   RerouteNode,
-   transformNodeDefs
-} from '../utils/nodedefs';
+import { AllNodeDefs, transformNodeDefs } from '../utils/nodedefs';
 import { ComfyObjectInfo } from '../types/comfy';
 import DB, { IGraphData } from './database';
 import { getNodePositionInGroup, getNodePositionOutOfGroup } from '../handlers/helpers';
@@ -398,17 +390,7 @@ export const useFlowStore = create<RFState>((set, get) => {
       },
 
       loadNodeDefsFromApi: async (fetcher) => {
-         const nodes = {};
-         const allNodeDefs = {
-            PreviewImage,
-            PreviewVideo,
-            RerouteNode,
-            PrimitiveNode,
-            FilePicker,
-            Group,
-            ...nodes
-         };
-         get().addNodeDefs(allNodeDefs);
+         get().addNodeDefs(AllNodeDefs);
       },
 
       removeNodeDefs: (typeNames: string[]) => {

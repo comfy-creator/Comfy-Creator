@@ -38,7 +38,7 @@
 
 // const MyNode: React.FC<MyNodeProps> = ({ nodeId, nodeInterface, setNodeInterface }) => {
 //    //    const incomingEdges = useInputEdges(nodeId);
-//    //    const widgetStates = useWidgetStates();
+//    //    const WidgetDefinitions = useWidgetDefinitions();
 
 //    const inputValues: InputValues = useInputValues(); // pretend this exists; this is relevant
 //    const modelRegistry: Map<string, ModelInfo> = useModelRegistry(); // pretend this exists

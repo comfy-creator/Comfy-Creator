@@ -5,7 +5,9 @@ import {
    NodeData,
    NodeDefinition,
    ThemeConfig,
-   UpdateInputData
+   UpdateInputData,
+   EdgeType,
+   WidgetDefinition
 } from '../../types/types';
 import { toast } from 'react-toastify';
 import {
@@ -41,9 +43,62 @@ const createWidgetFromSpec = (
    updateInputData?: (newState: Partial<HandleState>) => void
 ) => {
    const commonProps = { label };
-   if (data.edge_type !== def.edge_type) return;
+   if (data.edge_type !== def.edge_type) return null; // ????? Do we need defs AND data?
 
    const updateData = { display_name: data.display_name, edge_type: data.edge_type };
+
+   if (data.widget === 'hidden') return null;
+
+   // Check if widget is defined and not 'hidden'
+   if (data.widget) {
+      switch (data.widget.type) {
+         case 'TOGGLE':
+            return (
+               <ToggleWidget
+                  {...commonProps}
+                  checked={(data.value as boolean) || false}
+                  disabled={data.isDisabled}
+                  onChange={(checked: boolean) =>
+                     updateInputData?.({ ...updateData, value: checked })
+                  }
+               />
+            );
+         case 'NUMBER':
+            return (
+               <NumberWidget
+                  {...commonProps}
+                  value={data.value as number}
+                  disabled={data.isDisabled}
+                  onChange={(value: number) => updateInputData?.({ ...updateData, value })}
+               />
+            );
+         case 'TEXT':
+            return (
+               <TextWidget
+                  {...commonProps}
+                  value={data.value as string}
+                  disabled={data.isDisabled}
+                  onChange={(value: string) => updateInputData?.({ ...updateData, value })}
+               />
+            );
+         case 'FILEPICKER':
+            return <FilePickerWidget {...data.widget} />;
+         case 'DROPDOWN':
+            return (
+               <EnumWidget
+                  {...commonProps}
+                  value={data.value as string}
+                  onChange={(value: string) => updateInputData?.({ ...updateData, value })}
+                  options={data.widget.options || { values: [] }}
+                  disabled={data.isDisabled}
+                  multiSelect={data.widget.multiSelect}
+               />
+            );
+         // Add cases for other widget types as needed
+      }
+   }
+
+   // If no widget is defined, use the default widget for this edge_type, if one exists
    switch (data.edge_type) {
       case 'BOOLEAN':
          return (
@@ -54,7 +109,6 @@ const createWidgetFromSpec = (
                onChange={(checked: boolean) => updateInputData?.({ ...updateData, value: checked })}
             />
          );
-
       case 'INT':
       case 'FLOAT':
          return (
@@ -65,18 +119,7 @@ const createWidgetFromSpec = (
                onChange={(value: number) => updateInputData?.({ ...updateData, value })}
             />
          );
-
       case 'STRING':
-         if (def.isMultiline) {
-            return (
-               <TextWidget
-                  {...commonProps}
-                  value={data.value as string}
-                  disabled={data.isDisabled}
-                  onChange={(value: string) => updateInputData?.({ ...updateData, value })}
-               />
-            );
-         }
          return (
             <StringWidget
                {...commonProps}
@@ -85,31 +128,19 @@ const createWidgetFromSpec = (
                onChange={(value: string) => updateInputData?.({ ...updateData, value })}
             />
          );
-
       case 'ENUM':
          return (
             <EnumWidget
                {...commonProps}
                value={data.value as string}
                onChange={(value: string) => updateInputData?.({ ...updateData, value })}
-               // TODO: add options
                options={{ values: [] }}
                disabled={data.isDisabled}
-               multiSelect={def.isMultiSelect}
             />
          );
 
-      case 'IMAGE':
-         return <ImageWidget {...commonProps} value={data.value as string} />;
-
-      case 'FILEPICKER':
-         return <FilePickerWidget />;
-
-      // case 'VIDEO':
-      // return <VideoWidget {...commonProps} value={data.value} />;
-
       default:
-         console.warn(`Unsupported data type: ${(data as HandleState).edge_type}`);
+         console.warn(`Unsupported data type: ${data.edge_type}`);
          return null;
    }
 };
@@ -159,19 +190,6 @@ export const createNodeComponentFromDef = (
          containerRef.current.style.color = appearance.NODE_TEXT_COLOR;
       }, [activeTheme]);
 
-      // useEffect(() => {
-      //   if (!nodeRef.current) return;
-      //   const { currentNodeId } = execution;
-
-      //   if (currentNodeId === id) {
-      //     nodeRef.current.classList.add('executing');
-      //   } else {
-      //     if (nodeRef.current.classList.contains('executing')) {
-      //       nodeRef.current.classList.remove('executing');
-      //     }
-      //   }
-      // }, [execution]);
-
       useEffect(() => {
          if (!nodeRef.current) return;
 
@@ -194,12 +212,12 @@ export const createNodeComponentFromDef = (
       const inputHandles: ReactNode[] = [];
       const inputWidgets: ReactNode[] = [];
       const displayWidgets: ReactNode[] = [];
-      const isOutputNode = nodeDef.output_node || data.output_node;
 
       for (const name in inputs) {
          const input = inputs[name];
+         const inputDef = nodeDef.inputs[name];
 
-         if (isWidgetType(input.edge_type)) {
+         if (inputDef.widget && inputDef.widget !== 'hidden') {
             inputWidgets.push(
                <Widget
                   nodeId={id}
@@ -216,7 +234,6 @@ export const createNodeComponentFromDef = (
                   nodeId={id}
                   theme={theme}
                   key={input.display_name}
-                  // isConnected={input.isConnected}
                   handle={input as HandleState}
                />
             );
@@ -230,14 +247,8 @@ export const createNodeComponentFromDef = (
       }
 
       // Generate output handles
-      const outputHandles = Object.values(outputs).map((handle, i) => (
-         <OutputHandle
-            nodeId={id}
-            key={i}
-            theme={theme}
-            handle={handle}
-            // isConnected={handle.isConnected}
-         />
+      const outputHandles = Object.entries(outputs).map(([name, handle]) => (
+         <OutputHandle nodeId={id} key={name} theme={theme} handle={handle} />
       ));
 
       return (
@@ -260,7 +271,9 @@ export const createNodeComponentFromDef = (
                      style={{ ...getTransformStyle(zoomSelector), color: NODE_TITLE_COLOR }}
                      onClick={onClick}
                   >
-                     {nodeDef.display_name}
+                     {typeof nodeDef.display_name === 'string'
+                        ? nodeDef.display_name
+                        : nodeDef.display_name.en}
                   </span>
                </div>
 
@@ -270,8 +283,6 @@ export const createNodeComponentFromDef = (
                   </>
                ) : (
                   <>
-                     {/* {execution.currentNodeId === id && <ProgressBar />} */}
-
                      <div className="flow_content">
                         <div className="flow_input_output_container">
                            <div className="flow_input_container">{inputHandles}</div>
@@ -280,10 +291,6 @@ export const createNodeComponentFromDef = (
 
                         <div className="widgets_container">{inputWidgets}</div>
                         <div className="widgets_container">{displayWidgets}</div>
-
-                        <div className="node_footer">
-                           {isOutputNode && <button className="comfy-btn">Run</button>}
-                        </div>
                      </div>
                   </>
                )}
@@ -293,54 +300,13 @@ export const createNodeComponentFromDef = (
    };
 };
 
-export const GroupNode = () => {
-   const resizerStyle = {
-      width: '12px',
-      height: '12px',
-      border: 'none',
-      cursor: 'se-resize'
-   };
-   const { getActiveTheme } = useSettingsStore();
-
-   const theme = getActiveTheme();
-
-   const { NODE_TEXT_SIZE, NODE_TITLE_COLOR, NODE_TEXT_COLOR } = theme.colors.appearance;
-   const zoomSelector = useStore((s: ReactFlowState) => s.transform[2]);
-
-   return (
-      <>
-         <NodeResizeControl
-            style={resizerStyle}
-            color="transparent"
-            position="bottom-right"
-            minWidth={400}
-            minHeight={400}
-         />
-         <div
-            style={{ fontSize: NODE_TEXT_SIZE, color: NODE_TEXT_COLOR, width: '400px', height: '400px' }}
-            className="node_container"
-         >
-            <div className="node_label_container">
-               <span
-                  className="node_label"
-                  style={{ ...getTransformStyle(zoomSelector), color: NODE_TITLE_COLOR }}
-               >
-                  Group
-               </span>
-            </div>
-         </div>
-      </>
-   );
-};
-
 interface InputHandleProps {
    nodeId: string;
    theme: ThemeConfig;
-   isConnected?: boolean;
    handle: HandleState;
 }
 
-function InputHandle({ nodeId, handle, theme, isConnected }: InputHandleProps) {
+function InputHandle({ nodeId, handle, theme }: InputHandleProps) {
    const transform = useStore((s: ReactFlowState) => s.transform[2]);
    const transformScale = Math.max(1, 1 / transform);
    const showInput = transformScale < TRANSFORM_POINT;
@@ -348,7 +314,7 @@ function InputHandle({ nodeId, handle, theme, isConnected }: InputHandleProps) {
    const appearance = theme.colors.types;
    const { NODE_TEXT_COLOR } = theme.colors.appearance;
 
-   const handleStyle = isConnected
+   const handleStyle = handle.isConnected
       ? { background: appearance[handle.edge_type], border: '1px solid transparent' }
       : { border: `1.5px solid ${appearance[handle.edge_type]}`, backgroundColor: 'transparent' };
 
@@ -374,10 +340,9 @@ interface OutputHandleProps {
    nodeId: string;
    handle: HandleState;
    theme: ThemeConfig;
-   isConnected?: boolean;
 }
 
-function OutputHandle({ nodeId, handle, theme, isConnected }: OutputHandleProps) {
+function OutputHandle({ nodeId, handle, theme }: OutputHandleProps) {
    const transform = useStore((s: ReactFlowState) => s.transform[2]);
    const transformScale = Math.max(1, 1 / transform);
    const showOutput = transformScale < TRANSFORM_POINT;
@@ -385,7 +350,7 @@ function OutputHandle({ nodeId, handle, theme, isConnected }: OutputHandleProps)
    const appearance = theme.colors.types;
    const { NODE_TEXT_COLOR } = theme.colors.appearance;
 
-   const handleStyle = isConnected
+   const handleStyle = handle.isConnected
       ? { backgroundColor: appearance[handle.edge_type], border: '1px solid transparent' }
       : { border: `1.5px solid ${appearance[handle.edge_type]}`, backgroundColor: 'transparent' };
 
@@ -428,7 +393,7 @@ function Widget({ theme, nodeId, data, nodeDef, updateInputData }: WidgetProps) 
       updateInputData({ nodeId, display_name: data.display_name, data });
    };
 
-   const isMultiline = isMultilineStringInput(data);
+   const isMultiline = inputDef.widget?.type === 'TEXT';
    const containerStyle = !isMultiline ? { display: 'flex', alignItems: 'center' } : {};
 
    return showWidget ? (
@@ -454,7 +419,7 @@ export interface WidgetHandleProps {
 function WidgetHandle({ nodeId, data, theme }: WidgetHandleProps) {
    const appearance = theme.colors.types;
 
-   const handleStyle = data.primitiveNodeId
+   const handleStyle = data.isConnected
       ? { background: appearance[data.edge_type], border: '1px solid transparent' }
       : { border: `1.5px solid ${appearance[data.edge_type]}`, background: 'transparent' };
 
@@ -468,7 +433,7 @@ function WidgetHandle({ nodeId, data, theme }: WidgetHandleProps) {
             id={makeHandleId(nodeId, data.display_name)}
          />
 
-         {isMultilineStringInput(data) && (
+         {data.widget?.type === 'TEXT' && (
             <div className="flow_input_text">{data.display_name}</div>
          )}
       </div>

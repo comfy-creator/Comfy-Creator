@@ -1,9 +1,9 @@
-import { AppNode, UpdateInputData, WidgetState } from '../types/types';
+import { AppNode, UpdateInputData, WidgetDefinition } from '../types/types';
 import { controlAfterGenerateDef } from '../config/constants';
 import { isWidgetType } from './node';
 
 export function createValueControlInputs(args: any) {
-   const widgets: Record<string, WidgetState> = {};
+   const widgets: Record<string, WidgetDefinition> = {};
    const { input, options = {}, defaultValue } = args;
    const name = options.controlAfterGenerateName ?? 'control_after_generate';
 
@@ -38,7 +38,7 @@ export function createValueControlInput(data: any) {
    return widgets[Object.keys(widgets)[0]];
 }
 
-export function isSeedInput(widget: WidgetState) {
+export function isSeedInput(widget: WidgetDefinition) {
    return widget.widget_type === 'INT' && widget.display_name === 'seed';
 }
 
