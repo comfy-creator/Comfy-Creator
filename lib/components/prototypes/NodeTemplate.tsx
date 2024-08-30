@@ -33,7 +33,7 @@ import {
    isWidgetType,
    makeHandleId
 } from '../../utils/node';
-import { FilePickerWidget } from '../widgets/FilePicker';
+import { FilePickerWidget, FileProps } from '../widgets/FilePicker';
 import { TRANSFORM_POINT } from '../../config/constants';
 
 const createWidgetFromSpec = (
@@ -82,7 +82,13 @@ const createWidgetFromSpec = (
                />
             );
          case 'FILEPICKER':
-            return <FilePickerWidget {...data.widget} />;
+            return (
+               <FilePickerWidget
+                  onChange={(value: string | string[]) => updateInputData?.({ ...updateData, value })}
+                  value={data.value as string | string[]}
+                  {...(data.widget as FileProps)}
+               />
+            );
          case 'DROPDOWN':
             return (
                <EnumWidget
@@ -217,12 +223,12 @@ export const createNodeComponentFromDef = (
          const input = inputs[name];
          const inputDef = nodeDef.inputs[name];
 
-         if (inputDef.widget && inputDef.widget !== 'hidden') {
+         if (inputDef?.widget && inputDef?.widget !== 'hidden') {
             inputWidgets.push(
                <Widget
                   nodeId={id}
                   theme={theme}
-                  data={input}
+                  data={{ ...input, widget: input?.widget || inputDef.widget }}
                   nodeDef={nodeDef}
                   key={input.display_name}
                   updateInputData={updateInputData}
@@ -264,6 +270,7 @@ export const createNodeComponentFromDef = (
                style={{ fontSize: NODE_TEXT_SIZE, color: NODE_TEXT_COLOR }}
                className="node_container"
                ref={containerRef}
+               onDoubleClickCapture={(e) => e.stopPropagation()}
             >
                <div className="node_label_container">
                   <span
@@ -393,7 +400,7 @@ function Widget({ theme, nodeId, data, nodeDef, updateInputData }: WidgetProps) 
       updateInputData({ nodeId, display_name: data.display_name, data });
    };
 
-   const isMultiline = inputDef.widget?.type === 'TEXT';
+   const isMultiline = (inputDef.widget as WidgetDefinition)?.type === 'TEXT';
    const containerStyle = !isMultiline ? { display: 'flex', alignItems: 'center' } : {};
 
    return showWidget ? (
@@ -433,7 +440,7 @@ function WidgetHandle({ nodeId, data, theme }: WidgetHandleProps) {
             id={makeHandleId(nodeId, data.display_name)}
          />
 
-         {data.widget?.type === 'TEXT' && (
+         {(data.widget as WidgetDefinition)?.type === 'TEXT' && (
             <div className="flow_input_text">{data.display_name}</div>
          )}
       </div>
