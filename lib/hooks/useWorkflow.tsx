@@ -1,5 +1,5 @@
 import { ReactFlowInstance, ReactFlowJsonObject, useReactFlow, Edge } from '@xyflow/react';
-import { AppNode, HandleState, NodeData, RefValue, SerializedGraph } from '../types/types';
+import { AppNode, ConstantValue, HandleState, NodeData, RefValue, SerializedGraph } from '../types/types';
 import { useApiContext } from '../contexts/api';
 import { getHandleName, makeHandleId } from '../utils/node';
 import { uuidv4 } from 'lib0/random';
@@ -26,7 +26,7 @@ export const newSerializeGraph = (
    for (const node of nodes) {
       if (!node.data || !node.type) continue; // Remove non-useful nodes
 
-      const inputs: Record<string, HandleState> = {};
+      const inputs: Record<string, { value?: RefValue | ConstantValue}> = {};
       const outputs: Record<string, HandleState> = {};
 
       // Iterate through all input handles for this node
@@ -54,7 +54,7 @@ export const newSerializeGraph = (
                      nodeId: sourceNode.id,
                      handleName: edge.sourceHandle
                   };
-                  inputs[handle_name] = { ...handle_state, value: ref }; // we reference another value
+                  inputs[handle_name] = { value: ref }; // we reference another value
                }
             } else {
                if (!handle_state.optional) {
@@ -75,7 +75,7 @@ export const newSerializeGraph = (
                {
                   const value = Number(handle_state.value);
                   if (!isNaN(value)) {
-                     inputs[handle_name] = { ...handle_state, value };
+                     inputs[handle_name] = { value };
                   } else {
                      console.error('Invalid number input value');
                   }
@@ -85,9 +85,9 @@ export const newSerializeGraph = (
             case 'BOOLEAN':
                {
                   if (typeof handle_state.value == 'string') {
-                     inputs[handle_name] = { ...handle_state, value: handle_state.value === 'true' };
+                     inputs[handle_name] = { value: handle_state.value === 'true' };
                   } else if (typeof handle_state.value == 'boolean') {
-                     inputs[handle_name] = { ...handle_state, value: handle_state.value };
+                     inputs[handle_name] = { value: handle_state.value };
                   } else {
                      throw new Error('Invalid boolean input value');
                   }
@@ -96,11 +96,11 @@ export const newSerializeGraph = (
 
             case 'ENUM':
             case 'STRING':
-               inputs[handle_name] = { ...handle_state, value: handle_state.value };
+               inputs[handle_name] = { value: handle_state.value };
                break;
 
             default: {
-               inputs[handle_name] = { ...handle_state, value: handle_state.value };
+               inputs[handle_name] = { value: handle_state.value };
             }
          }
       }

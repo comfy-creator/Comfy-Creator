@@ -1,39 +1,61 @@
-import { ChangeEvent, useRef } from 'react';
+import { ChangeEvent, useRef, useState, useEffect } from 'react';
 
-type FileProps = {
-  kind?: string;
-  value?: string;
-  multiple?: boolean;
-  onChange?: (value: FileList | File) => void;
+export type FileProps = {
+   kind?: string;
+   value?: string | string[];
+   multiple?: boolean;
+   onChange?: (value: string | string[]) => void;
 };
 
-export function FilePickerWidget({ onChange, multiple, kind = 'file' }: FileProps) {
-  const fileRef = useRef<HTMLInputElement>(null);
+const imageToBASE64 = (file: File) =>
+   new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+   });
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      onChange?.(e.target.files[0]);
-    }
-  };
+export function FilePickerWidget({ onChange, multiple = true, kind = 'file', value }: FileProps) {
+   const fileRef = useRef<HTMLInputElement>(null);
+   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
 
-  const handleButtonClick = () => {
-    if (!fileRef.current) return;
-    fileRef.current.click();
-  };
+   useEffect(() => {
+      setSelectedFiles(Array.isArray(value) ? value : typeof value === 'string' ? [value] : []);
+   }, []);
 
-  return (
-    <>
-      <input
-        type="file"
-        ref={fileRef}
-        multiple={multiple}
-        onChange={handleFileChange}
-        style={{ display: 'none' }}
-      />
+   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files.length > 0) {
+         const files = selectedFiles;
+         for (let i = 0; i < e.target.files.length; i++) {
+            const res = await imageToBASE64(e.target.files[i]);
+            files.push(res);
+         }
+         multiple ? setSelectedFiles(files) : setSelectedFiles([files[files.length - 1]]);
+         onChange?.(multiple ? files : files[files.length - 1]);
+      }
+   };
 
-      <button className="comfy-btn" onClick={handleButtonClick} style={{ width: '100%' }}>
-        Choose {kind}
-      </button>
-    </>
-  );
+   const handleButtonClick = () => {
+      if (!fileRef.current) return;
+      fileRef.current.click();
+   };
+
+   return (
+      <>
+         {selectedFiles.map((url) => (
+            <img src={url} alt="preview" style={{ width: '100%' }} />
+         ))}
+         <input
+            type="file"
+            ref={fileRef}
+            multiple={multiple}
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
+         />
+
+         <button className="comfy-btn" onClick={handleButtonClick} style={{ width: '100%' }}>
+            Choose {kind}
+         </button>
+      </>
+   );
 }
