@@ -30,7 +30,8 @@ export const ToggleWidget: FC<ToggleProps> = ({ label, disabled, checked, onChan
           marginLeft: '1px',
           marginRight: '3px',
           borderRadius: '50%',
-          background: `${input ? '#606f79' : '#363636'}`
+          background: `${input ? '#606f79' : '#363636'}`,
+          cursor: 'pointer'
         }}
       />
     );

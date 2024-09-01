@@ -46,7 +46,6 @@ const createWidgetFromSpec = (
    if (data.edge_type !== def.edge_type) return null; // ????? Do we need defs AND data?
 
    const updateData = { display_name: data.display_name, edge_type: data.edge_type };
-
    if (data.widget === 'hidden') return null;
 
    // Check if widget is defined and not 'hidden'
@@ -56,7 +55,7 @@ const createWidgetFromSpec = (
             return (
                <ToggleWidget
                   {...commonProps}
-                  checked={(data.value as boolean) || false}
+                  checked={((data.value || data?.widget?.checked) as boolean) || true}
                   disabled={data.isDisabled}
                   onChange={(checked: boolean) =>
                      updateInputData?.({ ...updateData, value: checked })
@@ -84,7 +83,9 @@ const createWidgetFromSpec = (
          case 'FILEPICKER':
             return (
                <FilePickerWidget
-                  onChange={(value: string | string[]) => updateInputData?.({ ...updateData, value })}
+                  onChange={(value: string | string[]) =>
+                     updateInputData?.({ ...updateData, value })
+                  }
                   value={data.value as string | string[]}
                   {...(data.widget as FileProps)}
                />
@@ -206,7 +207,6 @@ export const createNodeComponentFromDef = (
          }
       }, [selected]);
 
-      const onClick = () => toast.success('File uploaded successfully!');
       const { inputs, outputs } = data;
       const resizerStyle = {
          width: '12px',
@@ -276,7 +276,6 @@ export const createNodeComponentFromDef = (
                   <span
                      className="node_label"
                      style={{ ...getTransformStyle(zoomSelector), color: NODE_TITLE_COLOR }}
-                     onClick={onClick}
                   >
                      {typeof nodeDef.display_name === 'string'
                         ? nodeDef.display_name
@@ -334,7 +333,10 @@ function InputHandle({ nodeId, handle, theme }: InputHandleProps) {
             id={makeHandleId(nodeId, handle.display_name)}
             className={`flow_handler left ${handle.edge_type}`}
          />
-         <span className="flow_input_text" style={{ color: NODE_TEXT_COLOR }}>
+         <span
+            className="flow_input_text"
+            style={{ color: NODE_TEXT_COLOR, opacity: handle.isConnected ? 0.7 : 1 }}
+         >
             {handle.display_name}
          </span>
       </div>
@@ -370,7 +372,10 @@ function OutputHandle({ nodeId, handle, theme }: OutputHandleProps) {
             id={makeHandleId(nodeId, handle.display_name)}
             className={`flow_handler right ${handle.edge_type}`}
          />
-         <span className="flow_output_text" style={{ color: NODE_TEXT_COLOR }}>
+         <span
+            className="flow_output_text"
+            style={{ color: NODE_TEXT_COLOR, opacity: handle.isConnected ? 0.7 : 1 }}
+         >
             {handle.display_name}
          </span>
       </div>
@@ -455,7 +460,6 @@ interface DisplayProps {
 function DisplayWidget({ data, nodeDef }: DisplayProps) {
    const inputDef = nodeDef.inputs[data.display_name] ?? (data as HandleState);
    if (!inputDef) return null;
-
    return (
       <div className="widget_container">
          <div style={{ width: '100%' }}>

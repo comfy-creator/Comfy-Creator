@@ -1,4 +1,7 @@
 import { ChangeEvent, useRef, useState, useEffect } from 'react';
+import { Modal } from 'antd';
+import { ChevronLeft } from '../icons/ChevronLeft';
+import { ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons';
 
 export type FileProps = {
    kind?: string;
@@ -15,8 +18,11 @@ const imageToBASE64 = (file: File) =>
       reader.readAsDataURL(file);
    });
 
-export function FilePickerWidget({ onChange, multiple = true, kind = 'file', value }: FileProps) {
+export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: FileProps) {
+   const [isModalOpen, setIsModalOpen] = useState(false);
+   const [selectedImage, setSelectedImage] = useState<string | null>(null);
    const fileRef = useRef<HTMLInputElement>(null);
+   const [fileNames, setFileNames] = useState<string[]>([]);
    const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
 
    useEffect(() => {
@@ -27,8 +33,10 @@ export function FilePickerWidget({ onChange, multiple = true, kind = 'file', val
       if (e.target.files && e.target.files.length > 0) {
          const files = selectedFiles;
          for (let i = 0; i < e.target.files.length; i++) {
+            if (fileNames.includes(e.target.files[i].name)) continue;
             const res = await imageToBASE64(e.target.files[i]);
             files.push(res);
+            setFileNames([...fileNames, e.target.files[i].name]);
          }
          multiple ? setSelectedFiles(files) : setSelectedFiles([files[files.length - 1]]);
          onChange?.(multiple ? files : files[files.length - 1]);
@@ -40,11 +48,38 @@ export function FilePickerWidget({ onChange, multiple = true, kind = 'file', val
       fileRef.current.click();
    };
 
+   const toggleModal = () => setIsModalOpen(!isModalOpen);
+   const handleNavigation = (nav: 'prev' | 'next') => {
+      const currentIndex = selectedFiles.indexOf(selectedImage!);
+      if (currentIndex !== -1) {
+         let newIndex = currentIndex;
+         if (nav === 'next') {
+            newIndex = (currentIndex + 1) % selectedFiles.length;
+         } else if (nav === 'prev') {
+            newIndex = (currentIndex - 1 + selectedFiles.length) % selectedFiles.length;
+         }
+         setSelectedImage(selectedFiles[newIndex]);
+      }
+   };
+
    return (
       <>
-         {selectedFiles.map((url) => (
-            <img src={url} alt="preview" style={{ width: '100%' }} />
-         ))}
+         <div className="">
+            {selectedFiles.map((url) => (
+               <div>
+                  <img
+                     src={url}
+                     alt="preview"
+                     style={{ width: '100%' }}
+                     onClick={() => {
+                        toggleModal();
+                        setSelectedImage(url);
+                     }}
+                  />
+               </div>
+            ))}
+         </div>
+
          <input
             type="file"
             ref={fileRef}
@@ -56,6 +91,70 @@ export function FilePickerWidget({ onChange, multiple = true, kind = 'file', val
          <button className="comfy-btn" onClick={handleButtonClick} style={{ width: '100%' }}>
             Choose {kind}
          </button>
+
+         <Modal
+            open={isModalOpen}
+            onCancel={toggleModal}
+            footer={null}
+            className="menu_modal "
+            width={'fit-content'}
+            centered
+            height="70vh"
+            style={{
+               justifyContent: 'center',
+               alignItems: 'center'
+            }}
+         >
+            {selectedImage && (
+               <div
+                  className="menu_modal_container"
+                  style={{
+                     justifyContent: 'center',
+                     alignItems: 'center'
+                  }}
+               >
+                  <p
+                     onClick={() => handleNavigation('prev')}
+                     className="menu_modal_items_button "
+                     style={{
+                        width: 'fit-content',
+                        padding: '0'
+                     }}
+                  >
+                     <ChevronLeftIcon
+                        className="icon"
+                        style={{
+                           color: 'black',
+                           margin: '0'
+                        }}
+                     />
+                  </p>
+
+                  <img
+                     src={selectedImage}
+                     alt="preview"
+                     style={{ width: '100%' }}
+                     className="image_feed-container"
+                  />
+                  <p
+                     onClick={() => handleNavigation('next')}
+                     className="menu_modal_items_button "
+                     style={{
+                        width: 'fit-content',
+                        padding: '0'
+                     }}
+                  >
+                     <ChevronRightIcon
+                        className="icon"
+                        style={{
+                           color: 'black',
+                           margin: '0'
+                        }}
+                     />
+                  </p>
+               </div>
+            )}
+         </Modal>
       </>
    );
 }

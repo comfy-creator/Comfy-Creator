@@ -11,7 +11,7 @@ export const LoadImage: NodeDefinition = {
          edge_type: 'STRING',
          widget: {
             type: 'FILEPICKER',
-            multiple_files: true,
+            multiple: true,
             file_extensions: ['.png', '.jpg', '.jpeg', '.bmp', '.webp', '.avif']
          }
       }
@@ -33,7 +33,7 @@ export const SaveImage: NodeDefinition = {
          display_name: 'image',
          edge_type: 'IMAGE'
       },
-      ['temporary']: {
+      ['temp?']: {
          display_name: 'temp?',
          edge_type: 'BOOLEAN',
          widget: {
@@ -60,7 +60,7 @@ export const LoadVideo: NodeDefinition = {
          edge_type: 'STRING',
          widget: {
             type: 'FILEPICKER',
-            multiple_files: true,
+            multiple: true,
             file_extensions: ['.mp4', '.webm', '.mov']
          }
       }
@@ -82,7 +82,7 @@ export const SaveVideo: NodeDefinition = {
          display_name: 'video',
          edge_type: 'VIDEO'
       },
-      ['temporary']: {
+      ['temp?']: {
          display_name: 'temp?',
          edge_type: 'BOOLEAN',
          widget: {

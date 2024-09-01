@@ -2,14 +2,11 @@ import { ReactNode, useEffect, useRef, useState } from 'react';
 import Draggable from 'react-draggable';
 import { useSettings } from '../../contexts/settings';
 import { useWorkflow } from '../../hooks/useWorkflow';
-import ExtraOptions from './menu/ExtraOptions';
 import SaveButton from './menu/SaveButton';
 import DevSaveButton from './menu/DevSaveButton';
-import ClearButton from './menu/ClearButton';
 import LoadDefaultButton from './menu/LoadDefaultButton';
 import { ComfyPromptStatus } from '../../types/comfy';
 import { toggleSwitch } from '../../utils/ui';
-import { ComfyList } from '../ComfyList';
 import { useFlowStore } from '../../store/flow';
 import { loadLegacyWorkflow } from '../../handlers/loadLegacy';
 import { useGraph } from '../../hooks/useGraph';
@@ -17,7 +14,6 @@ import { isLegacySerializedGraph } from '../../utils';
 import GraphRuns from './menu/GraphRuns';
 import { uuidv4 } from 'lib0/random.js';
 import Graphs from './menu/Graphs';
-import NewGraphButton from './menu/NewGraphButton';
 import Menu from '../Menu';
 
 type AutoQueueMode =

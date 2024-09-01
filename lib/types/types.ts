@@ -267,6 +267,7 @@ export type WidgetType =
    | 'FILEPICKER'
    | 'DROPDOWN'
    | 'SLIDER'
+   | 'BOOLEAN'
    | 'COLOR';
 
 export type NodeType = ComponentType<NodeProps<AppNode>>;
@@ -280,7 +281,8 @@ export type MinimalNode = Omit<AppNode, 'position' | 'data'> & {
       inputs?: RefValue | ConstantValue;
       outputs?: Record<string, HandleState>;
       widgets?: Record<string, WidgetDefinition>;
-   }
+   },
+   type: string | undefined;
 };
 
 // When ReactFlow serializes a graph, the properties inside of node.data and node.edge

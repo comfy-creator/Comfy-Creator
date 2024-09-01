@@ -1,15 +1,21 @@
 import { ReactFlowInstance, ReactFlowJsonObject, useReactFlow, Edge } from '@xyflow/react';
-import { AppNode, ConstantValue, HandleState, NodeData, RefValue, SerializedGraph } from '../types/types';
+import { AppNode, ConstantValue, HandleState, RefValue, SerializedGraph } from '../types/types';
 import { useApiContext } from '../contexts/api';
 import { getHandleName, makeHandleId } from '../utils/node';
 import { uuidv4 } from 'lib0/random';
 import { useGraphContext } from '../contexts/graph';
+import { toast } from 'react-toastify';
 
 // Second argument returned is a list of missing required input handles
 // If any are missing, you should _not_ submit the workflow, as it is incomplete
 //
 // If you minimize the payload, a lot of information is lost and it will be
 // difficult to reconstruct the original graph visually in the UI
+type InputValues = {
+   value?: ConstantValue;
+   ref?: RefValue;
+};
+
 export const newSerializeGraph = (
    instance: ReactFlowInstance<AppNode, Edge>,
    minimize_payload: boolean = false
@@ -26,7 +32,7 @@ export const newSerializeGraph = (
    for (const node of nodes) {
       if (!node.data || !node.type) continue; // Remove non-useful nodes
 
-      const inputs: Record<string, { value?: RefValue | ConstantValue}> = {};
+      const inputs: Record<string, InputValues> = {};
       const outputs: Record<string, HandleState> = {};
 
       // Iterate through all input handles for this node
@@ -52,13 +58,14 @@ export const newSerializeGraph = (
                } else {
                   const ref: RefValue = {
                      nodeId: sourceNode.id,
-                     handleName: edge.sourceHandle
+                     handleName: edge.sourceHandle?.split('::')[1] || ''
                   };
-                  inputs[handle_name] = { value: ref }; // we reference another value
+                  inputs[handle_name] = { ref }; // we reference another value
                }
             } else {
+               console.log('Handle state>>', handle_state);
                if (!handle_state.optional) {
-                  console.error(`Missing edge for requried input handle: ${targetHandleId}`);
+                  console.error(`Missing edge for required input handle: ${targetHandleId}`);
                   missingInputHandles[node.id] = (missingInputHandles[node.id] || []).concat(
                      handle_name
                   );
@@ -84,9 +91,9 @@ export const newSerializeGraph = (
 
             case 'BOOLEAN':
                {
-                  if (typeof handle_state.value == 'string') {
+                  if (typeof handle_state.value === 'string') {
                      inputs[handle_name] = { value: handle_state.value === 'true' };
-                  } else if (typeof handle_state.value == 'boolean') {
+                  } else if (typeof handle_state.value === 'boolean') {
                      inputs[handle_name] = { value: handle_state.value };
                   } else {
                      throw new Error('Invalid boolean input value');
@@ -97,6 +104,9 @@ export const newSerializeGraph = (
             case 'ENUM':
             case 'STRING':
                inputs[handle_name] = { value: handle_state.value };
+               break;
+            case 'IMAGE':
+               inputs[handle_name] = { ref: handle_state.value as InputValues['ref'] };
                break;
 
             default: {
@@ -113,19 +123,36 @@ export const newSerializeGraph = (
          }
       }
 
+      const data: { inputs?: Record<string, InputValues>; outputs?: Record<string, HandleState> } =
+         {};
+
+      if (Object.entries(inputs).length > 0) {
+         data['inputs'] = inputs;
+      }
+      if (Object.entries(outputs).length > 0) {
+         data['outputs'] = outputs;
+      }
+
       if (minimize_payload) {
          // Only include the essential properties for each node
          serializedGraph.nodes.push({
             id: node.id,
-            data: { inputs, outputs, widgets: {} },
+            type: node?.type || '',
+            data
             // position: node.position // note: the server doesn't really need this, but react flow wants it
          });
       } else {
          // Remove some non-essential properties but keep more than the minimized version
          const { selected, dragging, resizing, parentId, ...essentialProps } = node;
-         serializedGraph.nodes.push({ ...essentialProps, data: { inputs, outputs, widgets: {} } });
+         serializedGraph.nodes.push({
+            ...essentialProps,
+            type: node?.type || '',
+            data
+         });
       }
    }
+
+   console.log('Serializd graph>>', serializedGraph);
 
    if (Object.keys(missingInputHandles).length > 0) {
       return [serializedGraph, missingInputHandles];
@@ -140,8 +167,25 @@ export function useWorkflow() {
    const { runWorkflow } = useApiContext();
 
    const submitWorkflow = async () => {
-      const [serializedGraph, missingInputHandles] = newSerializeGraph(rflInstance, false);
-      if (missingInputHandles) return missingInputHandles;
+      const [serializedGraph, missingInputHandles] = newSerializeGraph(rflInstance, true);
+      if (missingInputHandles) {
+         if (missingInputHandles) {
+            for (const [nodeId, missingHandles] of Object.entries(missingInputHandles)) {
+               const node = rflInstance.getNode(nodeId);
+               if (node) {
+                  for (const handle of missingHandles) {
+                     toast.error(
+                        `Node ${node.data.display_name} is missing input for handle ${handle}`,
+                        {
+                           autoClose: 10000
+                        }
+                     );
+                  }
+               }
+            }
+         }
+         return missingInputHandles;
+      }
 
       const runId = uuidv4();
 
@@ -200,7 +244,9 @@ export function useWorkflow() {
                   const handleId = makeHandleId(node.id, input.display_name);
                   const edge = edges.find((edge) => edge.targetHandle == handleId);
                   if (!edge) {
-                     throw new Error(`Missing edge for input "${input.display_name}" on node "${node.id}"`);
+                     throw new Error(
+                        `Missing edge for input "${input.display_name}" on node "${node.id}"`
+                     );
                   }
 
                   const source = nodes.find((node) => node.id == edge.source);
