@@ -21,24 +21,32 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [selectedImage, setSelectedImage] = useState<string | null>(null);
    const fileRef = useRef<HTMLInputElement>(null);
-   const [fileNames, setFileNames] = useState<string[]>([]);
-   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+   const [selectedFiles, setSelectedFiles] = useState<{ name: string; url: string }[]>([]);
 
    useEffect(() => {
-      setSelectedFiles(Array.isArray(value) ? value : typeof value === 'string' ? [value] : []);
+      const files = [];
+      if (typeof value === 'string') {
+         files.push({ name: value, url: value });
+      } else if (Array.isArray(value)) {
+         const newFileNames = value.map((f) => ({ name: f, url: f }));
+         files.push(...newFileNames);
+      }
+      setSelectedFiles(files);
    }, []);
 
    const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
       if (e.target.files && e.target.files.length > 0) {
          const files = selectedFiles;
          for (let i = 0; i < e.target.files.length; i++) {
-            if (fileNames.includes(e.target.files[i].name)) continue;
+            if (files.map((f) => f.name).includes(e.target.files[i].name)) continue;
             const res = await imageToBASE64(e.target.files[i]);
-            files.push(res);
-            setFileNames([...fileNames, e.target.files[i].name]);
+            files.push({ name: e.target.files[i].name, url: res });
          }
          multiple ? setSelectedFiles(files) : setSelectedFiles([files[files.length - 1]]);
-         onChange?.(multiple ? files : files[files.length - 1]);
+         const onChangeFiles = multiple
+            ? files.map((f) => f.url)
+            : files[files.length - 1]?.url || '';
+         onChange?.(onChangeFiles);
       }
    };
 
@@ -49,7 +57,7 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
 
    const toggleModal = () => setIsModalOpen(!isModalOpen);
    const handleNavigation = (nav: 'prev' | 'next') => {
-      const currentIndex = selectedFiles.indexOf(selectedImage!);
+      const currentIndex = selectedFiles.map((f) => f.url).indexOf(selectedImage!);
       if (currentIndex !== -1) {
          let newIndex = currentIndex;
          if (nav === 'next') {
@@ -57,27 +65,29 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
          } else if (nav === 'prev') {
             newIndex = (currentIndex - 1 + selectedFiles.length) % selectedFiles.length;
          }
-         setSelectedImage(selectedFiles[newIndex]);
+         setSelectedImage(selectedFiles[newIndex]?.url);
       }
    };
 
-   const removeFile = (url: string) => {
-      const files = selectedFiles.filter((file) => file !== url);
+   const removeFile = (index: number) => {
+      const files = selectedFiles.filter((_, i) => i !== index);
       setSelectedFiles(files);
-      onChange?.(multiple ? files : files[0] ? files[0] : '');
+      const onChangeFiles = multiple ? files.map((f) => f.url) : files[files.length - 1]?.url || '';
+      onChange?.(onChangeFiles);
    };
 
    return (
       <>
-         <div className="files">
-            {selectedFiles.map((url) => (
+         <div className="files no_scrollbar" onWheelCapture={(e) => e.stopPropagation()}>
+            {selectedFiles.map(({ url }, index) => (
                <div className="file">
-                  <p onClick={() => removeFile(url)} className="file_remove_icon">
+                  <p onClick={() => removeFile(index)} className="file_remove_icon">
                      <Cross1Icon
                         className="icon"
                         style={{
                            color: 'black',
-                           margin: '0'
+                           margin: '0',
+                           fontSize: '4.5rem'
                         }}
                      />
                   </p>

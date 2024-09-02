@@ -1,5 +1,5 @@
 import { FC, useEffect, useState } from 'react';
-import { Checkbox } from 'antd';
+// import { Checkbox } from 'antd';
 
 type ToggleProps = {
    label: string;
@@ -23,12 +23,29 @@ export const ToggleWidget: FC<ToggleProps> = ({ label, disabled, checked, onChan
    };
 
    return (
-      <div className="widget_box">
-         <div className="widget_input">
-            <div className="widget_input_item" onClick={handleToggle}>
-               <span className={`widget_input_item_text ${disabledClass}`}>{label}</span>
-               <Checkbox checked={input} onChange={(e) => setInput(e.target.checked)} />
-            </div>
+      <div
+         className="widget_box"
+         style={{
+            alignItems: 'center',
+            cursor: 'pointer',
+            margin: '.67rem 0',
+            position: 'relative',
+            top: '2px',
+            opacity: disabled ? 0.5 : 1,
+         }}
+      >
+         <div
+            className="widget_input_item"
+            onClick={handleToggle}
+            style={{
+               alignItems: 'center',
+               cursor: 'pointer',
+               marginLeft: 0,
+              
+            }}
+         >
+            <span className={`widget_input_item_text ${disabledClass}`}>{label}</span>
+            <input type="radio" checked={input} onChange={(e) => setInput(e.target.checked)} style={{background: 'none'}} />
          </div>
       </div>
    );

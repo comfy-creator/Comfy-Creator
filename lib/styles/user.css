@@ -373,6 +373,8 @@ button.comfy-settings-btn {
     flex-wrap: wrap;
     gap: 5px;
     max-width: 420px;
+    max-height: 300px;
+    overflow-y: scroll;
 }
 
 .file {
@@ -396,3 +398,45 @@ button.comfy-settings-btn {
     background-color: var(--fg-color);
     transition: all ease 0.5s;
 }
+
+.dropdown {
+    width: 100%;
+    padding: 2px;
+    border-radius: 5px;
+    font-size: 10px;
+    background: var(--comfy-menu-bg);
+    color: var(--fg-color);
+}
+
+/* .no_scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+} */
+
+
+/* Hide scrollbar buttons */
+::-webkit-scrollbar-button {
+    display: none;
+  }
+  
+  /* Make the scrollbar thinner */
+  ::-webkit-scrollbar {
+    width: 4px; /* Adjust the width as needed */
+  }
+  
+  /* Style the scrollbar track */
+  ::-webkit-scrollbar-track {
+    background-color: #565656; /* Optional: scrollbar track color */
+  }
+  
+  /* Style the scrollbar thumb */
+  ::-webkit-scrollbar-thumb {
+    background-color: #888; /* Optional: scrollbar thumb color */
+    border-radius: 4px; /* Optional: rounded corners */
+  }
+  
+  /* Hover effect on the scrollbar thumb */
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #555; /* Optional: scrollbar thumb color on hover */
+  }
+  

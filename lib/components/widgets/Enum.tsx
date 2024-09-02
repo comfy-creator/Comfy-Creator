@@ -25,29 +25,17 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
    return (
       <div className="widget_box">
          <div className="widget_input">
-            {/* <div className="widget_input_item">
-          <WidgetBackwardIcon disabled={disabled} onClick={handleBackward} />
-          <div className={`widget_input_item_text ${disabledClass}`}>{label}</div>
-        </div>
-
-        <div className="widget_input_item" style={{ gap: '5px' }}>
-          <span className={`widget_input_item_text ${disabledClass}`}>
-            {valueIndex != undefined ? enumOptions[valueIndex] : 'undefined'}
-          </span>
-          <WidgetForwardIcon disabled={disabled} onClick={handleForward} />
-        </div> */}
-
-            <Select
-               onChange={handleSelect}
+            <select
+               onChange={(e) => handleSelect(e.target.value)}
                value={value}
-               style={{ width: '100%' }}
+               className="dropdown"
             >
                {options.map((option) => (
-                  <Select.Option key={option} value={option}>
+                  <option key={option} value={option}>
                      {option}
-                  </Select.Option>
+                  </option>
                ))}
-            </Select>
+            </select>
          </div>
       </div>
    );
