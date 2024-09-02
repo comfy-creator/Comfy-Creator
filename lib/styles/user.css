@@ -211,7 +211,6 @@ body {
 }
 
 .widget_box {
-    height: 16px;
     width: 100%;
     display: flex;
     align-items: center;
@@ -227,13 +226,14 @@ body {
     justify-content: space-between;
     background: var(--comfy-input-bg);
     border: 1px solid var(--border-color);
+    margin-top: 5px;
 }
 
 .widget_input_item {
     gap: 4px;
     display: flex;
     color: #b2b2b2;
-    margin: 2px 5px;
+    margin: 0px 5px;
     font-size: 0.6rem;
     align-items: center;
 }
@@ -366,4 +366,33 @@ button.comfy-settings-btn {
     border-radius: 5px;
     background-color: #2e2e2e;
     border: 2px solid #b2b2b2;
+}
+
+.files {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    max-width: 420px;
+}
+
+.file {
+    max-width: 200px;
+    position: relative;
+}
+
+.file_remove_icon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.5rem;
+    padding: 3px;
+    color: #b2b2b2;
+    cursor: pointer;
+    margin: 3px !important;
+    border-radius: 7px;
+    background-color: var(--fg-color);
+    transition: all ease 0.5s;
 }

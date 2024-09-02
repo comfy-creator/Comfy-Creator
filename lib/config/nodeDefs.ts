@@ -131,7 +131,7 @@ export const FeatureExtractor: NodeDefinition = {
          edge_type: 'IMAGE'
       },
       feature: {
-         display_name: 'feature type',
+         display_name: 'feature',
          edge_type: 'ENUM',
          widget: {
             type: 'DROPDOWN',

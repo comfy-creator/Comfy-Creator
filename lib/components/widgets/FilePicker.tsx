@@ -1,7 +1,6 @@
 import { ChangeEvent, useRef, useState, useEffect } from 'react';
 import { Modal } from 'antd';
-import { ChevronLeft } from '../icons/ChevronLeft';
-import { ChevronLeftIcon, ChevronRightIcon } from '@radix-ui/react-icons';
+import { ChevronLeftIcon, ChevronRightIcon, Cross1Icon } from '@radix-ui/react-icons';
 
 export type FileProps = {
    kind?: string;
@@ -62,11 +61,26 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
       }
    };
 
+   const removeFile = (url: string) => {
+      const files = selectedFiles.filter((file) => file !== url);
+      setSelectedFiles(files);
+      onChange?.(multiple ? files : files[0] ? files[0] : '');
+   };
+
    return (
       <>
-         <div className="">
+         <div className="files">
             {selectedFiles.map((url) => (
-               <div>
+               <div className="file">
+                  <p onClick={() => removeFile(url)} className="file_remove_icon">
+                     <Cross1Icon
+                        className="icon"
+                        style={{
+                           color: 'black',
+                           margin: '0'
+                        }}
+                     />
+                  </p>
                   <img
                      src={url}
                      alt="preview"

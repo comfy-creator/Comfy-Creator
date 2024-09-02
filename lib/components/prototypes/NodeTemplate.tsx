@@ -9,7 +9,6 @@ import {
    EdgeType,
    WidgetDefinition
 } from '../../types/types';
-import { toast } from 'react-toastify';
 import {
    Handle,
    NodeProps,
@@ -26,11 +25,8 @@ import { ImageWidget } from '../widgets/Image';
 import { TextWidget } from '../widgets/Text';
 import { useSettingsStore } from '../../store/settings';
 import { useFlowStore } from '../../store/flow';
-import { ProgressBar } from '../ProgressBar';
 import {
    isDisplayType,
-   isMultilineStringInput,
-   isWidgetType,
    makeHandleId
 } from '../../utils/node';
 import { FilePickerWidget, FileProps } from '../widgets/FilePicker';
@@ -52,6 +48,7 @@ const createWidgetFromSpec = (
    if (data.widget) {
       switch (data.widget.type) {
          case 'TOGGLE':
+            console.log('In data widget', data)
             return (
                <ToggleWidget
                   {...commonProps}
@@ -108,10 +105,11 @@ const createWidgetFromSpec = (
    // If no widget is defined, use the default widget for this edge_type, if one exists
    switch (data.edge_type) {
       case 'BOOLEAN':
+         console.log('In data edge type')
          return (
             <ToggleWidget
                {...commonProps}
-               checked={(data.value as boolean) || false}
+               checked={(data.value as boolean) || true}
                disabled={data.isDisabled}
                onChange={(checked: boolean) => updateInputData?.({ ...updateData, value: checked })}
             />
@@ -141,7 +139,7 @@ const createWidgetFromSpec = (
                {...commonProps}
                value={data.value as string}
                onChange={(value: string) => updateInputData?.({ ...updateData, value })}
-               options={{ values: [] }}
+               options={[]}
                disabled={data.isDisabled}
             />
          );
@@ -436,7 +434,7 @@ function WidgetHandle({ nodeId, data, theme }: WidgetHandleProps) {
       : { border: `1.5px solid ${appearance[data.edge_type]}`, background: 'transparent' };
 
    return (
-      <div style={{ display: 'flex', alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginTop: '5px' }}>
          <Handle
             type="target"
             position={Position.Left}
