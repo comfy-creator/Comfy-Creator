@@ -25,12 +25,10 @@ import { ImageWidget } from '../widgets/Image';
 import { TextWidget } from '../widgets/Text';
 import { useSettingsStore } from '../../store/settings';
 import { useFlowStore } from '../../store/flow';
-import {
-   isDisplayType,
-   makeHandleId
-} from '../../utils/node';
+import { isDisplayType, makeHandleId } from '../../utils/node';
 import { FilePickerWidget, FileProps } from '../widgets/FilePicker';
 import { TRANSFORM_POINT } from '../../config/constants';
+import { Card, CardHeader, CardBody, CardFooter, Divider, Link, Image } from '@nextui-org/react';
 
 const createWidgetFromSpec = (
    def: HandleState,
@@ -48,7 +46,7 @@ const createWidgetFromSpec = (
    if (data.widget) {
       switch (data.widget.type) {
          case 'TOGGLE':
-            console.log('In data widget', data)
+            console.log('In data widget', data);
             return (
                <ToggleWidget
                   {...commonProps}
@@ -105,7 +103,7 @@ const createWidgetFromSpec = (
    // If no widget is defined, use the default widget for this edge_type, if one exists
    switch (data.edge_type) {
       case 'BOOLEAN':
-         console.log('In data edge type')
+         console.log('In data edge type');
          return (
             <ToggleWidget
                {...commonProps}
@@ -311,6 +309,29 @@ export const createNodeComponentFromDef = (
          }
       }, [containerRef]);
 
+      const images = data.inputs?.file?.value as string[];
+
+      useEffect(() => {
+         const isImage = isDisplayImage(data);
+
+         if (isImage && images && Array.isArray(images) && images.length > 1) {
+            console.log('Changing dimensions>>>')
+            if ((nodeHeight || 0) > 420) {
+               return;
+            }
+            onNodesChange([
+               {
+                  type: 'dimensions',
+                  id,
+                  dimensions: {
+                     width: 420,
+                     height: nodeHeight!
+                  }
+               }
+            ]);
+         }
+      }, [images]);
+
       return (
          <>
             <NodeResizeControl
@@ -326,44 +347,55 @@ export const createNodeComponentFromDef = (
                   setIsResizing(false);
                }}
             />
-            <div
+            <Card
                style={{ fontSize: NODE_TEXT_SIZE, color: NODE_TEXT_COLOR }}
-               className="node_container"
+               className="flex-col"
                ref={nodeContainerRef}
                onDoubleClickCapture={(e) => e.stopPropagation()}
             >
-               <div className="node_label_container">
-                  <span
-                     className="node_label"
-                     style={{ ...getTransformStyle(zoomSelector), color: NODE_TITLE_COLOR }}
+               <CardHeader className="flex gap-3">
+                  <p
+                     className="!text-[11px]"
+                     style={{
+                        // ...getTransformStyle(zoomSelector),
+                        color: NODE_TITLE_COLOR
+                     }}
                   >
                      {typeof nodeDef.display_name === 'string'
                         ? nodeDef.display_name
                         : nodeDef.display_name.en}
-                  </span>
-               </div>
+                  </p>
+               </CardHeader>
 
-               {advanced ? (
-                  <>
-                     <div>Advanced options</div>
-                  </>
-               ) : (
-                  <>
-                     <div className="flow_content" ref={containerRef}>
-                        <div className="flow_input_output_container">
-                           <div className="flow_input_container">{inputHandles}</div>
-                           <div className="flow_output_container">{outputHandles}</div>
+               <Divider />
+
+               <CardBody>
+                  {advanced ? (
+                     <>
+                        <div>Advanced options</div>
+                     </>
+                  ) : (
+                     <>
+                        <div className="flow_content" ref={containerRef}>
+                           <div className="flow_input_output_container">
+                              <div className="flow_input_container">{inputHandles}</div>
+                              <div className="flow_output_container">{outputHandles}</div>
+                           </div>
+
+                           <div className="widgets_container">{inputWidgets}</div>
+                           <div className="widgets_container">{displayWidgets}</div>
                         </div>
-
-                        <div className="widgets_container">{inputWidgets}</div>
-                        <div className="widgets_container">{displayWidgets}</div>
-                     </div>
-                  </>
-               )}
-            </div>
+                     </>
+                  )}
+               </CardBody>
+            </Card>
          </>
       );
    };
+};
+
+const isDisplayImage = (data: NodeData) => {
+   return Object.values(data.inputs).some((input) => input['display_name'] === 'file');
 };
 
 interface InputHandleProps {

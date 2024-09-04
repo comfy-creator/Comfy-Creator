@@ -1,6 +1,7 @@
 import { ChangeEvent, useRef, useState, useEffect } from 'react';
 import { Modal } from 'antd';
 import { ChevronLeftIcon, ChevronRightIcon, Cross1Icon } from '@radix-ui/react-icons';
+import { Button } from '@nextui-org/react';
 
 export type FileProps = {
    kind?: string;
@@ -112,9 +113,14 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
             style={{ display: 'none' }}
          />
 
-         <button className="comfy-btn" onClick={handleButtonClick} style={{ width: '100%' }}>
+         <Button
+            variant="bordered"
+            className="!h-[25px] mt-2 !text-[12px] text-white bg-black/50 border-borderColor"
+            onClick={handleButtonClick}
+            style={{ width: '100%' }}
+         >
             Choose {kind}
-         </button>
+         </Button>
 
          <Modal
             open={isModalOpen}

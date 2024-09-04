@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { RFState, useFlowStore } from '../../store/flow';
+import { Textarea } from '@nextui-org/react';
 
 type TextProps = {
    label: string;
@@ -19,11 +20,15 @@ export function TextWidget({ disabled, value, onChange }: TextProps) {
    const [inputValue, setInputValue] = useState(value);
 
    return (
-      <textarea
+      <Textarea
          rows={4}
          value={inputValue}
          disabled={disabled}
-         className="comfy-multiline-input"
+         className="mt-2"
+         classNames={{
+            inputWrapper: '!bg-bg !text-fg focus:!bg-bg hover:!bg-bg',
+            input: '!text-fg focus:!bg-bg !bg-bg hover:!bg-bg !text-[10px]'
+         }}
          style={{ width: '100%', borderRadius: '4px' }}
          onChange={(e) => {
             setInputValue(e.target.value);

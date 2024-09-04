@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { WidgetBackwardIcon, WidgetForwardIcon } from '../icons/WidgetDirectionIcon';
-import { Select } from 'antd';
+import { Select, SelectItem } from '@nextui-org/react';
 
 type EnumProps = {
    label: string;
@@ -23,19 +23,48 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
    const disabledClass = disabled ? 'widget_input_item_disabled' : '';
    console.log('options', options);
    return (
-      <div className="widget_box">
-         <div className="widget_input">
-            <select
+      <div className="">
+         <div className="">
+            <Select
+               placeholder="Select an option"
                onChange={(e) => handleSelect(e.target.value)}
                value={value}
-               className="dropdown"
+               className="mt-3"
+               classNames={{
+                  label: 'group-data-[filled=true]:-translate-y-5',
+                  trigger: '!min-h-[27px] !h-[20px] w-full !text-[10px] text-fg bg-bg hover:!bg-bg',
+                  listboxWrapper: 'max-h-[400px]',
+                  innerWrapper: '!h-[20px] text-fg',
+                  value: '!text-fg !text-[10px]'
+               }}
+               listboxProps={{
+                  itemClasses: {
+                     base: [
+                        'rounded-md',
+                        'text-default-500',
+                        'transition-opacity',
+                        'data-[hover=true]:text-fg',
+                        'data-[hover=true]:bg-default-100',
+                        'dark:data-[hover=true]:bg-default-50',
+                        'data-[selectable=true]:focus:bg-default-50',
+                        'data-[pressed=true]:opacity-70',
+                        'data-[focus-visible=true]:ring-default-500'
+                     ]
+                  }
+               }}
+               popoverProps={{
+                  classNames: {
+                     base: 'before:bg-default-200',
+                     content: 'p-0 border-small border-divider bg-bg text-fg'
+                  }
+               }}
             >
                {options.map((option) => (
-                  <option key={option} value={option}>
+                  <SelectItem key={option} value={option}>
                      {option}
-                  </option>
+                  </SelectItem>
                ))}
-            </select>
+            </Select>
          </div>
       </div>
    );
