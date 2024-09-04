@@ -1,4 +1,4 @@
-import React, { ComponentType, ReactNode, useEffect, useRef, useState } from 'react';
+import React, { ComponentType, ReactNode, useEffect, useRef, useState, useCallback } from 'react';
 import {
    AppNode,
    HandleState,
@@ -154,13 +154,17 @@ export const createNodeComponentFromDef = (
    nodeDef: NodeDefinition,
    updateInputData: UpdateInputData
 ): ComponentType<NodeProps<AppNode>> => {
-   return ({ id, data, selected }: NodeProps<AppNode>) => {
+   return ({ id, data, selected, width: nodeWidth, height: nodeHeight }: NodeProps<AppNode>) => {
+      const { onNodesChange } = useFlowStore((state) => state);
+
       const nodeRef = useRef<HTMLDivElement | null>(null);
       const containerRef = useRef<HTMLDivElement>(null);
+      const nodeContainerRef = useRef<HTMLDivElement>(null);
 
       const [advanced] = useState(false);
       const [minWidth, setMinWidth] = useState(0);
       const [minHeight, setMinHeight] = useState(0);
+      const [isResizing, setIsResizing] = useState(false);
 
       const { getActiveTheme, activeTheme } = useSettingsStore();
       const { executions } = useFlowStore();
@@ -186,13 +190,13 @@ export const createNodeComponentFromDef = (
 
       useEffect(() => {
          if (!nodeRef.current) return;
-         if (!containerRef.current) return;
+         if (!nodeContainerRef.current) return;
 
          const { getActiveTheme } = useSettingsStore.getState();
          const appearance = getActiveTheme().colors.appearance;
 
-         containerRef.current.style.backgroundColor = appearance.NODE_BG_COLOR;
-         containerRef.current.style.color = appearance.NODE_TEXT_COLOR;
+         nodeContainerRef.current.style.backgroundColor = appearance.NODE_BG_COLOR;
+         nodeContainerRef.current.style.color = appearance.NODE_TEXT_COLOR;
       }, [activeTheme]);
 
       useEffect(() => {
@@ -255,6 +259,58 @@ export const createNodeComponentFromDef = (
          <OutputHandle nodeId={id} key={name} theme={theme} handle={handle} />
       ));
 
+      const updateMinHeight = useCallback(async () => {
+         if (containerRef.current) {
+            await new Promise((resolve) => {
+               setTimeout(() => {
+                  resolve(null);
+               }, 100);
+            });
+            if (!containerRef.current) {
+               return;
+            }
+            const height = containerRef.current.offsetHeight + 50;
+            const width = containerRef.current.offsetWidth;
+
+            if (!nodeHeight || nodeHeight < height) {
+               onNodesChange([
+                  {
+                     type: 'dimensions',
+                     id,
+                     dimensions: {
+                        width: !!nodeWidth ? nodeWidth : width,
+                        height
+                     }
+                  }
+               ]);
+            }
+            setMinHeight(height);
+         }
+      }, [setMinHeight, id]);
+
+      useEffect(() => {
+         updateMinHeight();
+
+         if (containerRef.current) {
+            const resizeObserver = new ResizeObserver((entries) => {
+               entries.forEach((entry) => {
+                  if (entry.target === containerRef.current && !isResizing) {
+                     updateMinHeight();
+                  }
+               });
+            });
+
+            resizeObserver.observe(containerRef.current);
+
+            // Cleanup
+            return () => {
+               if (resizeObserver && containerRef.current) {
+                  resizeObserver.unobserve(containerRef.current);
+               }
+            };
+         }
+      }, [containerRef]);
+
       return (
          <>
             <NodeResizeControl
@@ -263,11 +319,17 @@ export const createNodeComponentFromDef = (
                position="bottom-right"
                minWidth={minWidth}
                minHeight={minHeight}
+               onResizeStart={() => {
+                  setIsResizing(true);
+               }}
+               onResizeEnd={() => {
+                  setIsResizing(false);
+               }}
             />
             <div
                style={{ fontSize: NODE_TEXT_SIZE, color: NODE_TEXT_COLOR }}
                className="node_container"
-               ref={containerRef}
+               ref={nodeContainerRef}
                onDoubleClickCapture={(e) => e.stopPropagation()}
             >
                <div className="node_label_container">
@@ -287,7 +349,7 @@ export const createNodeComponentFromDef = (
                   </>
                ) : (
                   <>
-                     <div className="flow_content">
+                     <div className="flow_content" ref={containerRef}>
                         <div className="flow_input_output_container">
                            <div className="flow_input_container">{inputHandles}</div>
                            <div className="flow_output_container">{outputHandles}</div>
