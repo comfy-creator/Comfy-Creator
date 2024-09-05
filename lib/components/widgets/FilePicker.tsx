@@ -79,6 +79,15 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
 
    return (
       <>
+         <p className={`text-[9px] mt-[6px]`}>images</p>
+         <Button
+            variant="bordered"
+            className="!h-[25px] mt-1 mb-2 !text-[12px] text-dragText bg-bg border-borderColor"
+            onClick={handleButtonClick}
+            style={{ width: '100%' }}
+         >
+            Choose {kind}
+         </Button>
          <div className="files no_scrollbar" onWheelCapture={(e) => e.stopPropagation()}>
             {selectedFiles.map(({ url }, index) => (
                <div className="file">
@@ -112,15 +121,6 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
             onChange={handleFileChange}
             style={{ display: 'none' }}
          />
-
-         <Button
-            variant="bordered"
-            className="!h-[25px] mt-2 !text-[12px] text-white bg-black/50 border-borderColor"
-            onClick={handleButtonClick}
-            style={{ width: '100%' }}
-         >
-            Choose {kind}
-         </Button>
 
          <Modal
             open={isModalOpen}

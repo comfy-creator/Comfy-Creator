@@ -29,7 +29,7 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
                placeholder="Select an option"
                onChange={(e) => handleSelect(e.target.value)}
                value={value}
-               className="mt-[3px]"
+               className="mt-[6px]"
                classNames={{
                   label: 'group-data-[filled=true]:-translate-y-5',
                   trigger:

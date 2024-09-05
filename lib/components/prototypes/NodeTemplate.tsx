@@ -315,7 +315,7 @@ export const createNodeComponentFromDef = (
          const isImage = isDisplayImage(data);
 
          if (isImage && images && Array.isArray(images) && images.length > 1) {
-            console.log('Changing dimensions>>>')
+            console.log('Changing dimensions>>>');
             if ((nodeHeight || 0) > 420) {
                return;
             }
@@ -349,7 +349,7 @@ export const createNodeComponentFromDef = (
             />
             <Card
                style={{ fontSize: NODE_TEXT_SIZE, color: NODE_TEXT_COLOR }}
-               className="flex-col rounded-lg"
+               className="flex-col rounded-lg bg-trOddBgColor"
                ref={nodeContainerRef}
                onDoubleClickCapture={(e) => e.stopPropagation()}
             >

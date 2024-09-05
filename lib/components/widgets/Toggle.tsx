@@ -26,7 +26,7 @@ export const ToggleWidget: FC<ToggleProps> = ({ label, disabled, checked, onChan
 
    return (
       <div
-         className="widget_box"
+         className="widget_box mt-[4px]"
          style={{
             alignItems: 'center',
             cursor: 'pointer',
