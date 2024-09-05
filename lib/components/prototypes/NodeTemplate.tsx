@@ -349,13 +349,13 @@ export const createNodeComponentFromDef = (
             />
             <Card
                style={{ fontSize: NODE_TEXT_SIZE, color: NODE_TEXT_COLOR }}
-               className="flex-col"
+               className="flex-col rounded-lg"
                ref={nodeContainerRef}
                onDoubleClickCapture={(e) => e.stopPropagation()}
             >
-               <CardHeader className="flex gap-3">
+               <CardHeader className="flex gap-3 p-2 !py-2">
                   <p
-                     className="!text-[11px]"
+                     className="!text-[10px]"
                      style={{
                         // ...getTransformStyle(zoomSelector),
                         color: NODE_TITLE_COLOR
@@ -367,7 +367,7 @@ export const createNodeComponentFromDef = (
                   </p>
                </CardHeader>
 
-               <Divider />
+               <Divider className="bg-bg" />
 
                <CardBody>
                   {advanced ? (
@@ -376,14 +376,18 @@ export const createNodeComponentFromDef = (
                      </>
                   ) : (
                      <>
-                        <div className="flow_content" ref={containerRef}>
-                           <div className="flow_input_output_container">
-                              <div className="flow_input_container">{inputHandles}</div>
-                              <div className="flow_output_container">{outputHandles}</div>
+                        <div className="p-2" ref={containerRef}>
+                           <div className="flex mb-[3px] items-start justify-between">
+                              <div className="flex flex-col items-start justify-start gap-[3px]">
+                                 {inputHandles}
+                              </div>
+                              <div className="flex flex-col items-end justify-end gap-[3px]">
+                                 {outputHandles}
+                              </div>
                            </div>
 
-                           <div className="widgets_container">{inputWidgets}</div>
-                           <div className="widgets_container">{displayWidgets}</div>
+                           <div className="w-full">{inputWidgets}</div>
+                           <div className="w-full">{displayWidgets}</div>
                         </div>
                      </>
                   )}
@@ -498,12 +502,12 @@ function Widget({ theme, nodeId, data, nodeDef, updateInputData }: WidgetProps) 
    };
 
    const isMultiline = (inputDef.widget as WidgetDefinition)?.type === 'TEXT';
-   const containerStyle = !isMultiline ? { display: 'flex', alignItems: 'center' } : {};
+   const containerStyle = !isMultiline ? { display: 'flex', alignItems: 'start' } : {};
 
    return showWidget ? (
       <div className="widget_container" style={{ ...containerStyle }}>
          <WidgetHandle nodeId={nodeId} data={data} theme={theme} />
-         <div style={{ marginLeft: isMultiline ? '0px' : '10px', width: '100%' }}>
+         <div style={{ marginLeft: isMultiline ? '0px' : '5px', width: '100%' }}>
             {createWidgetFromSpec(inputDef, data.display_name, data, update)}
          </div>
       </div>
@@ -528,7 +532,7 @@ function WidgetHandle({ nodeId, data, theme }: WidgetHandleProps) {
       : { border: `1.5px solid ${appearance[data.edge_type]}`, background: 'transparent' };
 
    return (
-      <div style={{ display: 'flex', alignItems: 'center', marginTop: '5px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginTop: '12.5px' }}>
          <Handle
             type="target"
             position={Position.Left}

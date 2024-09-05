@@ -26,8 +26,8 @@ export function TextWidget({ disabled, value, onChange }: TextProps) {
          disabled={disabled}
          className="mt-2"
          classNames={{
-            inputWrapper: '!bg-bg !text-fg focus:!bg-bg hover:!bg-bg',
-            input: '!text-fg focus:!bg-bg !bg-bg hover:!bg-bg !text-[10px]'
+            inputWrapper: '!bg-bg !rounded-lg !text-dragText focus:!bg-bg hover:!bg-bg',
+            input: '!text-dragText  focus:!bg-bg !bg-bg hover:!bg-bg !text-[10px]'
          }}
          style={{ width: '100%', borderRadius: '4px' }}
          onChange={(e) => {

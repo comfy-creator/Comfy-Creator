@@ -1,5 +1,7 @@
 /* Put custom styles here */
 
+
+
 body {
     font-family: Arial, sans-serif !important;
 }
@@ -153,14 +155,14 @@ body {
 
 .flow_output_text {
     color: var(--drag-text);
-    margin-right: 10px;
+    margin-right: 5px;
     font-size: 0.6rem;
     transform: none !important;
 }
 
 .flow_input_text {
     color: var(--drag-text);
-    margin-left: 10px;
+    margin-left: 5px;
     font-size: 0.6rem;
     transform: none !important;
 }
@@ -171,11 +173,11 @@ body {
 
 .flow_handler {
     top: unset !important;
-    width: 5px !important;
-    height: 5px !important;
+    width: 7px !important;
+    height: 7px !important;
     padding: 1px !important;
-    min-width: 5px !important;
-    min-height: 5px !important;
+    min-width: 7px !important;
+    min-height: 7px !important;
     transform: none !important;
     border-radius: 50% !important;
 }
@@ -183,6 +185,7 @@ body {
 .flow_handler.right {
     margin-right: 5px;
     right: 5px !important;
+   
 }
 
 .flow_handler.left {
@@ -215,6 +218,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-top: 3px;
 }
 
 .widget_input {

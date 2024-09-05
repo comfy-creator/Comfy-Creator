@@ -29,13 +29,14 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
                placeholder="Select an option"
                onChange={(e) => handleSelect(e.target.value)}
                value={value}
-               className="mt-3"
+               className="mt-[3px]"
                classNames={{
                   label: 'group-data-[filled=true]:-translate-y-5',
-                  trigger: '!min-h-[27px] !h-[20px] w-full !text-[10px] text-fg bg-bg hover:!bg-bg',
+                  trigger:
+                     '!min-h-[27px] !h-[20px] w-full !text-[10px] !text-dragText bg-bg hover:!bg-bg',
                   listboxWrapper: 'max-h-[400px]',
-                  innerWrapper: '!h-[20px] text-fg',
-                  value: '!text-fg !text-[10px]'
+                  innerWrapper: '!h-[20px] !text-dragText',
+                  value: '!text-dragText !text-[10px]'
                }}
                listboxProps={{
                   itemClasses: {
