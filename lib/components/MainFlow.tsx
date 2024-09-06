@@ -76,6 +76,8 @@ const selector = (state: RFState) => ({
    addNodeDefComponent: state.addNodeDefComponent
 });
 
+import { Edge as EdgeType } from '@xyflow/react';
+
 export function MainFlow() {
    const {
       panOnDrag,
@@ -133,21 +135,6 @@ export function MainFlow() {
       });
    }, [appConfig.serverUrl, appConfig.server]);
 
-   // useEffect(() => {
-   //   if (!execution.output) return;
-
-   //   const node = nodes.find((node) => node.id === execution.currentNodeId);
-   //   if (node?.id !== execution.currentNodeId) return;
-   //   const { images } = execution.output;
-
-   //   const fileView = API_URL.VIEW_FILE({ ...images?.[0] });
-   //   updateInputData({
-   //     name: 'image',
-   //     nodeId: node.id,
-   //     data: { value: makeServerURL(fileView) }
-   //   });
-   // }, [execution, nodes, updateInputData, makeServerURL]);
-
    useEffect(() => {
       const { addThemes } = useSettingsStore.getState();
 
@@ -162,35 +149,6 @@ export function MainFlow() {
       registerEdgeType(HANDLE_TYPES);
    }, []);
 
-   // useEffect(() => {
-   //    (async () => {
-   //       DB.getItem()
-   //       const graphs = [] as IGraphData[];
-
-   //       if (graphs.length > 0) {
-   //          const newGraphs = graphs.map((graph) => {
-   //             return {
-   //                ...graph,
-   //                nodes: graph.nodes.filter(Boolean),
-   //                edges: graph.edges.filter(Boolean)
-   //             };
-   //          });
-
-   //          clearTimeout(debounceTimer?.current ?? '');
-   //          debounceTimer.current = setTimeout(() => {
-   //             saveSerializedGraph(newGraphs);
-   //          }, SAVE_GRAPH_DEBOUNCE);
-   //       }
-   //    })();
-
-   //    // Clean up function
-   //    return () => {
-   //       clearTimeout(debounceTimer?.current ?? '');
-   //    };
-   // }, []);
-
-   // TO DO: open the context menu if you dragged out an edge and didn't connect it,
-   // so we can auto-spawn a compatible node for that edge
    const onConnectEnd = useCallback(
       handleOnConnectEnd({
          nodeDefs,
@@ -235,8 +193,6 @@ export function MainFlow() {
       [hotKeysHandlers]
    );
 
-   // TO DO: this is aggressive; do not change zoom levels. We do not need to have
-   // all nodes on screen at once; we merely do not want to leave too far out
    const onMoveEnd = useCallback(
       (_: MouseEvent | globalThis.TouchEvent | null) => {
          const bounds = getNodesBounds(nodes);
@@ -286,6 +242,22 @@ export function MainFlow() {
    );
 
    const { onNodeDrag, onMouseUp } = useDragNode();
+
+   const onEdgeClick = useCallback(
+      (evt: React.MouseEvent, edge: EdgeType) => {
+         evt.stopPropagation();
+         setEdges((prevEdges) => prevEdges.filter((e) => e.id !== edge.id));
+         setNodes((prevNodes) => {
+            return prevNodes.map((node) => {
+               if (node.id === edge.source || node.id === edge.target) {
+                  return { ...node, isConnected: false };
+               }
+               return node;
+            });
+         });
+      },
+      [setEdges, setNodes]
+   );
 
    return (
       <ReactFlow
@@ -350,6 +322,7 @@ export function MainFlow() {
          connectionLineComponent={ConnectionLine}
          connectionLineType={ConnectionLineType.Bezier}
          onPaneContextMenu={onContextMenu}
+         onEdgeClick={onEdgeClick}
       >
          <ReactHotkeys keyName={hotKeysShortcut.join(',')} onKeyDown={handleKeyPress}>
             <Background color={'var(--tr-odd-bg-color)'} variant={BackgroundVariant.Lines} />

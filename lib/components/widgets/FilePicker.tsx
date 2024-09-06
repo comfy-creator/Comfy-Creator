@@ -2,6 +2,7 @@ import { ChangeEvent, useRef, useState, useEffect } from 'react';
 import { Modal } from 'antd';
 import { ChevronLeftIcon, ChevronRightIcon, Cross1Icon } from '@radix-ui/react-icons';
 import { Button } from '@nextui-org/react';
+import { useApiContext } from '../../contexts/api';
 
 export type FileProps = {
    kind?: string;
@@ -19,6 +20,7 @@ const imageToBASE64 = (file: File) =>
    });
 
 export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: FileProps) {
+   const {uploadFile} = useApiContext()
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [selectedImage, setSelectedImage] = useState<string | null>(null);
    const fileRef = useRef<HTMLInputElement>(null);
@@ -40,7 +42,7 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
          const files = selectedFiles;
          for (let i = 0; i < e.target.files.length; i++) {
             if (files.map((f) => f.name).includes(e.target.files[i].name)) continue;
-            const res = await imageToBASE64(e.target.files[i]);
+            const res = await handleUpload(e.target.files[i]);
             files.push({ name: e.target.files[i].name, url: res });
          }
          multiple ? setSelectedFiles(files) : setSelectedFiles([files[files.length - 1]]);
@@ -77,9 +79,30 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
       onChange?.(onChangeFiles);
    };
 
+   async function handleUpload(file: File) {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+         const response = await uploadFile(formData)
+
+         if (response) {
+            console.log('File uploaded successfully');
+            return response.url;
+            // Handle the response here
+         } else {
+            console.log('Failed to upload file');
+            // Handle the error here
+         }
+      } catch (error) {
+         console.log('Error occurred while uploading file:', error);
+         // Handle the error here
+      }
+   }
+
    return (
       <>
-         <p className={`text-[9px] mt-[6px]`}>images</p>
+         <p className={`text-[9px] mt-[5px]`}>images</p>
          <Button
             variant="bordered"
             className="!h-[25px] mt-1 mb-2 !text-[12px] text-dragText bg-bg border-borderColor"
@@ -88,16 +111,17 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
          >
             Choose {kind}
          </Button>
-         <div className="files no_scrollbar" onWheelCapture={(e) => e.stopPropagation()}>
+         <div className="files no_scrollbar overflow-y-auto" onWheelCapture={(e) => e.stopPropagation()}>
             {selectedFiles.map(({ url }, index) => (
                <div className="file">
-                  <p onClick={() => removeFile(index)} className="file_remove_icon">
+                  <p onClick={() => removeFile(index)}
+                     className="absolute top-2 right-2 bg-white w-[20px] h-[20px] rounded-full flex items-center justify-center p-1">
                      <Cross1Icon
                         className="icon"
                         style={{
                            color: 'black',
                            margin: '0',
-                           fontSize: '4.5rem'
+                           fontSize: '4rem'
                         }}
                      />
                   </p>
@@ -155,7 +179,8 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
                         className="icon"
                         style={{
                            color: 'black',
-                           margin: '0'
+                           margin: '0',
+                           
                         }}
                      />
                   </p>

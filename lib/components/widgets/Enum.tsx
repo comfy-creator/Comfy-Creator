@@ -23,13 +23,34 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
    const disabledClass = disabled ? 'widget_input_item_disabled' : '';
    console.log('options', options);
    return (
-      <div className="">
-         <div className="">
+      <div
+         style={{
+            alignItems: 'center',
+            cursor: 'pointer',
+            position: 'relative',
+            top: '2px',
+            opacity: disabled ? 0.5 : 1,
+            width: '100%'
+         }}
+         className="widget_box mt-[4px]"
+      >
+         <div
+            className="widget_input_item"
+            style={{
+               alignItems: 'start',
+               cursor: 'pointer',
+               marginLeft: 0,
+               flexDirection: 'column',
+               justifyContent: 'center !important',
+               gap: '0px !important',
+               width: '100%'
+            }}
+         >
+            <p className={`widget_input_item_text ${disabledClass}`}>{label}</p>
             <Select
-               placeholder="Select an option"
+               placeholder="Select a feature"
                onChange={(e) => handleSelect(e.target.value)}
                value={value}
-               className="mt-[6px]"
                classNames={{
                   label: 'group-data-[filled=true]:-translate-y-5',
                   trigger:

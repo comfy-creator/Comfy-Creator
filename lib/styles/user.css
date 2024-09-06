@@ -173,11 +173,11 @@ body {
 
 .flow_handler {
     top: unset !important;
-    width: 7px !important;
-    height: 7px !important;
+    width: 9px !important;
+    height: 9px !important;
     padding: 1px !important;
-    min-width: 7px !important;
-    min-height: 7px !important;
+    min-width: 9px !important;
+    min-height: 9px !important;
     transform: none !important;
     border-radius: 50% !important;
 }

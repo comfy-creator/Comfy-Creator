@@ -267,22 +267,33 @@ export const createNodeComponentFromDef = (
             if (!containerRef.current) {
                return;
             }
-            const height = containerRef.current.offsetHeight + 50;
+            const height = containerRef.current.offsetHeight + 70;
             const width = containerRef.current.offsetWidth;
 
-            if (!nodeHeight || nodeHeight < height) {
-               onNodesChange([
-                  {
-                     type: 'dimensions',
-                     id,
-                     dimensions: {
-                        width: !!nodeWidth ? nodeWidth : width,
-                        height
-                     }
-                  }
-               ]);
-            }
+            // if (!nodeHeight || nodeHeight < height) {
+            //    setMinHeight(height);
+            //    onNodesChange([
+            //       {
+            //          type: 'dimensions',
+            //          id,
+            //          dimensions: {
+            //             width: !!nodeWidth ? nodeWidth : width,
+            //             height
+            //          }
+            //       }
+            //    ]);
+            // }
             setMinHeight(height);
+            onNodesChange([
+               {
+                  type: 'dimensions',
+                  id,
+                  dimensions: {
+                     width: !!nodeWidth ? nodeWidth : width,
+                     height
+                  }
+               }
+            ]);
          }
       }, [setMinHeight, id]);
 
@@ -349,7 +360,7 @@ export const createNodeComponentFromDef = (
             />
             <Card
                style={{ fontSize: NODE_TEXT_SIZE, color: NODE_TEXT_COLOR }}
-               className="flex-col rounded-lg bg-trOddBgColor"
+               className="flex-col rounded-lg bg-trOddBgColor !min-h-full"
                ref={nodeContainerRef}
                onDoubleClickCapture={(e) => e.stopPropagation()}
             >
@@ -386,8 +397,8 @@ export const createNodeComponentFromDef = (
                               </div>
                            </div>
 
-                           <div className="w-full">{inputWidgets}</div>
-                           <div className="w-full">{displayWidgets}</div>
+                           <div className="w-full !h-full">{inputWidgets}</div>
+                           <div className="w-full !h-full">{displayWidgets}</div>
                         </div>
                      </>
                   )}

@@ -49,19 +49,20 @@ export const NumberWidget: FC<NumberWidgetProps> = ({ label, disabled, value = 0
    const disabledClass = disabled ? 'widget_input_item_disabled' : '';
 
    return (
-      <div className="widget_box">
-         <div className="widget_input">
-            <div className="widget_input_item">
+      <div className="flex flex-col mt-[5px]">
+         <p className={`"widget_input_item_text text-[9px] ${disabledClass}`}>{label}</p>
+         <div className="p-1 px-3 w-full flex justify-between border items-center border-borderColor bg-bg rounded-full mt-[4px]">
+            <div className="flex items-center gap-1 text-[0.6rem]">
                <WidgetBackwardIcon disabled={disabled} onClick={handleClickBackward} />
                <span
-                  className={`widget_input_item_text ${disabledClass}`}
+                  className={`widget_input_item_text  ${disabledClass}`}
                   onClick={handleShowDialog}
                >
-                  {label}
+                  Value
                </span>
             </div>
 
-            <div className="widget_input_item">
+            <div className="flex items-center gap-1 text-[0.6rem]">
                <span
                   className={`widget_input_item_text ${disabledClass}`}
                   onClick={handleShowDialog}
