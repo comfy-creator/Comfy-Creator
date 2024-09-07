@@ -35,8 +35,8 @@ export const defaultNodes: Node<NodeData>[] = [
          width: '210px'
       },
       measured: {
-         width: 200,
-         height: 224
+         width: 176,
+         height: 161
       },
       selected: false,
       dragging: false,
@@ -73,8 +73,8 @@ export const defaultNodes: Node<NodeData>[] = [
          width: '210px'
       },
       measured: {
-         width: 200,
-         height: 152
+         width: 176,
+         height: 213
       },
       draggable: true,
       selected: false,
@@ -116,8 +116,8 @@ export const defaultNodes: Node<NodeData>[] = [
          width: '210px'
       },
       measured: {
-         width: 216,
-         height: 111
+         width: 176,
+         height: 155
       },
       selected: false,
       dragging: false,
@@ -157,8 +157,8 @@ export const defaultNodes: Node<NodeData>[] = [
          width: '210px'
       },
       measured: {
-         width: 200,
-         height: 83
+         width: 176,
+         height: 103
       },
       selected: false,
       dragging: false,
@@ -200,8 +200,8 @@ export const defaultNodes: Node<NodeData>[] = [
          width: '210px'
       },
       measured: {
-         width: 226,
-         height: 119
+         width: 176,
+         height: 155
       },
       selected: false,
       dragging: false,
@@ -268,8 +268,8 @@ export const defaultNodes: Node<NodeData>[] = [
          width: '210px'
       },
       measured: {
-         width: 237,
-         height: 153
+         width: 176,
+         height: 173
       },
       selected: false,
       dragging: false,
@@ -314,8 +314,8 @@ export const defaultNodes: Node<NodeData>[] = [
          width: '210px'
       },
       measured: {
-         width: 200,
-         height: 123
+         width: 176,
+         height: 153
       },
       selected: false,
       dragging: false,

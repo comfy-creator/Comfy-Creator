@@ -238,26 +238,10 @@ export function MainFlow() {
          updateInputData,
          setEdges
       }),
-      [edges]
+      [edges, setEdges, nodes]
    );
 
    const { onNodeDrag, onMouseUp } = useDragNode();
-
-   const onEdgeClick = useCallback(
-      (evt: React.MouseEvent, edge: EdgeType) => {
-         evt.stopPropagation();
-         setEdges((prevEdges) => prevEdges.filter((e) => e.id !== edge.id));
-         setNodes((prevNodes) => {
-            return prevNodes.map((node) => {
-               if (node.id === edge.source || node.id === edge.target) {
-                  return { ...node, isConnected: false };
-               }
-               return node;
-            });
-         });
-      },
-      [setEdges, setNodes]
-   );
 
    return (
       <ReactFlow
@@ -322,7 +306,7 @@ export function MainFlow() {
          connectionLineComponent={ConnectionLine}
          connectionLineType={ConnectionLineType.Bezier}
          onPaneContextMenu={onContextMenu}
-         onEdgeClick={onEdgeClick}
+         // onEdgeClick={onEdgeClick}
       >
          <ReactHotkeys keyName={hotKeysShortcut.join(',')} onKeyDown={handleKeyPress}>
             <Background color={'var(--tr-odd-bg-color)'} variant={BackgroundVariant.Lines} />

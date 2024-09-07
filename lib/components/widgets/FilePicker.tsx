@@ -20,7 +20,7 @@ const imageToBASE64 = (file: File) =>
    });
 
 export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: FileProps) {
-   const {uploadFile} = useApiContext()
+   const { uploadFile } = useApiContext();
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [selectedImage, setSelectedImage] = useState<string | null>(null);
    const fileRef = useRef<HTMLInputElement>(null);
@@ -84,7 +84,7 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
       formData.append('file', file);
 
       try {
-         const response = await uploadFile(formData)
+         const response = await uploadFile(formData);
 
          if (response) {
             console.log('File uploaded successfully');
@@ -111,15 +111,19 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
          >
             Choose {kind}
          </Button>
-         <div className="files no_scrollbar overflow-y-auto" onWheelCapture={(e) => e.stopPropagation()}>
+         <div
+            className="flex flex-wrap no_scrollbar overflow-y-auto gap-2 !max-h-fit !h-fit"
+            onWheelCapture={(e) => e.stopPropagation()}
+         >
             {selectedFiles.map(({ url }, index) => (
                <div className="file">
-                  <p onClick={() => removeFile(index)}
-                     className="absolute top-2 right-2 bg-white w-[20px] h-[20px] rounded-full flex items-center justify-center p-1">
+                  <p
+                     onClick={() => removeFile(index)}
+                     className="absolute top-1 right-1 hover:bg-red-500/60 w-[20px] h-[20px] rounded-full flex items-center cursor-pointer justify-center p-1 transition-all duration-300 "
+                  >
                      <Cross1Icon
-                        className="icon"
+                        className="icon text-black hover:text-white"
                         style={{
-                           color: 'black',
                            margin: '0',
                            fontSize: '4rem'
                         }}
@@ -169,18 +173,16 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
                >
                   <p
                      onClick={() => handleNavigation('prev')}
-                     className="menu_modal_items_button "
+                     className="menu_modal_items_button bg-white !p-1 rounded-full"
                      style={{
                         width: 'fit-content',
                         padding: '0'
                      }}
                   >
                      <ChevronLeftIcon
-                        className="icon"
                         style={{
                            color: 'black',
-                           margin: '0',
-                           
+                           margin: '0'
                         }}
                      />
                   </p>
@@ -193,14 +195,13 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
                   />
                   <p
                      onClick={() => handleNavigation('next')}
-                     className="menu_modal_items_button "
+                     className="menu_modal_items_button bg-white !p-1 rounded-full"
                      style={{
                         width: 'fit-content',
                         padding: '0'
                      }}
                   >
                      <ChevronRightIcon
-                        className="icon"
                         style={{
                            color: 'black',
                            margin: '0'
