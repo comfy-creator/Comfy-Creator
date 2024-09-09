@@ -28,7 +28,7 @@ type AutoQueueMode =
 
 const ControlPanel = () => {
    const { addSetting, show: showSettings } = useSettings();
-   const { nodeDefs } = useFlowStore((state) => ({ nodeDefs: state.nodeDefs }));
+   const { nodeDefs, appLoading } = useFlowStore((state) => state);
    const { submitWorkflow } = useWorkflow();
    const { loadSerializedGraph } = useGraph();
    const lastExecutionError = false;
@@ -292,8 +292,9 @@ const ControlPanel = () => {
                <Button
                   id="queue-button"
                   variant="bordered"
-                  className="!py-1 h-[35px]"
+                  className={`!py-1 h-[35px] ${appLoading ? 'opacity-50 !cursor-not-allowed' : ''}`}
                   onClick={submitWorkflow}
+                  disabled={appLoading}
                >
                   Run Graph
                </Button>

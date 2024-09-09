@@ -67,6 +67,8 @@ export interface IGraphSnapshot {
 }
 
 export type RFState = {
+   appLoading: boolean;
+   setAppLoading: (loading: boolean) => void;
    executions: ExecutionState[];
 
    setExecutionOutput: (executionId: string, output: Record<string, any>) => void;
@@ -189,6 +191,9 @@ export const useFlowStore = create<RFState>((set, get) => {
 
    // === Return the store object ===
    return {
+      appLoading: false,
+      setAppLoading: (loading) => set({ appLoading: loading }),
+
       panOnDrag: true,
       setPanOnDrag: (panOnDrag) => set({ panOnDrag }),
 
@@ -264,6 +269,7 @@ export const useFlowStore = create<RFState>((set, get) => {
                }
             } else {
                // Use the default changes `applyNodeChanges` prepared for us
+               // console.log('Applying node changes>>', change, nextNodes.find((n) => n.id === change.id)!);
                nodesMap.set(change.id, nextNodes.find((n) => n.id === change.id)!);
             }
          }

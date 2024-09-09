@@ -1,8 +1,11 @@
-import { ChangeEvent, useRef, useState, useEffect } from 'react';
+import { ChangeEvent, useRef, useState, useEffect, useCallback } from 'react';
 import { Modal } from 'antd';
 import { ChevronLeftIcon, ChevronRightIcon, Cross1Icon } from '@radix-ui/react-icons';
 import { Button } from '@nextui-org/react';
 import { useApiContext } from '../../contexts/api';
+import { API_URL } from '../../config/constants';
+import { useFlowStore } from '../../store/flow';
+import { ProgressBar } from '../ProgressBar';
 
 export type FileProps = {
    kind?: string;
@@ -20,11 +23,16 @@ const imageToBASE64 = (file: File) =>
    });
 
 export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: FileProps) {
-   const { uploadFile } = useApiContext();
+   const { uploadFile, makeServerURL } = useApiContext();
+   const { setAppLoading } = useFlowStore((state) => state);
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [selectedImage, setSelectedImage] = useState<string | null>(null);
    const fileRef = useRef<HTMLInputElement>(null);
    const [selectedFiles, setSelectedFiles] = useState<{ name: string; url: string }[]>([]);
+
+   const [numOfFilesToUpload, setNumOfFilesToUpload] = useState(0);
+   const [numOfFilesUploaded, setNumOfFilesUploaded] = useState(0);
+   const [uploadProgress, setUploadProgress] = useState(0);
 
    useEffect(() => {
       const files = [];
@@ -38,19 +46,29 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
    }, []);
 
    const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+      setAppLoading(true);
+      setNumOfFilesToUpload(e.target.files ? e.target.files.length : 0);
       if (e.target.files && e.target.files.length > 0) {
          const files = selectedFiles;
          for (let i = 0; i < e.target.files.length; i++) {
             if (files.map((f) => f.name).includes(e.target.files[i].name)) continue;
-            const res = await handleUpload(e.target.files[i]);
+            const res = await imageToBASE64(e.target.files[i]);
+            // Delay for 2 seconds
+            await new Promise((resolve) => setTimeout(resolve, 3000));
             files.push({ name: e.target.files[i].name, url: res });
+            setNumOfFilesUploaded((prev) => prev + 1);
+            setUploadProgress((prev) => prev + 100 / (e.target.files ? e.target.files.length : 0));
          }
          multiple ? setSelectedFiles(files) : setSelectedFiles([files[files.length - 1]]);
          const onChangeFiles = multiple
             ? files.map((f) => f.url)
             : files[files.length - 1]?.url || '';
          onChange?.(onChangeFiles);
+         setNumOfFilesToUpload(0);
+         setNumOfFilesUploaded(0);
+         setUploadProgress(0);
       }
+      setAppLoading(false);
    };
 
    const handleButtonClick = () => {
@@ -79,26 +97,52 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
       onChange?.(onChangeFiles);
    };
 
-   async function handleUpload(file: File) {
-      const formData = new FormData();
-      formData.append('file', file);
+   const handleUpload = useCallback(
+      async function (file: File) {
+         const formData = new FormData();
+         formData.append('file', file);
 
-      try {
-         const response = await uploadFile(formData);
+         try {
+            const total = file.size;
+            let loaded = 0;
 
-         if (response) {
+            const response = await fetch(makeServerURL(API_URL.UPLOAD), {
+               method: 'POST',
+               body: formData,
+               cache: 'no-store'
+            });
+
+            if (!response.ok) {
+               throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const reader = response?.body?.getReader()!;
+            const chunks = [];
+
+            while (true) {
+               const { done, value } = await reader.read();
+
+               if (done) {
+                  break;
+               }
+
+               chunks.push(value);
+               loaded += value.length;
+               const percentComplete = (loaded / total) * 100;
+            }
+
+            const responseData = JSON.parse(
+               new TextDecoder().decode(new Uint8Array(chunks.flatMap((chunk) => [...chunk])))
+            );
             console.log('File uploaded successfully');
-            return response.url;
-            // Handle the response here
-         } else {
-            console.log('Failed to upload file');
+            return responseData.url;
+         } catch (error) {
+            console.log('Error occurred while uploading file:', error);
             // Handle the error here
          }
-      } catch (error) {
-         console.log('Error occurred while uploading file:', error);
-         // Handle the error here
-      }
-   }
+      },
+      [numOfFilesToUpload, numOfFilesUploaded, uploadProgress]
+   );
 
    return (
       <>
@@ -111,6 +155,15 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
          >
             Choose {kind}
          </Button>
+         {numOfFilesToUpload > 0 && (
+            <div className="w-full flex items-center justify-between">
+               <p>
+                  {numOfFilesUploaded} / {numOfFilesToUpload}
+               </p>
+               <p>{uploadProgress}%</p>
+            </div>
+         )}
+         <ProgressBar progress={(uploadProgress || 0)?.toFixed(2)?.toString()} />
          <div
             className="flex flex-wrap no_scrollbar overflow-y-auto gap-2 !max-h-fit !h-fit"
             onWheelCapture={(e) => e.stopPropagation()}
@@ -122,7 +175,7 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
                      className="absolute top-1 right-1 hover:bg-red-500/60 w-[20px] h-[20px] rounded-full flex items-center cursor-pointer justify-center p-1 transition-all duration-300 "
                   >
                      <Cross1Icon
-                        className="icon text-black hover:text-white"
+                        className="icon text-white hover:text-white"
                         style={{
                            margin: '0',
                            fontSize: '4rem'

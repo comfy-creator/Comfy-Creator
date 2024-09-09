@@ -10,6 +10,7 @@
     --border-color: #4e4e4e;
     --tr-even-bg-color: #222;
     --tr-odd-bg-color: #353535;
+    --primary: #19D719
 }
 
 @media (prefers-color-scheme: dark) {

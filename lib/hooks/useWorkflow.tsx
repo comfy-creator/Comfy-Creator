@@ -152,7 +152,7 @@ export const newSerializeGraph = (
       }
    }
 
-   console.log('Serializd graph>>', serializedGraph);
+   console.log('Serialized graph>>', JSON.stringify(serializedGraph, null, 2));
 
    if (Object.keys(missingInputHandles).length > 0) {
       return [serializedGraph, missingInputHandles];

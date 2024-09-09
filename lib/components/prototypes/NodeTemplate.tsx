@@ -152,7 +152,14 @@ export const createNodeComponentFromDef = (
    nodeDef: NodeDefinition,
    updateInputData: UpdateInputData
 ): ComponentType<NodeProps<AppNode>> => {
-   return ({ id, data, selected, width: nodeWidth, height: nodeHeight }: NodeProps<AppNode>) => {
+   return ({
+      id,
+      data,
+      selected,
+      width: nodeWidth,
+      height: nodeHeight,
+      ...newData
+   }: NodeProps<AppNode>) => {
       const { onNodesChange } = useFlowStore((state) => state);
 
       const nodeRef = useRef<HTMLDivElement | null>(null);
@@ -160,8 +167,8 @@ export const createNodeComponentFromDef = (
       const nodeContainerRef = useRef<HTMLDivElement>(null);
 
       const [advanced] = useState(false);
-      const [minWidth, setMinWidth] = useState(0);
-      const [minHeight, setMinHeight] = useState(0);
+      const [minWidth] = useState(300);
+      const [minHeight, setMinHeight] = useState(nodeHeight || 0);
       const [isResizing, setIsResizing] = useState(false);
 
       const { getActiveTheme, activeTheme } = useSettingsStore();
@@ -180,14 +187,6 @@ export const createNodeComponentFromDef = (
       }, []);
 
       useEffect(() => {
-         if (!nodeRef.current) return;
-
-         setMinWidth(nodeRef.current.clientWidth);
-         setMinHeight(nodeRef.current.clientHeight);
-      }, [nodeRef]);
-
-      useEffect(() => {
-         if (!nodeRef.current) return;
          if (!nodeContainerRef.current) return;
 
          const { getActiveTheme } = useSettingsStore.getState();
@@ -257,47 +256,35 @@ export const createNodeComponentFromDef = (
          <OutputHandle nodeId={id} key={name} theme={theme} handle={handle} />
       ));
 
-      const updateMinHeight = useCallback(async () => {
-         if (containerRef.current) {
-            await new Promise((resolve) => {
-               setTimeout(() => {
-                  resolve(null);
-               }, 100);
-            });
-            if (!containerRef.current) {
-               return;
-            }
-            const height = containerRef.current.offsetHeight + 70;
-            const width = containerRef.current.offsetWidth;
+      const images = data.inputs?.file?.value as string[];
 
-            // if (!nodeHeight || nodeHeight < height) {
-            //    setMinHeight(height);
-            //    onNodesChange([
-            //       {
-            //          type: 'dimensions',
-            //          id,
-            //          dimensions: {
-            //             width: !!nodeWidth ? nodeWidth : width,
-            //             height
-            //          }
-            //       }
-            //    ]);
-            // }
-            setMinHeight(height);
+      const updateMinHeight = useCallback(async () => {
+         console.log('newData>>', newData);
+         const isImage = isDisplayImage(data);
+
+         if (!containerRef.current) {
+            return;
+         }
+         if (containerRef.current) {
+            const height = containerRef.current.offsetHeight + 70; //(isImage ? images.length * 200 : 0);
+            const width = containerRef.current.offsetWidth + 4;
+
+            setMinHeight(() => height);
             onNodesChange([
                {
                   type: 'dimensions',
                   id,
                   dimensions: {
-                     width: !!nodeWidth ? nodeWidth : width,
+                     width,
                      height
                   }
                }
             ]);
          }
-      }, [setMinHeight, id]);
+      }, [setMinHeight, onNodesChange, containerRef, minHeight]);
 
       useEffect(() => {
+         console.log('Resizing>>');
          updateMinHeight();
 
          if (containerRef.current) {
@@ -320,28 +307,25 @@ export const createNodeComponentFromDef = (
          }
       }, [containerRef]);
 
-      const images = data.inputs?.file?.value as string[];
+      // const images = data.inputs?.file?.value as string[];
 
-      useEffect(() => {
-         const isImage = isDisplayImage(data);
+      // useEffect(() => {
+      //    const isImage = isDisplayImage(data);
 
-         if (isImage && images && Array.isArray(images) && images.length > 1) {
-            console.log('Changing dimensions>>>');
-            if ((nodeHeight || 0) > 420) {
-               return;
-            }
-            onNodesChange([
-               {
-                  type: 'dimensions',
-                  id,
-                  dimensions: {
-                     width: 420,
-                     height: nodeHeight!
-                  }
-               }
-            ]);
-         }
-      }, [images]);
+      //    if (isImage && images && Array.isArray(images) && images.length > 1) {
+      //       console.log('Changing dimensions>>>');
+      //       onNodesChange([
+      //          {
+      //             type: 'dimensions',
+      //             id,
+      //             dimensions: {
+      //                width: 420,
+      //                height: nodeHeight!
+      //             }
+      //          }
+      //       ]);
+      //    }
+      // }, [images]);
 
       return (
          <>
@@ -352,9 +336,11 @@ export const createNodeComponentFromDef = (
                minWidth={minWidth}
                minHeight={minHeight}
                onResizeStart={() => {
+                  // console.log('Starting>>', minWidth, minHeight, nodeWidth, nodeHeight);
                   setIsResizing(true);
                }}
                onResizeEnd={() => {
+                  // console.log('Ending>>', minWidth, minHeight, nodeWidth, nodeHeight);
                   setIsResizing(false);
                }}
             />

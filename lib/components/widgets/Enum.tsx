@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
 import { WidgetBackwardIcon, WidgetForwardIcon } from '../icons/WidgetDirectionIcon';
-import { Select, SelectItem } from '@nextui-org/react';
+// import { Select, SelectItem } from '@nextui-org/react';
+import {
+   SelectContent,
+   SelectTrigger,
+   SelectValue,
+   SelectItem,
+   Select
+} from '@/components/ui/select';
 
 type EnumProps = {
    label: string;
@@ -47,7 +54,19 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
             }}
          >
             <p className={`widget_input_item_text ${disabledClass}`}>{label}</p>
-            <Select
+            <Select>
+               <SelectTrigger className="w-full !text-[10px] p-2 h-[25px] bg-bg border-none outline-none focus:ring-borderColor">
+                  <SelectValue placeholder="Select a feature" />
+               </SelectTrigger>
+               <SelectContent className="bg-bg border-none">
+                  {options.map((option) => (
+                     <SelectItem className="!text-xs text-fg" key={option} value={option}>
+                        {option}
+                     </SelectItem>
+                  ))}
+               </SelectContent>
+            </Select>
+            {/* <Select
                placeholder="Select a feature"
                onChange={(e) => handleSelect(e.target.value)}
                value={value}
@@ -86,7 +105,7 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
                      {option}
                   </SelectItem>
                ))}
-            </Select>
+            </Select> */}
          </div>
       </div>
    );
