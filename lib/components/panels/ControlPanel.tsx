@@ -15,7 +15,7 @@ import GraphRuns from './menu/GraphRuns';
 import { uuidv4 } from 'lib0/random.js';
 import Graphs from './menu/Graphs';
 import Menu from '../Menu';
-import { Button } from '@nextui-org/react';
+import { Button } from '@/components/ui/button';
 
 type AutoQueueMode =
    | {
@@ -28,7 +28,7 @@ type AutoQueueMode =
 
 const ControlPanel = () => {
    const { addSetting, show: showSettings } = useSettings();
-   const { nodeDefs, appLoading } = useFlowStore((state) => state);
+   const { nodeDefs } = useFlowStore((state) => ({ nodeDefs: state.nodeDefs }));
    const { submitWorkflow } = useWorkflow();
    const { loadSerializedGraph } = useGraph();
    const lastExecutionError = false;
@@ -291,18 +291,17 @@ const ControlPanel = () => {
 
                <Button
                   id="queue-button"
-                  variant="bordered"
-                  className={`!py-1 h-[35px] ${appLoading ? 'opacity-50 !cursor-not-allowed' : ''}`}
+                  variant="outline"
+                  className="!py-1 h-[35px] hover:!bg-white/[1%] hover:!text-fg"
                   onClick={submitWorkflow}
-                  disabled={appLoading}
                >
                   Run Graph
                </Button>
 
                <Button
                   id="comfy-load-button"
-                  variant="bordered"
-                  className="!py-1 h-[35px]"
+                  variant="outline"
+                  className="!py-1 h-[35px] hover:!bg-white/[1%] hover:!text-fg"
                   onClick={() => loadFileInputRef?.current?.click()}
                >
                   Load

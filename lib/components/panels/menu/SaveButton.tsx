@@ -1,7 +1,7 @@
 import { useWorkflow } from '../../../hooks/useWorkflow';
 import { useEffect } from 'react';
 import { useFlowStore } from '../../../store/flow';
-import { Button } from '@nextui-org/react';
+import { Button } from '@/components/ui/button';
 
 interface SaveButtonProps {
    promptFilename: {
@@ -42,8 +42,8 @@ const SaveButton = ({ promptFilename }: SaveButtonProps) => {
 
    return (
       <Button
-         variant="bordered"
-         className="!py-1 h-[35px]"
+         variant="outline"
+         className="!py-1 h-[35px] hover:!bg-white/[1%] hover:!text-fg"
          id="comfy-save-button"
          onClick={handleClick}
       >

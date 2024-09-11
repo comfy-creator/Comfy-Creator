@@ -1,7 +1,5 @@
-import { Box } from '@mui/material';
-import { Checkbox, cn, Radio } from '@nextui-org/react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { FC, useEffect, useState } from 'react';
-// import { Checkbox } from 'antd';
 
 type ToggleProps = {
    label: string;
@@ -57,22 +55,15 @@ export const ToggleWidget: FC<ToggleProps> = ({ label, disabled, checked, onChan
                   onChange={(e) => setInput(e.target.checked)}
                   style={{ background: 'none', accentColor: '#76b900', margin: 0 }}
                /> */}
-            <Checkbox
-               isSelected={input}
-               onValueChange={(checked) => setInput(checked)}
-               className="!w-full h-[15px] rounded-xl"
-               classNames={{
-                  base: cn(
-                     'inline-flex m-0 !bg-bg hover:!bg-bg items-center justify-between !mr-0 !w-full data-[hover=true]:!bg-bg',
-                     'flex-row-reverse max-w-[100%] cursor-pointer rounded-xl !p-3 border border-transparent !mr-0 hover:!bg-bg data-[hover=true]:!bg-bg',
-                     'data-[selected=true]:border-primaryy data-[hover=true]:!bg-bg bg-bg !w-full'
-                  ),
-                  wrapper: '!mr-0 !h-[12px] !w-[12px] p-1',
-                  label: '!w-[150px]'
-               }}
-            >
-               <p className="text-dragText text-[10px] mr-5">{input ? 'True' : 'False'}</p>
-            </Checkbox>
+            <div className="flex !bg-bg hover:!bg-bg items-center justify-between !w-full data-[hover=true]:!bg-bg px-3 py-1.5 rounded-full">
+               <p className="text-dragText text-[10px]">{input ? 'True' : 'False'}</p>
+               <Checkbox
+                  checked={input}
+                  onCheckedChange={(checked) => setInput(checked === true)}
+                  className="rounded-full"
+                  aria-setsize={10}
+               />
+            </div>
          </div>
       </div>
    );

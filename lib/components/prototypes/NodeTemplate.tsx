@@ -297,7 +297,7 @@ export const createNodeComponentFromDef = (
                   </>
                ) : (
                   <>
-                     <div className="flow_content" ref={mainRef}>
+                     <div className="flow_content !p-4" ref={mainRef}>
                         <div className="flow_input_output_container">
                            <div className="flow_input_container">{inputHandles}</div>
                            <div className="flow_output_container">{outputHandles}</div>

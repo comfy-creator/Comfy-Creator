@@ -4,7 +4,7 @@ import './menu.module.scss';
 import { BookmarkIcon } from '@radix-ui/react-icons';
 import ImageFeed from './ImageFeed';
 import Models from './Models';
-import { Button } from '@nextui-org/react';
+import { Button } from '@/components/ui/button';
 
 const Tabs = [
    {
@@ -46,8 +46,8 @@ const Menu = () => {
    return (
       <>
          <Button
-            variant="bordered"
-            className="!py-1 h-[35px]"
+            variant="outline"
+            className="!py-1 h-[35px] hover:!bg-white/[1%] hover:!text-fg"
             id="comfy-load-default-button"
             onClick={showModal}
          >

@@ -2,7 +2,7 @@ import { useGraph } from '../../../hooks/useGraph';
 import { defaultEdges, defaultNodes } from '../../../default-graph';
 import { uuidv4 } from 'lib0/random';
 import { RFState, useFlowStore } from '../../../store/flow';
-import { Button } from '@nextui-org/react';
+import { Button } from '@/components/ui/button';
 
 const LoadDefaultButton = () => {
    const { loadSerializedGraph } = useGraph();
@@ -24,8 +24,8 @@ const LoadDefaultButton = () => {
 
    return (
       <Button
-         variant="bordered"
-         className="!py-1 h-[35px]"
+         variant="outline"
+         className="!py-1 h-[35px] hover:!bg-white/[1%] hover:!text-fg"
          id="comfy-load-default-button"
          onClick={handleClick}
       >

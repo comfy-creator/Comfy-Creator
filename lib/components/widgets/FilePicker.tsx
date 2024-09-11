@@ -1,11 +1,11 @@
 import { ChangeEvent, useRef, useState, useEffect, useCallback } from 'react';
 import { Modal } from 'antd';
 import { ChevronLeftIcon, ChevronRightIcon, Cross1Icon } from '@radix-ui/react-icons';
-import { Button } from '@nextui-org/react';
 import { useApiContext } from '../../contexts/api';
 import { API_URL } from '../../config/constants';
 import { useFlowStore } from '../../store/flow';
 import { ProgressBar } from '../ProgressBar';
+import { Button } from '@/components/ui/button';
 
 export type FileProps = {
    kind?: string;
@@ -149,8 +149,8 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
       <>
          <p className={`text-[9px] mt-[5px]`}>images</p>
          <Button
-            variant="bordered"
-            className="!h-[25px] mt-1 mb-2 !text-[12px] text-dragText bg-bg border-borderColor"
+            variant="outline"
+            className="!h-[25px] mt-1 mb-2 !text-[12px] text-dragText bg-bg border-borderColor hover:bg-white/[3%] hover:text-fg"
             onClick={handleButtonClick}
             style={{ width: '100%' }}
          >
