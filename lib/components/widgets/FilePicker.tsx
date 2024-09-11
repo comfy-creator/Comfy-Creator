@@ -52,6 +52,7 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
          const files = selectedFiles;
          for (let i = 0; i < e.target.files.length; i++) {
             if (files.map((f) => f.name).includes(e.target.files[i].name)) continue;
+            // change to upload file for s3 bucket upload and file system upload
             const res = await imageToBASE64(e.target.files[i]);
             // Delay for 2 seconds
             await new Promise((resolve) => setTimeout(resolve, 3000));
@@ -160,7 +161,7 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
                <p>
                   {numOfFilesUploaded} / {numOfFilesToUpload}
                </p>
-               <p>{uploadProgress}%</p>
+               <p>{uploadProgress.toFixed(2)}%</p>
             </div>
          )}
          <ProgressBar progress={(uploadProgress || 0)?.toFixed(2)?.toString()} />

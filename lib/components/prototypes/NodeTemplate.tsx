@@ -1,4 +1,13 @@
-import React, { ComponentType, ReactNode, useEffect, useRef, useState, useCallback } from 'react';
+import React, {
+   ComponentType,
+   ReactNode,
+   useEffect,
+   useRef,
+   useState,
+   useCallback,
+   MutableRefObject,
+   useMemo
+} from 'react';
 import {
    AppNode,
    HandleState,
@@ -152,24 +161,11 @@ export const createNodeComponentFromDef = (
    nodeDef: NodeDefinition,
    updateInputData: UpdateInputData
 ): ComponentType<NodeProps<AppNode>> => {
-   return ({
-      id,
-      data,
-      selected,
-      width: nodeWidth,
-      height: nodeHeight,
-      ...newData
-   }: NodeProps<AppNode>) => {
-      const { onNodesChange } = useFlowStore((state) => state);
-
+   return ({ id, data, selected }: NodeProps<AppNode>) => {
       const nodeRef = useRef<HTMLDivElement | null>(null);
       const containerRef = useRef<HTMLDivElement>(null);
-      const nodeContainerRef = useRef<HTMLDivElement>(null);
 
       const [advanced] = useState(false);
-      const [minWidth] = useState(300);
-      const [minHeight, setMinHeight] = useState(nodeHeight || 0);
-      const [isResizing, setIsResizing] = useState(false);
 
       const { getActiveTheme, activeTheme } = useSettingsStore();
       const { executions } = useFlowStore();
@@ -179,6 +175,18 @@ export const createNodeComponentFromDef = (
 
       const zoomSelector = useStore((s: ReactFlowState) => s.transform[2]);
 
+      const images = useMemo(
+         () =>
+            (data?.inputs?.file?.value
+               ? typeof data?.inputs?.file?.value === 'string'
+                  ? [data?.inputs?.file?.value]
+                  : data?.inputs?.file?.value
+               : []) as string[],
+         [data?.inputs?.file?.value]
+      );
+
+      const { mainRef, minHeight, minWidth } = useResizer(id, images);
+
       useEffect(() => {
          const node = document.querySelector(`[data-id="${id}"]`);
          if (!node) return;
@@ -187,13 +195,14 @@ export const createNodeComponentFromDef = (
       }, []);
 
       useEffect(() => {
-         if (!nodeContainerRef.current) return;
+         if (!nodeRef.current) return;
+         if (!containerRef.current) return;
 
          const { getActiveTheme } = useSettingsStore.getState();
          const appearance = getActiveTheme().colors.appearance;
 
-         nodeContainerRef.current.style.backgroundColor = appearance.NODE_BG_COLOR;
-         nodeContainerRef.current.style.color = appearance.NODE_TEXT_COLOR;
+         containerRef.current.style.backgroundColor = appearance.NODE_BG_COLOR;
+         containerRef.current.style.color = appearance.NODE_TEXT_COLOR;
       }, [activeTheme]);
 
       useEffect(() => {
@@ -256,77 +265,6 @@ export const createNodeComponentFromDef = (
          <OutputHandle nodeId={id} key={name} theme={theme} handle={handle} />
       ));
 
-      const images = data.inputs?.file?.value as string[];
-
-      const updateMinHeight = useCallback(async () => {
-         console.log('newData>>', newData);
-         const isImage = isDisplayImage(data);
-
-         if (!containerRef.current) {
-            return;
-         }
-         if (containerRef.current) {
-            const height = containerRef.current.offsetHeight + 70; //(isImage ? images.length * 200 : 0);
-            const width = containerRef.current.offsetWidth + 4;
-
-            setMinHeight(() => height);
-            onNodesChange([
-               {
-                  type: 'dimensions',
-                  id,
-                  dimensions: {
-                     width,
-                     height
-                  }
-               }
-            ]);
-         }
-      }, [setMinHeight, onNodesChange, containerRef, minHeight]);
-
-      useEffect(() => {
-         console.log('Resizing>>');
-         updateMinHeight();
-
-         if (containerRef.current) {
-            const resizeObserver = new ResizeObserver((entries) => {
-               entries.forEach((entry) => {
-                  if (entry.target === containerRef.current && !isResizing) {
-                     updateMinHeight();
-                  }
-               });
-            });
-
-            resizeObserver.observe(containerRef.current);
-
-            // Cleanup
-            return () => {
-               if (resizeObserver && containerRef.current) {
-                  resizeObserver.unobserve(containerRef.current);
-               }
-            };
-         }
-      }, [containerRef]);
-
-      // const images = data.inputs?.file?.value as string[];
-
-      // useEffect(() => {
-      //    const isImage = isDisplayImage(data);
-
-      //    if (isImage && images && Array.isArray(images) && images.length > 1) {
-      //       console.log('Changing dimensions>>>');
-      //       onNodesChange([
-      //          {
-      //             type: 'dimensions',
-      //             id,
-      //             dimensions: {
-      //                width: 420,
-      //                height: nodeHeight!
-      //             }
-      //          }
-      //       ]);
-      //    }
-      // }, [images]);
-
       return (
          <>
             <NodeResizeControl
@@ -335,65 +273,147 @@ export const createNodeComponentFromDef = (
                position="bottom-right"
                minWidth={minWidth}
                minHeight={minHeight}
-               onResizeStart={() => {
-                  // console.log('Starting>>', minWidth, minHeight, nodeWidth, nodeHeight);
-                  setIsResizing(true);
-               }}
-               onResizeEnd={() => {
-                  // console.log('Ending>>', minWidth, minHeight, nodeWidth, nodeHeight);
-                  setIsResizing(false);
-               }}
             />
-            <Card
+            <div
                style={{ fontSize: NODE_TEXT_SIZE, color: NODE_TEXT_COLOR }}
-               className="flex-col rounded-lg bg-trOddBgColor !min-h-full"
-               ref={nodeContainerRef}
+               className="node_container"
+               ref={containerRef}
                onDoubleClickCapture={(e) => e.stopPropagation()}
             >
-               <CardHeader className="flex gap-3 p-2 !py-2">
-                  <p
-                     className="!text-[10px]"
-                     style={{
-                        // ...getTransformStyle(zoomSelector),
-                        color: NODE_TITLE_COLOR
-                     }}
+               <div className="node_label_container">
+                  <span
+                     className="node_label"
+                     style={{ ...getTransformStyle(zoomSelector), color: NODE_TITLE_COLOR }}
                   >
                      {typeof nodeDef.display_name === 'string'
                         ? nodeDef.display_name
                         : nodeDef.display_name.en}
-                  </p>
-               </CardHeader>
+                  </span>
+               </div>
 
-               <Divider className="bg-bg" />
-
-               <CardBody>
-                  {advanced ? (
-                     <>
-                        <div>Advanced options</div>
-                     </>
-                  ) : (
-                     <>
-                        <div className="p-2" ref={containerRef}>
-                           <div className="flex mb-[3px] items-start justify-between">
-                              <div className="flex flex-col items-start justify-start gap-[3px]">
-                                 {inputHandles}
-                              </div>
-                              <div className="flex flex-col items-end justify-end gap-[3px]">
-                                 {outputHandles}
-                              </div>
-                           </div>
-
-                           <div className="w-full !h-full">{inputWidgets}</div>
-                           <div className="w-full !h-full">{displayWidgets}</div>
+               {advanced ? (
+                  <>
+                     <div>Advanced options</div>
+                  </>
+               ) : (
+                  <>
+                     <div className="flow_content" ref={mainRef}>
+                        <div className="flow_input_output_container">
+                           <div className="flow_input_container">{inputHandles}</div>
+                           <div className="flow_output_container">{outputHandles}</div>
                         </div>
-                     </>
-                  )}
-               </CardBody>
-            </Card>
+
+                        <div className="widgets_container">{inputWidgets}</div>
+                        <div className="widgets_container">{displayWidgets}</div>
+                     </div>
+                  </>
+               )}
+            </div>
          </>
       );
    };
 };
+
+export function useResizer(
+   id: string,
+   images: string[]
+): {
+   minHeight: number;
+   minWidth: number;
+   mainRef: MutableRefObject<HTMLDivElement | null>;
+} {
+   const mainRef = useRef<HTMLDivElement>(null);
+   const [minHeight, setMinHeight] = useState(200);
+   const [minWidth, setMinWidth] = useState(240);
+   const { onNodesChange } = useFlowStore();
+
+   const updateNodeHeight = useCallback(async () => {
+      if (mainRef.current) {
+         await new Promise((resolve) => {
+            setTimeout(() => {
+               resolve(null);
+            }, 100);
+         });
+         if (!mainRef.current) {
+            return;
+         }
+         const state = useFlowStore.getState();
+         const findNode = state.nodes.find((n) => n.id === id);
+         if (!findNode) {
+            return;
+         }
+         const dimensions = {
+            height: findNode.height,
+            width: findNode.width
+         };
+         let newHeight = mainRef.current.offsetHeight + 50;
+         let newWidth = mainRef.current.offsetWidth + 4;
+
+         if (images.length > 1) {
+            mainRef.current.style.minWidth = '450px';
+            newHeight = mainRef.current.offsetHeight + 50;
+            newWidth = mainRef.current.offsetWidth + 12;
+            setMinWidth(newWidth);
+            const state = useFlowStore.getState();
+            const newNodes = state.nodes.map((n) => {
+               if (n.id === id) {
+                  return {
+                     ...n,
+                     width: newWidth,
+                     height: newHeight
+                  };
+               }
+               return n;
+            });
+            state.setNodes(() => newNodes);
+         } else if (images.length === 1) {
+            mainRef.current.style.minWidth = '212px';
+            newHeight = mainRef.current.offsetHeight + 50;
+            newWidth = mainRef.current.offsetWidth + 12;
+            setMinWidth(240);
+            const state = useFlowStore.getState();
+            const newNodes = state.nodes.map((n) => {
+               if (n.id === id) {
+                  return {
+                     ...n,
+                     width: newWidth,
+                     height: newHeight
+                  };
+               }
+               return n;
+            });
+            state.setNodes(newNodes);
+         }
+         if (!dimensions || (dimensions.height || 0) < newHeight - 2) {
+            onNodesChange([
+               {
+                  type: 'dimensions',
+                  id: id,
+                  dimensions: {
+                     width: !!dimensions && dimensions.width ? dimensions.width : newWidth,
+                     height: newHeight
+                  }
+               }
+            ]);
+         }
+         setMinHeight(newHeight);
+      }
+   }, [id, images]);
+
+   useEffect(() => {
+      updateNodeHeight();
+   }, [mainRef]);
+
+   useEffect(() => {
+      updateNodeHeight();
+   }, [images]);
+
+   return {
+      minHeight,
+      minWidth,
+      mainRef
+   };
+}
 
 const isDisplayImage = (data: NodeData) => {
    return Object.values(data.inputs).some((input) => input['display_name'] === 'file');

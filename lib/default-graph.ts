@@ -3,46 +3,6 @@ import { NodeData } from './types/types';
 
 export const defaultNodes: Node<NodeData>[] = [
    {
-      id: '481e098b-9656-49b7-9a10-7bd337df09b4',
-      type: 'LoadImage',
-      data: {
-         display_name: 'Load Image',
-         inputs: {
-            file: {
-               value: [
-                  'https://cdn.discordapp.com/attachments/1122903185611313253/1278079421466673285/man.jpg?ex=66dc05f7&is=66dab477&hm=00e5b97ee78ebe59fb9dde58913e549938a710c4a9eb405bfc92c81b5ba5036b&'
-               ],
-               display_name: 'file',
-               isHighlighted: false,
-               edge_type: 'STRING'
-            }
-         },
-         outputs: {
-            image: {
-               display_name: 'image',
-               isHighlighted: false,
-               isConnected: true,
-               edge_type: 'IMAGE'
-            }
-         },
-         widgets: {}
-      },
-      position: {
-         x: -89.42604151597826,
-         y: 320.3794320448657
-      },
-      style: {
-         width: '210px'
-      },
-      measured: {
-         width: 176,
-         height: 316
-      },
-      selected: false,
-      dragging: false,
-      draggable: true
-   },
-   {
       id: 'fdb94825-2194-4138-b140-2205a9d0e09a',
       type: 'TextEncoder',
       data: {
@@ -73,8 +33,8 @@ export const defaultNodes: Node<NodeData>[] = [
          width: '210px'
       },
       measured: {
-         width: 176,
-         height: 213
+         width: 210,
+         height: 189
       },
       selected: false,
       dragging: false,
@@ -116,8 +76,8 @@ export const defaultNodes: Node<NodeData>[] = [
          width: '210px'
       },
       measured: {
-         width: 176,
-         height: 153
+         width: 210,
+         height: 129
       },
       selected: false,
       dragging: false,
@@ -159,8 +119,8 @@ export const defaultNodes: Node<NodeData>[] = [
          width: '210px'
       },
       measured: {
-         width: 176,
-         height: 153
+         width: 210,
+         height: 129
       },
       selected: false,
       dragging: false,
@@ -197,8 +157,8 @@ export const defaultNodes: Node<NodeData>[] = [
          width: '210px'
       },
       measured: {
-         width: 176,
-         height: 103
+         width: 210,
+         height: 79
       },
       selected: false,
       dragging: false,
@@ -240,8 +200,8 @@ export const defaultNodes: Node<NodeData>[] = [
          width: '210px'
       },
       measured: {
-         width: 176,
-         height: 154
+         width: 210,
+         height: 129
       },
       selected: false,
       dragging: false,
@@ -305,32 +265,57 @@ export const defaultNodes: Node<NodeData>[] = [
          width: '210px'
       },
       measured: {
-         width: 176,
-         height: 173
+         width: 210,
+         height: 149
       },
       selected: false,
       dragging: false,
+      draggable: true
+   },
+   {
+      id: '3ba5c632-0c1e-440a-a3db-e54631d93c0f',
+      type: 'LoadImage',
+      data: {
+         display_name: 'Load Image',
+         inputs: {
+            file: {
+               value: [],
+               display_name: 'file',
+               edge_type: 'STRING',
+               isHighlighted: false
+            }
+         },
+         outputs: {
+            image: {
+               display_name: 'image',
+               isHighlighted: false,
+               isConnected: true,
+               edge_type: 'IMAGE'
+            }
+         },
+         widgets: {}
+      },
+      position: {
+         x: -186.6171018907885,
+         y: 299.90737473766
+      },
+      style: {
+         width: '210px'
+      },
+      measured: {
+         width: 282,
+         height: 166
+      },
+      selected: false,
+      dragging: false,
+      width: 282,
+      height: 166,
+      resizing: false,
       draggable: true
    }
 ];
 
 export const defaultEdges: Edge[] = [
-   {
-      source: '481e098b-9656-49b7-9a10-7bd337df09b4',
-      sourceHandle: '481e098b-9656-49b7-9a10-7bd337df09b4::image',
-      target: '3b6d6b50-d188-4ab8-a6d2-e99b9ac6514f',
-      targetHandle: '3b6d6b50-d188-4ab8-a6d2-e99b9ac6514f::image',
-      type: 'IMAGE',
-      id: 'xy-edge__481e098b-9656-49b7-9a10-7bd337df09b4481e098b-9656-49b7-9a10-7bd337df09b4::image-3b6d6b50-d188-4ab8-a6d2-e99b9ac6514f3b6d6b50-d188-4ab8-a6d2-e99b9ac6514f::image'
-   },
-   {
-      source: '481e098b-9656-49b7-9a10-7bd337df09b4',
-      sourceHandle: '481e098b-9656-49b7-9a10-7bd337df09b4::image',
-      target: 'aa20e179-a127-4639-9c05-eac9854df742',
-      targetHandle: 'aa20e179-a127-4639-9c05-eac9854df742::image',
-      type: 'IMAGE',
-      id: 'xy-edge__481e098b-9656-49b7-9a10-7bd337df09b4481e098b-9656-49b7-9a10-7bd337df09b4::image-aa20e179-a127-4639-9c05-eac9854df742aa20e179-a127-4639-9c05-eac9854df742::image'
-   },
    {
       source: '3b6d6b50-d188-4ab8-a6d2-e99b9ac6514f',
       sourceHandle: '3b6d6b50-d188-4ab8-a6d2-e99b9ac6514f::image',
@@ -372,11 +357,27 @@ export const defaultEdges: Edge[] = [
       id: 'xy-edge__952243ea-3338-4cbd-81a8-fd59a971b05c952243ea-3338-4cbd-81a8-fd59a971b05c::image-efa17bc2-1466-4708-8882-f604847ba8bdefa17bc2-1466-4708-8882-f604847ba8bd::image'
    },
    {
-      source: '481e098b-9656-49b7-9a10-7bd337df09b4',
-      sourceHandle: '481e098b-9656-49b7-9a10-7bd337df09b4::image',
+      source: '3ba5c632-0c1e-440a-a3db-e54631d93c0f',
+      sourceHandle: '3ba5c632-0c1e-440a-a3db-e54631d93c0f::image',
+      target: '3b6d6b50-d188-4ab8-a6d2-e99b9ac6514f',
+      targetHandle: '3b6d6b50-d188-4ab8-a6d2-e99b9ac6514f::image',
+      type: 'IMAGE',
+      id: 'xy-edge__3ba5c632-0c1e-440a-a3db-e54631d93c0f3ba5c632-0c1e-440a-a3db-e54631d93c0f::image-3b6d6b50-d188-4ab8-a6d2-e99b9ac6514f3b6d6b50-d188-4ab8-a6d2-e99b9ac6514f::image'
+   },
+   {
+      source: '3ba5c632-0c1e-440a-a3db-e54631d93c0f',
+      sourceHandle: '3ba5c632-0c1e-440a-a3db-e54631d93c0f::image',
+      target: 'aa20e179-a127-4639-9c05-eac9854df742',
+      targetHandle: 'aa20e179-a127-4639-9c05-eac9854df742::image',
+      type: 'IMAGE',
+      id: 'xy-edge__3ba5c632-0c1e-440a-a3db-e54631d93c0f3ba5c632-0c1e-440a-a3db-e54631d93c0f::image-aa20e179-a127-4639-9c05-eac9854df742aa20e179-a127-4639-9c05-eac9854df742::image'
+   },
+   {
+      source: '3ba5c632-0c1e-440a-a3db-e54631d93c0f',
+      sourceHandle: '3ba5c632-0c1e-440a-a3db-e54631d93c0f::image',
       target: '56c9156a-5031-4fd2-9559-5224b1a4bdd0',
       targetHandle: '56c9156a-5031-4fd2-9559-5224b1a4bdd0::image',
       type: 'IMAGE',
-      id: 'xy-edge__481e098b-9656-49b7-9a10-7bd337df09b4481e098b-9656-49b7-9a10-7bd337df09b4::image-56c9156a-5031-4fd2-9559-5224b1a4bdd056c9156a-5031-4fd2-9559-5224b1a4bdd0::image'
+      id: 'xy-edge__3ba5c632-0c1e-440a-a3db-e54631d93c0f3ba5c632-0c1e-440a-a3db-e54631d93c0f::image-56c9156a-5031-4fd2-9559-5224b1a4bdd056c9156a-5031-4fd2-9559-5224b1a4bdd0::image'
    }
 ];

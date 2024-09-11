@@ -123,22 +123,13 @@ export const newSerializeGraph = (
          }
       }
 
-      const data: { inputs?: Record<string, InputValues>; outputs?: Record<string, HandleState> } =
-         {};
-
-      if (Object.entries(inputs).length > 0) {
-         data['inputs'] = inputs;
-      }
-      if (Object.entries(outputs).length > 0) {
-         data['outputs'] = outputs;
-      }
-
       if (minimize_payload) {
          // Only include the essential properties for each node
          serializedGraph.nodes.push({
             id: node.id,
             type: node?.type || '',
-            data
+            inputs,
+            outputs,
             // position: node.position // note: the server doesn't really need this, but react flow wants it
          });
       } else {
@@ -147,7 +138,8 @@ export const newSerializeGraph = (
          serializedGraph.nodes.push({
             ...essentialProps,
             type: node?.type || '',
-            data
+            inputs,
+            outputs,
          });
       }
    }
