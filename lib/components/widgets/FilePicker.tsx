@@ -6,6 +6,7 @@ import { API_URL } from '../../config/constants';
 import { useFlowStore } from '../../store/flow';
 import { ProgressBar } from '../ProgressBar';
 import { Button } from '@/components/ui/button';
+import { Spinner } from '@nextui-org/react';
 
 export type FileProps = {
    kind?: string;
@@ -28,7 +29,9 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [selectedImage, setSelectedImage] = useState<string | null>(null);
    const fileRef = useRef<HTMLInputElement>(null);
-   const [selectedFiles, setSelectedFiles] = useState<{ name: string; url: string }[]>([]);
+   const [selectedFiles, setSelectedFiles] = useState<
+      { name: string; url: string; loading: boolean }[]
+   >([]);
 
    const [numOfFilesToUpload, setNumOfFilesToUpload] = useState(0);
    const [numOfFilesUploaded, setNumOfFilesUploaded] = useState(0);
@@ -37,9 +40,9 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
    useEffect(() => {
       const files = [];
       if (typeof value === 'string') {
-         files.push({ name: value, url: value });
+         files.push({ name: value, url: value, loading: false });
       } else if (Array.isArray(value)) {
-         const newFileNames = value.map((f) => ({ name: f, url: f }));
+         const newFileNames = value.map((f) => ({ name: f, url: f, loading: false }));
          files.push(...newFileNames);
       }
       setSelectedFiles(files);
@@ -47,20 +50,40 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
 
    const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
       setAppLoading(true);
-      setNumOfFilesToUpload(e.target.files ? e.target.files.length : 0);
-      if (e.target.files && e.target.files.length > 0) {
-         const files = selectedFiles;
-         for (let i = 0; i < e.target.files.length; i++) {
-            if (files.map((f) => f.name).includes(e.target.files[i].name)) continue;
-            // change to upload file for s3 bucket upload and file system upload
-            const res = await imageToBASE64(e.target.files[i]);
-            // Delay for 2 seconds
+      const newFiles = Array.from(e.target.files || []).map((file) => ({
+         name: file.name,
+         url: URL.createObjectURL(file),
+         loading: true
+      }));
+
+      const filteredNewFiles = newFiles.filter(
+         (newFile) => !selectedFiles.some((file) => file.name === newFile.name)
+      );
+
+      const files = [...selectedFiles, ...filteredNewFiles];
+      const onChangeFiles = multiple ? files.map((f) => f.url) : files[files.length - 1]?.url || '';
+      setSelectedFiles(files);
+      onChange?.(onChangeFiles);
+
+      setNumOfFilesToUpload(filteredNewFiles.length);
+      if (filteredNewFiles.length > 0) {
+         for (let i = 0; i < filteredNewFiles.length; i++) {
+            const file = filteredNewFiles[i];
+            const fileIndex = files.findIndex((f) => f.name === file.name);
+            if (fileIndex === -1) continue;
+
+            const fileBlob = await fetch(file.url).then((r) => r.blob());
+            const res = await imageToBASE64(
+               new File([fileBlob], file.name, { type: fileBlob.type })
+            );
+
             await new Promise((resolve) => setTimeout(resolve, 3000));
-            files.push({ name: e.target.files[i].name, url: res });
+            files[fileIndex].url = res;
+            files[fileIndex].loading = false;
             setNumOfFilesUploaded((prev) => prev + 1);
-            setUploadProgress((prev) => prev + 100 / (e.target.files ? e.target.files.length : 0));
+            setUploadProgress((prev) => prev + 100 / filteredNewFiles.length);
          }
-         multiple ? setSelectedFiles(files) : setSelectedFiles([files[files.length - 1]]);
+         setSelectedFiles(files);
          const onChangeFiles = multiple
             ? files.map((f) => f.url)
             : files[files.length - 1]?.url || '';
@@ -169,29 +192,39 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
             className="flex flex-wrap no_scrollbar overflow-y-auto gap-2 !max-h-fit !h-fit"
             onWheelCapture={(e) => e.stopPropagation()}
          >
-            {selectedFiles.map(({ url }, index) => (
-               <div className="file">
-                  <p
-                     onClick={() => removeFile(index)}
-                     className="absolute top-1 right-1 hover:bg-red-500/60 w-[20px] h-[20px] rounded-full flex items-center cursor-pointer justify-center p-1 transition-all duration-300 "
-                  >
-                     <Cross1Icon
-                        className="icon text-white hover:text-white"
-                        style={{
-                           margin: '0',
-                           fontSize: '4rem'
+            {selectedFiles.map(({ url, loading }, index) => (
+               <div className="file relative" key={index}>
+                  {!loading && (
+                     <p
+                        onClick={() => removeFile(index)}
+                        className="absolute top-1 right-1 hover:bg-red-500/60 w-[20px] h-[20px] rounded-full flex items-center cursor-pointer justify-center p-1 transition-all duration-300 z-[99]"
+                     >
+                        <Cross1Icon
+                           className="icon text-white hover:text-white"
+                           style={{
+                              margin: '0',
+                              fontSize: '4rem'
+                           }}
+                        />
+                     </p>
+                  )}
+                  <div className="relative" style={{ width: '100%' }}>
+                     <img
+                        src={url}
+                        alt="preview"
+                        style={{ width: '100%', opacity: loading ? 0 : 1 }}
+                        onClick={() => {
+                           toggleModal();
+                           setSelectedImage(url);
                         }}
                      />
-                  </p>
-                  <img
-                     src={url}
-                     alt="preview"
-                     style={{ width: '100%' }}
-                     onClick={() => {
-                        toggleModal();
-                        setSelectedImage(url);
-                     }}
-                  />
+                     {loading && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/10 z-[999] animate-pulse p-10">
+                           {/* <ProgressBar progress="100" /> */}
+                           <Spinner size="sm" />
+                        </div>
+                     )}
+                  </div>
                </div>
             ))}
          </div>
@@ -202,6 +235,7 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
             multiple={multiple}
             onChange={handleFileChange}
             style={{ display: 'none' }}
+            key={selectedFiles.length}
          />
 
          <Modal
