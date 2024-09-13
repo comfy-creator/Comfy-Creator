@@ -56,7 +56,6 @@ const selector = (state: RFState) => ({
    setEdges: state.setEdges,
    nodeComponents: state.nodeComponents,
    loadNodeDefsFromApi: state.loadNodeDefsFromApi,
-   nodeDefs: state.nodeDefs,
    addNode: state.addNode,
    updateInputData: state.updateInputData,
    updateOutputData: state.updateOutputData,
@@ -69,14 +68,9 @@ const selector = (state: RFState) => ({
    registerEdgeType: state.registerEdgeType,
    addRawNode: state.addRawNode,
    executions: state.executions,
-   isUpdatingEdge: state.isUpdatingEdge,
    setIsUpdatingEdge: state.setIsUpdatingEdge,
-   currentHandleEdge: state.currentHandleEdge,
-   setCurrentHandleEdge: state.setCurrentHandleEdge,
    addNodeDefComponent: state.addNodeDefComponent
 });
-
-import { Edge as EdgeType } from '@xyflow/react';
 
 export function MainFlow() {
    const {
@@ -88,21 +82,16 @@ export function MainFlow() {
       onConnect,
       setNodes,
       setEdges,
-      nodeDefs,
       nodeComponents,
       loadNodeDefsFromApi,
       addNode,
       hotKeysShortcut,
       hotKeysHandlers,
-      setCurrentConnectionLineType,
       edgeComponents,
       registerEdgeType,
       updateInputData,
       updateOutputData,
-      isUpdatingEdge,
       setIsUpdatingEdge,
-      currentHandleEdge,
-      setCurrentHandleEdge,
       addNodeDefComponent
    } = useFlowStore(selector);
 
@@ -116,10 +105,9 @@ export function MainFlow() {
    const { loadCurrentSettings, addSetting } = useSettings();
    const { getNodeDefs, appConfig, getNodeComponents } = useApiContext();
 
-   const { saveSerializedGraph, loadSerializedGraph } = useGraph();
+   const { loadSerializedGraph } = useGraph();
 
    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-   const [Component, setComponent] = useState<any>(null);
 
    useEffect(() => {
       loadNodeDefsFromApi(getNodeDefs);
@@ -149,27 +137,9 @@ export function MainFlow() {
       registerEdgeType(HANDLE_TYPES);
    }, []);
 
-   const onConnectEnd = useCallback(
-      handleOnConnectEnd({
-         nodeDefs,
-         setNodes,
-         onContextMenu,
-         isUpdatingEdge,
-         currentHandleEdge,
-         setCurrentHandleEdge
-      }),
-      [nodes, currentHandleEdge, nodeDefs]
-   );
+   const onConnectEnd = useCallback(handleOnConnectEnd({ onContextMenu }), [onContextMenu]);
 
-   const onConnectStart: OnConnectStart = useCallback(
-      handleOnConnectStart({
-         nodes,
-         setNodes,
-         setCurrentHandleEdge,
-         setCurrentConnectionLineType
-      }),
-      [nodes]
-   );
+   const onConnectStart: OnConnectStart = useCallback(handleOnConnectStart(), [nodes]);
 
    // Validation connection for edge-compatability and circular loops
    const isValidConnection = useCallback(validateConnection({ getEdges, getNodes }), [

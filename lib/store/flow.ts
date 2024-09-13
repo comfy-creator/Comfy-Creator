@@ -259,13 +259,26 @@ export const useFlowStore = create<RFState>((set, get) => {
                nodesMap.set(change.item.id, change.item);
             } else if (change.type === 'remove' && nodesMap.has(change.id)) {
                const deletedNode = nodesMap.get(change.id)!;
-               const connectedEdges = getConnectedEdges([deletedNode], [...edgesMap.values()]);
+               const connectedEdges = getConnectedEdges([deletedNode], get().edges);
 
                nodesMap.delete(change.id);
 
                // Deletes any edges connected to this deleted node
                for (const edge of connectedEdges) {
                   edgesMap.delete(edge.id);
+                  if (edge.source === change.id) {
+                     get().updateInputData({
+                        nodeId: edge.target,
+                        display_name: edge.targetHandle?.split('::')?.[1] || '',
+                        data: { isConnected: false }
+                     });
+                  } else if (edge.target === change.id) {
+                     get().updateOutputData({
+                        nodeId: edge.source,
+                        display_name: edge.sourceHandle?.split('::')?.[1] || '',
+                        data: { isConnected: false }
+                     });
+                  }
                }
             } else {
                // Use the default changes `applyNodeChanges` prepared for us

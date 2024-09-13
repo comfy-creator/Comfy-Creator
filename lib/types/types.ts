@@ -213,20 +213,7 @@ export type OnContextMenu = (
 export type OnNodeContextMenu = (event: ReactMouseEvent, node: AppNode) => void;
 
 export interface HandleOnConnectEndParams {
-   isUpdatingEdge: boolean;
-   nodeDefs: NodeDefinitions;
    onContextMenu: OnContextMenu;
-   currentHandleEdge: HandleEdge | null;
-
-   setCurrentHandleEdge: (edge: HandleEdge | null) => void;
-   setNodes: (nodes: AppNode[]) => void;
-}
-
-export interface HandleOnConnectStartParams {
-   setCurrentConnectionLineType: (type: ConnectionLineType) => void;
-   setCurrentHandleEdge: (edge: HandleEdge | null) => void;
-   setNodes: (nodes: AppNode[]) => void;
-   nodes: AppNode[];
 }
 
 export interface ValidateConnectionParams {
@@ -260,7 +247,7 @@ export type EdgeType =
    | 'LORA'
    | 'CONTROL_NET';
 
-export type WidgetType =
+   export type WidgetType =
    | 'TOGGLE'
    | 'NUMBER'
    | 'TEXT'
@@ -268,6 +255,7 @@ export type WidgetType =
    | 'DROPDOWN'
    | 'SLIDER'
    | 'BOOLEAN'
+   | 'MASK'
    | 'COLOR';
 
 export type NodeType = ComponentType<NodeProps<AppNode>>;

@@ -38,6 +38,7 @@ import { isDisplayType, makeHandleId } from '../../utils/node';
 import { FilePickerWidget, FileProps } from '../widgets/FilePicker';
 import { TRANSFORM_POINT } from '../../config/constants';
 import { Card, CardHeader, CardBody, CardFooter, Divider, Link, Image } from '@nextui-org/react';
+import { MaskWidget } from '../widgets/Mask';
 
 const createWidgetFromSpec = (
    def: HandleState,
@@ -94,6 +95,9 @@ const createWidgetFromSpec = (
                   {...(data.widget as FileProps)}
                />
             );
+         case 'MASK':
+            console.log('In data widget', data.widget);
+            return <MaskWidget />;
          case 'DROPDOWN':
             return (
                <EnumWidget
@@ -431,11 +435,12 @@ function InputHandle({ nodeId, handle, theme }: InputHandleProps) {
    const showInput = transformScale < TRANSFORM_POINT;
 
    const appearance = theme.colors.types;
+   const color = appearance[handle.edge_type] || appearance['DEFAULT'];
    const { NODE_TEXT_COLOR } = theme.colors.appearance;
 
    const handleStyle = handle.isConnected
-      ? { background: appearance[handle.edge_type], border: '1px solid transparent' }
-      : { border: `1.5px solid ${appearance[handle.edge_type]}`, backgroundColor: 'transparent' };
+      ? { background: color, border: '1px solid transparent' }
+      : { border: `1.5px solid ${color}`, backgroundColor: 'transparent' };
 
    return showInput ? (
       <div className={`flow_input ${handle.isHighlighted ? 'edge_opacity' : ''}`}>
@@ -470,11 +475,13 @@ function OutputHandle({ nodeId, handle, theme }: OutputHandleProps) {
    const showOutput = transformScale < TRANSFORM_POINT;
 
    const appearance = theme.colors.types;
+   const color = appearance[handle.edge_type] || appearance['DEFAULT'];
+
    const { NODE_TEXT_COLOR } = theme.colors.appearance;
 
    const handleStyle = handle.isConnected
-      ? { backgroundColor: appearance[handle.edge_type], border: '1px solid transparent' }
-      : { border: `1.5px solid ${appearance[handle.edge_type]}`, backgroundColor: 'transparent' };
+      ? { backgroundColor: color, border: '1px solid transparent' }
+      : { border: `1.5px solid ${color}`, backgroundColor: 'transparent' };
 
    return showOutput ? (
       <div className={`flow_output ${handle.isHighlighted ? 'edge_opacity' : ''}`}>
@@ -524,7 +531,13 @@ function Widget({ theme, nodeId, data, nodeDef, updateInputData }: WidgetProps) 
    return showWidget ? (
       <div className="widget_container" style={{ ...containerStyle }}>
          <WidgetHandle nodeId={nodeId} data={data} theme={theme} />
-         <div style={{ marginLeft: isMultiline ? '0px' : '5px', width: '100%' }}>
+         <div
+            style={{
+               marginLeft: isMultiline ? '0px' : '5px',
+               width: '100%',
+               opacity: data?.isConnected ? 0.7 : 1
+            }}
+         >
             {createWidgetFromSpec(inputDef, data.display_name, data, update)}
          </div>
       </div>
@@ -543,10 +556,11 @@ export interface WidgetHandleProps {
 
 function WidgetHandle({ nodeId, data, theme }: WidgetHandleProps) {
    const appearance = theme.colors.types;
+   const color = appearance[data.edge_type] || appearance['DEFAULT'];
 
    const handleStyle = data.isConnected
-      ? { background: appearance[data.edge_type], border: '1px solid transparent' }
-      : { border: `1.5px solid ${appearance[data.edge_type]}`, background: 'transparent' };
+      ? { background: color, border: '1px solid transparent' }
+      : { border: `1.5px solid ${color}`, background: 'transparent' };
 
    return (
       <div style={{ display: 'flex', alignItems: 'center', marginTop: '12.5px' }}>

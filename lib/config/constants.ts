@@ -1,4 +1,4 @@
-import { EdgeType, HandleState, ViewFileArgs } from '../types/types';
+import { EdgeType, HandleState, ViewFileArgs, WidgetType } from '../types/types';
 import { useFlowStore } from '../store/flow';
 import { IPagination } from '../types/api';
 
@@ -114,6 +114,7 @@ export const HANDLE_TYPES: EdgeType[] = [
    'STYLE_MODEL',
    'VAE',
    'TAESD',
+   'EMBEDDING',
 
    // widget types
    'INT',

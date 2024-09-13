@@ -410,6 +410,11 @@ button.comfy-settings-btn {
     -ms-overflow-style: none;
 } */
 
+input[type="color"]::-webkit-color-swatch {
+   border-radius: 50%;
+   border: none;
+ }
+
 /* Hide scrollbar buttons */
 ::-webkit-scrollbar-button {
    display: none;

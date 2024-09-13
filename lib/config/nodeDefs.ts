@@ -50,6 +50,27 @@ export const SaveImage: NodeDefinition = {
    }
 };
 
+export const MaskImage: NodeDefinition = {
+   category: 'masking',
+   display_name: 'Mask Image',
+   description: 'Mask Image',
+   inputs: {
+      ['image']: {
+         display_name: 'image',
+         edge_type: 'IMAGE',
+         widget: {
+            type: 'MASK'
+         }
+      }
+   },
+   outputs: {
+      ['image']: {
+         display_name: 'image',
+         edge_type: 'IMAGE'
+      }
+   }
+};
+
 export const LoadVideo: NodeDefinition = {
    category: 'video',
    display_name: 'Load Video',
@@ -335,7 +356,8 @@ export const AllNodeDefs = {
    ImageRegen,
    SelectObject,
    RemoveBackground,
-   IC_Light
+   IC_Light,
+   MaskImage
 };
 
 function buildInput(type: string, name: string, options: any, optional: boolean) {
