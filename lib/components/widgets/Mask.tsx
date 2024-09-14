@@ -43,7 +43,7 @@ export function MaskWidget({
    const [konvaImage, setKonvaImage] = useState<Konva.Image | null>(null);
    const maskCanvasRef = useRef<HTMLCanvasElement>(null);
    const imgRef = useRef<HTMLImageElement>(null);
-   const [isEditing, setIsEditing] = useState(false);
+   const [isEditing, setIsEditing] = useState(true);
    const [undoStack, setUndoStack] = useState<
       { points: number[][]; size: number; color: string }[][]
    >([]);
@@ -158,7 +158,52 @@ export function MaskWidget({
 
    const handleMouseUp = () => {
       setIsDrawing(false);
-      handleGetMaskClick(currentLine);
+      if (currentLine.length > 0) {
+         const lastLine = currentLine[currentLine.length - 1];
+         const points = lastLine.points;
+
+         const minX = Math.min(...points.map((p) => p[0]));
+         const maxX = Math.max(...points.map((p) => p[0]));
+         const minY = Math.min(...points.map((p) => p[1]));
+         const maxY = Math.max(...points.map((p) => p[1]));
+
+         const filledPoints = [];
+         const gridSpacing = 5;
+
+         for (let x = minX; x <= maxX; x += gridSpacing) {
+            for (let y = minY; y <= maxY; y += gridSpacing) {
+               if (isPointInPolygon([x, y], points)) {
+                  filledPoints.push([x, y]);
+               }
+            }
+         }
+
+         const filledLine = {
+            ...lastLine,
+            points: filledPoints
+         };
+
+         const updatedLines = [...currentLine.slice(0, -1), filledLine];
+         setCurrentLine(updatedLines);
+         handleGetMaskClick(updatedLines);
+      } else {
+         handleGetMaskClick(currentLine);
+      }
+   };
+
+   const isPointInPolygon = (point: [number, number], polygon: [number, number][]): boolean => {
+      let inside = false;
+      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+         const xi = polygon[i][0],
+            yi = polygon[i][1];
+         const xj = polygon[j][0],
+            yj = polygon[j][1];
+         const intersect =
+            yi > point[1] !== yj > point[1] &&
+            point[0] < ((xj - xi) * (point[1] - yi)) / (yj - yi) + xi;
+         if (intersect) inside = !inside;
+      }
+      return inside;
    };
 
    const handleCheckmarkClick = async () => {
@@ -195,7 +240,7 @@ export function MaskWidget({
             onClick={handleReopenModal}
          />
          <Modal
-            open={isModalOpen}
+            open={true}
             onCancel={toggleModal}
             footer={null}
             className="menu_modal "
@@ -275,7 +320,7 @@ export function MaskWidget({
                               onMouseDown={handleMouseDown}
                               onMouseMove={handleMouseMove}
                               onMouseUp={handleMouseUp}
-                              className="border border-borderColor hover:cursor-crosshair max-w-full"
+                              className="border border-borderColor hover:cursor-crosshair max-w-full "
                            >
                               <Layer>
                                  <KonvaImage
