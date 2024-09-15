@@ -38,7 +38,7 @@ export function MaskWidget({
    const [currentLine, setCurrentLine] = useState<
       { points: number[][]; size: number; color: string }[]
    >([]);
-   const [brushSize, setBrushSize] = useState<number>(5);
+   const [brushSize, setBrushSize] = useState<number>(2.5);
    const [brushColor, setBrushColor] = useState<string>('#ff0000');
    const [konvaImage, setKonvaImage] = useState<Konva.Image | null>(null);
    const maskCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -52,6 +52,13 @@ export function MaskWidget({
    >([]);
    const [isSubmittingUpdate, setIsSubmittingUpdate] = useState(false);
    const [initialImage, setInitialImage] = useState<string | null>(null);
+   const [brushColors, setBrushColors] = useState<string[]>([
+      '#ff0000',
+      '#00ff00',
+      '#0000ff',
+      '#ffff00',
+      '#ff00ff'
+   ]);
 
    useEffect(() => {
       if (imageUrl) {
@@ -73,7 +80,7 @@ export function MaskWidget({
 
       lines.forEach((line) => {
          ctx.lineWidth = line.size;
-         ctx.strokeStyle = line.color;
+         ctx.strokeStyle = '#ff0000';
          ctx.beginPath();
          line.points.forEach(([x, y], index) => {
             if (index === 0) {
@@ -172,7 +179,7 @@ export function MaskWidget({
 
          for (let x = minX; x <= maxX; x += gridSpacing) {
             for (let y = minY; y <= maxY; y += gridSpacing) {
-               if (isPointInPolygon([x, y], points)) {
+               if (isPointInPolygon([x, y], points as [number, number][])) {
                   filledPoints.push([x, y]);
                }
             }
@@ -180,10 +187,12 @@ export function MaskWidget({
 
          const filledLine = {
             ...lastLine,
-            points: filledPoints
+            points: filledPoints,
+            size: 7.9,
+            color: `${lastLine.color}60`
          };
 
-         const updatedLines = [...currentLine.slice(0, -1), filledLine];
+         const updatedLines = [...currentLine, filledLine];
          setCurrentLine(updatedLines);
          handleGetMaskClick(updatedLines);
       } else {
@@ -240,7 +249,7 @@ export function MaskWidget({
             onClick={handleReopenModal}
          />
          <Modal
-            open={true}
+            open={isModalOpen}
             onCancel={toggleModal}
             footer={null}
             className="menu_modal "
@@ -277,7 +286,7 @@ export function MaskWidget({
                            <LuRedo2 color="white" />
                         </Button>
                      </div>
-                     <div>
+                     {/* <div>
                         <div className="flex items-center justify-between mb-2 text-[9px]">
                            <p className="opacity-50">Brush Size</p>
                            <p>{brushSize}</p>
@@ -291,18 +300,28 @@ export function MaskWidget({
                            className="w-[150px]"
                            onValueChange={(number) => setBrushSize(number[0])}
                         />
-                     </div>
+                     </div> */}
                      <label htmlFor="color">
                         <div className="flex flex-col gap-1 cursor-pointer">
                            <p className="text-[9px] opacity-50">Brush Color</p>
-                           <div className="w-[20px] h-[20px] rounded-md bg-white border border-borderColorf flex items-center justify-center">
-                              <input
-                                 className="appearance-none bg-transparent border-none h-[22px] w-[18px] cursor-pointer"
-                                 value={brushColor}
-                                 id="color"
-                                 type="color"
-                                 onChange={(e) => setBrushColor(e.target.value)}
-                              ></input>
+                           <div className="flex items-center gap-1">
+                              {brushColors.map((color, id) => {
+                                 return (
+                                    <div
+                                       key={id}
+                                       className={`w-[20px] h-[20px] rounded-md bg-white flex items-center justify-center ${brushColor == color && 'border border-primary'}`}
+                                       onClick={() => setBrushColor(color)}
+                                    >
+                                       <div
+                                          style={{ backgroundColor: color }}
+                                          className={`border-none h-[16px] w-[16px] cursor-pointer rounded-full`}
+                                          id="color"
+                                          // type="color"
+                                          // onChange={(e) => setBrushColor(e.target.value)}
+                                       ></div>
+                                    </div>
+                                 );
+                              })}
                            </div>
                         </div>
                      </label>
@@ -320,7 +339,7 @@ export function MaskWidget({
                               onMouseDown={handleMouseDown}
                               onMouseMove={handleMouseMove}
                               onMouseUp={handleMouseUp}
-                              className="border border-borderColor hover:cursor-crosshair max-w-full "
+                              className="border border-borderColor hover:cursor-context-menu max-w-full "
                            >
                               <Layer>
                                  <KonvaImage
