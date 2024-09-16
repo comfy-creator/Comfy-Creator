@@ -17,8 +17,8 @@ export function handleEdgeUpdateStart({
       const sourceHandle = getHandleName(edge.sourceHandle);
       const targetHandle = getHandleName(edge.targetHandle);
 
-      updateInputData({ nodeId: targetNode, name: targetHandle, data: { isConnected: false } });
-      updateOutputData({ nodeId: sourceNode, name: sourceHandle, data: { isConnected: false } });
+      updateInputData({ nodeId: targetNode, display_name: targetHandle, data: { isConnected: false } });
+      updateOutputData({ nodeId: sourceNode, display_name: sourceHandle, data: { isConnected: false } });
       setEdges((eds: Edge[]) => eds.filter((e) => e.id !== edge.id));
    };
 }

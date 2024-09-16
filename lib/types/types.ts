@@ -214,6 +214,7 @@ export type OnNodeContextMenu = (event: ReactMouseEvent, node: AppNode) => void;
 
 export interface HandleOnConnectEndParams {
    onContextMenu: OnContextMenu;
+   onPaneClick: () => void;
 }
 
 export interface ValidateConnectionParams {
@@ -245,9 +246,10 @@ export type EdgeType =
    | 'MASK'
    | 'VIDEO'
    | 'LORA'
-   | 'CONTROL_NET';
+   | 'CONTROL_NET'
+   | 'PREVIEW';
 
-   export type WidgetType =
+export type WidgetType =
    | 'TOGGLE'
    | 'NUMBER'
    | 'TEXT'
@@ -256,7 +258,8 @@ export type EdgeType =
    | 'SLIDER'
    | 'BOOLEAN'
    | 'MASK'
-   | 'COLOR';
+   | 'COLOR'
+   | 'PREVIEW_MASKED_IMAGE';
 
 export type NodeType = ComponentType<NodeProps<AppNode>>;
 

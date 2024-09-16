@@ -39,6 +39,7 @@ import { FilePickerWidget, FileProps } from '../widgets/FilePicker';
 import { TRANSFORM_POINT } from '../../config/constants';
 import { Card, CardHeader, CardBody, CardFooter, Divider, Link, Image } from '@nextui-org/react';
 import { MaskWidget } from '../widgets/Mask';
+import PreviewMaskedImageWidget from '../widgets/PreviewMask';
 
 const createWidgetFromSpec = (
    def: HandleState,
@@ -47,6 +48,7 @@ const createWidgetFromSpec = (
    updateInputData?: (newState: Partial<HandleState>) => void
 ) => {
    const commonProps = { label };
+
    if (data.edge_type !== def.edge_type) return null; // ????? Do we need defs AND data?
 
    const updateData = { display_name: data.display_name, edge_type: data.edge_type };
@@ -96,6 +98,8 @@ const createWidgetFromSpec = (
             );
          case 'MASK':
             return <MaskWidget />;
+         case 'PREVIEW_MASKED_IMAGE':
+            return <PreviewMaskedImageWidget {...commonProps} value={data.value as string} />;
          case 'DROPDOWN':
             return (
                <EnumWidget

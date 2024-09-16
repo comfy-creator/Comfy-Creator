@@ -137,7 +137,7 @@ export function MainFlow() {
       registerEdgeType(HANDLE_TYPES);
    }, []);
 
-   const onConnectEnd = useCallback(handleOnConnectEnd({ onContextMenu }), [onContextMenu]);
+   const onConnectEnd = useCallback(handleOnConnectEnd({ onContextMenu, onPaneClick }), [onContextMenu, onPaneClick]);
 
    const onConnectStart: OnConnectStart = useCallback(handleOnConnectStart(), [nodes]);
 

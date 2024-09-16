@@ -304,7 +304,10 @@ export const useFlowStore = create<RFState>((set, get) => {
       },
 
       onConnect: (connection: Connection) => {
-         const filterEdges = get().edges.filter(
+         const edges = get().edges;
+         const pEdge = edges.find((edge) => edge.targetHandle === connection.targetHandle);
+
+         const filterEdges = edges.filter(
             (edge) =>
                !(edge.target === connection.target && edge.targetHandle === connection.targetHandle)
          );
@@ -350,6 +353,14 @@ export const useFlowStore = create<RFState>((set, get) => {
 
          if (newConn) {
             const { updateInputData, updateOutputData, setEdges } = get();
+
+            if (pEdge) {
+               get().updateOutputData({
+                  nodeId: pEdge.source,
+                  display_name: getHandleName(pEdge.sourceHandle!),
+                  data: { isConnected: false }
+               });
+            }
 
             updateInputData({
                nodeId: target.id,

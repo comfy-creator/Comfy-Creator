@@ -1,6 +1,12 @@
 import { ChangeEvent, useRef, useState, useEffect, createRef } from 'react';
 import { Modal } from 'antd';
-import { ChevronLeftIcon, ChevronRightIcon, Cross1Icon, Pencil2Icon } from '@radix-ui/react-icons';
+import {
+   ChevronLeftIcon,
+   ChevronRightIcon,
+   Cross1Icon,
+   EraserIcon,
+   Pencil2Icon
+} from '@radix-ui/react-icons';
 import { useApiContext } from '../../contexts/api';
 import { API_URL } from '../../config/constants';
 import { useFlowStore } from '../../store/flow';
@@ -34,6 +40,7 @@ type Label = {
       points: number[][];
       size: number;
       color: string;
+      isEraser?: boolean;
    }>;
 };
 
@@ -42,7 +49,7 @@ export function MaskWidget({
    imageUrl = 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D'
 }: MaskProps) {
    const { setAppLoading } = useFlowStore((state) => state);
-   const [isModalOpen, setIsModalOpen] = useState(true);
+   const [isModalOpen, setIsModalOpen] = useState(false);
    const [selectedImage, setSelectedImage] = useState<string | null>(null);
    const [image, setImage] = useState<HTMLImageElement | null>(null);
    const [isDrawing, setIsDrawing] = useState<boolean>(false);
@@ -69,7 +76,8 @@ export function MaskWidget({
    const [labelError, setLabelError] = useState<string | null>(null);
    const [showAllShapes, setShowAllShapes] = useState(false);
    const [isEraserActive, setIsEraserActive] = useState<boolean>(false);
-   const eraserSize = 7; // Define a specific size for the eraser
+   const [maskedImage, setMaskedImage] = useState(null);
+   const eraserSize = 20; // Define a specific size for the eraser
 
    useEffect(() => {
       if (imageUrl) {
@@ -116,9 +124,9 @@ export function MaskWidget({
    };
 
    useEffect(() => {
-      if (selectedImage) {
+      if (initialImage) {
          const img = new Image();
-         img.src = selectedImage;
+         img.src = initialImage;
          img.crossOrigin = 'anonymous';
          img.onload = () => {
             setImage(img);
@@ -130,7 +138,7 @@ export function MaskWidget({
             setKonvaImage(konvaImg);
          };
       }
-   }, [selectedImage]);
+   }, [initialImage]);
 
    const handleUndo = () => {
       if (undoStack.length === 0) return;
@@ -156,79 +164,52 @@ export function MaskWidget({
       const point = stage.getPointerPosition();
       if (!point) return;
 
-      if (isEraserActive) {
-         eraseShapeAtPoint(point);
-      } else {
-         if (!activeLabel) return;
-         setIsDrawing(true);
-         setUndoStack((prev) => [...prev, shapes]);
-         setRedoStack([]);
+      setIsDrawing(true);
+      setUndoStack((prev) => [...prev, shapes]);
+      setRedoStack([]);
+
+      if (!isEraserActive && activeLabel) {
          setShapes((prevShapes) => [
             ...prevShapes,
-            { points: [[point.x, point.y]], size: brushSize, color: activeLabel.color }
+            {
+               points: [[point.x, point.y]],
+               size: brushSize,
+               color: activeLabel.color,
+               isEraser: false
+            }
          ]);
       }
    };
 
    const handleMouseMove = (evt: any) => {
-      if (isEraserActive) {
-         // No erasing on mouse move
-         return;
-      }
-
-      if (!isDrawing || !activeLabel) return;
+      if (!isDrawing) return;
       const stage = evt.target.getStage();
       const point = stage.getPointerPosition();
       if (!point) return;
 
-      setShapes((prevShapes) => {
-         const newShapes = [...prevShapes];
-         const lastShape = newShapes[newShapes.length - 1];
-         lastShape.points = [...lastShape.points, [point.x, point.y]];
-         handleGetMaskClick(newShapes);
-         return newShapes;
-      });
+      if (isEraserActive) {
+         setShapes((prevShapes) =>
+            prevShapes.map((shape) => ({
+               ...shape,
+               points: shape.points.filter(([x, y]) => {
+                  const distance = Math.hypot(x - point.x, y - point.y);
+                  return distance > eraserSize;
+               })
+            }))
+         );
+      } else if (activeLabel) {
+         setShapes((prevShapes) => {
+            const newShapes = [...prevShapes];
+            const lastShape = newShapes[newShapes.length - 1];
+            lastShape.points = [...lastShape.points, [point.x, point.y]];
+            return newShapes;
+         });
+      }
    };
 
    const handleMouseUp = () => {
-      if (isEraserActive) {
-         // No additional actions needed for eraser on mouse up
-         return;
-      }
-
-      if (!activeLabel) return;
       setIsDrawing(false);
       handleGetMaskClick(shapes);
-
-      if (stageRef.current && image) {
-         const stage = stageRef.current;
-         const scaleX = image.width / stage.width();
-         const scaleY = image.height / stage.height();
-
-         // Create a temporary canvas to draw the mask
-         const tempCanvas = document.createElement('canvas');
-         tempCanvas.width = image.width;
-         tempCanvas.height = image.height;
-         const tempCtx = tempCanvas.getContext('2d');
-
-         if (tempCtx) {
-            shapes.forEach((shape) => {
-               tempCtx.beginPath();
-               shape.points.forEach(([x, y], index) => {
-                  const scaledX = x * scaleX;
-                  const scaledY = y * scaleY;
-                  if (index === 0) {
-                     tempCtx.moveTo(scaledX, scaledY);
-                  } else {
-                     tempCtx.lineTo(scaledX, scaledY);
-                  }
-               });
-               tempCtx.closePath();
-               tempCtx.fillStyle = 'white';
-               tempCtx.fill();
-            });
-         }
-      }
 
       if (activeLabel) {
          const updatedLabels = labels.map((label) =>
@@ -336,68 +317,79 @@ export function MaskWidget({
 
    const toggleEraser = () => {
       setIsEraserActive(!isEraserActive);
-      if (isEraserActive) {
-         setBrushColor(brushColors[Math.floor(Math.random() * brushColors.length)]); // Restore a random brush color when switching back
-      }
+      // if (isEraserActive) {
+      //    setBrushColor(brushColors[Math.floor(Math.random() * brushColors.length)]); // Restore a random brush color when switching back
+      // }
    };
 
-   // Function to erase shapes at a given point
-   const eraseShapeAtPoint = (point: { x: number; y: number }) => {
-      const eraserRadius = eraserSize;
-      const newShapes: Label['shapes'] = [];
-
-      shapes.forEach((shape) => {
-         let currentSegment: { points: number[][]; size: number; color: string } | null = null;
-
-         for (let i = 0; i < shape.points.length; i++) {
-            const [x, y] = shape.points[i];
-            const distance = Math.hypot(x - point.x, y - point.y);
-
-            if (distance > eraserRadius) {
-               if (!currentSegment) {
-                  currentSegment = { points: [], size: shape.size, color: shape.color };
-               }
-               currentSegment.points.push([x, y]);
-            } else {
-               if (currentSegment && currentSegment.points.length > 1) {
-                  newShapes.push(currentSegment);
-               }
-               currentSegment = null;
-            }
-         }
-
-         if (currentSegment && currentSegment.points.length > 1) {
-            newShapes.push(currentSegment);
-         }
-      });
-
-      if (newShapes.length !== shapes.length) {
-         setUndoStack((prev) => [...prev, shapes]);
-         setShapes(newShapes);
-
-         // Update labels by removing shapes that have been edited
-         const updatedLabels = labels.map((label) => ({
-            ...label,
-            shapes: label.shapes
-               .filter((shape) => shape.color !== label.color) // Corrected filter condition
-               .concat(newShapes.filter((newShape) => newShape.color === label.color))
-         }));
-         setLabels(updatedLabels);
+   useEffect(() => {
+      if (isModalOpen) {
+         setShapes(activeLabel ? activeLabel.shapes : []);
+      } else {
+         const allShapes = labels.flatMap((label) =>
+            label.shapes.map((shape) => ({
+               ...shape,
+               color: label.color
+            }))
+         );
+         setShapes(allShapes);
       }
-   };
+   }, [isModalOpen]);
 
    const hasMasks = labels.some((label) => label.shapes.length > 0);
 
    return (
       <>
-         <p className="text-[9px] mt-[5px]">image</p>
-         <img
+         <p className="text-[9px] mt-[7px]">image</p>
+         {/* <img
             src={selectedImage || ''}
             alt="preview"
             style={{ width: '100%' }}
             className="mt-2"
             onClick={handleReopenModal}
-         />
+         /> */}
+         {image && (
+            <div className="mt-3" onClick={() => handleReopenModal()}>
+               <Stage
+                  ref={stageRef}
+                  width={160}
+                  height={245}
+                  // onMouseDown={handleMouseDown}
+                  // onMouseMove={handleMouseMove}
+                  // onMouseUp={handleMouseUp}
+
+                  // className={`border border-borderColor ${
+                  //    activeLabel || isEraserActive
+                  //       ? 'hover:cursor-context-menu'
+                  //       : 'hover:cursor-not-allowed'
+                  // } max-w-full`}
+               >
+                  <Layer>
+                     <KonvaImage image={image} width={160} height={245} />
+                     {shapes.map((shape, i) => (
+                        <Shape
+                           key={i}
+                           sceneFunc={(context, shapeNode) => {
+                              context.beginPath();
+                              shape.points.forEach(([x, y], index) => {
+                                 if (index === 0) {
+                                    context.moveTo(x, y);
+                                 } else {
+                                    context.lineTo(x, y);
+                                 }
+                              });
+                              context.closePath();
+                              context.fillStrokeShape(shapeNode);
+                           }}
+                           fill={`${shape.color}60`}
+                           stroke={shape.color}
+                           strokeWidth={shape.size}
+                        />
+                     ))}
+                  </Layer>
+               </Stage>
+            </div>
+         )}
          <Modal
             open={isModalOpen}
             onCancel={toggleModal}
@@ -431,7 +423,7 @@ export function MaskWidget({
                      className={`bg-borderColor hover:bg-borderColor text-xs p-2 h-[25px] `}
                      onClick={toggleEraser}
                   >
-                     {isEraserActive ? <BsBrush /> : <Pencil2Icon />}
+                     {isEraserActive ? <BsBrush /> : <EraserIcon />}
                   </Button>
                </div>
             </div>

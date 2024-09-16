@@ -65,8 +65,11 @@ export const MaskImage: NodeDefinition = {
    },
    outputs: {
       ['image']: {
-         display_name: 'image',
-         edge_type: 'IMAGE'
+         display_name: 'Masked Image',
+         edge_type: 'IMAGE',
+         widget: {
+            type: 'PREVIEW_MASKED_IMAGE'
+         }
       }
    }
 };
@@ -344,6 +347,22 @@ export const IC_Light: NodeDefinition = {
    }
 };
 
+export const PreviewMaskedImage: NodeDefinition = {
+   category: 'masking',
+   display_name: 'Preview Mask',
+   description: 'Preview the masked image and the image with the drawings',
+   inputs: {
+      ['image']: {
+         display_name: 'Masked Image',
+         edge_type: 'IMAGE',
+         widget: {
+            type: 'MASK'
+         }
+      }
+   },
+   outputs: {}
+};
+
 export const AllNodeDefs = {
    LoadImage,
    SaveImage,
@@ -357,7 +376,8 @@ export const AllNodeDefs = {
    SelectObject,
    RemoveBackground,
    IC_Light,
-   MaskImage
+   MaskImage,
+   PreviewMaskedImage
 };
 
 function buildInput(type: string, name: string, options: any, optional: boolean) {

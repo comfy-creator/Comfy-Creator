@@ -4,7 +4,7 @@ import { Connection, Edge, getOutgoers, Node, OnConnectStartParams } from '@xyfl
 import { getHandleName, isPrimitiveNode, isWidgetType } from '../utils/node';
 import { AppNode, HandleOnConnectEndParams, ValidateConnectionParams } from '../types/types';
 
-export function handleOnConnectEnd({ onContextMenu }: HandleOnConnectEndParams) {
+export function handleOnConnectEnd({ onContextMenu, onPaneClick }: HandleOnConnectEndParams) {
    // ReactMouseEvent | TouchEvent instead ?
    // TODO: this logic may be wrong here? We're mixing react-events with native-events!
    return async (event: MouseEvent | globalThis.TouchEvent) => {
@@ -25,7 +25,14 @@ export function handleOnConnectEnd({ onContextMenu }: HandleOnConnectEndParams) 
          // For some reason, need to wait until the next event loop
          await new Promise((resolve) => setTimeout(resolve, 0));
 
-         const suggestionOptions = { nodeDefs, limit: 10, handleType, edgeType, handleId };
+         const suggestionOptions = {
+            nodeDefs,
+            limit: 10,
+            handleType,
+            edgeType,
+            handleId,
+            onPaneClick
+         };
          const suggestedNodes = getSuggestedNodesData(suggestionOptions);
 
          const menuTitle = `${edgeType} | ${edgeType}`;

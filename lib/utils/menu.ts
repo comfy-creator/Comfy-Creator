@@ -157,6 +157,7 @@ interface GetSuggestionsData {
    edgeType: EdgeType;
    handleType: HandleType;
    nodeDefs: NodeDefinitions;
+   onPaneClick: () => void;
 }
 
 export function getSuggestedNodesData({
@@ -164,7 +165,8 @@ export function getSuggestedNodesData({
    handleId,
    handleType,
    edgeType,
-   limit
+   limit,
+   onPaneClick
 }: GetSuggestionsData): IMenuType[] {
    let suggestedNodes = Object.entries(nodeDefs).filter(
       ([_, node]) =>
@@ -188,7 +190,7 @@ export function getSuggestedNodesData({
          const position = { x: e.clientX, y: e.clientY };
 
          const nodeId = addNode({ position, type });
-         const { setEdges, nodes } = useFlowStore.getState();
+         const { setEdges, nodes, edges } = useFlowStore.getState();
 
          const node = nodes.find((node) => node.id === nodeId);
          if (!node) return;
@@ -207,7 +209,22 @@ export function getSuggestedNodesData({
 
          const edge = createEdge({ sourceHandle, targetHandle, type: edgeType });
 
-         setEdges((edges) => [...edges, edge]);
+         const pEdge = edges.find((edge) => edge.targetHandle === handleId);
+
+         if (pEdge) {
+            updateOutputData({
+               nodeId: pEdge.source,
+               display_name: getHandleName(pEdge.sourceHandle!),
+               data: { isConnected: false }
+            });
+         }
+
+         setEdges((edges) => {
+            const newEdges = edges.filter((edge) => edge.targetHandle !== handleId);
+            return [...newEdges, edge];
+         });
+
+         onPaneClick?.();
 
          // TODO: abstract these away and avoid repetitions
          updateInputData({
