@@ -56,7 +56,6 @@ const createWidgetFromSpec = (
    if (data.widget) {
       switch (data.widget.type) {
          case 'TOGGLE':
-            console.log('In data widget', data);
             return (
                <ToggleWidget
                   {...commonProps}
@@ -96,7 +95,6 @@ const createWidgetFromSpec = (
                />
             );
          case 'MASK':
-            console.log('In data widget', data.widget);
             return <MaskWidget />;
          case 'DROPDOWN':
             return (
@@ -116,7 +114,6 @@ const createWidgetFromSpec = (
    // If no widget is defined, use the default widget for this edge_type, if one exists
    switch (data.edge_type) {
       case 'BOOLEAN':
-         console.log('In data edge type');
          return (
             <ToggleWidget
                {...commonProps}

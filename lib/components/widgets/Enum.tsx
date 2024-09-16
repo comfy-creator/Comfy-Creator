@@ -28,7 +28,7 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
    };
 
    const disabledClass = disabled ? 'widget_input_item_disabled' : '';
-   console.log('options', options);
+
    return (
       <div
          style={{

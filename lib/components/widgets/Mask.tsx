@@ -1,4 +1,4 @@
-import { ChangeEvent, useRef, useState, useEffect, useCallback } from 'react';
+import { ChangeEvent, useRef, useState, useEffect, createRef } from 'react';
 import { Modal } from 'antd';
 import { ChevronLeftIcon, ChevronRightIcon, Cross1Icon, Pencil2Icon } from '@radix-ui/react-icons';
 import { useApiContext } from '../../contexts/api';
@@ -7,17 +7,18 @@ import { useFlowStore } from '../../store/flow';
 import { ProgressBar } from '../ProgressBar';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@nextui-org/react';
-import { Stage, Layer, Line, Image as KonvaImage } from 'react-konva';
+import { Stage, Layer, Image as KonvaImage, Shape } from 'react-konva';
 import Konva from 'konva';
 import { Slider } from '@/components/ui/slider';
 import { LuRedo2, LuUndo2 } from 'react-icons/lu';
-import { BsCheck } from 'react-icons/bs';
+import { BsBrush, BsCheck } from 'react-icons/bs';
 
 export type MaskProps = {
    onChange?: (value: string) => void;
    imageUrl?: string;
 };
 
+const brushColors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'];
 const imageToBASE64 = (file: File) =>
    new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -26,39 +27,49 @@ const imageToBASE64 = (file: File) =>
       reader.readAsDataURL(file);
    });
 
+type Label = {
+   name: string;
+   color: string;
+   shapes: Array<{
+      points: number[][];
+      size: number;
+      color: string;
+   }>;
+};
+
 export function MaskWidget({
    onChange,
    imageUrl = 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D'
 }: MaskProps) {
    const { setAppLoading } = useFlowStore((state) => state);
-   const [isModalOpen, setIsModalOpen] = useState(false);
+   const [isModalOpen, setIsModalOpen] = useState(true);
    const [selectedImage, setSelectedImage] = useState<string | null>(null);
    const [image, setImage] = useState<HTMLImageElement | null>(null);
    const [isDrawing, setIsDrawing] = useState<boolean>(false);
-   const [currentLine, setCurrentLine] = useState<
-      { points: number[][]; size: number; color: string }[]
-   >([]);
    const [brushSize, setBrushSize] = useState<number>(2.5);
-   const [brushColor, setBrushColor] = useState<string>('#ff0000');
+   const [brushColor, setBrushColor] = useState<string>(
+      brushColors[Math.floor(Math.random() * brushColors.length)]
+   );
    const [konvaImage, setKonvaImage] = useState<Konva.Image | null>(null);
+
    const maskCanvasRef = useRef<HTMLCanvasElement>(null);
    const imgRef = useRef<HTMLImageElement>(null);
-   const [isEditing, setIsEditing] = useState(true);
-   const [undoStack, setUndoStack] = useState<
-      { points: number[][]; size: number; color: string }[][]
-   >([]);
-   const [redoStack, setRedoStack] = useState<
-      { points: number[][]; size: number; color: string }[][]
-   >([]);
+
+   const [shapes, setShapes] = useState<Label['shapes']>([]);
+
+   const [undoStack, setUndoStack] = useState<Array<typeof shapes>>([]);
+   const [redoStack, setRedoStack] = useState<Array<typeof shapes>>([]);
    const [isSubmittingUpdate, setIsSubmittingUpdate] = useState(false);
    const [initialImage, setInitialImage] = useState<string | null>(null);
-   const [brushColors, setBrushColors] = useState<string[]>([
-      '#ff0000',
-      '#00ff00',
-      '#0000ff',
-      '#ffff00',
-      '#ff00ff'
-   ]);
+   const [labels, setLabels] = useState<Label[]>([]);
+   const [newLabel, setNewLabel] = useState<string>('');
+   const [activeLabel, setActiveLabel] = useState<Label | null>(null);
+   const [availableColors, setAvailableColors] = useState<string[]>([...brushColors]);
+   const stageRef = createRef<Konva.Stage>();
+   const [labelError, setLabelError] = useState<string | null>(null);
+   const [showAllShapes, setShowAllShapes] = useState(false);
+   const [isEraserActive, setIsEraserActive] = useState<boolean>(false);
+   const eraserSize = 7; // Define a specific size for the eraser
 
    useEffect(() => {
       if (imageUrl) {
@@ -69,7 +80,7 @@ export function MaskWidget({
 
    const toggleModal = () => setIsModalOpen(!isModalOpen);
 
-   const handleGetMaskClick = (lines: { points: number[][]; size: number; color: string }[]) => {
+   const handleGetMaskClick = (shapesToDraw: typeof shapes) => {
       if (!maskCanvasRef.current || !image || !imgRef.current) return;
       const ctx = maskCanvasRef.current.getContext('2d');
       if (!ctx) return;
@@ -78,17 +89,20 @@ export function MaskWidget({
 
       ctx.globalCompositeOperation = 'source-over';
 
-      lines.forEach((line) => {
-         ctx.lineWidth = line.size;
-         ctx.strokeStyle = '#ff0000';
+      shapesToDraw.forEach((shape) => {
+         ctx.lineWidth = shape.size;
+         ctx.strokeStyle = shape.color;
+         ctx.fillStyle = `${shape.color}60`;
          ctx.beginPath();
-         line.points.forEach(([x, y], index) => {
+         shape.points.forEach(([x, y], index) => {
             if (index === 0) {
                ctx.moveTo(x, y);
             } else {
                ctx.lineTo(x, y);
             }
          });
+         ctx.closePath();
+         ctx.fill();
          ctx.stroke();
       });
 
@@ -119,100 +133,110 @@ export function MaskWidget({
    }, [selectedImage]);
 
    const handleUndo = () => {
-      if (currentLine.length === 0) return;
-      setRedoStack((prev) => [currentLine, ...prev]);
-      const newCurrentLine = undoStack[undoStack.length - 1] || [];
-      setCurrentLine(newCurrentLine);
+      if (undoStack.length === 0) return;
+      const previousShapes = undoStack[undoStack.length - 1];
+      setRedoStack((prev) => [shapes, ...prev]);
+      setShapes(previousShapes);
       setUndoStack((prev) => prev.slice(0, -1));
-      handleGetMaskClick(newCurrentLine);
+      handleGetMaskClick(previousShapes);
    };
 
    const handleRedo = () => {
       if (redoStack.length === 0) return;
-      setUndoStack((prev) => [...prev, currentLine]);
-      const newCurrentLine = redoStack[0];
-      setCurrentLine(newCurrentLine);
+      const nextShapes = redoStack[0];
+      setUndoStack((prev) => [...prev, shapes]);
+      setShapes(nextShapes);
       setRedoStack((prev) => prev.slice(1));
-      handleGetMaskClick(newCurrentLine);
+      handleGetMaskClick(nextShapes);
    };
 
    const handleMouseDown = (evt: any) => {
       const stage = evt.target.getStage();
+      if (!stage) return;
       const point = stage.getPointerPosition();
-      setIsDrawing(true);
-      setUndoStack((prev) => [...prev, currentLine]);
-      setRedoStack([]);
-      setCurrentLine((prevLines) => [
-         ...prevLines,
-         { points: [[point.x, point.y]], size: brushSize, color: brushColor }
-      ]);
+      if (!point) return;
+
+      if (isEraserActive) {
+         eraseShapeAtPoint(point);
+      } else {
+         if (!activeLabel) return;
+         setIsDrawing(true);
+         setUndoStack((prev) => [...prev, shapes]);
+         setRedoStack([]);
+         setShapes((prevShapes) => [
+            ...prevShapes,
+            { points: [[point.x, point.y]], size: brushSize, color: activeLabel.color }
+         ]);
+      }
    };
 
    const handleMouseMove = (evt: any) => {
-      if (!isDrawing) return;
+      if (isEraserActive) {
+         // No erasing on mouse move
+         return;
+      }
+
+      if (!isDrawing || !activeLabel) return;
       const stage = evt.target.getStage();
       const point = stage.getPointerPosition();
-      setCurrentLine((prevLines) => {
-         const newLines = [...prevLines];
-         newLines[newLines.length - 1].points = [
-            ...newLines[newLines.length - 1].points,
-            [point.x, point.y]
-         ];
-         handleGetMaskClick(newLines);
-         return newLines;
+      if (!point) return;
+
+      setShapes((prevShapes) => {
+         const newShapes = [...prevShapes];
+         const lastShape = newShapes[newShapes.length - 1];
+         lastShape.points = [...lastShape.points, [point.x, point.y]];
+         handleGetMaskClick(newShapes);
+         return newShapes;
       });
    };
 
    const handleMouseUp = () => {
+      if (isEraserActive) {
+         // No additional actions needed for eraser on mouse up
+         return;
+      }
+
+      if (!activeLabel) return;
       setIsDrawing(false);
-      if (currentLine.length > 0) {
-         const lastLine = currentLine[currentLine.length - 1];
-         const points = lastLine.points;
+      handleGetMaskClick(shapes);
 
-         const minX = Math.min(...points.map((p) => p[0]));
-         const maxX = Math.max(...points.map((p) => p[0]));
-         const minY = Math.min(...points.map((p) => p[1]));
-         const maxY = Math.max(...points.map((p) => p[1]));
+      if (stageRef.current && image) {
+         const stage = stageRef.current;
+         const scaleX = image.width / stage.width();
+         const scaleY = image.height / stage.height();
 
-         const filledPoints = [];
-         const gridSpacing = 5;
+         // Create a temporary canvas to draw the mask
+         const tempCanvas = document.createElement('canvas');
+         tempCanvas.width = image.width;
+         tempCanvas.height = image.height;
+         const tempCtx = tempCanvas.getContext('2d');
 
-         for (let x = minX; x <= maxX; x += gridSpacing) {
-            for (let y = minY; y <= maxY; y += gridSpacing) {
-               if (isPointInPolygon([x, y], points as [number, number][])) {
-                  filledPoints.push([x, y]);
-               }
-            }
+         if (tempCtx) {
+            shapes.forEach((shape) => {
+               tempCtx.beginPath();
+               shape.points.forEach(([x, y], index) => {
+                  const scaledX = x * scaleX;
+                  const scaledY = y * scaleY;
+                  if (index === 0) {
+                     tempCtx.moveTo(scaledX, scaledY);
+                  } else {
+                     tempCtx.lineTo(scaledX, scaledY);
+                  }
+               });
+               tempCtx.closePath();
+               tempCtx.fillStyle = 'white';
+               tempCtx.fill();
+            });
          }
-
-         const filledLine = {
-            ...lastLine,
-            points: filledPoints,
-            size: 7.9,
-            color: `${lastLine.color}60`
-         };
-
-         const updatedLines = [...currentLine, filledLine];
-         setCurrentLine(updatedLines);
-         handleGetMaskClick(updatedLines);
-      } else {
-         handleGetMaskClick(currentLine);
       }
-   };
 
-   const isPointInPolygon = (point: [number, number], polygon: [number, number][]): boolean => {
-      let inside = false;
-      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-         const xi = polygon[i][0],
-            yi = polygon[i][1];
-         const xj = polygon[j][0],
-            yj = polygon[j][1];
-         const intersect =
-            yi > point[1] !== yj > point[1] &&
-            point[0] < ((xj - xi) * (point[1] - yi)) / (yj - yi) + xi;
-         if (intersect) inside = !inside;
+      if (activeLabel) {
+         const updatedLabels = labels.map((label) =>
+            label === activeLabel ? { ...label, shapes } : label
+         );
+         setLabels(updatedLabels);
+         setActiveLabel({ ...activeLabel, shapes });
       }
-      return inside;
    };
 
    const handleCheckmarkClick = async () => {
@@ -238,6 +262,132 @@ export function MaskWidget({
       setIsModalOpen(true);
    };
 
+   const handleLabelChange = (e: ChangeEvent<HTMLInputElement>) => {
+      setNewLabel(e.target.value);
+      setLabelError(null);
+   };
+
+   const handleAddLabel = () => {
+      const trimmedLabel = newLabel.trim();
+      if (trimmedLabel !== '' && labels.length < 5 && availableColors.length > 0) {
+         // Check if the label name already exists
+         if (labels.some((label) => label.name.toLowerCase() === trimmedLabel.toLowerCase())) {
+            setLabelError('A label with this name already exists. Please choose a unique name.');
+            return;
+         }
+
+         const newColor = availableColors[0];
+         const newLabelObject: Label = {
+            name: trimmedLabel,
+            color: newColor,
+            shapes: []
+         };
+         setLabels([...labels, newLabelObject]);
+         setNewLabel('');
+         setActiveLabel(newLabelObject);
+         setShapes([]);
+         setAvailableColors(availableColors.slice(1));
+         setBrushColor(newColor);
+         setLabelError(null);
+      }
+   };
+
+   const handleRemoveLabel = (index: number) => {
+      const removedLabel = labels[index];
+      const updatedLabels = labels.filter((_, i) => i !== index);
+      setLabels(updatedLabels);
+      setAvailableColors([...availableColors, removedLabel.color]);
+
+      if (activeLabel === removedLabel) {
+         setActiveLabel(null);
+         setShapes([]);
+      } else if (showAllShapes) {
+         // Update shapes to exclude the removed label's shapes
+         const remainingShapes = shapes.filter((shape) =>
+            updatedLabels.some((label) => label.color === shape.color)
+         );
+         setShapes(remainingShapes);
+      }
+
+      // Always update showAllShapes when a label is removed
+      setShowAllShapes(updatedLabels.length > 0);
+   };
+
+   const handleLabelClick = (label: Label) => {
+      setActiveLabel(label);
+      setShapes(label.shapes);
+      setBrushColor(label.color);
+   };
+
+   const handleShowAllShapes = () => {
+      setShowAllShapes(!showAllShapes);
+      if (!showAllShapes) {
+         const allShapes = labels.flatMap((label) =>
+            label.shapes.map((shape) => ({
+               ...shape,
+               color: label.color
+            }))
+         );
+         setShapes(allShapes);
+      } else {
+         setShapes(activeLabel ? activeLabel.shapes : []);
+      }
+   };
+
+   const toggleEraser = () => {
+      setIsEraserActive(!isEraserActive);
+      if (isEraserActive) {
+         setBrushColor(brushColors[Math.floor(Math.random() * brushColors.length)]); // Restore a random brush color when switching back
+      }
+   };
+
+   // Function to erase shapes at a given point
+   const eraseShapeAtPoint = (point: { x: number; y: number }) => {
+      const eraserRadius = eraserSize;
+      const newShapes: Label['shapes'] = [];
+
+      shapes.forEach((shape) => {
+         let currentSegment: { points: number[][]; size: number; color: string } | null = null;
+
+         for (let i = 0; i < shape.points.length; i++) {
+            const [x, y] = shape.points[i];
+            const distance = Math.hypot(x - point.x, y - point.y);
+
+            if (distance > eraserRadius) {
+               if (!currentSegment) {
+                  currentSegment = { points: [], size: shape.size, color: shape.color };
+               }
+               currentSegment.points.push([x, y]);
+            } else {
+               if (currentSegment && currentSegment.points.length > 1) {
+                  newShapes.push(currentSegment);
+               }
+               currentSegment = null;
+            }
+         }
+
+         if (currentSegment && currentSegment.points.length > 1) {
+            newShapes.push(currentSegment);
+         }
+      });
+
+      if (newShapes.length !== shapes.length) {
+         setUndoStack((prev) => [...prev, shapes]);
+         setShapes(newShapes);
+
+         // Update labels by removing shapes that have been edited
+         const updatedLabels = labels.map((label) => ({
+            ...label,
+            shapes: label.shapes
+               .filter((shape) => shape.color !== label.color) // Corrected filter condition
+               .concat(newShapes.filter((newShape) => newShape.color === label.color))
+         }));
+         setLabels(updatedLabels);
+      }
+   };
+
+   const hasMasks = labels.some((label) => label.shapes.length > 0);
+
    return (
       <>
          <p className="text-[9px] mt-[5px]">image</p>
@@ -252,8 +402,8 @@ export function MaskWidget({
             open={isModalOpen}
             onCancel={toggleModal}
             footer={null}
-            className="menu_modal "
-            width={'fit-content'}
+            className="menu_modal"
+            width={'800px'}
             centered
             height="90vh"
             style={{
@@ -261,151 +411,172 @@ export function MaskWidget({
                alignItems: 'center'
             }}
          >
-            <div
-               onClick={() => setIsEditing(!isEditing)}
-               className={`bg-bg w-fit p-2.5 absolute ${isEditing ? 'top-7' : 'top-4'} left-4 rounded cursor-pointer`}
-            >
-               <Pencil2Icon className="text-fg" />
-            </div>
-            {isEditing && (
-               <div className="flex items-center gap-2 p-3 px-5 rounded-lg bg-bg text-fg border border-borderColor justify-between mx-10 w-fit">
-                  <div className="flex items-center gap-6">
-                     <div className="flex items-center gap-1">
-                        <Button
-                           disabled={currentLine.length < 1}
-                           className="bg-borderColor hover:bg-borderColor text-xs p-2 h-[25px]"
-                           onClick={handleUndo}
-                        >
-                           <LuUndo2 color="white" />
-                        </Button>
-                        <Button
-                           className="bg-borderColor hover:bg-borderColor text-xs p-2 h-[25px]"
-                           disabled={redoStack.length < 1}
-                           onClick={handleRedo}
-                        >
-                           <LuRedo2 color="white" />
-                        </Button>
-                     </div>
-                     {/* <div>
-                        <div className="flex items-center justify-between mb-2 text-[9px]">
-                           <p className="opacity-50">Brush Size</p>
-                           <p>{brushSize}</p>
-                        </div>
-                        <Slider
-                           step={1}
-                           max={50}
-                           min={0}
-                           aria-label={'Brush Size'}
-                           defaultValue={[5]}
-                           className="w-[150px]"
-                           onValueChange={(number) => setBrushSize(number[0])}
-                        />
-                     </div> */}
-                     <label htmlFor="color">
-                        <div className="flex flex-col gap-1 cursor-pointer">
-                           <p className="text-[9px] opacity-50">Brush Color</p>
-                           <div className="flex items-center gap-1">
-                              {brushColors.map((color, id) => {
-                                 return (
-                                    <div
-                                       key={id}
-                                       className={`w-[20px] h-[20px] rounded-md bg-white flex items-center justify-center ${brushColor == color && 'border border-primary'}`}
-                                       onClick={() => setBrushColor(color)}
-                                    >
-                                       <div
-                                          style={{ backgroundColor: color }}
-                                          className={`border-none h-[16px] w-[16px] cursor-pointer rounded-full`}
-                                          id="color"
-                                          // type="color"
-                                          // onChange={(e) => setBrushColor(e.target.value)}
-                                       ></div>
-                                    </div>
-                                 );
-                              })}
-                           </div>
-                        </div>
-                     </label>
-                  </div>
+            <div className="flex items-center gap-6">
+               <div className="flex items-center gap-1">
+                  <Button
+                     disabled={undoStack.length === 0}
+                     className="bg-borderColor hover:bg-borderColor text-xs p-2 h-[25px]"
+                     onClick={handleUndo}
+                  >
+                     <LuUndo2 color="white" />
+                  </Button>
+                  <Button
+                     className="bg-borderColor hover:bg-borderColor text-xs p-2 h-[25px]"
+                     disabled={redoStack.length === 0}
+                     onClick={handleRedo}
+                  >
+                     <LuRedo2 color="white" />
+                  </Button>
+                  <Button
+                     className={`bg-borderColor hover:bg-borderColor text-xs p-2 h-[25px] `}
+                     onClick={toggleEraser}
+                  >
+                     {isEraserActive ? <BsBrush /> : <Pencil2Icon />}
+                  </Button>
                </div>
-            )}
+            </div>
+
             {selectedImage && (
-               <div className="flex gap-5 items-center justify-center h-full max-w-full overflow-auto">
-                  {isEditing ? (
-                     <div className="flex gap-5 max-w-full">
-                        {image && (
-                           <Stage
-                              width={(image.width / image.height) * 500}
-                              height={500}
-                              onMouseDown={handleMouseDown}
-                              onMouseMove={handleMouseMove}
-                              onMouseUp={handleMouseUp}
-                              className="border border-borderColor hover:cursor-context-menu max-w-full "
-                           >
-                              <Layer>
-                                 <KonvaImage
-                                    image={image}
-                                    width={(image.width / image.height) * 500}
-                                    height={500}
+               <div className="flex gap-5 items-center justify-center h-full overflow-auto">
+                  <div className="flex gap-5 relative">
+                     {image && (
+                        <div
+                           className="relative"
+                           style={{ width: (image.width / image.height) * 500 }}
+                        >
+                           {/* {shapes.length > 0 && (
+                              <button
+                                 disabled={isSubmittingUpdate}
+                                 className="text-xs flex items-center 
+                                 justify-center w-[30px] h-[30px] 
+                                 absolute top-3 left-3 bg-borderColor 
+                                 hover:bg-borderColor text-white 
+                                 rounded disabled:opacity-50"
+                                 onClick={handleCheckmarkClick}
+                              >
+                                 {isSubmittingUpdate ? (
+                                    <Spinner size="sm" color="white" />
+                                 ) : (
+                                    <BsCheck size={20} color="white" />
+                                 )}
+                              </button>
+                           )} */}
+
+                           <div className="">
+                              <div className="flex flex-col gap-1 p-3">
+                                 <h3 className="text-base font-semibold mb-1 text-fg">
+                                    Select Mask
+                                 </h3>
+                                 <p className="text-xs text-gray-300 mb-2">Add up to 5 masks</p>
+                                 <input
+                                    type="text"
+                                    value={newLabel}
+                                    onChange={handleLabelChange}
+                                    placeholder="Enter label"
+                                    className="px-3 py-2 w-full bg-borderColor text-fg text-xs border border-borderColor rounded-md focus:outline-none mb-2"
                                  />
-                                 {currentLine.map((line, i) => (
-                                    <Line
-                                       key={i}
-                                       points={line.points.flat()}
-                                       stroke={line.color}
-                                       strokeWidth={line.size}
-                                       tension={0.5}
-                                       lineCap="round"
-                                       globalCompositeOperation="source-over"
-                                    />
-                                 ))}
-                              </Layer>
-                           </Stage>
-                        )}
-                        {image && (
-                           <canvas
-                              ref={maskCanvasRef}
-                              style={{ display: 'none' }}
-                              width={(image.width / image.height) * 500}
-                              height={500}
-                           />
-                        )}
-                        {image && (
-                           <div
-                              className="bg-black relative max-w-full"
-                              style={{ width: (image.width / image.height) * 500 }}
-                           >
-                              {currentLine.length > 0 && (
-                                 <button
-                                    disabled={isSubmittingUpdate}
-                                    className=" text-xs flex items-center 
-                                    justify-center w-[30px] h-[30px] 
-                                    absolute top-3 right-3 bg-borderColor 
-                                    hover:bg-borderColor text-white 
-                                    rounded disabled:opacity-50"
-                                    onClick={handleCheckmarkClick}
+                                 <Button
+                                    onClick={handleAddLabel}
+                                    className="bg-bg hover:bg-bg text-xs px-3 py-2 h-[36px] w-full text-fg transition-transform duration-200 ease-in-out hover:scale-95 active:scale-105"
+                                    disabled={labels.length >= 5}
                                  >
-                                    {isSubmittingUpdate ? (
-                                       <Spinner size="sm" color="white" />
-                                    ) : (
-                                       <BsCheck size={20} color="white" />
-                                    )}
-                                 </button>
-                              )}
-                              <img
-                                 ref={imgRef}
-                                 className="h-[500px] flex items-center justify-center max-w-full"
-                                 alt="Masked Output"
-                              />
+                                    Add Label
+                                 </Button>
+                                 {labelError && (
+                                    <p className="text-[10px] text-red-500 mt-1">{labelError}</p>
+                                 )}
+                                 {labels.length >= 5 && (
+                                    <p className="text-[10px] text-yellow-500 mt-1">
+                                       Maximum number of labels reached. Remove a label to add a new
+                                       one.
+                                    </p>
+                                 )}
+                              </div>
+
+                              <div className="mt-2 flex flex-col gap-2 px-3 pb-3">
+                                 {labels.map((label, index) => (
+                                    <div
+                                       key={index}
+                                       className={`flex items-center justify-between bg-borderColor text-fg px-3 py-2 rounded-md text-xs w-full animate-fadeIn transition-all duration-300 ease-in-out transform hover:scale-105 cursor-pointer ${
+                                          activeLabel === label ? 'border-2 border-blue-500' : ''
+                                       }`}
+                                       onClick={() => handleLabelClick(label)}
+                                    >
+                                       <div className="flex items-center">
+                                          <span
+                                             className="w-4 h-4 rounded-full mr-3 animate-pulse"
+                                             style={{ backgroundColor: label.color }}
+                                          ></span>
+                                          <span className="animate-fadeIn">{label.name}</span>
+                                       </div>
+                                       <button
+                                          onClick={(e) => {
+                                             e.stopPropagation();
+                                             handleRemoveLabel(index);
+                                          }}
+                                          className="ml-2 text-red-500 hover:text-red-700 text-sm transition-all duration-200 ease-in-out hover:scale-110 active:scale-95"
+                                       >
+                                          ×
+                                       </button>
+                                    </div>
+                                 ))}
+
+                                 <Button
+                                    disabled={!hasMasks}
+                                    onClick={handleShowAllShapes}
+                                    className="bg-bg hover:bg-bg text-xs px-3 py-2 h-[36px] w-auto max-w-[200px] text-fg transition-transform duration-200 ease-in-out hover:scale-95 active:scale-105 mt-2"
+                                 >
+                                    {showAllShapes ? 'Hide All Shapes' : 'Show All Shapes'}
+                                 </Button>
+                              </div>
                            </div>
-                        )}
-                     </div>
-                  ) : (
-                     <img
-                        src={selectedImage}
-                        className="h-[500px] max-w-full"
-                        alt="Masked Output"
-                     />
-                  )}
+                        </div>
+                     )}
+
+                     {image && (
+                        <Stage
+                           ref={stageRef}
+                           width={(image.width / image.height) * 500}
+                           height={500}
+                           onMouseDown={handleMouseDown}
+                           onMouseMove={handleMouseMove}
+                           onMouseUp={handleMouseUp}
+                           className={`border border-borderColor ${
+                              activeLabel || isEraserActive
+                                 ? 'hover:cursor-context-menu'
+                                 : 'hover:cursor-not-allowed'
+                           } max-w-full`}
+                        >
+                           <Layer>
+                              <KonvaImage
+                                 image={image}
+                                 width={(image.width / image.height) * 500}
+                                 height={500}
+                              />
+                              {shapes.map((shape, i) => (
+                                 <Shape
+                                    key={i}
+                                    sceneFunc={(context, shapeNode) => {
+                                       context.beginPath();
+                                       shape.points.forEach(([x, y], index) => {
+                                          if (index === 0) {
+                                             context.moveTo(x, y);
+                                          } else {
+                                             context.lineTo(x, y);
+                                          }
+                                       });
+                                       context.closePath();
+                                       context.fillStrokeShape(shapeNode);
+                                    }}
+                                    fill={`${shape.color}60`}
+                                    stroke={shape.color}
+                                    strokeWidth={shape.size}
+                                 />
+                              ))}
+                           </Layer>
+                        </Stage>
+                     )}
+                  </div>
                </div>
             )}
          </Modal>
