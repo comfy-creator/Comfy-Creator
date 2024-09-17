@@ -338,6 +338,12 @@ export function MaskWidget({
 
    const hasMasks = labels.some((label) => label.shapes.length > 0);
 
+   // preview image height and width
+   const previewImageHeight = 270;
+   const previewImageWidth = 190;
+   // konva image height
+   const konvaImageHeight = 500;
+
    return (
       <>
          <p className="text-[9px] mt-[7px]">image</p>
@@ -350,32 +356,29 @@ export function MaskWidget({
          /> */}
          {image && (
             <div className="mt-3" onClick={() => handleReopenModal()}>
-               <Stage
-                  ref={stageRef}
-                  width={160}
-                  height={245}
-                  // onMouseDown={handleMouseDown}
-                  // onMouseMove={handleMouseMove}
-                  // onMouseUp={handleMouseUp}
-
-                  // className={`border border-borderColor ${
-                  //    activeLabel || isEraserActive
-                  //       ? 'hover:cursor-context-menu'
-                  //       : 'hover:cursor-not-allowed'
-                  // } max-w-full`}
-               >
+               <Stage ref={stageRef} width={previewImageWidth} height={previewImageHeight}>
                   <Layer>
-                     <KonvaImage image={image} width={160} height={245} />
+                     <KonvaImage
+                        image={image}
+                        width={previewImageWidth}
+                        height={previewImageHeight}
+                     />
                      {shapes.map((shape, i) => (
                         <Shape
                            key={i}
                            sceneFunc={(context, shapeNode) => {
                               context.beginPath();
+                              const scaleX =
+                                 previewImageWidth /
+                                 ((image.width / image.height) * konvaImageHeight);
+                              const scaleY = previewImageHeight / konvaImageHeight;
                               shape.points.forEach(([x, y], index) => {
+                                 const scaledX = x * scaleX;
+                                 const scaledY = y * scaleY;
                                  if (index === 0) {
-                                    context.moveTo(x, y);
+                                    context.moveTo(scaledX, scaledY);
                                  } else {
-                                    context.lineTo(x, y);
+                                    context.lineTo(scaledX, scaledY);
                                  }
                               });
                               context.closePath();
@@ -390,6 +393,7 @@ export function MaskWidget({
                </Stage>
             </div>
          )}
+
          <Modal
             open={isModalOpen}
             onCancel={toggleModal}
@@ -434,7 +438,7 @@ export function MaskWidget({
                      {image && (
                         <div
                            className="relative"
-                           style={{ width: (image.width / image.height) * 500 }}
+                           style={{ width: (image.width / image.height) * konvaImageHeight }}
                         >
                            {/* {shapes.length > 0 && (
                               <button
@@ -528,8 +532,8 @@ export function MaskWidget({
                      {image && (
                         <Stage
                            ref={stageRef}
-                           width={(image.width / image.height) * 500}
-                           height={500}
+                           width={(image.width / image.height) * konvaImageHeight}
+                           height={konvaImageHeight}
                            onMouseDown={handleMouseDown}
                            onMouseMove={handleMouseMove}
                            onMouseUp={handleMouseUp}
@@ -542,8 +546,8 @@ export function MaskWidget({
                            <Layer>
                               <KonvaImage
                                  image={image}
-                                 width={(image.width / image.height) * 500}
-                                 height={500}
+                                 width={(image.width / image.height) * konvaImageHeight}
+                                 height={konvaImageHeight}
                               />
                               {shapes.map((shape, i) => (
                                  <Shape
