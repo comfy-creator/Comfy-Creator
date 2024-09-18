@@ -20,7 +20,8 @@ import { LuRedo2, LuUndo2 } from 'react-icons/lu';
 import { BsBrush, BsCheck } from 'react-icons/bs';
 
 export type MaskProps = {
-   onChange?: (value: string) => void;
+   nodeId: string;
+   onChange?: (value: any) => void;
    imageUrl?: string;
 };
 
@@ -45,10 +46,11 @@ type Label = {
 };
 
 export function MaskWidget({
+   nodeId,
    onChange,
    imageUrl = 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D'
 }: MaskProps) {
-   const { setAppLoading } = useFlowStore((state) => state);
+   const { updateNodeData, nodes } = useFlowStore((state) => state);
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [selectedImage, setSelectedImage] = useState<string | null>(null);
    const [image, setImage] = useState<HTMLImageElement | null>(null);
@@ -85,6 +87,43 @@ export function MaskWidget({
          setInitialImage(imageUrl);
       }
    }, [imageUrl]);
+
+   const updateOutputData = () => {
+      let outputs: any = {};
+      const node = nodes.find((node) => node.id === nodeId);
+      if (node) {
+         outputs = node.data.outputs;
+      }
+      const outputArray = Object.entries(outputs);
+      if (labels.length > 0 && labels.length > outputArray.length) {
+         const newData = [...labels].reverse().slice(0, labels.length - outputArray.length);
+         for (const label of newData) {
+            // no need to update the node, since it's an object clone, it updates the output object
+            outputs[label.name] = {
+               display_name: label.name,
+               edge_type: 'IMAGE',
+               isHighlighted: false,
+               value: label
+            };
+         }
+      } else if (labels.length < outputArray.length) {
+         const newData = outputArray.slice(labels.length);
+         for (const [key, _] of newData) {
+            delete outputs[key];
+         }
+      }
+
+      outputArray.forEach(([key, _], index) => {
+         if (labels[index]) {
+            outputs[key].value = labels[index];
+         }
+      });
+   }
+
+   useEffect(() => {
+      onChange?.(labels);
+      updateOutputData();
+   }, [labels]);
 
    const toggleModal = () => setIsModalOpen(!isModalOpen);
 
@@ -339,8 +378,8 @@ export function MaskWidget({
    const hasMasks = labels.some((label) => label.shapes.length > 0);
 
    // preview image height and width
-   const previewImageHeight = 270;
-   const previewImageWidth = 190;
+   const previewImageHeight = 250;
+   const previewImageWidth = 165;
    // konva image height
    const konvaImageHeight = 500;
 

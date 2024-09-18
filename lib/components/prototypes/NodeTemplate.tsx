@@ -16,7 +16,8 @@ import {
    ThemeConfig,
    UpdateInputData,
    EdgeType,
-   WidgetDefinition
+   WidgetDefinition,
+   UpdateOutputData
 } from '../../types/types';
 import {
    Handle,
@@ -42,6 +43,7 @@ import { MaskWidget } from '../widgets/Mask';
 import PreviewMaskedImageWidget from '../widgets/PreviewMask';
 
 const createWidgetFromSpec = (
+   nodeId: string,
    def: HandleState,
    label: string,
    data: HandleState,
@@ -97,7 +99,14 @@ const createWidgetFromSpec = (
                />
             );
          case 'MASK':
-            return <MaskWidget />;
+            return (
+               <MaskWidget
+                  nodeId={nodeId}
+                  onChange={(value: any) => {
+                     updateInputData?.({ ...updateData, value });
+                  }}
+               />
+            );
          case 'PREVIEW_MASKED_IMAGE':
             return <PreviewMaskedImageWidget {...commonProps} value={data.value as string} />;
          case 'DROPDOWN':
@@ -260,7 +269,7 @@ export const createNodeComponentFromDef = (
 
          if (isDisplayType(input.edge_type)) {
             displayWidgets.push(
-               <DisplayWidget nodeDef={nodeDef} key={input.display_name} data={input} />
+               <DisplayWidget nodeId={id} nodeDef={nodeDef} key={input.display_name} data={input} />
             );
          }
       }
@@ -539,7 +548,7 @@ function Widget({ theme, nodeId, data, nodeDef, updateInputData }: WidgetProps) 
                opacity: data?.isConnected ? 0.7 : 1
             }}
          >
-            {createWidgetFromSpec(inputDef, data.display_name, data, update)}
+            {createWidgetFromSpec(nodeId, inputDef, data.display_name, data, update)}
          </div>
       </div>
    ) : (
@@ -581,17 +590,18 @@ function WidgetHandle({ nodeId, data, theme }: WidgetHandleProps) {
 }
 
 interface DisplayProps {
+   nodeId: string;
    data: HandleState;
    nodeDef: NodeDefinition;
 }
 
-function DisplayWidget({ data, nodeDef }: DisplayProps) {
+function DisplayWidget({ nodeId, data, nodeDef }: DisplayProps) {
    const inputDef = nodeDef.inputs[data.display_name] ?? (data as HandleState);
    if (!inputDef) return null;
    return (
       <div className="widget_container">
          <div style={{ width: '100%' }}>
-            {createWidgetFromSpec(inputDef, data.display_name, data)}
+            {createWidgetFromSpec(nodeId, inputDef, data.display_name, data)}
          </div>
       </div>
    );
