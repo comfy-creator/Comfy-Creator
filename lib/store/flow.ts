@@ -27,7 +27,8 @@ import {
    UpdateInputDataParams,
    UpdateOutputData,
    UpdateOutputDataParams,
-   AppNode
+   AppNode,
+   HandleState
 } from '../types/types';
 import {
    addWidgetToPrimitiveNode,
@@ -362,10 +363,18 @@ export const useFlowStore = create<RFState>((set, get) => {
                });
             }
 
+            let inputData: Partial<HandleState> = { isConnected: true };
+            const sourceNode = get().nodes.find((node) => node.id === connection.source);
+            if (sourceNode && sourceNode.type === 'MaskImage') {
+               const maskImageValue =
+                  sourceNode.data.outputs[getHandleName(connection.sourceHandle!)]?.value;
+               inputData = { ...inputData, value: maskImageValue };
+            }
+
             updateInputData({
                nodeId: target.id,
                display_name: _targetHandle.display_name,
-               data: { isConnected: true }
+               data: inputData
             });
 
             updateOutputData({

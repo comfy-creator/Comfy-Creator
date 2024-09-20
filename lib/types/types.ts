@@ -367,3 +367,16 @@ export type RefValue = { nodeId: string; handleName: string };
 //   position: XYPosition;
 //   defaultValues?: Record<string, any>;
 // }
+
+
+export type Label = {
+   name: string;
+   color: string;
+   shapes: Array<{
+      points: number[][];
+      size: number;
+      color: string;
+      isEraser?: boolean;
+   }>;
+   bitmap?: number[][]; // Add this line
+};

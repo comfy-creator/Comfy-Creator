@@ -352,11 +352,11 @@ export const PreviewMaskedImage: NodeDefinition = {
    display_name: 'Preview Mask',
    description: 'Preview the masked image and the image with the drawings',
    inputs: {
-      ['image']: {
+      ['Masked Image']: {
          display_name: 'Masked Image',
          edge_type: 'IMAGE',
          widget: {
-            type: 'MASK'
+            type: 'PREVIEW_MASKED_IMAGE'
          }
       }
    },

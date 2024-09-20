@@ -1,4 +1,4 @@
-import { ChangeEvent, useRef, useState, useEffect, createRef } from 'react';
+import { ChangeEvent, useRef, useState, useEffect, createRef, useMemo } from 'react';
 import { Modal } from 'antd';
 import {
    ChevronLeftIcon,
@@ -18,8 +18,11 @@ import Konva from 'konva';
 import { Slider } from '@/components/ui/slider';
 import { LuRedo2, LuUndo2 } from 'react-icons/lu';
 import { BsBrush, BsCheck } from 'react-icons/bs';
+import { getHandleName, makeHandleId } from '../../utils/node';
+import { Label } from '../../types/types';
 
 export type MaskProps = {
+   value: any;
    nodeId: string;
    onChange?: (value: any) => void;
    imageUrl?: string;
@@ -34,23 +37,19 @@ const imageToBASE64 = (file: File) =>
       reader.readAsDataURL(file);
    });
 
-type Label = {
-   name: string;
-   color: string;
-   shapes: Array<{
-      points: number[][];
-      size: number;
-      color: string;
-      isEraser?: boolean;
-   }>;
-};
+// preview image height and width
+export const PreviewImageHeight = 255;
+export const PreviewImageWidth = 166;
+// konva image height
+export const KonvaImageHeight = 500;
 
 export function MaskWidget({
    nodeId,
    onChange,
+   value,
    imageUrl = 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D'
 }: MaskProps) {
-   const { updateNodeData, nodes } = useFlowStore((state) => state);
+   const { updateInputData, nodes, edges, setEdges } = useFlowStore((state) => state);
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [selectedImage, setSelectedImage] = useState<string | null>(null);
    const [image, setImage] = useState<HTMLImageElement | null>(null);
@@ -59,7 +58,6 @@ export function MaskWidget({
    const [brushColor, setBrushColor] = useState<string>(
       brushColors[Math.floor(Math.random() * brushColors.length)]
    );
-   const [konvaImage, setKonvaImage] = useState<Konva.Image | null>(null);
 
    const maskCanvasRef = useRef<HTMLCanvasElement>(null);
    const imgRef = useRef<HTMLImageElement>(null);
@@ -88,6 +86,21 @@ export function MaskWidget({
       }
    }, [imageUrl]);
 
+   useEffect(() => {
+      if (value && Array.isArray(value)) {
+         const allShapes = value.flatMap((label) =>
+            label.shapes.map((shape: any) => ({
+               ...shape,
+               color: label.color
+            }))
+         );
+         setShapes(allShapes);
+         setActiveLabel(value?.[value.length - 1] || null);
+         setLabels(value);
+         setShowAllShapes(true);
+      }
+   }, []);
+
    const updateOutputData = () => {
       let outputs: any = {};
       const node = nodes.find((node) => node.id === nodeId);
@@ -103,7 +116,7 @@ export function MaskWidget({
                display_name: label.name,
                edge_type: 'IMAGE',
                isHighlighted: false,
-               value: label
+               value: { ...label, imageUrl }
             };
          }
       } else if (labels.length < outputArray.length) {
@@ -114,18 +127,46 @@ export function MaskWidget({
       }
 
       outputArray.forEach(([key, _], index) => {
+         const edge = edges.find((e) => e.sourceHandle === makeHandleId(nodeId, key));
          if (labels[index]) {
-            outputs[key].value = labels[index];
+            outputs[key] = {
+               ...outputs[key],
+               value: { ...labels[index], imageUrl },
+               isConnected: edge ? true : false
+            };
          }
       });
-   }
+   };
 
    useEffect(() => {
       onChange?.(labels);
       updateOutputData();
    }, [labels]);
 
-   const toggleModal = () => setIsModalOpen(!isModalOpen);
+   const toggleModal = () => {
+      setIsModalOpen((prev) => {
+         if (!prev && activeLabel && !showAllShapes) {
+            setShapes(activeLabel.shapes);
+         } else if (!prev && showAllShapes) {
+            const allShapes = labels.flatMap((label) =>
+               label.shapes.map((shape) => ({
+                  ...shape,
+                  color: label.color
+               }))
+            );
+            setShapes(allShapes);
+         } else if (prev) {
+            const allShapes = labels.flatMap((label) =>
+               label.shapes.map((shape) => ({
+                  ...shape,
+                  color: label.color
+               }))
+            );
+            setShapes(allShapes);
+         }
+         return !prev
+      });
+   };
 
    const handleGetMaskClick = (shapesToDraw: typeof shapes) => {
       if (!maskCanvasRef.current || !image || !imgRef.current) return;
@@ -169,12 +210,6 @@ export function MaskWidget({
          img.crossOrigin = 'anonymous';
          img.onload = () => {
             setImage(img);
-            const konvaImg = new Konva.Image({
-               image: img,
-               width: img.width,
-               height: img.height
-            });
-            setKonvaImage(konvaImg);
          };
       }
    }, [initialImage]);
@@ -195,6 +230,67 @@ export function MaskWidget({
       setShapes(nextShapes);
       setRedoStack((prev) => prev.slice(1));
       handleGetMaskClick(nextShapes);
+   };
+
+   const generateBitmap = () => {
+      console.log("Generating bitmaps...");
+      if (!image || !stageRef.current) return;
+
+      const stageWidth = Math.floor((image.width / image.height) * KonvaImageHeight);
+      const stageHeight = KonvaImageHeight;
+
+      // Create a temporary canvas
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = stageWidth;
+      tempCanvas.height = stageHeight;
+      const tempContext = tempCanvas.getContext('2d');
+
+      if (!tempContext) return;
+
+      // Update each label with its bitmap
+      setLabels(prevLabels => prevLabels.map((label) => {
+         // Clear the temporary canvas
+         tempContext.clearRect(0, 0, stageWidth, stageHeight);
+
+         // Draw all shapes for this label
+         label.shapes.forEach(shape => {
+            tempContext.beginPath();
+            shape.points.forEach(([x, y], pointIndex) => {
+               if (pointIndex === 0) {
+                  tempContext.moveTo(x, y);
+               } else {
+                  tempContext.lineTo(x, y);
+               }
+            });
+            tempContext.closePath();
+            tempContext.fillStyle = 'white';
+            tempContext.fill();
+         });
+
+         // Get image data of the shapes
+         const imageData = tempContext.getImageData(0, 0, stageWidth, stageHeight);
+         const data = imageData.data;
+
+         // Create bitmap for this label
+         const bitmap = Array(stageHeight).fill(0).map(() => Array(stageWidth).fill(0));
+
+         // Fill the bitmap based on the shapes
+         for (let y = 0; y < stageHeight; y++) {
+            for (let x = 0; x < stageWidth; x++) {
+               const dataIndex = (y * stageWidth + x) * 4;
+               if (data[dataIndex] > 0) { // If pixel is not black (i.e., part of a shape)
+                  bitmap[y][x] = 1;
+               }
+            }
+         }
+
+         // Update the label with its bitmap
+         label.bitmap = bitmap;
+
+         return label;
+      }))
+
+      console.log("Labels updated with bitmaps:", labels);
    };
 
    const handleMouseDown = (evt: any) => {
@@ -257,6 +353,8 @@ export function MaskWidget({
          setLabels(updatedLabels);
          setActiveLabel({ ...activeLabel, shapes });
       }
+
+      generateBitmap(); // Add this line to generate and log the bitmap
    };
 
    const handleCheckmarkClick = async () => {
@@ -277,11 +375,6 @@ export function MaskWidget({
       onChange?.(base64Image);
    };
 
-   const handleReopenModal = () => {
-      setSelectedImage(initialImage);
-      setIsModalOpen(true);
-   };
-
    const handleLabelChange = (e: ChangeEvent<HTMLInputElement>) => {
       setNewLabel(e.target.value);
       setLabelError(null);
@@ -300,7 +393,8 @@ export function MaskWidget({
          const newLabelObject: Label = {
             name: trimmedLabel,
             color: newColor,
-            shapes: []
+            shapes: [],
+            bitmap: undefined // It will be generated when shapes are added
          };
          setLabels([...labels, newLabelObject]);
          setNewLabel('');
@@ -314,6 +408,23 @@ export function MaskWidget({
 
    const handleRemoveLabel = (index: number) => {
       const removedLabel = labels[index];
+
+      // once label is removed we have to update the node that was connected to it if any
+      const edgeConnectedToLabel = edges.find(
+         (e) => e.sourceHandle === makeHandleId(nodeId, removedLabel.name)
+      );
+      if (edgeConnectedToLabel) {
+         const targetNode = nodes.find((node) => node.id === edgeConnectedToLabel.target);
+         updateInputData({
+            nodeId: edgeConnectedToLabel.target,
+            display_name:
+               targetNode?.data.inputs[getHandleName(edgeConnectedToLabel.targetHandle!)]
+                  ?.display_name!,
+            data: { isConnected: false, value: '' }
+         });
+         setEdges((edges) => edges.filter((e) => e.id !== edgeConnectedToLabel.id));
+      }
+
       const updatedLabels = labels.filter((_, i) => i !== index);
       setLabels(updatedLabels);
       setAvailableColors([...availableColors, removedLabel.color]);
@@ -337,6 +448,7 @@ export function MaskWidget({
       setActiveLabel(label);
       setShapes(label.shapes);
       setBrushColor(label.color);
+      setShowAllShapes(false);
    };
 
    const handleShowAllShapes = () => {
@@ -361,46 +473,18 @@ export function MaskWidget({
       // }
    };
 
-   useEffect(() => {
-      if (isModalOpen) {
-         setShapes(activeLabel ? activeLabel.shapes : []);
-      } else {
-         const allShapes = labels.flatMap((label) =>
-            label.shapes.map((shape) => ({
-               ...shape,
-               color: label.color
-            }))
-         );
-         setShapes(allShapes);
-      }
-   }, [isModalOpen]);
-
    const hasMasks = labels.some((label) => label.shapes.length > 0);
 
-   // preview image height and width
-   const previewImageHeight = 250;
-   const previewImageWidth = 165;
-   // konva image height
-   const konvaImageHeight = 500;
-
-   return (
-      <>
-         <p className="text-[9px] mt-[7px]">image</p>
-         {/* <img
-            src={selectedImage || ''}
-            alt="preview"
-            style={{ width: '100%' }}
-            className="mt-2"
-            onClick={handleReopenModal}
-         /> */}
-         {image && (
-            <div className="mt-3" onClick={() => handleReopenModal()}>
-               <Stage ref={stageRef} width={previewImageWidth} height={previewImageHeight}>
+   const DisplayShapes = useMemo(
+      () =>
+         image && (
+            <div className="mt-3" onClick={() => toggleModal()}>
+               <Stage ref={stageRef} width={PreviewImageWidth} height={PreviewImageHeight}>
                   <Layer>
                      <KonvaImage
                         image={image}
-                        width={previewImageWidth}
-                        height={previewImageHeight}
+                        width={PreviewImageWidth}
+                        height={PreviewImageHeight}
                      />
                      {shapes.map((shape, i) => (
                         <Shape
@@ -408,9 +492,9 @@ export function MaskWidget({
                            sceneFunc={(context, shapeNode) => {
                               context.beginPath();
                               const scaleX =
-                                 previewImageWidth /
-                                 ((image.width / image.height) * konvaImageHeight);
-                              const scaleY = previewImageHeight / konvaImageHeight;
+                                 PreviewImageWidth /
+                                 ((image?.width! / image?.height!) * KonvaImageHeight);
+                              const scaleY = PreviewImageHeight / KonvaImageHeight;
                               shape.points.forEach(([x, y], index) => {
                                  const scaledX = x * scaleX;
                                  const scaledY = y * scaleY;
@@ -431,7 +515,14 @@ export function MaskWidget({
                   </Layer>
                </Stage>
             </div>
-         )}
+         ),
+      [shapes, image]
+   );
+   
+   return (
+      <>
+         <p className="text-[9px] mt-[7px]">image</p>
+         {DisplayShapes}
 
          <Modal
             open={isModalOpen}
@@ -477,7 +568,7 @@ export function MaskWidget({
                      {image && (
                         <div
                            className="relative"
-                           style={{ width: (image.width / image.height) * konvaImageHeight }}
+                           style={{ width: (image.width / image.height) * KonvaImageHeight }}
                         >
                            {/* {shapes.length > 0 && (
                               <button
@@ -533,7 +624,7 @@ export function MaskWidget({
                                     <div
                                        key={index}
                                        className={`flex items-center justify-between bg-borderColor text-fg px-3 py-2 rounded-md text-xs w-full animate-fadeIn transition-all duration-300 ease-in-out transform hover:scale-105 cursor-pointer ${
-                                          activeLabel === label ? 'border-2 border-blue-500' : ''
+                                          activeLabel === label && !showAllShapes ? 'border-2 border-blue-500' : ''
                                        }`}
                                        onClick={() => handleLabelClick(label)}
                                     >
@@ -571,8 +662,8 @@ export function MaskWidget({
                      {image && (
                         <Stage
                            ref={stageRef}
-                           width={(image.width / image.height) * konvaImageHeight}
-                           height={konvaImageHeight}
+                           width={(image.width / image.height) * KonvaImageHeight}
+                           height={KonvaImageHeight}
                            onMouseDown={handleMouseDown}
                            onMouseMove={handleMouseMove}
                            onMouseUp={handleMouseUp}
@@ -585,8 +676,8 @@ export function MaskWidget({
                            <Layer>
                               <KonvaImage
                                  image={image}
-                                 width={(image.width / image.height) * konvaImageHeight}
-                                 height={konvaImageHeight}
+                                 width={(image.width / image.height) * KonvaImageHeight}
+                                 height={KonvaImageHeight}
                               />
                               {shapes.map((shape, i) => (
                                  <Shape

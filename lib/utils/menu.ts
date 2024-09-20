@@ -1,4 +1,4 @@
-import { AppNode, EdgeType, HandleType, IMenuType, NodeDefinitions } from '../types/types';
+import { AppNode, EdgeType, HandleState, HandleType, IMenuType, NodeDefinitions } from '../types/types';
 import { useFlowStore } from '../store/flow';
 import { categorizeObjects } from './ui';
 import type { MouseEvent as ReactMouseEvent } from 'react';
@@ -226,11 +226,18 @@ export function getSuggestedNodesData({
 
          onPaneClick?.();
 
+         let inputData: Partial<HandleState> = { isConnected: true };
          // TODO: abstract these away and avoid repetitions
+         const sourceNode = nodes.find((node) => node.id === getHandleNodeId(handleId));
+         if (sourceNode && sourceNode.type === 'MaskImage') {
+            const maskImageValue = sourceNode.data.outputs[getHandleName(handleId)]?.value;
+            console.log('Got to this place>>>');
+            inputData = { ...inputData, value: maskImageValue }
+         }
          updateInputData({
             nodeId: getHandleNodeId(targetHandle),
             display_name: getHandleName(targetHandle),
-            data: { isConnected: true }
+            data: inputData
          });
 
          updateOutputData({

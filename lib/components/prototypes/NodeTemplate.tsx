@@ -101,6 +101,7 @@ const createWidgetFromSpec = (
          case 'MASK':
             return (
                <MaskWidget
+                  value={data.value}
                   nodeId={nodeId}
                   onChange={(value: any) => {
                      updateInputData?.({ ...updateData, value });
