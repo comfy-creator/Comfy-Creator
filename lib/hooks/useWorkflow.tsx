@@ -29,6 +29,7 @@ const removeFieldsFromFirstLevelObjects = (obj: AnyObject, fieldsToRemove: strin
       });
    }
 
+   // If it's an object, recurse deeper
    if (typeof obj === 'object' && obj !== null) {
       const newObj: AnyObject = {};
 
@@ -190,11 +191,11 @@ export const newSerializeGraph = (
       }
    }
 
-   const cleanedGraph = removeFieldsFromFirstLevelObjects(serializedGraph, [
-      'shapes',
-      'color',
-      'imageUrl'
-   ]) as SerializedGraph;
+   const cleanedGraph = removeFieldsFromFirstLevelObjects(
+      serializedGraph.nodes.filter((node) => node.type !== 'PreviewMaskedImage'),
+      ['shapes', 'color', 'imageUrl']
+   ) as SerializedGraph;
+
    console.log('Serialized graph>>', JSON.stringify(cleanedGraph, null, 2));
 
    if (Object.keys(missingInputHandles).length > 0) {

@@ -40,43 +40,35 @@ const PreviewMaskedImageWidget = ({ value }: PreviewMaskedImageWidgetProps) => {
          img.crossOrigin = 'anonymous';
          img.onload = () => {
             setImage(img);
-            // Call displayImageFromBinary here with appropriate bitmap
-            const bitmap = value.bitmap;
+            // getting the base64 from the value obj
+            const base64 = value.base64;
 
-            console.log('Bitmap>>>>', bitmap);
-            displayImageFromBinary(bitmap);
+            console.log('Base64>>>>', base64);
+            displayImageFromBase64(base64);
          };
       }
    }, [value]);
 
-   function displayImageFromBinary(bitmap: number[][]) {
-      const width = 166;
-      const height = bitmap.length * (166 / bitmap[0].length);
+   function displayImageFromBase64(base64: string) {
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext('2d');
       if (!ctx || !canvas) return;
 
-      canvas.width = width;
-      canvas.height = height;
-      const imageData = ctx.createImageData(width, height);
+      const img = new Image();
+      img.src = base64;
+      img.onload = () => {
+         const width = 166;
+         const height = (img.height / img.width) * width;
+         canvas.width = width;
+         canvas.height = height;
 
-      for (let y = 0; y < height; y++) {
-         for (let x = 0; x < width; x++) {
-            const index = (y * width + x) * 4;
-            const value =
-               bitmap[Math.floor((y * bitmap.length) / height)][
-                  Math.floor((x * bitmap[0].length) / width)
-               ] === 1
-                  ? 255
-                  : 0; // White or black
-            imageData.data[index] = value; // R
-            imageData.data[index + 1] = value; // G
-            imageData.data[index + 2] = value; // B
-            imageData.data[index + 3] = 255; // A
-         }
-      }
+         ctx.fillStyle = 'black';
+         ctx.fillRect(0, 0, width, height);
 
-      ctx.putImageData(imageData, 0, 0);
+         // Draw the image (mask) in white
+         ctx.globalCompositeOperation = 'source-over';
+         ctx.drawImage(img, 0, 0, width, height);
+      };
    }
 
    return (

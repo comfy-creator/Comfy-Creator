@@ -368,7 +368,6 @@ export type RefValue = { nodeId: string; handleName: string };
 //   defaultValues?: Record<string, any>;
 // }
 
-
 export type Label = {
    name: string;
    color: string;
@@ -378,5 +377,5 @@ export type Label = {
       color: string;
       isEraser?: boolean;
    }>;
-   bitmap?: number[][]; // Add this line
+   base64?: string;
 };

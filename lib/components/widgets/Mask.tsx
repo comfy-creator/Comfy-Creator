@@ -164,7 +164,7 @@ export function MaskWidget({
             );
             setShapes(allShapes);
          }
-         return !prev
+         return !prev;
       });
    };
 
@@ -232,8 +232,8 @@ export function MaskWidget({
       handleGetMaskClick(nextShapes);
    };
 
-   const generateBitmap = () => {
-      console.log("Generating bitmaps...");
+   const generateBase64 = () => {
+      console.log('Generating base64...');
       if (!image || !stageRef.current) return;
 
       const stageWidth = Math.floor((image.width / image.height) * KonvaImageHeight);
@@ -247,50 +247,38 @@ export function MaskWidget({
 
       if (!tempContext) return;
 
-      // Update each label with its bitmap
-      setLabels(prevLabels => prevLabels.map((label) => {
-         // Clear the temporary canvas
-         tempContext.clearRect(0, 0, stageWidth, stageHeight);
+      // Update each label with its base64
+      setLabels((prevLabels) =>
+         prevLabels.map((label) => {
+            // Clear the temporary canvas
+            tempContext.clearRect(0, 0, stageWidth, stageHeight);
 
-         // Draw all shapes for this label
-         label.shapes.forEach(shape => {
-            tempContext.beginPath();
-            shape.points.forEach(([x, y], pointIndex) => {
-               if (pointIndex === 0) {
-                  tempContext.moveTo(x, y);
-               } else {
-                  tempContext.lineTo(x, y);
-               }
+            // Draw all shapes for this label
+            label.shapes.forEach((shape) => {
+               tempContext.beginPath();
+               shape.points.forEach(([x, y], pointIndex) => {
+                  if (pointIndex === 0) {
+                     tempContext.moveTo(x, y);
+                  } else {
+                     tempContext.lineTo(x, y);
+                  }
+               });
+               tempContext.closePath();
+               tempContext.fillStyle = 'white';
+               tempContext.fill();
             });
-            tempContext.closePath();
-            tempContext.fillStyle = 'white';
-            tempContext.fill();
-         });
 
-         // Get image data of the shapes
-         const imageData = tempContext.getImageData(0, 0, stageWidth, stageHeight);
-         const data = imageData.data;
+            // Get base64 of the shapes
+            const base64 = tempCanvas.toDataURL('image/png');
 
-         // Create bitmap for this label
-         const bitmap = Array(stageHeight).fill(0).map(() => Array(stageWidth).fill(0));
+            // Update the label with its base64
+            label.base64 = base64;
 
-         // Fill the bitmap based on the shapes
-         for (let y = 0; y < stageHeight; y++) {
-            for (let x = 0; x < stageWidth; x++) {
-               const dataIndex = (y * stageWidth + x) * 4;
-               if (data[dataIndex] > 0) { // If pixel is not black (i.e., part of a shape)
-                  bitmap[y][x] = 1;
-               }
-            }
-         }
+            return label;
+         })
+      );
 
-         // Update the label with its bitmap
-         label.bitmap = bitmap;
-
-         return label;
-      }))
-
-      console.log("Labels updated with bitmaps:", labels);
+      console.log('Labels updated with base64:', labels);
    };
 
    const handleMouseDown = (evt: any) => {
@@ -354,7 +342,7 @@ export function MaskWidget({
          setActiveLabel({ ...activeLabel, shapes });
       }
 
-      generateBitmap(); // Add this line to generate and log the bitmap
+      generateBase64(); // Update this line
    };
 
    const handleCheckmarkClick = async () => {
@@ -394,7 +382,7 @@ export function MaskWidget({
             name: trimmedLabel,
             color: newColor,
             shapes: [],
-            bitmap: undefined // It will be generated when shapes are added
+            base64: undefined // It will be generated when shapes are added
          };
          setLabels([...labels, newLabelObject]);
          setNewLabel('');
@@ -518,7 +506,7 @@ export function MaskWidget({
          ),
       [shapes, image]
    );
-   
+
    return (
       <>
          <p className="text-[9px] mt-[7px]">image</p>
@@ -624,7 +612,9 @@ export function MaskWidget({
                                     <div
                                        key={index}
                                        className={`flex items-center justify-between bg-borderColor text-fg px-3 py-2 rounded-md text-xs w-full animate-fadeIn transition-all duration-300 ease-in-out transform hover:scale-105 cursor-pointer ${
-                                          activeLabel === label && !showAllShapes ? 'border-2 border-blue-500' : ''
+                                          activeLabel === label && !showAllShapes
+                                             ? 'border-2 border-blue-500'
+                                             : ''
                                        }`}
                                        onClick={() => handleLabelClick(label)}
                                     >
