@@ -16,6 +16,52 @@ type InputValues = {
    ref?: RefValue;
 };
 
+type AnyObject = Record<string, any>;
+
+const removeFieldsFromFirstLevelObjects = (obj: AnyObject, fieldsToRemove: string[]): AnyObject => {
+   if (Array.isArray(obj)) {
+      return obj.map((item) => {
+         if (item && typeof item === 'object' && item.type === 'MaskImage') {
+            return removeSpecifiedFieldsRecursively(item, fieldsToRemove);
+         }
+
+         return removeFieldsFromFirstLevelObjects(item, fieldsToRemove);
+      });
+   }
+
+   if (typeof obj === 'object' && obj !== null) {
+      const newObj: AnyObject = {};
+
+      Object.keys(obj).forEach((key) => {
+         newObj[key] = removeFieldsFromFirstLevelObjects(obj[key], fieldsToRemove);
+      });
+
+      return newObj;
+   }
+
+   return obj;
+};
+
+const removeSpecifiedFieldsRecursively = (obj: AnyObject, fieldsToRemove: string[]): AnyObject => {
+   if (Array.isArray(obj)) {
+      return obj.map((item) => removeSpecifiedFieldsRecursively(item, fieldsToRemove));
+   }
+
+   if (typeof obj === 'object' && obj !== null) {
+      const newObj: AnyObject = {};
+
+      Object.keys(obj).forEach((key) => {
+         if (!fieldsToRemove.includes(key)) {
+            newObj[key] = removeSpecifiedFieldsRecursively(obj[key], fieldsToRemove);
+         }
+      });
+
+      return newObj;
+   }
+
+   return obj;
+};
+
 export const newSerializeGraph = (
    instance: ReactFlowInstance<AppNode, Edge>,
    minimize_payload: boolean = false
@@ -129,7 +175,7 @@ export const newSerializeGraph = (
             id: node.id,
             type: node?.type || '',
             inputs,
-            outputs,
+            outputs
             // position: node.position // note: the server doesn't really need this, but react flow wants it
          });
       } else {
@@ -139,17 +185,22 @@ export const newSerializeGraph = (
             ...essentialProps,
             type: node?.type || '',
             inputs,
-            outputs,
+            outputs
          });
       }
    }
 
-   console.log('Serialized graph>>', JSON.stringify(serializedGraph, null, 2));
+   const cleanedGraph = removeFieldsFromFirstLevelObjects(serializedGraph, [
+      'shapes',
+      'color',
+      'imageUrl'
+   ]) as SerializedGraph;
+   console.log('Serialized graph>>', JSON.stringify(cleanedGraph, null, 2));
 
    if (Object.keys(missingInputHandles).length > 0) {
-      return [serializedGraph, missingInputHandles];
+      return [cleanedGraph, missingInputHandles];
    } else {
-      return [serializedGraph, undefined];
+      return [cleanedGraph, undefined];
    }
 };
 
@@ -160,6 +211,7 @@ export function useWorkflow() {
 
    const submitWorkflow = async () => {
       const [serializedGraph, missingInputHandles] = newSerializeGraph(rflInstance, true);
+
       if (missingInputHandles) {
          if (missingInputHandles) {
             for (const [nodeId, missingHandles] of Object.entries(missingInputHandles)) {
