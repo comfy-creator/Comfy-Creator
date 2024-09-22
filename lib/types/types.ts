@@ -254,6 +254,7 @@ export type WidgetType =
    | 'NUMBER'
    | 'TEXT'
    | 'FILEPICKER'
+   | 'IMAGE_ROUTER'
    | 'DROPDOWN'
    | 'SLIDER'
    | 'BOOLEAN'

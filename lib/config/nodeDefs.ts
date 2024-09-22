@@ -12,7 +12,10 @@ export const LoadImage: NodeDefinition = {
          widget: {
             type: 'FILEPICKER',
             multiple: true,
-            file_extensions: ['.png', '.jpg', '.jpeg', '.bmp', '.webp', '.avif']
+            file_extensions: ['.png', '.jpg', '.jpeg', '.bmp', '.webp', '.avif'],
+            output_info: {
+               name: 'image'
+            }
          }
       }
    },
@@ -363,6 +366,27 @@ export const PreviewMaskedImage: NodeDefinition = {
    outputs: {}
 };
 
+export const ImageRouter: NodeDefinition = {
+   category: 'image',
+   display_name: 'Image Router',
+   description: 'Image Router',
+   inputs: {
+      ['image']: {
+         display_name: 'image',
+         edge_type: 'IMAGE',
+         widget: {
+            type: 'IMAGE_ROUTER'
+         }
+      }
+   },
+   outputs: {
+      ['image']: {
+         display_name: 'image',
+         edge_type: 'IMAGE'
+      }
+   }
+};
+
 export const AllNodeDefs = {
    LoadImage,
    SaveImage,
@@ -377,7 +401,8 @@ export const AllNodeDefs = {
    RemoveBackground,
    IC_Light,
    MaskImage,
-   PreviewMaskedImage
+   PreviewMaskedImage,
+   ImageRouter
 };
 
 function buildInput(type: string, name: string, options: any, optional: boolean) {

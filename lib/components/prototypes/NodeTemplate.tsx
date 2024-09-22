@@ -40,6 +40,7 @@ import { FilePickerWidget, FileProps } from '../widgets/FilePicker';
 import { TRANSFORM_POINT } from '../../config/constants';
 import { Card, CardHeader, CardBody, CardFooter, Divider, Link, Image } from '@nextui-org/react';
 import { MaskWidget } from '../widgets/Mask';
+import { ImageRouterWidget } from '../widgets/ImageRouter';
 import PreviewMaskedImageWidget from '../widgets/PreviewMask';
 
 const createWidgetFromSpec = (
@@ -91,11 +92,21 @@ const createWidgetFromSpec = (
          case 'FILEPICKER':
             return (
                <FilePickerWidget
+                  nodeId={nodeId}
                   onChange={(value: string | string[]) =>
                      updateInputData?.({ ...updateData, value })
                   }
                   value={data.value as string | string[]}
+                  outputInfo={data?.widget?.output_info}
                   {...(data.widget as FileProps)}
+               />
+            );
+         case 'IMAGE_ROUTER':
+            return (
+               <ImageRouterWidget
+                  {...commonProps}
+                  value={data.value as string}
+                  onChange={(value: string) => updateInputData?.({ ...updateData, value })}
                />
             );
          case 'MASK':

@@ -25,7 +25,6 @@ export type MaskProps = {
    value: any;
    nodeId: string;
    onChange?: (value: any) => void;
-   imageUrl?: string;
 };
 
 const brushColors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'];
@@ -43,15 +42,11 @@ export const PreviewImageWidth = 166;
 // konva image height
 export const KonvaImageHeight = 500;
 
-export function MaskWidget({
-   nodeId,
-   onChange,
-   value,
-   imageUrl = 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cG9ydHJhaXR8ZW58MHx8MHx8fDA%3D'
-}: MaskProps) {
+export function MaskWidget({ nodeId, onChange, value }: MaskProps) {
    const { updateInputData, nodes, edges, setEdges } = useFlowStore((state) => state);
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [selectedImage, setSelectedImage] = useState<string | null>(null);
+   const [imageUrl, setImageUrl] = useState<string>('');
    const [image, setImage] = useState<HTMLImageElement | null>(null);
    const [isDrawing, setIsDrawing] = useState<boolean>(false);
    const [brushSize, setBrushSize] = useState<number>(2.5);
@@ -59,6 +54,7 @@ export function MaskWidget({
       brushColors[Math.floor(Math.random() * brushColors.length)]
    );
 
+   
    const maskCanvasRef = useRef<HTMLCanvasElement>(null);
    const imgRef = useRef<HTMLImageElement>(null);
 
@@ -70,7 +66,7 @@ export function MaskWidget({
    const [initialImage, setInitialImage] = useState<string | null>(null);
    const [labels, setLabels] = useState<Label[]>([]);
    const [newLabel, setNewLabel] = useState<string>('');
-   const [activeLabel, setActiveLabel] = useState<Label | null>(null);
+   const [activeLabel, setActiveLabel] = useState<string | null>(null);
    const [availableColors, setAvailableColors] = useState<string[]>([...brushColors]);
    const stageRef = createRef<Konva.Stage>();
    const [labelError, setLabelError] = useState<string | null>(null);
@@ -87,17 +83,28 @@ export function MaskWidget({
    }, [imageUrl]);
 
    useEffect(() => {
-      if (value && Array.isArray(value)) {
-         const allShapes = value.flatMap((label) =>
+      if (value && Array.isArray(value?.labels)) {
+         const allShapes = value?.labels.flatMap((label: any) =>
             label.shapes.map((shape: any) => ({
                ...shape,
                color: label.color
             }))
          );
          setShapes(allShapes);
-         setActiveLabel(value?.[value.length - 1] || null);
-         setLabels(value);
+         setActiveLabel(value?.labels?.[value.length - 1] || null);
+         setLabels(value?.labels);
          setShowAllShapes(true);
+      }
+      if (value?.imageUrl) {
+
+         const img = new Image(value?.imageUrl);
+         img.onload = () => {
+            console.log('Image width: ', img.width);
+            console.log('Image height: ', img.height);
+         };
+         
+       
+         setImageUrl(Array.isArray(value?.imageUrl) ? value.imageUrl?.[0] : value.imageUrl);
       }
    }, []);
 
@@ -139,31 +146,34 @@ export function MaskWidget({
    };
 
    useEffect(() => {
-      onChange?.(labels);
+      onChange?.({
+         imageUrl: Array.isArray(value?.imageUrl) ? value?.imageUrl?.[0] : value?.imageUrl,
+         labels
+      });
       updateOutputData();
    }, [labels]);
 
    const toggleModal = () => {
       setIsModalOpen((prev) => {
-         if (!prev && activeLabel && !showAllShapes) {
-            setShapes(activeLabel.shapes);
-         } else if (!prev && showAllShapes) {
-            const allShapes = labels.flatMap((label) =>
-               label.shapes.map((shape) => ({
-                  ...shape,
-                  color: label.color
-               }))
-            );
-            setShapes(allShapes);
-         } else if (prev) {
-            const allShapes = labels.flatMap((label) =>
-               label.shapes.map((shape) => ({
-                  ...shape,
-                  color: label.color
-               }))
-            );
-            setShapes(allShapes);
-         }
+         // if (!prev && activeLabel && !showAllShapes) {
+         //    setShapes(activeLabel.shapes);
+         // } else if (!prev && showAllShapes) {
+         //    const allShapes = labels.flatMap((label) =>
+         //       label.shapes.map((shape) => ({
+         //          ...shape,
+         //          color: label.color
+         //       }))
+         //    );
+         //    setShapes(allShapes);
+         // } else if (prev) {
+         //    const allShapes = labels.flatMap((label) =>
+         //       label.shapes.map((shape) => ({
+         //          ...shape,
+         //          color: label.color
+         //       }))
+         //    );
+         //    setShapes(allShapes);
+         // }
          return !prev;
       });
    };
@@ -297,7 +307,7 @@ export function MaskWidget({
             {
                points: [[point.x, point.y]],
                size: brushSize,
-               color: activeLabel.color,
+               color: labels.filter((label) => label.name == activeLabel)[0].color,
                isEraser: false
             }
          ]);
@@ -336,10 +346,10 @@ export function MaskWidget({
 
       if (activeLabel) {
          const updatedLabels = labels.map((label) =>
-            label === activeLabel ? { ...label, shapes } : label
+            label.name === activeLabel ? { ...label, shapes } : label
          );
          setLabels(updatedLabels);
-         setActiveLabel({ ...activeLabel, shapes });
+         setActiveLabel(activeLabel);
       }
 
       generateBase64(); // Update this line
@@ -360,7 +370,7 @@ export function MaskWidget({
       setSelectedImage(base64Image);
       setIsSubmittingUpdate(false);
       setIsModalOpen(false);
-      onChange?.(base64Image);
+      // onChange?.(base64Image);
    };
 
    const handleLabelChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -386,7 +396,7 @@ export function MaskWidget({
          };
          setLabels([...labels, newLabelObject]);
          setNewLabel('');
-         setActiveLabel(newLabelObject);
+         setActiveLabel(trimmedLabel);
          setShapes([]);
          setAvailableColors(availableColors.slice(1));
          setBrushColor(newColor);
@@ -417,7 +427,7 @@ export function MaskWidget({
       setLabels(updatedLabels);
       setAvailableColors([...availableColors, removedLabel.color]);
 
-      if (activeLabel === removedLabel) {
+      if (activeLabel === removedLabel.name) {
          setActiveLabel(null);
          setShapes([]);
       } else if (showAllShapes) {
@@ -433,7 +443,7 @@ export function MaskWidget({
    };
 
    const handleLabelClick = (label: Label) => {
-      setActiveLabel(label);
+      setActiveLabel(label.name);
       setShapes(label.shapes);
       setBrushColor(label.color);
       setShowAllShapes(false);
@@ -450,7 +460,9 @@ export function MaskWidget({
          );
          setShapes(allShapes);
       } else {
-         setShapes(activeLabel ? activeLabel.shapes : []);
+         setShapes(
+            activeLabel ? labels.find((label) => label.name === activeLabel)?.shapes || [] : []
+         );
       }
    };
 
@@ -460,6 +472,17 @@ export function MaskWidget({
       //    setBrushColor(brushColors[Math.floor(Math.random() * brushColors.length)]); // Restore a random brush color when switching back
       // }
    };
+
+   useEffect(() => {
+      if (activeLabel) {
+         const updatedLabels = labels.map((label) =>
+            label.name === activeLabel
+               ? { ...label, shapes: shapes.filter((shape) => shape.color === label.color) }
+               : label
+         );
+         setLabels(updatedLabels);
+      }
+   }, [shapes]);
 
    const hasMasks = labels.some((label) => label.shapes.length > 0);
 
@@ -612,7 +635,7 @@ export function MaskWidget({
                                     <div
                                        key={index}
                                        className={`flex items-center justify-between bg-borderColor text-fg px-3 py-2 rounded-md text-xs w-full animate-fadeIn transition-all duration-300 ease-in-out transform hover:scale-105 cursor-pointer ${
-                                          activeLabel === label && !showAllShapes
+                                          activeLabel === label.name && !showAllShapes
                                              ? 'border-2 border-blue-500'
                                              : ''
                                        }`}

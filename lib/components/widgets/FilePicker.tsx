@@ -9,10 +9,14 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@nextui-org/react';
 
 export type FileProps = {
+   nodeId?: string;
    kind?: string;
    value?: string | string[];
    multiple?: boolean;
    onChange?: (value: string | string[]) => void;
+   outputInfo?: {
+      name: string;
+   };
 };
 
 const imageToBASE64 = (file: File) =>
@@ -23,9 +27,16 @@ const imageToBASE64 = (file: File) =>
       reader.readAsDataURL(file);
    });
 
-export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: FileProps) {
+export function FilePickerWidget({
+   nodeId,
+   onChange,
+   multiple,
+   kind = 'file',
+   value,
+   outputInfo
+}: FileProps) {
    const { uploadFile, makeServerURL } = useApiContext();
-   const { setAppLoading } = useFlowStore((state) => state);
+   const { setAppLoading, nodes } = useFlowStore((state) => state);
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [selectedImage, setSelectedImage] = useState<string | null>(null);
    const fileRef = useRef<HTMLInputElement>(null);
@@ -48,6 +59,22 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
       setSelectedFiles(files);
    }, []);
 
+   const updateOutputData = (files: { name: string; url: string; loading: boolean }[]) => {
+      if (nodeId && outputInfo) {
+         let outputs: any = {};
+         const node = nodes.find((node) => node.id === nodeId);
+         if (node) {
+            outputs = node.data.outputs;
+            outputs[outputInfo.name] = {
+               ...outputs[outputInfo.name],
+               value: {
+                  imageUrl: files?.map((f) => f.url)
+               }
+            };
+         }
+      }
+   };
+
    const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
       setAppLoading(true);
       const newFiles = Array.from(e.target.files || []).map((file) => ({
@@ -64,6 +91,7 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
       const onChangeFiles = multiple ? files.map((f) => f.url) : files[files.length - 1]?.url || '';
       setSelectedFiles(files);
       onChange?.(onChangeFiles);
+      updateOutputData(files);
 
       setNumOfFilesToUpload(filteredNewFiles.length);
       if (filteredNewFiles.length > 0) {
@@ -83,16 +111,20 @@ export function FilePickerWidget({ onChange, multiple, kind = 'file', value }: F
             setNumOfFilesUploaded((prev) => prev + 1);
             setUploadProgress((prev) => prev + 100 / filteredNewFiles.length);
          }
+         console.log('After upload>>>>');
          setSelectedFiles(files);
          const onChangeFiles = multiple
             ? files.map((f) => f.url)
             : files[files.length - 1]?.url || '';
          onChange?.(onChangeFiles);
+         updateOutputData(files);
+
          setNumOfFilesToUpload(0);
          setNumOfFilesUploaded(0);
          setUploadProgress(0);
       }
       setAppLoading(false);
+      console.log('Before output');
    };
 
    const handleButtonClick = () => {

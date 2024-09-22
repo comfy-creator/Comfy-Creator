@@ -2,7 +2,7 @@ import { AppNode, EdgeType, HandleState, HandleType, IMenuType, NodeDefinitions 
 import { useFlowStore } from '../store/flow';
 import { categorizeObjects } from './ui';
 import type { MouseEvent as ReactMouseEvent } from 'react';
-import { createEdge, getHandleName, getHandleNodeId, makeHandleId } from './node';
+import { createEdge, getHandleName, getHandleNodeId, isPassOutputNodeType, makeHandleId } from './node';
 import { NODE_GROUP_NAME } from '../config/constants';
 
 export function getNodeMenuItems(node: AppNode) {
@@ -229,10 +229,9 @@ export function getSuggestedNodesData({
          let inputData: Partial<HandleState> = { isConnected: true };
          // TODO: abstract these away and avoid repetitions
          const sourceNode = nodes.find((node) => node.id === getHandleNodeId(handleId));
-         if (sourceNode && sourceNode.type === 'MaskImage') {
-            const maskImageValue = sourceNode.data.outputs[getHandleName(handleId)]?.value;
-            console.log('Got to this place>>>');
-            inputData = { ...inputData, value: maskImageValue }
+         if (sourceNode && isPassOutputNodeType(sourceNode.type!)) {
+            const value = sourceNode.data.outputs[getHandleName(handleId)]?.value;
+            inputData = { ...inputData, value };
          }
          updateInputData({
             nodeId: getHandleNodeId(targetHandle),

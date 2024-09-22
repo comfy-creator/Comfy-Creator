@@ -1,5 +1,5 @@
 import { AppNode, EdgeType, HandleState, NodeData, NodeDefinition } from '../types/types';
-import { DISPLAY_TYPES, WIDGET_TYPES } from '../config/constants';
+import { DISPLAY_TYPES, PASS_OUTPUT_NODE_TYPE, WIDGET_TYPES } from '../config/constants';
 import { useFlowStore } from '../store/flow';
 import { createValueControlInput, isSeedInput } from './widgets';
 import { Edge } from '@xyflow/react';
@@ -62,6 +62,7 @@ export function computeInitialNodeData(def: NodeDefinition) {
 
 export const isWidgetType = (type: EdgeType) => WIDGET_TYPES.includes(type);
 export const isDisplayType = (type: EdgeType) => DISPLAY_TYPES.includes(type);
+export const isPassOutputNodeType = (type: string) => PASS_OUTPUT_NODE_TYPE.includes(type);
 
 export const disconnectPrimitiveNode = (id: string) => {
    const { nodes, updateInputData, updateNodeData } = useFlowStore.getState();
