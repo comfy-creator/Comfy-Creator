@@ -98,17 +98,9 @@ export const DEFAULT_HOTKEYS_HANDLERS = {
    }
 };
 
-export const WIDGET_TYPES: EdgeType[] = [
-   'INT',
-   'STRING',
-   'BOOLEAN',
-   'FLOAT',
-   'ENUM',
-   'FILEPICKER',
-   'IMAGE_ROUTER'
-];
+export const WIDGET_TYPES: EdgeType[] = ['INT', 'STRING', 'BOOLEAN', 'FLOAT', 'ENUM', 'FILEPICKER'];
 export const DISPLAY_TYPES: EdgeType[] = ['IMAGE', 'VIDEO'];
-export const PASS_OUTPUT_NODE_TYPE = ['MaskImage', 'LoadImage'];
+export const PASS_OUTPUT_NODE_TYPE = ['MaskImage', 'LoadImage', 'ImageRouter'];
 
 export const HANDLE_TYPES: EdgeType[] = [
    'CLIP',
@@ -124,6 +116,7 @@ export const HANDLE_TYPES: EdgeType[] = [
    'VAE',
    'TAESD',
    'EMBEDDING',
+
    // widget types
    'INT',
    'FLOAT',

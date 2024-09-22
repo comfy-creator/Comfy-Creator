@@ -102,13 +102,7 @@ const createWidgetFromSpec = (
                />
             );
          case 'IMAGE_ROUTER':
-            return (
-               <ImageRouterWidget
-                  {...commonProps}
-                  value={data.value as string}
-                  onChange={(value: string) => updateInputData?.({ ...updateData, value })}
-               />
-            );
+            return <ImageRouterWidget {...commonProps} nodeId={nodeId} value={data.value} />;
          case 'MASK':
             return (
                <MaskWidget

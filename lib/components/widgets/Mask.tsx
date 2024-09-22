@@ -1,4 +1,4 @@
-import { ChangeEvent, useRef, useState, useEffect, createRef, useMemo } from 'react';
+import { ChangeEvent, useRef, useState, useEffect, createRef, useMemo, useCallback} from 'react';
 import { Modal } from 'antd';
 import {
    ChevronLeftIcon,
@@ -20,6 +20,7 @@ import { LuRedo2, LuUndo2 } from 'react-icons/lu';
 import { BsBrush, BsCheck } from 'react-icons/bs';
 import { getHandleName, makeHandleId } from '../../utils/node';
 import { Label } from '../../types/types';
+import { throttle } from 'lodash';
 
 export type MaskProps = {
    value: any;
@@ -43,6 +44,8 @@ export const PreviewImageWidth = 166;
 export const KonvaImageHeight = 500;
 
 export function MaskWidget({ nodeId, onChange, value }: MaskProps) {
+   const [imageWidth, setImageWidth] = useState<number>(PreviewImageWidth);
+   const [imageHeight, setImageHeight] = useState<number>(PreviewImageHeight);
    const { updateInputData, nodes, edges, setEdges } = useFlowStore((state) => state);
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -97,7 +100,14 @@ export function MaskWidget({ nodeId, onChange, value }: MaskProps) {
       }
       if (value?.imageUrl) {
 
-         const img = new Image(value?.imageUrl);
+         const img = new Image();
+         img.src = value?.imageUrl;
+         img.crossOrigin = 'anonymous';
+
+
+         const aspectRatio = img.height / img.width;
+         setImageWidth(163);
+         setImageHeight(163 * aspectRatio);
          img.onload = () => {
             console.log('Image width: ', img.width);
             console.log('Image height: ', img.height);
@@ -257,6 +267,10 @@ export function MaskWidget({ nodeId, onChange, value }: MaskProps) {
 
       if (!tempContext) return;
 
+      // Calculate scaling factors
+      const scaleX = stageWidth / 350;
+      const scaleY = stageHeight / KonvaImageHeight;
+
       // Update each label with its base64
       setLabels((prevLabels) =>
          prevLabels.map((label) => {
@@ -267,10 +281,12 @@ export function MaskWidget({ nodeId, onChange, value }: MaskProps) {
             label.shapes.forEach((shape) => {
                tempContext.beginPath();
                shape.points.forEach(([x, y], pointIndex) => {
+                  const scaledX = x * scaleX;
+                  const scaledY = y * scaleY;
                   if (pointIndex === 0) {
-                     tempContext.moveTo(x, y);
+                     tempContext.moveTo(scaledX, scaledY);
                   } else {
-                     tempContext.lineTo(x, y);
+                     tempContext.lineTo(scaledX, scaledY);
                   }
                });
                tempContext.closePath();
@@ -314,31 +330,34 @@ export function MaskWidget({ nodeId, onChange, value }: MaskProps) {
       }
    };
 
-   const handleMouseMove = (evt: any) => {
-      if (!isDrawing) return;
-      const stage = evt.target.getStage();
-      const point = stage.getPointerPosition();
-      if (!point) return;
-
-      if (isEraserActive) {
-         setShapes((prevShapes) =>
+   const handleMouseMove = useCallback(
+      throttle((evt: any) => {
+        if (!isDrawing) return;
+        const stage = evt.target.getStage();
+        const point = stage.getPointerPosition();
+        if (!point) return;
+    
+        if (isEraserActive) {
+          setShapes((prevShapes) =>
             prevShapes.map((shape) => ({
-               ...shape,
-               points: shape.points.filter(([x, y]) => {
-                  const distance = Math.hypot(x - point.x, y - point.y);
-                  return distance > eraserSize;
-               })
+              ...shape,
+              points: shape.points.filter(([x, y]) => {
+                const distance = Math.hypot(x - point.x, y - point.y);
+                return distance > eraserSize;
+              })
             }))
-         );
-      } else if (activeLabel) {
-         setShapes((prevShapes) => {
+          );
+        } else if (activeLabel) {
+          setShapes((prevShapes) => {
             const newShapes = [...prevShapes];
             const lastShape = newShapes[newShapes.length - 1];
             lastShape.points = [...lastShape.points, [point.x, point.y]];
             return newShapes;
-         });
-      }
-   };
+          });
+        }
+      }, 65), // Throttle the function to run at most once every 50ms
+      [isDrawing, isEraserActive, activeLabel, eraserSize] // dependencies
+    );
 
    const handleMouseUp = () => {
       setIsDrawing(false);
@@ -490,22 +509,20 @@ export function MaskWidget({ nodeId, onChange, value }: MaskProps) {
       () =>
          image && (
             <div className="mt-3" onClick={() => toggleModal()}>
-               <Stage ref={stageRef} width={PreviewImageWidth} height={PreviewImageHeight}>
+               <Stage ref={stageRef} width={imageWidth} height={imageHeight}>
                   <Layer>
                      <KonvaImage
                         image={image}
-                        width={PreviewImageWidth}
-                        height={PreviewImageHeight}
+                        width={imageWidth}
+                        height={imageHeight}
                      />
                      {shapes.map((shape, i) => (
                         <Shape
                            key={i}
                            sceneFunc={(context, shapeNode) => {
                               context.beginPath();
-                              const scaleX =
-                                 PreviewImageWidth /
-                                 ((image?.width! / image?.height!) * KonvaImageHeight);
-                              const scaleY = PreviewImageHeight / KonvaImageHeight;
+                              const scaleX = imageWidth / 350;
+                              const scaleY = imageHeight / KonvaImageHeight;
                               shape.points.forEach(([x, y], index) => {
                                  const scaledX = x * scaleX;
                                  const scaledY = y * scaleY;
@@ -527,7 +544,7 @@ export function MaskWidget({ nodeId, onChange, value }: MaskProps) {
                </Stage>
             </div>
          ),
-      [shapes, image]
+      [shapes, image, imageWidth, imageHeight]
    );
 
    return (
@@ -579,7 +596,7 @@ export function MaskWidget({ nodeId, onChange, value }: MaskProps) {
                      {image && (
                         <div
                            className="relative"
-                           style={{ width: (image.width / image.height) * KonvaImageHeight }}
+                           style={{ width: '350px' }}
                         >
                            {/* {shapes.length > 0 && (
                               <button
@@ -675,7 +692,7 @@ export function MaskWidget({ nodeId, onChange, value }: MaskProps) {
                      {image && (
                         <Stage
                            ref={stageRef}
-                           width={(image.width / image.height) * KonvaImageHeight}
+                           width={350}
                            height={KonvaImageHeight}
                            onMouseDown={handleMouseDown}
                            onMouseMove={handleMouseMove}
@@ -689,7 +706,7 @@ export function MaskWidget({ nodeId, onChange, value }: MaskProps) {
                            <Layer>
                               <KonvaImage
                                  image={image}
-                                 width={(image.width / image.height) * KonvaImageHeight}
+                                 width={350}
                                  height={KonvaImageHeight}
                               />
                               {shapes.map((shape, i) => (
