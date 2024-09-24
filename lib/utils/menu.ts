@@ -1,11 +1,24 @@
-import { AppNode, EdgeType, HandleState, HandleType, IMenuType, NodeDefinitions } from '../types/types';
+import {
+   AppNode,
+   EdgeType,
+   HandleState,
+   HandleType,
+   IMenuType,
+   NodeDefinitions
+} from '../types/types';
 import { useFlowStore } from '../store/flow';
 import { categorizeObjects } from './ui';
 import type { MouseEvent as ReactMouseEvent } from 'react';
-import { createEdge, getHandleName, getHandleNodeId, isPassOutputNodeType, makeHandleId } from './node';
+import {
+   createEdge,
+   getHandleName,
+   getHandleNodeId,
+   isPassOutputNodeType,
+   makeHandleId
+} from './node';
 import { NODE_GROUP_NAME } from '../config/constants';
 
-export function getNodeMenuItems(node: AppNode) {
+export function getNodeMenuItems(node: AppNode, onPaneClick: () => void) {
    const items: (IMenuType | null)[] = [
       // { label: 'Inputs', hasSubMenu: true, disabled: true, subMenu: null, data: null },
       // { label: 'Outputs', hasSubMenu: true, disabled: true, subMenu: null, data: null },
@@ -39,7 +52,10 @@ export function getNodeMenuItems(node: AppNode) {
          disabled: false,
          subMenu: null,
          data: node.id,
-         onClick: () => cloneNode(node.id)
+         onClick: () => {
+            cloneNode(node.id);
+            onPaneClick();
+         }
       },
 
       null,
@@ -50,7 +66,10 @@ export function getNodeMenuItems(node: AppNode) {
          disabled: false,
          subMenu: null,
          data: node.id,
-         onClick: () => removeNode(node.id)
+         onClick: () => {
+            removeNode(node.id);
+            onPaneClick();
+         }
       }
    ];
 
@@ -58,8 +77,13 @@ export function getNodeMenuItems(node: AppNode) {
 }
 
 function removeNode(id: string) {
-   const { removeNode } = useFlowStore.getState();
-   removeNode(id);
+   const { onNodesChange } = useFlowStore.getState();
+   onNodesChange([
+      {
+         id,
+         type: 'remove'
+      }
+   ]);
 }
 
 function cloneNode(id: string) {
@@ -75,13 +99,13 @@ function cloneNode(id: string) {
    addRawNode(newNode);
 }
 
-export function getContextMenuItems() {
+export function getContextMenuItems(onPaneClick: () => void) {
    const state = useFlowStore.getState();
 
    return [
       {
          data: null,
-         subMenu: categorizeObjects(state.nodeDefs),
+         subMenu: categorizeObjects(state.nodeDefs, onPaneClick),
          isOpen: false,
          disabled: false,
          hasSubMenu: true,
@@ -96,7 +120,7 @@ export function getContextMenuItems() {
          hasSubMenu: false,
          label: 'Add Group',
          onClick: (event: ReactMouseEvent) => {
-            console.log('Click>>')
+            console.log('Click>>');
             const position = { x: event.clientX, y: event.clientY };
 
             state.addNode({ position, type: NODE_GROUP_NAME });
@@ -186,7 +210,8 @@ export function getSuggestedNodesData({
       hasSubMenu: false,
       label: node.display_name,
       onClick: (e: ReactMouseEvent) => {
-         const { addNode, updateInputData, updateOutputData } = useFlowStore.getState();
+         const { addNode, updateInputData, updateOutputData, refValueNodes } =
+            useFlowStore.getState();
          const position = { x: e.clientX, y: e.clientY };
 
          const nodeId = addNode({ position, type });
@@ -229,9 +254,11 @@ export function getSuggestedNodesData({
          let inputData: Partial<HandleState> = { isConnected: true };
          // TODO: abstract these away and avoid repetitions
          const sourceNode = nodes.find((node) => node.id === getHandleNodeId(handleId));
-         if (sourceNode && isPassOutputNodeType(sourceNode.type!)) {
-            const value = sourceNode.data.outputs[getHandleName(handleId)]?.value;
-            inputData = { ...inputData, value };
+         if (sourceNode && refValueNodes.includes(type)) {
+            inputData = {
+               ...inputData,
+               ref: { nodeId: sourceNode.id, handleName: getHandleName(sourceHandle) }
+            };
          }
          updateInputData({
             nodeId: getHandleNodeId(targetHandle),

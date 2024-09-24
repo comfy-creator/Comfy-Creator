@@ -17,6 +17,7 @@ export type FileProps = {
    outputInfo?: {
       name: string;
    };
+   displayName?: string;
 };
 
 const imageToBASE64 = (file: File) =>
@@ -33,7 +34,8 @@ export function FilePickerWidget({
    multiple,
    kind = 'file',
    value,
-   outputInfo
+   outputInfo,
+   displayName
 }: FileProps) {
    const { uploadFile, makeServerURL } = useApiContext();
    const { setAppLoading, nodes } = useFlowStore((state) => state);
@@ -59,6 +61,12 @@ export function FilePickerWidget({
       setSelectedFiles(files);
    }, []);
 
+   const handleUpdate = (files: { name: string; url: string; loading: boolean }[]) => {
+      updateOutputData(files);
+      const onChangeFiles = multiple ? files.map((f) => f.url) : [files[files.length - 1]?.url] || [];
+      onChange?.(onChangeFiles);
+   }
+
    const updateOutputData = (files: { name: string; url: string; loading: boolean }[]) => {
       if (nodeId && outputInfo) {
          let outputs: any = {};
@@ -67,9 +75,7 @@ export function FilePickerWidget({
             outputs = node.data.outputs;
             outputs[outputInfo.name] = {
                ...outputs[outputInfo.name],
-               value: {
-                  imageUrl: files?.map((f) => f.url)
-               }
+               value: files?.map((f) => f.url) || []
             };
          }
       }
@@ -88,10 +94,8 @@ export function FilePickerWidget({
       );
 
       const files = [...selectedFiles, ...filteredNewFiles];
-      const onChangeFiles = multiple ? files.map((f) => f.url) : files[files.length - 1]?.url || '';
+      handleUpdate(files);
       setSelectedFiles(files);
-      onChange?.(onChangeFiles);
-      updateOutputData(files);
 
       setNumOfFilesToUpload(filteredNewFiles.length);
       if (filteredNewFiles.length > 0) {
@@ -111,20 +115,14 @@ export function FilePickerWidget({
             setNumOfFilesUploaded((prev) => prev + 1);
             setUploadProgress((prev) => prev + 100 / filteredNewFiles.length);
          }
-         console.log('After upload>>>>');
          setSelectedFiles(files);
-         const onChangeFiles = multiple
-            ? files.map((f) => f.url)
-            : files[files.length - 1]?.url || '';
-         onChange?.(onChangeFiles);
-         updateOutputData(files);
+         handleUpdate(files);
 
          setNumOfFilesToUpload(0);
          setNumOfFilesUploaded(0);
          setUploadProgress(0);
       }
       setAppLoading(false);
-      console.log('Before output');
    };
 
    const handleButtonClick = () => {
@@ -149,8 +147,7 @@ export function FilePickerWidget({
    const removeFile = (index: number) => {
       const files = selectedFiles.filter((_, i) => i !== index);
       setSelectedFiles(files);
-      const onChangeFiles = multiple ? files.map((f) => f.url) : files[files.length - 1]?.url || '';
-      onChange?.(onChangeFiles);
+      handleUpdate(files);
    };
 
    const handleUpload = useCallback(
@@ -202,7 +199,7 @@ export function FilePickerWidget({
 
    return (
       <>
-         <p className={`text-[9px] mt-[5px]`}>images</p>
+         <p className={`text-[9px] mt-[5px]`}>{displayName}</p>
          <Button
             variant="outline"
             className="!h-[25px] mt-1 mb-2 !text-[12px] text-dragText bg-bg border-borderColor hover:bg-white/[3%] hover:text-fg"

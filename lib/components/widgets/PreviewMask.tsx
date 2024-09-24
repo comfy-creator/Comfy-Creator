@@ -1,13 +1,14 @@
 import { createRef, useEffect, useRef, useState } from 'react';
 import Konva from 'konva';
-import { Label } from '../../types/types';
+import { Label, RefValue } from '../../types/types';
 
 type PreviewMaskedImageWidgetProps = {
+   refValue?: RefValue;
    value?: any;
    label?: string;
 };
 
-const PreviewMaskedImageWidget = ({ value }: PreviewMaskedImageWidgetProps) => {
+const PreviewMaskedImageWidget = ({ value, refValue, label }: PreviewMaskedImageWidgetProps) => {
    const [image, setImage] = useState<HTMLImageElement | null>(null);
 
    const [shapes, setShapes] = useState<Label['shapes']>([]);
@@ -24,7 +25,7 @@ const PreviewMaskedImageWidget = ({ value }: PreviewMaskedImageWidgetProps) => {
    }, [image, imageRef.current]);
 
    useEffect(() => {
-      console.log('Value>>>>', value);
+      console.log('Value>>>>', value, refValue);
       if (value && value.shapes) {
          setShapes(
             value.shapes.map((shape: Label['shapes']) => ({

@@ -270,7 +270,7 @@ export type NodeTypes = Record<string, NodeType>;
 export type MinimalNode = Omit<AppNode, 'position' | 'data'> & {
    position?: { x: number; y: number };
    inputs?: RefValue | ConstantValue;
-   outputs?: Record<string, HandleState>;
+   outputs?: RefValue | ConstantValue;
    widgets?: Record<string, WidgetDefinition>;
    type: string | undefined;
 };

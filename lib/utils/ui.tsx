@@ -209,7 +209,7 @@ export function dragElement(dragEl: HTMLDivElement, addSetting: any) {
    }
 }
 
-export function categorizeObjects(nodeDefs: NodeDefinitions) {
+export function categorizeObjects(nodeDefs: NodeDefinitions, onPaneClick: () => void) {
    const categorizedArray: IMenuType[] = [];
 
    for (const name in nodeDefs) {
@@ -280,8 +280,13 @@ export function categorizeObjects(nodeDefs: NodeDefinitions) {
             hasSubMenu: item.hasSubMenu,
             subMenu: item.subMenu ? sort(item.subMenu) : item.subMenu,
             // TODO: fix this
-            // @ts-expect-error
-            onClick: item.data ? (e: MouseEvent) => onNodeClick(e, item.data!) : undefined
+            onClick: item.data
+               ? (e: MouseEvent) => {
+                  console.log('Happening here>>>>')
+                    onNodeClick(e, item.data! as any);
+                    onPaneClick();
+                 }
+               : undefined
          };
       }) as IMenuType[];
    };

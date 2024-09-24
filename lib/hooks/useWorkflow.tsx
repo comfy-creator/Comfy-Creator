@@ -1,10 +1,11 @@
 import { ReactFlowInstance, ReactFlowJsonObject, useReactFlow, Edge } from '@xyflow/react';
 import { AppNode, ConstantValue, HandleState, RefValue, SerializedGraph } from '../types/types';
 import { useApiContext } from '../contexts/api';
-import { getHandleName, makeHandleId } from '../utils/node';
+import { getHandleName, isExcludedNodeType, isPassOutputNodeType, isRefInputType, makeHandleId } from '../utils/node';
 import { uuidv4 } from 'lib0/random';
 import { useGraphContext } from '../contexts/graph';
 import { toast } from 'react-toastify';
+import { useFlowStore } from '../store/flow';
 
 // Second argument returned is a list of missing required input handles
 // If any are missing, you should _not_ submit the workflow, as it is incomplete
@@ -63,9 +64,10 @@ const removeSpecifiedFieldsRecursively = (obj: AnyObject, fieldsToRemove: string
    return obj;
 };
 
-export const newSerializeGraph = (
+export const serializeGraph = (
    instance: ReactFlowInstance<AppNode, Edge>,
-   minimize_payload: boolean = false
+   minimize_payload: boolean = false,
+   refValueNodes: string[]
 ): [SerializedGraph, Record<string, string[]> | undefined] => {
    const { nodes, edges, viewport } = instance.toObject();
 
@@ -79,13 +81,15 @@ export const newSerializeGraph = (
    for (const node of nodes) {
       if (!node.data || !node.type) continue; // Remove non-useful nodes
 
+      if (isExcludedNodeType(node.type)) continue;
+
       const inputs: Record<string, InputValues> = {};
-      const outputs: Record<string, HandleState> = {};
+      const outputs: Record<string, InputValues> = {};
 
       // Iterate through all input handles for this node
       for (const [handle_name, handle_state] of Object.entries(node.data.inputs)) {
          // If the value is not provided, look for a reference
-         if (!handle_state.value) {
+         if (refValueNodes.includes(node.type) && isRefInputType(handle_state.display_name)) {
             const targetHandleId = makeHandleId(node.id, handle_name);
             const edge = edges.find((edge) => edge.targetHandle === targetHandleId);
 
@@ -103,14 +107,9 @@ export const newSerializeGraph = (
                         handle_name
                      );
                } else {
-                  const ref: RefValue = {
-                     nodeId: sourceNode.id,
-                     handleName: edge.sourceHandle?.split('::')[1] || ''
-                  };
-                  inputs[handle_name] = { ref }; // we reference another value
+                  inputs[handle_name] = { ref: handle_state?.ref }; // we reference another value
                }
             } else {
-               console.log('Handle state>>', handle_state);
                if (!handle_state.optional) {
                   console.error(`Missing edge for required input handle: ${targetHandleId}`);
                   missingInputHandles[node.id] = (missingInputHandles[node.id] || []).concat(
@@ -153,7 +152,8 @@ export const newSerializeGraph = (
                inputs[handle_name] = { value: handle_state.value };
                break;
             case 'IMAGE':
-               inputs[handle_name] = { ref: handle_state.value as InputValues['ref'] };
+            case 'VIDEO':
+               inputs[handle_name] = { ref: handle_state.ref };
                break;
 
             default: {
@@ -166,7 +166,7 @@ export const newSerializeGraph = (
       // a node's output handle's value is being held constant
       for (const [handle_name, handle_state] of Object.entries(node.data.outputs)) {
          if (handle_state.value !== undefined) {
-            outputs[handle_name] = { ...handle_state, value: handle_state.value };
+            outputs[handle_name] = { value: handle_state.value };
          }
       }
 
@@ -177,7 +177,6 @@ export const newSerializeGraph = (
             type: node?.type || '',
             inputs,
             outputs
-            // position: node.position // note: the server doesn't really need this, but react flow wants it
          });
       } else {
          // Remove some non-essential properties but keep more than the minimized version
@@ -191,17 +190,17 @@ export const newSerializeGraph = (
       }
    }
 
-   const cleanedGraph = removeFieldsFromFirstLevelObjects(
-      serializedGraph.nodes.filter((node) => node.type !== 'PreviewMaskedImage'),
-      ['shapes', 'color', 'imageUrl']
-   ) as SerializedGraph;
+   // const cleanedGraph = removeFieldsFromFirstLevelObjects(
+   //    serializedGraph.nodes.filter((node) => node.type !== 'PreviewMaskedImage'),
+   //    ['shapes', 'color', 'imageUrl']
+   // ) as SerializedGraph;
 
-   console.log('Serialized graph>>', JSON.stringify(cleanedGraph, null, 2));
+   console.log('Serialized graph>>', JSON.stringify(serializedGraph, null, 2));
 
    if (Object.keys(missingInputHandles).length > 0) {
-      return [cleanedGraph, missingInputHandles];
+      return [serializedGraph, missingInputHandles];
    } else {
-      return [cleanedGraph, undefined];
+      return [serializedGraph, undefined];
    }
 };
 
@@ -209,9 +208,10 @@ export function useWorkflow() {
    const rflInstance = useReactFlow<AppNode, Edge>();
    const { addGraphRun } = useGraphContext();
    const { runWorkflow } = useApiContext();
+   const { refValueNodes } = useFlowStore();
 
    const submitWorkflow = async () => {
-      const [serializedGraph, missingInputHandles] = newSerializeGraph(rflInstance, true);
+      const [serializedGraph, missingInputHandles] = serializeGraph(rflInstance, true, refValueNodes);
 
       if (missingInputHandles) {
          if (missingInputHandles) {
@@ -242,11 +242,6 @@ export function useWorkflow() {
       //   applyWidgetControl(node, updateInputData);
       // }
    };
-
-   // const serializeGraph = () => {
-   //   if (!instance) throw new Error('Flow instance not found');
-   //   return instance.toObject() as ReactFlowJsonObject<NodeData>;
-   // };
 
    const serializeGraphToWorkflow = () => {
       if (!rflInstance) throw new Error('Flow instance not found');
@@ -323,41 +318,10 @@ export function useWorkflow() {
       return workflow;
    };
 
-   const serializeGraph = () => {
+   const generateWorkflow = () => {
       if (!rflInstance) throw new Error('Flow instance not found');
       return rflInstance.toObject() as ReactFlowJsonObject<AppNode>;
    };
 
-   return { submitWorkflow, serializeGraphToWorkflow, serializeGraph };
+   return { submitWorkflow, serializeGraphToWorkflow, generateWorkflow };
 }
-
-// export type Node<T, U extends string> = {
-//   id: string;
-//   position: XYPosition;
-//   data: T;
-//   type?: U;
-//   sourcePosition?: Position;
-//   targetPosition?: Position;
-//   hidden?: boolean;
-//   selected?: boolean;
-//   dragging?: boolean;
-//   draggable?: boolean;
-//   selectable?: boolean;
-//   connectable?: boolean;
-//   resizing?: boolean;
-//   deletable?: boolean;
-//   dragHandle?: string;
-//   width?: number | null;
-//   height?: number | null;
-//   /** @deprecated - use `parentId` instead */
-//   parentNode?: string;
-//   parentId?: string;
-//   zIndex?: number;
-//   extent?: 'parent' | CoordinateExtent;
-//   expandParent?: boolean;
-//   positionAbsolute?: XYPosition;
-//   ariaLabel?: string;
-//   focusable?: boolean;
-//   style?: React.CSSProperties;
-//   className?: string;
-// };

@@ -98,15 +98,24 @@ const createWidgetFromSpec = (
                   }
                   value={data.value as string | string[]}
                   outputInfo={data?.widget?.output_info}
+                  displayName={data?.widget?.display_name}
                   {...(data.widget as FileProps)}
                />
             );
          case 'IMAGE_ROUTER':
-            return <ImageRouterWidget {...commonProps} nodeId={nodeId} value={data.value} />;
+            return (
+               <ImageRouterWidget
+                  {...commonProps}
+                  nodeId={nodeId}
+                  refValue={data?.ref}
+                  value={data.value}
+               />
+            );
          case 'MASK':
             return (
                <MaskWidget
-                  value={data.value}
+                  refValue={data?.ref}
+                  value={data?.value}
                   nodeId={nodeId}
                   onChange={(value: any) => {
                      updateInputData?.({ ...updateData, value });
@@ -114,7 +123,9 @@ const createWidgetFromSpec = (
                />
             );
          case 'PREVIEW_MASKED_IMAGE':
-            return <PreviewMaskedImageWidget {...commonProps} value={data.value as string} />;
+            return (
+               <PreviewMaskedImageWidget {...commonProps} refValue={data?.ref} value={data?.value} />
+            );
          case 'DROPDOWN':
             return (
                <EnumWidget

@@ -100,7 +100,16 @@ export const DEFAULT_HOTKEYS_HANDLERS = {
 
 export const WIDGET_TYPES: EdgeType[] = ['INT', 'STRING', 'BOOLEAN', 'FLOAT', 'ENUM', 'FILEPICKER'];
 export const DISPLAY_TYPES: EdgeType[] = ['IMAGE', 'VIDEO'];
+export const REF_INPUTS: string[] = ['image', 'video'];
 export const PASS_OUTPUT_NODE_TYPE = ['MaskImage', 'LoadImage', 'ImageRouter'];
+export const EXCLUDED_NODE_TYPES = [
+   'PreviewImage',
+   'SaveImage',
+   'SaveVideo',
+   'PreviewMaskedImage',
+   'RerouteNode',
+   'Group'
+];
 
 export const HANDLE_TYPES: EdgeType[] = [
    'CLIP',

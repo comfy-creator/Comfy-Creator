@@ -35,7 +35,9 @@ import {
    computeInitialNodeData,
    disconnectPrimitiveNode,
    getHandleName,
+   isPassOutputNodeType,
    isPrimitiveNode,
+   isRefInputType,
    isWidgetType
 } from '../utils/node';
 import { createNodeComponentFromDef } from '../components/prototypes/NodeTemplate';
@@ -79,6 +81,7 @@ export type RFState = {
    panOnDrag: boolean;
    setPanOnDrag: (panOnDrag: boolean) => void;
 
+   refValueNodes: string[];
    nodes: AppNode[];
    edges: Edge[];
    setNodes: (nodes: React.SetStateAction<AppNode[]>, selectGraph?: boolean) => void;
@@ -95,7 +98,6 @@ export type RFState = {
    removeNodeDefs: (typeNames: string[]) => void;
 
    addNode: (params: AddNodeParams) => string;
-   removeNode: (nodeId: string) => void;
    addRawNode: (node: AppNode) => void;
 
    updateNodeData: (nodeId: string, newState: Partial<NodeData>) => void;
@@ -198,6 +200,7 @@ export const useFlowStore = create<RFState>((set, get) => {
       panOnDrag: true,
       setPanOnDrag: (panOnDrag) => set({ panOnDrag }),
 
+      refValueNodes: [],
       nodes: [],
 
       edges: [],
@@ -262,16 +265,25 @@ export const useFlowStore = create<RFState>((set, get) => {
                const deletedNode = nodesMap.get(change.id)!;
                const connectedEdges = getConnectedEdges([deletedNode], get().edges);
 
+                if (isPrimitiveNode(deletedNode)) {
+                   disconnectPrimitiveNode(deletedNode.id);
+                }
+
                nodesMap.delete(change.id);
 
                // Deletes any edges connected to this deleted node
                for (const edge of connectedEdges) {
                   edgesMap.delete(edge.id);
                   if (edge.source === change.id) {
+                     let inputData: Partial<HandleState> = { isConnected: false };
+                     const targetNode = nodesMap.get(edge.target);
+                     if (get().refValueNodes.includes(targetNode?.type!)) {
+                        inputData = { ...inputData, ref: undefined };
+                     }
                      get().updateInputData({
                         nodeId: edge.target,
                         display_name: edge.targetHandle?.split('::')?.[1] || '',
-                        data: { isConnected: false }
+                        data: inputData
                      });
                   } else if (edge.target === change.id) {
                      get().updateOutputData({
@@ -365,10 +377,11 @@ export const useFlowStore = create<RFState>((set, get) => {
 
             let inputData: Partial<HandleState> = { isConnected: true };
             const sourceNode = get().nodes.find((node) => node.id === connection.source);
-            if (sourceNode && sourceNode.type === 'MaskImage') {
-               const maskImageValue =
-                  sourceNode.data.outputs[getHandleName(connection.sourceHandle!)]?.value;
-               inputData = { ...inputData, value: maskImageValue };
+            if (sourceNode && get().refValueNodes.includes(target.type!)) {
+               inputData = {
+                  ...inputData,
+                  ref: { nodeId: sourceNode.id, handleName: getHandleName(sourceHandle) }
+               };
             }
 
             updateInputData({
@@ -405,6 +418,16 @@ export const useFlowStore = create<RFState>((set, get) => {
                   // components[NODE_GROUP_NAME] = GroupNode;
                } else {
                   components[type] = createNodeComponentFromDef(def, updateInputData);
+               }
+               if (def.inputs) {
+                  const inputs = Object.entries(def.inputs);
+                  for (const [key, _] of inputs) {
+                     if (isRefInputType(key)) {
+                        if (!get().refValueNodes.includes(type)) {
+                           get().refValueNodes.push(type);
+                        }
+                     }
+                  }
                }
                return components;
             }, {} as NodeComponents);
@@ -467,22 +490,6 @@ export const useFlowStore = create<RFState>((set, get) => {
       },
 
       addRawNode: (node: Node<NodeData>) => nodesMap.set(node.id, node),
-      removeNode: (nodeId: string) => {
-         const node = nodesMap.get(nodeId);
-         if (!node) return;
-
-         if (isPrimitiveNode(node)) {
-            disconnectPrimitiveNode(node.id);
-         }
-
-         nodesMap.delete(nodeId);
-         const edges = edgesMap.values();
-         for (const edge of edges) {
-            if (edge.source === nodeId || edge.target === nodeId) {
-               edgesMap.delete(edge.id);
-            }
-         }
-      },
 
       updateNodeData: (nodeId: string, newState: Partial<NodeData>) => {
          const node = nodesMap.get(nodeId);

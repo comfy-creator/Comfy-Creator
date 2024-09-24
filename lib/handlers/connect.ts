@@ -27,7 +27,7 @@ export function handleOnConnectEnd({ onContextMenu, onPaneClick }: HandleOnConne
 
          const suggestionOptions = {
             nodeDefs,
-            limit: 10,
+            limit: 15,
             handleType,
             edgeType,
             handleId,

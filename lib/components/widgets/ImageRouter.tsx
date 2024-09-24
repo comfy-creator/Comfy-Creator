@@ -1,60 +1,96 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFlowStore } from '../../store/flow';
+import { AppNode, RefValue } from '../../types/types';
+import { makeHandleId } from '../../utils/node';
 
-export const ImageRouterWidget = ({ nodeId, value }: { nodeId?: string; value?: any }) => {
-   const { nodes, setNodes, edges } = useFlowStore((state) => state);
+export const ImageRouterWidget = ({
+   nodeId,
+   value,
+   refValue
+}: {
+   nodeId?: string;
+   value?: any;
+   refValue?: RefValue;
+}) => {
+   const { nodes, edges, setNodes } = useFlowStore((state) => state);
    const [images, setImages] = useState<string[]>(value || []);
 
-   useEffect(() => {
-      const connectedEdge = edges.find(
-         (edge) => edge.target === nodeId && edge.targetHandle === `${nodeId}::image`
-      );
-
-      if (connectedEdge) {
-         const filePickerNode = nodes.find((node) => node.id === connectedEdge.source);
-
-         if (filePickerNode) {
-            const outputImages = filePickerNode.data.inputs['file']?.value || [];
-
-            setImages(Array.isArray(outputImages) ? outputImages : [outputImages]);
-         } else {
-            setImages([]);
-         }
-      } else {
-         setImages([]);
-      }
-   }, [nodeId, nodes, edges]);
+   const refNode = useMemo(() => {
+      if (refValue?.nodeId === undefined) return;
+      return nodes.find((node) => node.id === refValue?.nodeId);
+   }, [refValue, nodes]);
 
    useEffect(() => {
-      const updatedNodes = nodes.map((node) => {
-         if (node.id === nodeId) {
-            const newOutputs = { ...node.data.outputs };
-            images.forEach((image, index) => {
-               const outputKey = `image${index + 1}`;
-               newOutputs[outputKey] = {
-                  display_name: `image${index + 1}`,
-                  edge_type: 'IMAGE',
-                  value: { imageUrl: image }
+      if (!refValue?.nodeId) {
+         const newNodes = nodes.map((node) => {
+            if (node.id == nodeId) {
+               return {
+                  ...node,
+                  data: {
+                     ...node.data,
+                     outputs: {}
+                  }
                };
-            });
-            Object.keys(newOutputs).forEach((key) => {
-               if (
-                  key.startsWith('image') &&
-                  !images.some((image, index) => `image${index + 1}` === key)
-               ) {
-                  delete newOutputs[key];
-               }
-            });
-            return { ...node, data: { ...node.data, outputs: newOutputs } };
+            }
+            return node;
+         });
+         setNodes(newNodes);
+      }
+   }, [refValue]);
+
+   useMemo(() => {
+      const images = refNode?.data?.outputs[refValue?.handleName!]?.value as any;
+      setImages(images ? images : []);
+   }, [refNode, refValue]);
+
+   const updateOutputData = () => {
+      let outputs: any = {};
+      const node = nodes.find((node) => node.id === nodeId);
+      if (node) {
+         outputs = node.data.outputs;
+      }
+      const outputArray = Object.entries(outputs);
+      if (images.length > 0 && images.length > outputArray.length) {
+         const newData = [...images].reverse().slice(0, images.length - outputArray.length);
+         for (const image of newData) {
+            // no need to update the node, since it's an object clone, it updates the output object
+            const imageTitle = `image${outputArray.length + 1}`;
+            outputs[imageTitle] = {
+               display_name: imageTitle,
+               edge_type: 'IMAGE',
+               isHighlighted: false,
+               value: image
+            };
          }
-         return node;
+      } else if (images.length < outputArray.length) {
+         const newData = outputArray.slice(images.length);
+         for (const [key, _] of newData) {
+            delete outputs[key];
+         }
+      }
+
+      outputArray.forEach(([key, _], index) => {
+         const edge = edges.find((e) => e.sourceHandle === makeHandleId(nodeId!, key));
+         if (images[index]) {
+            outputs[key] = {
+               ...outputs[key],
+               value: images[index],
+               isConnected: edge ? true : false
+            };
+         }
       });
-      setNodes(updatedNodes);
+   };
+
+   useEffect(() => {
+      updateOutputData();
    }, [images]);
 
    return (
       <div>
          <p className="widget_input_item_text mt-[.3rem] text-[.6rem]">images</p>
+         {refValue?.nodeId && images?.length <= 0 && (
+            <p>Add image to ref node to get output handles</p>
+         )}
       </div>
    );
 };

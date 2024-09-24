@@ -15,7 +15,8 @@ export const LoadImage: NodeDefinition = {
             file_extensions: ['.png', '.jpg', '.jpeg', '.bmp', '.webp', '.avif'],
             output_info: {
                name: 'image'
-            }
+            },
+            display_name: 'Images'
          }
       }
    },
@@ -379,12 +380,7 @@ export const ImageRouter: NodeDefinition = {
          }
       }
    },
-   outputs: {
-      ['image']: {
-         display_name: 'image',
-         edge_type: 'IMAGE'
-      }
-   }
+   outputs: {}
 };
 
 export const AllNodeDefs = {
