@@ -190,17 +190,17 @@ export const serializeGraph = (
       }
    }
 
-   // const cleanedGraph = removeFieldsFromFirstLevelObjects(
-   //    serializedGraph.nodes.filter((node) => node.type !== 'PreviewMaskedImage'),
-   //    ['shapes', 'color', 'imageUrl']
-   // ) as SerializedGraph;
+   const cleanedGraph = removeFieldsFromFirstLevelObjects(
+      serializedGraph.nodes.filter((node) => node.type !== 'PreviewMaskedImage'),
+      ['shapes', 'color', 'size', 'name']
+   ) as SerializedGraph;
 
-   console.log('Serialized graph>>', JSON.stringify(serializedGraph, null, 2));
+   console.log('Serialized graph>>', JSON.stringify(cleanedGraph, null, 2));
 
    if (Object.keys(missingInputHandles).length > 0) {
-      return [serializedGraph, missingInputHandles];
+      return [cleanedGraph, missingInputHandles];
    } else {
-      return [serializedGraph, undefined];
+      return [cleanedGraph, undefined];
    }
 };
 

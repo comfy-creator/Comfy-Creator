@@ -1,63 +1,51 @@
-import { createRef, useEffect, useRef, useState } from 'react';
-import Konva from 'konva';
-import { Label, RefValue } from '../../types/types';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { RefValue } from '../../types/types';
+import { useFlowStore } from '../../store/flow';
 
 type PreviewMaskedImageWidgetProps = {
    refValue?: RefValue;
    value?: any;
-   label?: string;
+   nodeId?: string;
 };
 
-const PreviewMaskedImageWidget = ({ value, refValue, label }: PreviewMaskedImageWidgetProps) => {
-   const [image, setImage] = useState<HTMLImageElement | null>(null);
-
-   const [shapes, setShapes] = useState<Label['shapes']>([]);
-   const stageRef = createRef<Konva.Stage>();
-   const imageRef = useRef<Konva.Image>(null);
+const PreviewMaskedImageWidget = ({ nodeId, refValue }: PreviewMaskedImageWidgetProps) => {
+   const { nodes } = useFlowStore((state) => state);
+   const [base64, setBase64] = useState<string | null>(null);
    const canvasRef = useRef<HTMLCanvasElement | null>(null); // Create a ref for the canvas
 
-   useEffect(() => {
-      if (image) {
-         if (imageRef?.current) {
-            imageRef?.current.cache();
-         }
-      }
-   }, [image, imageRef.current]);
+   const refNode = useMemo(() => {
+      if (refValue?.nodeId === undefined) return;
+      return nodes.find((node) => node.id === refValue?.nodeId);
+   }, [refValue, nodes]);
 
    useEffect(() => {
-      console.log('Value>>>>', value, refValue);
-      if (value && value.shapes) {
-         setShapes(
-            value.shapes.map((shape: Label['shapes']) => ({
-               ...shape,
-               color: 'white',
-               fill: 'white'
-            }))
-         );
+      if (!refValue?.nodeId) {
+         canvasRef.current?.getContext('2d')?.reset()
+         setBase64(null);
       }
-      if (value && value.imageUrl) {
-         const img = new Image();
-         img.src = value.imageUrl;
-         img.crossOrigin = 'anonymous';
-         img.onload = () => {
-            setImage(img);
-            // getting the base64 from the value obj
-            const base64 = value.base64;
+   }, [refValue]);
 
-            console.log('Base64>>>>', base64);
-            displayImageFromBase64(base64);
-         };
+   useMemo(() => {
+      const base64 = refNode?.data?.outputs[refValue?.handleName!]?.value as any;
+      setBase64(base64);
+   }, [refNode, refValue]);
+
+   useEffect(() => {
+      if (base64) {
+         displayImageFromBase64(base64);
       }
-   }, [value]);
+   }, [base64, canvasRef]);
 
    function displayImageFromBase64(base64: string) {
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext('2d');
+      console.log('Here>>>>', ctx, canvas);
       if (!ctx || !canvas) return;
-
+      console.log('Here>>>>');
       const img = new Image();
       img.src = base64;
       img.onload = () => {
+         console.log('Loading here>>>');
          const width = 166;
          const height = (img.height / img.width) * width;
          canvas.width = width;

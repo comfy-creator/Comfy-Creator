@@ -124,7 +124,12 @@ const createWidgetFromSpec = (
             );
          case 'PREVIEW_MASKED_IMAGE':
             return (
-               <PreviewMaskedImageWidget {...commonProps} refValue={data?.ref} value={data?.value} />
+               <PreviewMaskedImageWidget
+                     {...commonProps}
+                     nodeId={nodeId}
+                     refValue={data?.ref}
+                     value={data?.ref}
+               />
             );
          case 'DROPDOWN':
             return (

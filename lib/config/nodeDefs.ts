@@ -358,7 +358,7 @@ export const PreviewMaskedImage: NodeDefinition = {
    inputs: {
       ['Masked Image']: {
          display_name: 'Masked Image',
-         edge_type: 'IMAGE',
+         edge_type: 'MASK',
          widget: {
             type: 'PREVIEW_MASKED_IMAGE'
          }
