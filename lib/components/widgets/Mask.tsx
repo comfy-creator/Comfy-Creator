@@ -1,26 +1,17 @@
 import { ChangeEvent, useRef, useState, useEffect, createRef, useMemo, useCallback } from 'react';
-import { Modal } from 'antd';
-import {
-   ChevronLeftIcon,
-   ChevronRightIcon,
-   Cross1Icon,
-   EraserIcon,
-   Pencil2Icon
-} from '@radix-ui/react-icons';
-import { useApiContext } from '../../contexts/api';
-import { API_URL } from '../../config/constants';
+import { Modal, Tooltip } from 'antd';
+import { EraserIcon } from '@radix-ui/react-icons';
 import { useFlowStore } from '../../store/flow';
-import { ProgressBar } from '../ProgressBar';
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@nextui-org/react';
 import { Stage, Layer, Image as KonvaImage, Shape } from 'react-konva';
 import Konva from 'konva';
-import { Slider } from '@/components/ui/slider';
 import { LuRedo2, LuUndo2 } from 'react-icons/lu';
-import { BsBrush, BsCheck } from 'react-icons/bs';
+import { BsBrush } from 'react-icons/bs';
 import { getHandleName, makeHandleId } from '../../utils/node';
-import { AppNode, Label, RefValue } from '../../types/types';
+import { Label, RefValue } from '../../types/types';
 import { throttle } from 'lodash';
+import CursorBrush from '../icons/CursorBrush.svg';
+import CursorEraser from '../icons/CursorEraser.svg'
 
 export type MaskProps = {
    refValue?: RefValue;
@@ -49,7 +40,6 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
    const [imageHeight, setImageHeight] = useState<number>(PreviewImageHeight);
    const { updateInputData, nodes, edges, setEdges, setNodes } = useFlowStore((state) => state);
    const [isModalOpen, setIsModalOpen] = useState(false);
-   const [selectedImage, setSelectedImage] = useState<string | null>(null);
    const [imageUrl, setImageUrl] = useState<string>('');
    const [image, setImage] = useState<HTMLImageElement | null>(null);
    const [isDrawing, setIsDrawing] = useState<boolean>(false);
@@ -66,7 +56,6 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
    const [undoStack, setUndoStack] = useState<Array<typeof shapes>>([]);
    const [redoStack, setRedoStack] = useState<Array<typeof shapes>>([]);
    const [isSubmittingUpdate, setIsSubmittingUpdate] = useState(false);
-   const [initialImage, setInitialImage] = useState<string | null>(null);
    const [labels, setLabels] = useState<Label[]>([]);
    const [newLabel, setNewLabel] = useState<string>('');
    const [activeLabel, setActiveLabel] = useState<string | null>(null);
@@ -85,6 +74,8 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
 
    useEffect(() => {
       if (!refValue?.nodeId) {
+         setLabels([]);
+         setImageUrl('');
          const newNodes = nodes.map((node) => {
             if (node.id == nodeId) {
                return {
@@ -102,31 +93,34 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
       }
    }, [refValue]);
 
-   useMemo(() => {
-      const image = refNode?.data?.outputs[refValue?.handleName!]?.value as any;
-      const theImage = Array.isArray(image) ? image?.[0] : image;
-      setInitialImage(theImage);
-      setSelectedImage(theImage);
-
-      if (theImage) {
+   const loadImage = useCallback(
+      (url: string) => {
          const img = new Image();
-         img.src = theImage;
+         img.src = url;
          img.crossOrigin = 'anonymous';
 
          const aspectRatio = img.height / img.width;
          setImageWidth(163);
          setImageHeight(163 * aspectRatio);
          img.onload = () => {
+            setImage(img);
          };
+      },
+      [setImage, setImageWidth, setImageHeight]
+   );
 
+   useMemo(() => {
+      const image = refNode?.data?.outputs[refValue?.handleName!]?.value as any;
+      const theImage = Array.isArray(image) ? image?.[0] : image;
+      if (theImage) {
+         loadImage(theImage);
          setImageUrl(theImage);
       }
    }, [refNode, refValue]);
 
    useEffect(() => {
-      if (imageUrl) {
-         setSelectedImage(imageUrl);
-         setInitialImage(imageUrl);
+      if (!imageUrl) {
+         setImage(null);
       }
    }, [imageUrl]);
 
@@ -144,17 +138,9 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
          setShowAllShapes(true);
       }
       if (value?.imageUrl) {
-         const img = new Image();
-         img.src = value?.imageUrl;
-         img.crossOrigin = 'anonymous';
-
-         const aspectRatio = img.height / img.width;
-         setImageWidth(163);
-         setImageHeight(163 * aspectRatio);
-         img.onload = () => {
-         };
-
-         setImageUrl(Array.isArray(value?.imageUrl) ? value.imageUrl?.[0] : value.imageUrl);
+         const theImage = Array.isArray(value?.imageUrl) ? value.imageUrl?.[0] : value.imageUrl;
+         loadImage(theImage);
+         setImageUrl(theImage);
       }
    }, []);
 
@@ -206,7 +192,7 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
    const toggleModal = () => {
       setIsModalOpen((prev) => {
          if (!prev && activeLabel && !showAllShapes) {
-            setShapes(labels.find(l => l.name === activeLabel)?.shapes || []);
+            setShapes(labels.find((l) => l.name === activeLabel)?.shapes || []);
          } else if (!prev && showAllShapes) {
             const allShapes = labels.flatMap((label) =>
                label.shapes.map((shape) => ({
@@ -262,17 +248,6 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
 
       imgRef.current.src = maskCanvasRef.current.toDataURL();
    };
-
-   useEffect(() => {
-      if (initialImage) {
-         const img = new Image();
-         img.src = initialImage;
-         img.crossOrigin = 'anonymous';
-         img.onload = () => {
-            setImage(img);
-         };
-      }
-   }, [initialImage]);
 
    const handleUndo = () => {
       if (undoStack.length === 0) return;
@@ -426,7 +401,6 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
 
       await new Promise((resolve) => setTimeout(resolve, 3000));
 
-      setSelectedImage(base64Image);
       setIsSubmittingUpdate(false);
       setIsModalOpen(false);
       // onChange?.(base64Image);
@@ -621,12 +595,20 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
                      className={`bg-borderColor hover:bg-borderColor text-xs p-2 h-[25px] `}
                      onClick={toggleEraser}
                   >
-                     {isEraserActive ? <BsBrush /> : <EraserIcon />}
+                     {isEraserActive ? (
+                        <Tooltip title="Brush">
+                           <BsBrush />
+                        </Tooltip>
+                     ) : (
+                        <Tooltip title="Eraser">
+                           <EraserIcon />
+                        </Tooltip>
+                     )}
                   </Button>
                </div>
             </div>
 
-            {selectedImage && (
+            {image && (
                <div className="flex gap-5 items-center justify-center h-full overflow-auto">
                   <div className="flex gap-5 relative">
                      {image && (
@@ -735,6 +717,11 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
                                  ? 'hover:cursor-context-menu'
                                  : 'hover:cursor-not-allowed'
                            } max-w-full`}
+                           style={{
+                              cursor: isEraserActive
+                                 ? `url(${CursorEraser}), auto`
+                                 : `url(${CursorBrush}), auto`
+                           }}
                         >
                            <Layer>
                               <KonvaImage image={image} width={350} height={KonvaImageHeight} />

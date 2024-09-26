@@ -69,7 +69,8 @@ const selector = (state: RFState) => ({
    addRawNode: state.addRawNode,
    executions: state.executions,
    setIsUpdatingEdge: state.setIsUpdatingEdge,
-   addNodeDefComponent: state.addNodeDefComponent
+   addNodeDefComponent: state.addNodeDefComponent,
+   refValueNodes: state.refValueNodes,
 });
 
 export function MainFlow() {
@@ -92,7 +93,8 @@ export function MainFlow() {
       updateInputData,
       updateOutputData,
       setIsUpdatingEdge,
-      addNodeDefComponent
+      addNodeDefComponent,
+      refValueNodes
    } = useFlowStore(selector);
 
    const { currentStateGraphRunIndex, addNewGraph } = useGraphContext();
@@ -206,7 +208,9 @@ export function MainFlow() {
          setIsUpdatingEdge,
          updateOutputData,
          updateInputData,
-         setEdges
+         setEdges,
+         refValueNodes,
+         nodes
       }),
       [edges, setEdges, nodes]
    );
