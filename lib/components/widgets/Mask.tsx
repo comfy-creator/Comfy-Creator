@@ -21,29 +21,20 @@ export type MaskProps = {
 };
 
 const brushColors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'];
-const imageToBASE64 = (file: File) =>
-   new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-   });
 
 // preview image height and width
 export const PreviewImageHeight = 255;
 export const PreviewImageWidth = 166;
-// konva image height
-export const KonvaImageHeight = 500;
 
 export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
    const [imageWidth, setImageWidth] = useState<number>(PreviewImageWidth);
    const [imageHeight, setImageHeight] = useState<number>(PreviewImageHeight);
-   const { updateInputData, nodes, edges, setEdges, setNodes } = useFlowStore((state) => state);
+   const [KonvaImageHeight, setKonvaImageHeight] = useState<number>(350);
+   const { updateInputData, nodes, edges, setEdges, updateNodeData } = useFlowStore((state) => state);
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [imageUrl, setImageUrl] = useState<string>('');
    const [image, setImage] = useState<HTMLImageElement | null>(null);
    const [isDrawing, setIsDrawing] = useState<boolean>(false);
-   const [brushSize, setBrushSize] = useState<number>(2.5);
    const [brushColor, setBrushColor] = useState<string>(
       brushColors[Math.floor(Math.random() * brushColors.length)]
    );
@@ -55,7 +46,6 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
 
    const [undoStack, setUndoStack] = useState<Array<typeof shapes>>([]);
    const [redoStack, setRedoStack] = useState<Array<typeof shapes>>([]);
-   const [isSubmittingUpdate, setIsSubmittingUpdate] = useState(false);
    const [labels, setLabels] = useState<Label[]>([]);
    const [newLabel, setNewLabel] = useState<string>('');
    const [activeLabel, setActiveLabel] = useState<string | null>(null);
@@ -64,8 +54,8 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
    const [labelError, setLabelError] = useState<string | null>(null);
    const [showAllShapes, setShowAllShapes] = useState(false);
    const [isEraserActive, setIsEraserActive] = useState<boolean>(false);
-   const [maskedImage, setMaskedImage] = useState(null);
    const eraserSize = 20; // Define a specific size for the eraser
+   const brushSize: number = 2.5;
 
    const refNode = useMemo(() => {
       if (refValue?.nodeId === undefined) return;
@@ -76,20 +66,26 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
       if (!refValue?.nodeId) {
          setLabels([]);
          setImageUrl('');
-         const newNodes = nodes.map((node) => {
-            if (node.id == nodeId) {
-               return {
-                  ...node,
-                  data: {
-                     ...node.data,
-                     outputs: {}
-                  }
-               };
+         const outputs = nodes.find((node) => node.id === nodeId)?.data.outputs;
+         for (const output in outputs) {
+            if (outputs[output].isConnected) {
+               const edgeConnected = edges.find(
+                  (e) => e.sourceHandle === makeHandleId(nodeId, output)
+               );
+               if (edgeConnected) {
+                  updateInputData({
+                     nodeId: edgeConnected.target,
+                     display_name: getHandleName(edgeConnected.targetHandle!),
+                     data: {
+                        isConnected: false,
+                        ref: undefined,
+                        value: ''
+                     }
+                  });
+               }
             }
-            return node;
-         });
-         setNodes(newNodes);
-         //TODO: update the nodes connected to the outputs to be null
+         }
+         updateNodeData(nodeId, { outputs: {} });
       }
    }, [refValue]);
 
@@ -102,6 +98,9 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
          const aspectRatio = img.height / img.width;
          setImageWidth(163);
          setImageHeight(163 * aspectRatio);
+         // setting the konva image height to the image height
+         setKonvaImageHeight(350 * aspectRatio);
+
          img.onload = () => {
             setImage(img);
          };
@@ -115,12 +114,18 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
       if (theImage) {
          loadImage(theImage);
          setImageUrl(theImage);
+      }else {
+         setLabels([]);
+         setImageUrl('');
       }
    }, [refNode, refValue]);
 
    useEffect(() => {
       if (!imageUrl) {
-         setImage(null);
+         // making it run last
+         setTimeout(() => {
+            setImage(null);
+         }, 0);
       }
    }, [imageUrl]);
 
@@ -286,6 +291,8 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
       const scaleX = stageWidth / 350;
       const scaleY = stageHeight / KonvaImageHeight;
 
+      console.log('ScaleX:', scaleX, 'ScaleY:', scaleY);
+
       // Update each label with its base64
       setLabels((prevLabels) =>
          prevLabels.map((label) => {
@@ -309,17 +316,29 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
                tempContext.fill();
             });
 
-            // Get base64 of the shapes
-            const base64 = tempCanvas.toDataURL('image/png');
+            // Resize the temporary canvas to 1200px width while maintaining aspect ratio
+            const resizeCanvas = document.createElement('canvas');
+            resizeCanvas.width = image.width;
+            resizeCanvas.height = image.height;
+            const resizeContext = resizeCanvas.getContext('2d');
 
-            // Update the label with its base64
+            if (resizeContext) {
+                resizeContext.imageSmoothingEnabled = true;
+                resizeContext.imageSmoothingQuality = 'high';
+
+                // Draw the original canvas onto the resized canvas
+                resizeContext.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, resizeCanvas.width, resizeCanvas.height);
+            }
+            const base64 = resizeCanvas.toDataURL('image/png');
+
+            console.log('Base64:', base64);
             label.base64 = base64;
 
             return label;
          })
       );
 
-      console.log('Labels updated with base64:', labels);
+     
    };
 
    const handleMouseDown = (evt: any) => {
@@ -387,23 +406,6 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
       }
 
       generateBase64(); // Update this line
-   };
-
-   const handleCheckmarkClick = async () => {
-      if (!imgRef.current) return;
-
-      setIsSubmittingUpdate(true);
-      const base64Image = await imageToBASE64(
-         new File([await (await fetch(imgRef.current.src)).blob()], 'updated_image.png', {
-            type: 'image/png'
-         })
-      );
-
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-
-      setIsSubmittingUpdate(false);
-      setIsModalOpen(false);
-      // onChange?.(base64Image);
    };
 
    const handleLabelChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -613,23 +615,7 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
                   <div className="flex gap-5 relative">
                      {image && (
                         <div className="relative" style={{ width: '350px' }}>
-                           {/* {shapes.length > 0 && (
-                              <button
-                                 disabled={isSubmittingUpdate}
-                                 className="text-xs flex items-center 
-                                 justify-center w-[30px] h-[30px] 
-                                 absolute top-3 left-3 bg-borderColor 
-                                 hover:bg-borderColor text-white 
-                                 rounded disabled:opacity-50"
-                                 onClick={handleCheckmarkClick}
-                              >
-                                 {isSubmittingUpdate ? (
-                                    <Spinner size="sm" color="white" />
-                                 ) : (
-                                    <BsCheck size={20} color="white" />
-                                 )}
-                              </button>
-                           )} */}
+                           
 
                            <div className="">
                               <div className="flex flex-col gap-1 p-3">
@@ -712,15 +698,15 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
                            onMouseDown={handleMouseDown}
                            onMouseMove={handleMouseMove}
                            onMouseUp={handleMouseUp}
-                           className={`border border-borderColor ${
+                           className={`my-auto ${
                               activeLabel || isEraserActive
                                  ? 'hover:cursor-context-menu'
                                  : 'hover:cursor-not-allowed'
                            } max-w-full`}
                            style={{
                               cursor: isEraserActive
-                                 ? `url(${CursorEraser}), auto`
-                                 : `url(${CursorBrush}), auto`
+                                 ? `url(${CursorEraser}) 0 100, auto`
+                                 : `url(${CursorBrush}) 0 100, auto`
                            }}
                         >
                            <Layer>

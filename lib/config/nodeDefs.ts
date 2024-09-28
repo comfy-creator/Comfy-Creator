@@ -67,15 +67,7 @@ export const MaskImage: NodeDefinition = {
          }
       }
    },
-   outputs: {
-      ['image']: {
-         display_name: 'Masked Image',
-         edge_type: 'IMAGE',
-         widget: {
-            type: 'PREVIEW_MASKED_IMAGE'
-         }
-      }
-   }
+   outputs: {}
 };
 
 export const LoadVideo: NodeDefinition = {
@@ -244,8 +236,8 @@ export const ImageRegen: NodeDefinition = {
          display_name: 'image',
          edge_type: 'IMAGE'
       },
-      ['mask']: {
-         display_name: 'mask',
+      ['Masked Image']: {
+         display_name: 'Masked Image',
          edge_type: 'MASK',
          optional: true
       },
