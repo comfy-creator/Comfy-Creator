@@ -35,31 +35,26 @@ import {
    computeInitialNodeData,
    disconnectPrimitiveNode,
    getHandleName,
-   isPassOutputNodeType,
    isPrimitiveNode,
    isRefInputType,
    isWidgetType
 } from '../utils/node';
 import { createNodeComponentFromDef } from '../components/prototypes/NodeTemplate';
 import {
-   CURRENT_GRAPH_INDEX,
    DEFAULT_HOTKEYS_HANDLERS,
    DEFAULT_SHORTCUT_KEYS,
-   GRAPHS_KEY,
    HANDLE_TYPES,
    NODE_GROUP_NAME
 } from '../config/constants';
 import { createEdgeFromTemplate } from '../components/prototypes/EdgeTemplate';
 import { yjsProvider } from '../yjs';
-import { Transaction, YMapEvent } from 'yjs';
-import { AllNodeDefs, transformNodeDefs } from '../config/nodeDefs';
+import { AllNodeDefs } from '../config/nodeDefs';
 import { ComfyObjectInfo } from '../types/comfy';
-import DB, { IGraphData } from './database';
+import { Database } from './database';
 import { getNodePositionInGroup, getNodePositionOutOfGroup } from '../handlers/helpers';
 
 const nodesMap = yjsProvider.doc.getMap<AppNode>('nodes');
 const edgesMap = yjsProvider.doc.getMap<Edge>('edges');
-const awareness = yjsProvider.awareness; // TO DO: use for cusor location
 
 type NodeCallbackType = 'afterQueued';
 
@@ -143,49 +138,36 @@ export const useFlowStore = create<RFState>((set, get) => {
       set({ nodes: Array.from(nodesMap.values()) });
 
       // save to db
-      DB.getItem(GRAPHS_KEY).then(async (res) => {
-         const currentGraphIndex = ((await DB.getItem(CURRENT_GRAPH_INDEX)) as string) || '';
-         const fetchedGraphs = (res || []) as IGraphData[];
-
-         const graphs = fetchedGraphs.map((graph) => {
-            if (currentGraphIndex === graph.index) {
-               return {
-                  ...graph,
-                  nodes: [...nodesMap.values()],
-                  edges: [...edgesMap.values()]
-               };
-            } else {
-               return graph;
+      Database.config
+         .where({ id: 'config' })
+         .first()
+         .then((config) => {
+            if (config?.currentGraphId) {
+               Database.graphs.update(config?.currentGraphId, {
+                  nodes: Array.from(nodesMap.values()),
+                  edges: Array.from(edgesMap.values())
+               });
             }
          });
-         // save to DB
-         DB.setItem(GRAPHS_KEY, graphs);
-      });
    };
    yjsNodesObserver();
    nodesMap.observe(yjsNodesObserver);
 
    const yjsEdgesObserver = () => {
       set({ edges: Array.from(edgesMap.values()) });
-      // save to db
-      DB.getItem(GRAPHS_KEY).then(async (res) => {
-         const currentGraphIndex = ((await DB.getItem(CURRENT_GRAPH_INDEX)) as string) || '';
-         const fetchedGraphs = (res || []) as IGraphData[];
 
-         const graphs = fetchedGraphs.map((graph) => {
-            if (currentGraphIndex === graph.index) {
-               return {
-                  ...graph,
-                  nodes: [...nodesMap.values()],
-                  edges: [...edgesMap.values()]
-               };
-            } else {
-               return graph;
+      // save to db
+      Database.config
+         .where({ id: 'config' })
+         .first()
+         .then((config) => {
+            if (config?.currentGraphId) {
+               Database.graphs.update(config?.currentGraphId, {
+                  nodes: Array.from(nodesMap.values()),
+                  edges: Array.from(edgesMap.values())
+               });
             }
          });
-         // save to DB
-         DB.setItem(GRAPHS_KEY, graphs);
-      });
    };
    yjsEdgesObserver();
    nodesMap.observe(yjsEdgesObserver);
@@ -265,9 +247,9 @@ export const useFlowStore = create<RFState>((set, get) => {
                const deletedNode = nodesMap.get(change.id)!;
                const connectedEdges = getConnectedEdges([deletedNode], get().edges);
 
-                if (isPrimitiveNode(deletedNode)) {
-                   disconnectPrimitiveNode(deletedNode.id);
-                }
+               if (isPrimitiveNode(deletedNode)) {
+                  disconnectPrimitiveNode(deletedNode.id);
+               }
 
                nodesMap.delete(change.id);
 

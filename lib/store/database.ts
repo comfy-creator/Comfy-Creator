@@ -1,92 +1,43 @@
-import { INDEX_DB_NAME, INDEX_DB_OJECT_NAME } from '../config/constants';
+import Dexie, { type EntityTable } from 'dexie';
 import { AppNode } from '../types/types';
 import { Edge } from '@xyflow/react';
 
 export interface IGraphData {
-   index: string;
+   id: string;
    label: string;
    nodes: AppNode[];
    edges: Edge[];
 }
 
-export interface IGraphRun {
-   index: string;
+export interface IGraphSnapshot {
+   id: string;
    label: string;
    nodes: AppNode[];
    edges: Edge[];
 }
 
-// db.ts
+export interface IGraphConfig {
+   id: string;
+   currentGraphId: string;
+   currentSnapshotId: string;
+}
 
-let request: IDBOpenDBRequest;
-let db: IDBDatabase;
-let version = 1;
-
-export const initDB = (): Promise<boolean> => {
-   return new Promise((resolve) => {
-      // open the connection
-      request = indexedDB.open(INDEX_DB_NAME);
-
-      request.onupgradeneeded = () => {
-         db = request.result;
-
-         // if the data object store doesn't exist, create it
-         db.createObjectStore(INDEX_DB_OJECT_NAME);
-      };
-
-      request.onsuccess = () => {
-         db = request.result;
-         version = db.version;
-         console.log('request.onsuccess - initDB', version);
-         resolve(true);
-      };
-
-      request.onerror = () => {
-         resolve(false);
-      };
-   });
+const Database = new Dexie('Graph') as Dexie & {
+   graphs: EntityTable<IGraphData, 'id'>;
+   snapshots: EntityTable<IGraphSnapshot, 'id'>;
+   config: EntityTable<IGraphConfig, 'id'>;
 };
 
-const setItem = (key: string, value: any) => {
-   if (db) {
-      const transaction = db?.transaction(INDEX_DB_OJECT_NAME, 'readwrite');
-      const objectStore = transaction?.objectStore(INDEX_DB_OJECT_NAME);
-      const transactionRequest = objectStore?.put(value, key) as IDBRequest<IDBValidKey>;
+// Schema declaration:
+Database.version(1).stores({
+   graphs: '++id',
+   snapshots: '++id',
+   config: '++id'
+});
 
-      transactionRequest.onsuccess = (event: Event) => {};
+Database.on('populate', async () => {
+   await Database.config.add({ id: 'config', currentGraphId: '', currentSnapshotId: '' });
+   await Database.graphs.add({ id: 'default', label: 'Default', nodes: [], edges: [] });
+});
 
-      transactionRequest.onerror = (event: Event) => {
-         console.log('Error: ' + (event.target as IDBRequest).error);
-      };
-   }
-};
-
-const getItem = (key: string) => {
-   return new Promise(async (resolve, reject) => {
-      if (db) {
-         const transaction = db?.transaction(INDEX_DB_OJECT_NAME, 'readonly');
-         const objectStore = transaction?.objectStore(INDEX_DB_OJECT_NAME);
-         const transactionRequest = objectStore?.get(key) as IDBRequest<any>;
-
-         transactionRequest.onsuccess = (event: Event) => {
-            const result = (event.target as IDBRequest).result;
-            if (result) {
-               resolve(result);
-            } else {
-               resolve(null);
-            }
-         };
-
-         transactionRequest.onerror = (event: Event) => {
-            console.log('Error: ' + (event.target as IDBRequest).error);
-            reject((event.target as IDBRequest).error);
-         };
-      } else {
-         resolve(null);
-      }
-   });
-};
-
-const DB = { getItem, setItem };
-
-export default DB;
+export { Database };

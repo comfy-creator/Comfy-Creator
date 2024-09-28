@@ -5,7 +5,7 @@ import AddIcon from '../../icons/AddIcon';
 import CloseIcon from '../../icons/CloseIcon';
 
 const Graphs = () => {
-  const { stateGraphs, addNewGraph } = useGraphContext();
+  const { graphs, addNewGraph } = useGraphContext();
 
   const handleAdd = () => {
     const value = prompt('Name of the graph: ');
@@ -22,7 +22,7 @@ const Graphs = () => {
           <AddIcon />
         </span>
       </div>
-      {stateGraphs.slice().reverse().map((graph, index) => (
+      {graphs.slice().reverse().map((graph, index) => (
         <Graph key={index} graph={graph} />
       ))}
     </div>
@@ -34,29 +34,29 @@ const Graph = ({ graph }: { graph: IGraphData }) => {
     renameGraph,
     removeGraph,
     selectGraph,
-    currentStateGraphIndex: currentGraphIndex
+    currentGraphIndex
   } = useGraphContext();
 
   const handleEdit = () => {
     const value = prompt('Edit graph', graph.label);
     if (value) {
-      renameGraph(graph.index, value);
+      renameGraph(graph.id, value);
     }
   };
 
   const handleDelete = () => {
     const value = confirm(`Delete graph ${graph.label}?`);
     if (value) {
-      removeGraph(graph.index);
+      removeGraph(graph.id);
     }
   };
 
   const handleSelect = () => {
-    selectGraph(graph.index);
+    selectGraph(graph.id);
   };
 
   return (
-    <div className={`graph_container ${graph.index === currentGraphIndex ? 'graph_selected' : ''}`}>
+    <div className={`graph_container ${graph.id === currentGraphIndex ? 'graph_selected' : ''}`}>
       <h3 className="graph_label" onClick={handleSelect}>
         {graph.label}
       </h3>

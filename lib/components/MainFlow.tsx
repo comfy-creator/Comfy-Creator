@@ -97,7 +97,7 @@ export function MainFlow() {
       refValueNodes
    } = useFlowStore(selector);
 
-   const { currentStateGraphRunIndex, addNewGraph } = useGraphContext();
+   const { currentSnapshotIndex, addNewGraph } = useGraphContext();
 
    const { getNodes, getEdges, getViewport, fitView, screenToFlowPosition } = useReactFlow<
       AppNode,
@@ -233,13 +233,17 @@ export function MainFlow() {
          onEdgesChange={onEdgesChange}
          connectionMode={ConnectionMode.Loose}
          onConnectStart={(...props) => {
-            if (currentStateGraphRunIndex.length > 0) {
+            // if the current graph is a snapshot, add a new graph 
+            // (with the nodes and edges since they want to continue with it) becasue they can't edit snapshots
+            if (currentSnapshotIndex.length > 0) {
                addNewGraph('', { nodes, edges }, true, true);
             }
             onConnectStart(...props);
          }}
          onConnectEnd={(...props) => {
-            if (currentStateGraphRunIndex.length > 0) {
+            // if the current graph is a snapshot, add a new graph
+            // (with the nodes and edges since they want to continue with it) becasue they can't edit snapshots
+            if (currentSnapshotIndex.length > 0) {
                addNewGraph('', { nodes, edges }, true, true);
             }
             onConnectEnd(...props);

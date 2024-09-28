@@ -16,8 +16,8 @@ import './styles/index.css';
 import 'react-toastify/dist/ReactToastify.css';
 import '@xyflow/react/dist/style.css';
 import 'viewerjs/dist/viewer.css';
-import { initDB } from './store/database';
 import { GraphContextProvider } from './contexts/graph';
+import { Database } from './store/database';
 
 interface GraphEditorProps {
    token?: string;
@@ -33,8 +33,8 @@ function GraphEditor(props: GraphEditorProps) {
       window['@xyflow/react'] = RFlow;
       window.ReactFlow = RFlow;
 
-      initDB().then((res) => {
-         setIsDBReady(res);
+      Database.on('ready', () => {
+         setIsDBReady(true);
       });
    }, []);
 

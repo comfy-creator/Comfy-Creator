@@ -1,7 +1,6 @@
 import { useGraph } from '../../../hooks/useGraph';
 import { defaultEdges, defaultNodes } from '../../../default-graph';
 import { uuidv4 } from 'lib0/random';
-import { RFState, useFlowStore } from '../../../store/flow';
 import { Button } from '@/components/ui/button';
 
 const LoadDefaultButton = () => {
@@ -12,13 +11,13 @@ const LoadDefaultButton = () => {
 
       if (value) {
          const graph = {
-            index: uuidv4(),
+            id: uuidv4(),
             label: 'Default',
             nodes: defaultNodes,
             edges: defaultEdges
          };
 
-         loadSerializedGraph([graph], true);
+         loadSerializedGraph(graph, true);
       }
    };
 
