@@ -33,7 +33,7 @@ const Graph = ({ graph }: { graph: IGraphData }) => {
   const {
     renameGraph,
     removeGraph,
-    selectGraph,
+    setCurrentGraphIndex,
     currentGraphIndex
   } = useGraphContext();
 
@@ -52,7 +52,7 @@ const Graph = ({ graph }: { graph: IGraphData }) => {
   };
 
   const handleSelect = () => {
-    selectGraph(graph.id);
+    setCurrentGraphIndex(graph.id);
   };
 
   return (

@@ -20,7 +20,7 @@ interface IGraphContext {
    renameGraph: (index: string, label: string) => void;
    graphs: IGraphData[];
    currentGraphIndex: string;
-   setCurrentGraphIndex: (index: string, graphs?: IGraphData[]) => void;
+   setCurrentGraphIndex: (index: string) => void;
    snapshots: IGraphSnapshot[];
    currentSnapshotIndex: string;
    addGraphSnapshot: (index: string) => void;
@@ -50,27 +50,19 @@ export const GraphContextProvider: React.FC<{
       selectGraphSnapshot(config?.currentSnapshotId || '');
    }, [config?.currentGraphId, config?.currentSnapshotId]);
 
-   const setCurrentGraphIndex = async (id: string, _graphs?: IGraphData[]) => {
-      if (!_graphs || !_graphs.length) {
-         _graphs = graphs as IGraphData[];
-      }
-
-      const currentGraph = _graphs.find((graph) => graph.id === id);
-      if (currentGraph) {
-         setEdges(currentGraph?.edges || []);
-         setNodes(currentGraph?.nodes || []);
-      }
+   const setCurrentGraphIndex = async (id: string) => {
       await Database.config.update('config', { currentGraphId: id, currentSnapshotId: '' });
    };
 
    const selectGraph = async (id: string) => {
-      console.log('Graphs>>', graphs);
       const currentGraph = (graphs || [])?.find((graph) => graph.id === id) || graphs?.[0];
       if (currentGraph) {
-         setEdges(currentGraph?.edges || []);
-         setNodes(currentGraph?.nodes || []);
-
-         await Database.config.update('config', { currentGraphId: id, currentSnapshotId: '' });
+         await Database.config
+            .update('config', { currentGraphId: id, currentSnapshotId: '' })
+            .then(() => {
+               setEdges(currentGraph?.edges || []);
+               setNodes(currentGraph?.nodes || []);
+            });
       }
    };
 
@@ -81,7 +73,9 @@ export const GraphContextProvider: React.FC<{
       fromSnapshot: boolean = false
    ) => {
       if (fromSnapshot && !config?.currentSnapshotId) {
-         const currentSnapshot = snapshots.find((snapshot) => snapshot.id === config?.currentSnapshotId);
+         const currentSnapshot = snapshots.find(
+            (snapshot) => snapshot.id === config?.currentSnapshotId
+         );
          label = currentSnapshot?.label || `Graph - ${graphs.length + 1}`;
       }
 
@@ -106,13 +100,12 @@ export const GraphContextProvider: React.FC<{
    const removeGraph = async (index: string) => {
       const newGraphs = graphs.filter((graph) => graph.id !== index);
       const lastGraph = newGraphs[newGraphs.length - 1];
-
       // save to state
+      await Database.graphs.delete(index);
       if (!config?.currentSnapshotId && lastGraph) {
-         await Database.graphs.delete(index);
-         setCurrentGraphIndex(lastGraph ? lastGraph.id : '', newGraphs);
+         setCurrentGraphIndex(lastGraph ? lastGraph.id : '');
       } else if (!config?.currentSnapshotId && !lastGraph) {
-         addNewGraph('Default');
+         addNewGraph('Default', undefined, true);
       } else if (config?.currentSnapshotId && !lastGraph) {
          addNewGraph('Default', undefined, false);
       }
