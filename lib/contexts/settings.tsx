@@ -117,7 +117,7 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
 
   const setSettingValue = (id: string, value: any) => {
     setSettingValueAsync(id, value).catch((err) => {
-      alert(`Error saving setting '${id}'`);
+      // alert(`Error saving setting '${id}'`);
       console.error(err);
     });
   };

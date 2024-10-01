@@ -1,6 +1,7 @@
 import { useWorkflow } from '../../../hooks/useWorkflow';
 import { useEffect } from 'react';
 import { useFlowStore } from '../../../store/flow';
+import { Button } from '@/components/ui/button';
 
 interface SaveButtonProps {
    promptFilename: {
@@ -9,7 +10,7 @@ interface SaveButtonProps {
 }
 
 const SaveButton = ({ promptFilename }: SaveButtonProps) => {
-   const { serializeGraph, submitWorkflow } = useWorkflow();
+   const { generateWorkflow } = useWorkflow();
    const { addHotKeysHandlers } = useFlowStore();
 
    const handleClick = async () => {
@@ -21,8 +22,7 @@ const SaveButton = ({ promptFilename }: SaveButtonProps) => {
             filename += '.json';
          }
       }
-      const res = await submitWorkflow();
-      const json = JSON.stringify(res, null, 2);
+      const json = JSON.stringify(generateWorkflow(), null, 2);
       const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
 
@@ -41,9 +41,14 @@ const SaveButton = ({ promptFilename }: SaveButtonProps) => {
    }, []);
 
    return (
-      <button id="comfy-save-button" onClick={handleClick}>
+      <Button
+         variant="outline"
+         className="!py-1 h-[35px] hover:!bg-white/[1%] hover:!text-fg"
+         id="comfy-save-button"
+         onClick={handleClick}
+      >
          Save
-      </button>
+      </Button>
    );
 };
 

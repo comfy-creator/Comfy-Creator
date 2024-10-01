@@ -99,7 +99,7 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
       event.preventDefault();
 
       if (!data) {
-        data = getContextMenuItems();
+        data = getContextMenuItems(onPaneClick);
       }
 
       // @ts-expect-error
@@ -116,7 +116,7 @@ export function ContextMenuProvider({ children }: Readonly<{ children: ReactNode
       event.preventDefault();
       event.stopPropagation();
 
-      const menuData = getMenuData(event, getNodeMenuItems(node));
+      const menuData = getMenuData(event, getNodeMenuItems(node, onPaneClick));
       if (!menuData) return;
 
       setMenuProps(menuData);

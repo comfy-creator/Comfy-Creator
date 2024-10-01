@@ -1,369 +1,442 @@
 /* Put custom styles here */
 
 body {
-    font-family: Arial, sans-serif !important;
+   font-family: Arial, sans-serif !important;
 }
 
 .context-menu {
-    top: 100px;
-    color: #aaf;
-    z-index: 10;
-    left: 100px;
-    position: fixed;
-    min-width: 100px;
-    font-family: Tahoma, sans-serif;
-    box-shadow: 0 0 10px black !important;
-    background: var(--comfy-menu-bg) !important;
+   top: 100px;
+   color: #aaf;
+   z-index: 10;
+   left: 100px;
+   position: fixed;
+   min-width: 100px;
+   font-family: Tahoma, sans-serif;
+   box-shadow: 0 0 10px black !important;
+   background: var(--comfy-menu-bg) !important;
 }
 
 .context-menu.dark {
-    background-color: #000 !important;
+   background-color: #000 !important;
 }
 
 .context-menu h4 {
-    color: white;
-    font-size: 16px;
-    margin: 0;
-    padding: 0.3em;
+   color: white;
+   font-size: 16px;
+   margin: 0;
+   padding: 0.3em;
 }
 
 .context-menu button {
-    width: 100%;
-    border: none;
-    display: block;
-    padding: 0.3em;
-    cursor: pointer;
-    font-size: 16px;
-    text-align: left;
-    background: inherit;
-    transition: all 0.2s ease-in-out;
-    color: #f2f2f2;
+   width: 100%;
+   border: none;
+   display: block;
+   padding: 0.3em;
+   cursor: pointer;
+   font-size: 16px;
+   text-align: left;
+   background: inherit;
+   transition: all 0.2s ease-in-out;
+   color: #f2f2f2;
 }
 
 .context-menu button:hover {
-    background: #f2f2f2;
-    color: #2e2e2e;
+   background: #f2f2f2;
+   color: #2e2e2e;
 }
 
 .react-flow__node {
-    padding: 5px !important;
-    cursor: crosshair !important;
-    border-radius: 8px !important;
+   padding: 5px !important;
+   cursor: crosshair !important;
+   border-radius: 8px !important;
 }
 
 .react-flow__node-Group {
-    /* width: 400px !important;
+   /* width: 400px !important;
     height: 400px !important; */
-    border: 1px solid gray;
+   border: 1px solid gray;
 }
 
 .selected {
-    margin: 0 !important;
-    border: 2px solid #ddd;
+   margin: 0 !important;
+   border: 2px solid #ddd;
 }
 
 .node_container {
-    height: 100%;
-    font-size: 12px;
-    border-radius: 8px !important;
+   height: 100%;
+   font-size: 12px;
+   border-radius: 8px !important;
 }
 
 .node_label_container {
-    gap: 15px;
-    display: flex;
-    padding: 5px 8px;
-    margin-bottom: 10px;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid rgb(41, 41, 41);
+   gap: 15px;
+   display: flex;
+   padding: 5px 8px;
+   margin-bottom: 10px;
+   align-items: center;
+   justify-content: space-between;
+   border-bottom: 1px solid rgb(41, 41, 41);
 }
 
 .node_label {
-    color: #c9c8c8;
-    font-size: 0.7rem;
+   color: #c9c8c8;
+   font-size: 0.7rem;
 }
 
 .node_footer {
-    margin-top: 3px;
-    margin-bottom: 3px;
+   margin-top: 3px;
+   margin-bottom: 3px;
 }
 
 .node_footer .comfy-btn {
-    width: 100%;
+   width: 100%;
 }
 
 .clip {
-    background-color: #ffd500 !important;
+   background-color: #ffd500 !important;
 }
 
 .latent {
-    background-color: #ff9cf9 !important;
+   background-color: #ff9cf9 !important;
 }
 
 .conditioning,
 .positive,
 .negative {
-    background-color: #ffa931 !important;
+   background-color: #ffa931 !important;
 }
 
 .model {
-    background-color: #b39ddb !important;
+   background-color: #b39ddb !important;
 }
 
 .vae {
-    background-color: #f96b6b !important;
+   background-color: #f96b6b !important;
 }
 
 .model {
-    background-color: #b39ddb !important;
+   background-color: #b39ddb !important;
 }
 
 /* Flow */
 
 .flow_output_container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    justify-content: flex-end;
-    gap: 3px;
+   display: flex;
+   flex-direction: column;
+   align-items: flex-end;
+   justify-content: flex-end;
+   gap: 3px;
 }
 
 .flow_input_container {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    gap: 3px;
+   display: flex;
+   flex-direction: column;
+   align-items: flex-start;
+   justify-content: flex-start;
+   gap: 3px;
 }
 
 .flow_input_output_container {
-    display: flex;
-    margin-bottom: 3px;
-    align-items: flex-start;
-    justify-content: space-between;
+   display: flex;
+   margin-bottom: 3px;
+   align-items: flex-start;
+   justify-content: space-between;
 }
 
 .flow_output,
 .flow_input {
-    margin: 0;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
+   margin: 0;
+   display: flex;
+   flex-direction: row;
+   align-items: center;
 }
 
 .flow_output_text {
-    color: var(--drag-text);
-    margin-right: 10px;
-    font-size: 0.6rem;
-    transform: none !important;
+   color: var(--drag-text);
+   margin-right: 5px;
+   font-size: 0.6rem;
+   transform: none !important;
 }
 
 .flow_input_text {
-    color: var(--drag-text);
-    margin-left: 10px;
-    font-size: 0.6rem;
-    transform: none !important;
+   color: var(--drag-text);
+   margin-left: 5px;
+   font-size: 0.6rem;
+   transform: none !important;
 }
 
 .react-flow__handle {
-    background: gray;
+   background: gray;
 }
 
 .flow_handler {
-    top: unset !important;
-    width: 5px !important;
-    height: 5px !important;
-    padding: 1px !important;
-    min-width: 5px !important;
-    min-height: 5px !important;
-    transform: none !important;
-    border-radius: 50% !important;
+   top: unset !important;
+   width: 9px !important;
+   height: 9px !important;
+   padding: 1px !important;
+   min-width: 9px !important;
+   min-height: 9px !important;
+   transform: none !important;
+   border-radius: 50% !important;
 }
 
 .flow_handler.right {
-    margin-right: 5px;
-    right: 5px !important;
+   margin-right: 5px;
+   right: 5px !important;
 }
 
 .flow_handler.left {
-    margin-left: 5px;
-    left: 5px !important;
+   margin-left: 5px;
+   left: 5px !important;
 }
 
 .flow_input_output_handler {
-    border: 1px solid transparent !important;
+   border: 1px solid transparent !important;
 }
 
 /* widgets */
 .flow_content {
-    padding: 8px;
+   padding: 8px;
 }
 
 .widgets_container {
-    width: 100%;
+   width: 100%;
 }
 
 .widget_container {
-    width: 100%;
-    font-size: 0.5em;
-    margin-bottom: 2px;
-    font-weight: normal;
+   width: 100%;
+   font-size: 0.5em;
+   margin-bottom: 2px;
+   font-weight: normal;
 }
 
 .widget_box {
-    height: 16px;
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+   width: 100%;
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
 }
 
 .widget_input {
-    gap: 15px;
-    width: 100%;
-    display: flex;
-    border-radius: 10px;
-    align-items: center;
-    justify-content: space-between;
-    background: var(--comfy-input-bg);
-    border: 1px solid var(--border-color);
+   gap: 15px;
+   width: 100%;
+   display: flex;
+   border-radius: 10px;
+   align-items: center;
+   justify-content: space-between;
+   background: var(--comfy-input-bg);
+   border: 1px solid var(--border-color);
+   margin-top: 5px;
 }
 
 .widget_input_item {
-    gap: 4px;
-    display: flex;
-    color: #b2b2b2;
-    margin: 2px 5px;
-    font-size: 0.6rem;
-    align-items: center;
+   gap: 4px;
+   display: flex;
+   color: #b2b2b2;
+   margin: 0px 5px;
+   font-size: 0.6rem;
+   align-items: center;
 }
 
 .widget_input_item_disabled {
-    color: #656565 !important;
+   color: #656565 !important;
 }
 
 .react-flow__pane {
-    cursor: default !important;
+   cursor: default !important;
 }
 
 .edge_opacity {
-    opacity: 0.5;
+   opacity: 0.5;
 }
 
 button.comfy-settings-btn {
-    background-color: rgba(0, 0, 0, 0);
-    font-size: 12px;
-    cursor: pointer;
-    border: none;
-    padding: 0;
+   background-color: rgba(0, 0, 0, 0);
+   font-size: 12px;
+   cursor: pointer;
+   border: none;
+   padding: 0;
 }
 
 #comfy-settings-dialog button {
-    background-color: var(--bg-color);
-    border: 1px var(--border-color) solid;
-    border-radius: 0;
-    color: var(--input-text);
-    font-size: 1rem;
-    padding: 0.5rem;
+   background-color: var(--bg-color);
+   border: 1px var(--border-color) solid;
+   border-radius: 0;
+   color: var(--input-text);
+   font-size: 1rem;
+   padding: 0.5rem;
 }
 
 .comfy-logging-logs {
-    display: grid;
-    color: var(--fg-color);
-    white-space: pre-wrap;
+   display: grid;
+   color: var(--fg-color);
+   white-space: pre-wrap;
 }
 
 .comfy-logging-log {
-    display: contents;
+   display: contents;
 }
 
 .comfy-logging-title {
-    background: var(--tr-even-bg-color);
-    font-weight: bold;
-    margin-bottom: 5px;
-    text-align: center;
+   background: var(--tr-even-bg-color);
+   font-weight: bold;
+   margin-bottom: 5px;
+   text-align: center;
 }
 
 .comfy-logging-log div {
-    background: var(--row-bg);
-    padding: 5px;
+   background: var(--row-bg);
+   padding: 5px;
 }
 
 .executing {
-    border: 2px solid #0e8c00 !important;
+   border: 2px solid #0e8c00 !important;
 }
 
 .flow-progress_container {
-    width: 100%;
-    height: 5px;
-    border-radius: 5px;
-    margin-bottom: 20px;
+   width: 100%;
+   height: 5px;
+   border-radius: 5px;
+   margin-bottom: 20px;
 }
 
 .flow-progress_bar {
-    height: 100%;
-    border-radius: 1px;
-    background-color: #0e8c00;
-    transition: width 0.3s ease-in-out;
+   height: 100%;
+   border-radius: 1px;
+   background-color: #0e8c00;
+   transition: width 0.3s ease-in-out;
 }
-
 
 /*Graphs*/
 .graphs_container {
-    margin: 20px 0;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-    
+   margin: 20px 0;
+   width: 100%;
+   display: flex;
+   flex-direction: column;
+   gap: 5px;
 }
 
 .graph_container {
-    padding: 3px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 7px;
-    cursor: pointer;
+   padding: 3px;
+   display: flex;
+   flex-direction: row;
+   align-items: center;
+   justify-content: space-between;
+   gap: 7px;
+   cursor: pointer;
 }
 
 .graph_title_container {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+   width: 100%;
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
 }
 
 .graph_title {
-    margin: 1px 0;
-    color: #b2b2b2;
-    font-size: 0.9rem;
+   margin: 1px 0;
+   color: #b2b2b2;
+   font-size: 0.9rem;
 }
 
 .add_graph_icon {
-    font-size: 1.2rem;
-    color: #b2b2b2;
-    cursor: pointer;
+   font-size: 1.2rem;
+   color: #b2b2b2;
+   cursor: pointer;
 }
 
 .graph_label {
-    margin: 1px 0;
-    color: #b2b2b2;
-    font-size: 0.8rem;
+   margin: 1px 0;
+   color: #b2b2b2;
+   font-size: 0.8rem;
 }
 
 .graph_actions {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 1.1rem;
-    
+   display: flex;
+   gap: 10px;
+   align-items: center;
+   justify-content: space-between;
+   font-size: 1.1rem;
 }
 
 .graph_selected {
-    border-radius: 5px;
-    background-color: #2e2e2e;
-    border: 2px solid #b2b2b2;
+   border-radius: 5px;
+   background-color: #2e2e2e;
+   border: 2px solid #b2b2b2;
+}
+
+.files {
+   display: flex;
+   flex-wrap: wrap;
+   gap: 5px;
+   max-width: 420px;
+   max-height: 300px;
+   overflow-y: scroll;
+}
+
+.file {
+   max-width: 200px;
+   position: relative;
+}
+
+.file_remove_icon {
+   position: absolute;
+   top: 0;
+   right: 0;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+   font-size: 0.5rem;
+   padding: 3px;
+   color: #b2b2b2;
+   cursor: pointer;
+   margin: 3px !important;
+   border-radius: 7px;
+   background-color: var(--fg-color);
+   transition: all ease 0.5s;
+}
+
+.dropdown {
+   width: 100%;
+   padding: 2px;
+   border-radius: 5px;
+   font-size: 10px;
+   background: var(--comfy-menu-bg);
+   color: var(--fg-color);
+}
+
+/* .no_scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+} */
+
+input[type="color"]::-webkit-color-swatch {
+   border-radius: 50%;
+   border: none;
+ }
+
+/* Hide scrollbar buttons */
+::-webkit-scrollbar-button {
+   display: none;
+}
+
+/* Make the scrollbar thinner */
+::-webkit-scrollbar {
+   width: 4px; /* Adjust the width as needed */
+}
+
+/* Style the scrollbar track */
+::-webkit-scrollbar-track {
+   background-color: #565656; /* Optional: scrollbar track color */
+}
+
+/* Style the scrollbar thumb */
+::-webkit-scrollbar-thumb {
+   background-color: #888; /* Optional: scrollbar thumb color */
+   border-radius: 4px; /* Optional: rounded corners */
+}
+
+/* Hover effect on the scrollbar thumb */
+::-webkit-scrollbar-thumb:hover {
+   background-color: #555; /* Optional: scrollbar thumb color on hover */
 }

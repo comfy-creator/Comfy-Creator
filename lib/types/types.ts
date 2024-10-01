@@ -213,20 +213,8 @@ export type OnContextMenu = (
 export type OnNodeContextMenu = (event: ReactMouseEvent, node: AppNode) => void;
 
 export interface HandleOnConnectEndParams {
-   isUpdatingEdge: boolean;
-   nodeDefs: NodeDefinitions;
    onContextMenu: OnContextMenu;
-   currentHandleEdge: HandleEdge | null;
-
-   setCurrentHandleEdge: (edge: HandleEdge | null) => void;
-   setNodes: (nodes: AppNode[]) => void;
-}
-
-export interface HandleOnConnectStartParams {
-   setCurrentConnectionLineType: (type: ConnectionLineType) => void;
-   setCurrentHandleEdge: (edge: HandleEdge | null) => void;
-   setNodes: (nodes: AppNode[]) => void;
-   nodes: AppNode[];
+   onPaneClick: () => void;
 }
 
 export interface ValidateConnectionParams {
@@ -258,16 +246,21 @@ export type EdgeType =
    | 'MASK'
    | 'VIDEO'
    | 'LORA'
-   | 'CONTROL_NET';
+   | 'CONTROL_NET'
+   | 'PREVIEW';
 
 export type WidgetType =
    | 'TOGGLE'
    | 'NUMBER'
    | 'TEXT'
    | 'FILEPICKER'
+   | 'IMAGE_ROUTER'
    | 'DROPDOWN'
    | 'SLIDER'
-   | 'COLOR';
+   | 'BOOLEAN'
+   | 'MASK'
+   | 'COLOR'
+   | 'PREVIEW_MASKED_IMAGE';
 
 export type NodeType = ComponentType<NodeProps<AppNode>>;
 
@@ -276,11 +269,10 @@ export type NodeTypes = Record<string, NodeType>;
 // Removes Reactflow's Node-type's 'position' as a required property
 export type MinimalNode = Omit<AppNode, 'position' | 'data'> & {
    position?: { x: number; y: number };
-   data?: {
-      inputs?: RefValue | ConstantValue;
-      outputs?: Record<string, HandleState>;
-      widgets?: Record<string, WidgetDefinition>;
-   }
+   inputs?: RefValue | ConstantValue;
+   outputs?: RefValue | ConstantValue;
+   widgets?: Record<string, WidgetDefinition>;
+   type: string | undefined;
 };
 
 // When ReactFlow serializes a graph, the properties inside of node.data and node.edge
@@ -376,3 +368,15 @@ export type RefValue = { nodeId: string; handleName: string };
 //   position: XYPosition;
 //   defaultValues?: Record<string, any>;
 // }
+
+export type Label = {
+   name: string;
+   color: string;
+   shapes: Array<{
+      points: number[][];
+      size: number;
+      color: string;
+      isEraser?: boolean;
+   }>;
+   base64?: string;
+};

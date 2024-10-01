@@ -1,6 +1,7 @@
 import { useWorkflow } from '../../../hooks/useWorkflow';
 import { useEffect } from 'react';
 import { useFlowStore } from '../../../store/flow';
+import { Button } from '@/components/ui/button';
 
 interface DevSaveButtonProps {
    promptFilename: {
@@ -40,13 +41,15 @@ const DevSaveButton = ({ promptFilename }: DevSaveButtonProps) => {
       addHotKeysHandlers({ 'ctrl+shift+s': handleClick });
    }, []);
    return (
-      <button
+      <Button
          id="comfy-dev-save-api-button"
+         variant={'outline'}
+         className="!py-1 h-[35px] hover:!bg-white/[1%] hover:!text-fg"
          style={{ width: '100%', display: 'none' }}
          onClick={handleClick}
       >
          Save (API Format)
-      </button>
+      </Button>
    );
 };
 

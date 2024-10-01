@@ -2,73 +2,74 @@ import { getSuggestedNodesData } from '../utils/menu';
 import { useFlowStore } from '../store/flow';
 import { Connection, Edge, getOutgoers, Node, OnConnectStartParams } from '@xyflow/react';
 import { getHandleName, isPrimitiveNode, isWidgetType } from '../utils/node';
-import {
-   HandleOnConnectEndParams,
-   HandleOnConnectStartParams,
-   ValidateConnectionParams
-} from '../types/types';
+import { AppNode, HandleOnConnectEndParams, ValidateConnectionParams } from '../types/types';
 
-export function handleOnConnectEnd({
-   nodeDefs,
-   setNodes,
-   onContextMenu,
-   isUpdatingEdge,
-   currentHandleEdge,
-   setCurrentHandleEdge
-}: HandleOnConnectEndParams) {
+export function handleOnConnectEnd({ onContextMenu, onPaneClick }: HandleOnConnectEndParams) {
    // ReactMouseEvent | TouchEvent instead ?
    // TODO: this logic may be wrong here? We're mixing react-events with native-events!
    return async (event: MouseEvent | globalThis.TouchEvent) => {
+      const { currentHandleEdge, nodeDefs, setNodes, isUpdatingEdge, setCurrentHandleEdge } =
+         useFlowStore.getState();
       if (isUpdatingEdge) return;
 
       const target = event.target as HTMLElement;
       const isDroppedOnPane = target.classList.contains('react-flow__pane');
+
       if (isDroppedOnPane) {
-         if (!currentHandleEdge) return;
+         if (!currentHandleEdge) {
+            updateNodeInputsAndOutputs(setNodes);
+            return;
+         }
          const { handleId, handleType, edgeType } = currentHandleEdge;
 
          // For some reason, need to wait until the next event loop
          await new Promise((resolve) => setTimeout(resolve, 0));
 
-         const suggestionOptions = { nodeDefs, limit: 10, handleType, edgeType, handleId };
+         const suggestionOptions = {
+            nodeDefs,
+            limit: 15,
+            handleType,
+            edgeType,
+            handleId,
+            onPaneClick
+         };
          const suggestedNodes = getSuggestedNodesData(suggestionOptions);
 
          const menuTitle = `${edgeType} | ${edgeType}`;
          onContextMenu(event, suggestedNodes, menuTitle);
-      } else {
-         const { nodes } = useFlowStore.getState();
-
-         const newNodes = nodes.map((node) => {
-            const outputs = { ...node.data.outputs };
-            for (const name in outputs) {
-               outputs[name].isHighlighted = false;
-            }
-
-            const inputs = { ...node.data.inputs };
-            for (const name in inputs) {
-               inputs[name].isHighlighted = false;
-            }
-
-            return {
-               ...node,
-               data: { ...node.data, outputs, inputs }
-            };
-         });
-
-         setNodes(newNodes);
       }
+      updateNodeInputsAndOutputs(setNodes);
 
       setCurrentHandleEdge(null);
    };
 }
 
-export function handleOnConnectStart({
-   nodes,
-   setNodes,
-   setCurrentHandleEdge,
-   setCurrentConnectionLineType
-}: HandleOnConnectStartParams) {
+const updateNodeInputsAndOutputs = (setNodes: (nodes: AppNode[]) => void) => {
+   const { nodes } = useFlowStore.getState();
+
+   const newNodes = nodes.map((node) => {
+      const outputs = { ...node.data.outputs };
+      for (const name in outputs) {
+         outputs[name].isHighlighted = false;
+      }
+
+      const inputs = { ...node.data.inputs };
+      for (const name in inputs) {
+         inputs[name].isHighlighted = false;
+      }
+
+      return {
+         ...node,
+         data: { ...node.data, outputs, inputs }
+      };
+   });
+
+   setNodes(newNodes);
+};
+
+export function handleOnConnectStart() {
    return (_: MouseEvent | TouchEvent, params: OnConnectStartParams) => {
+      const { nodes, setNodes, setCurrentHandleEdge } = useFlowStore.getState();
       const node = nodes.find((node) => node.id === params.nodeId);
       if (!node || !params.handleId) return;
 
@@ -82,7 +83,6 @@ export function handleOnConnectStart({
          edgeType: handle.edge_type,
          handleType
       });
-      // setCurrentConnectionLineType(handle.edge_type);
 
       let newNodes = nodes;
       if (params.handleType === 'target') {

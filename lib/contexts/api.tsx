@@ -47,6 +47,7 @@ interface IApiContext extends IComfyApi {
    getOutputImages: (pagination: IPagination) => Promise<IGetOutputImagesResponse>;
    getNodeComponents: any;
    generate: any;
+   uploadFile: (body: any) => Promise<any>;
 }
 
 enum ApiStatus {
@@ -378,6 +379,15 @@ export const ApiContextProvider: React.FC<{
       return await resp.json();
    };
 
+   const uploadFile = async (body: any): Promise<Record<string, any>> => {
+      const resp = await fetchApi(API_URL.UPLOAD, {
+         method: 'POST',
+         cache: 'no-store',
+         body
+      });
+      return await resp.json();
+   };
+
    const generate = async (): Promise<Record<string, any>> => {
       const resp = await fetchApi(API_URL.GENERATE, {
          method: 'POST',
@@ -629,6 +639,7 @@ export const ApiContextProvider: React.FC<{
             // API functions
             makeServerURL,
             generate,
+            uploadFile,
             fetchApi,
             getNodeComponents,
             getExtensions,

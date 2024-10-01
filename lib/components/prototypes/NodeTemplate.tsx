@@ -1,4 +1,13 @@
-import React, { ComponentType, ReactNode, useEffect, useRef, useState } from 'react';
+import React, {
+   ComponentType,
+   ReactNode,
+   useEffect,
+   useRef,
+   useState,
+   useCallback,
+   MutableRefObject,
+   useMemo
+} from 'react';
 import {
    AppNode,
    HandleState,
@@ -7,9 +16,9 @@ import {
    ThemeConfig,
    UpdateInputData,
    EdgeType,
-   WidgetDefinition
+   WidgetDefinition,
+   UpdateOutputData
 } from '../../types/types';
-import { toast } from 'react-toastify';
 import {
    Handle,
    NodeProps,
@@ -26,27 +35,25 @@ import { ImageWidget } from '../widgets/Image';
 import { TextWidget } from '../widgets/Text';
 import { useSettingsStore } from '../../store/settings';
 import { useFlowStore } from '../../store/flow';
-import { ProgressBar } from '../ProgressBar';
-import {
-   isDisplayType,
-   isMultilineStringInput,
-   isWidgetType,
-   makeHandleId
-} from '../../utils/node';
+import { isDisplayType, makeHandleId } from '../../utils/node';
 import { FilePickerWidget, FileProps } from '../widgets/FilePicker';
 import { TRANSFORM_POINT } from '../../config/constants';
+import { MaskWidget } from '../widgets/Mask';
+import { ImageRouterWidget } from '../widgets/ImageRouter';
+import PreviewMaskedImageWidget from '../widgets/PreviewMask';
 
 const createWidgetFromSpec = (
+   nodeId: string,
    def: HandleState,
    label: string,
    data: HandleState,
    updateInputData?: (newState: Partial<HandleState>) => void
 ) => {
    const commonProps = { label };
+
    if (data.edge_type !== def.edge_type) return null; // ????? Do we need defs AND data?
 
    const updateData = { display_name: data.display_name, edge_type: data.edge_type };
-
    if (data.widget === 'hidden') return null;
 
    // Check if widget is defined and not 'hidden'
@@ -56,7 +63,7 @@ const createWidgetFromSpec = (
             return (
                <ToggleWidget
                   {...commonProps}
-                  checked={(data.value as boolean) || false}
+                  checked={((data.value || data?.widget?.checked) as boolean) || true}
                   disabled={data.isDisabled}
                   onChange={(checked: boolean) =>
                      updateInputData?.({ ...updateData, value: checked })
@@ -84,9 +91,43 @@ const createWidgetFromSpec = (
          case 'FILEPICKER':
             return (
                <FilePickerWidget
-                  onChange={(value: string | string[]) => updateInputData?.({ ...updateData, value })}
+                  nodeId={nodeId}
+                  onChange={(value: string | string[]) =>
+                     updateInputData?.({ ...updateData, value })
+                  }
                   value={data.value as string | string[]}
+                  outputInfo={data?.widget?.output_info}
+                  displayName={data?.widget?.display_name}
                   {...(data.widget as FileProps)}
+               />
+            );
+         case 'IMAGE_ROUTER':
+            return (
+               <ImageRouterWidget
+                  {...commonProps}
+                  nodeId={nodeId}
+                  refValue={data?.ref}
+                  value={data.value}
+               />
+            );
+         case 'MASK':
+            return (
+               <MaskWidget
+                  refValue={data?.ref}
+                  value={data?.value}
+                  nodeId={nodeId}
+                  onChange={(value: any) => {
+                     updateInputData?.({ ...updateData, value });
+                  }}
+               />
+            );
+         case 'PREVIEW_MASKED_IMAGE':
+            return (
+               <PreviewMaskedImageWidget
+                     {...commonProps}
+                     nodeId={nodeId}
+                     refValue={data?.ref}
+                     value={data?.ref}
                />
             );
          case 'DROPDOWN':
@@ -110,7 +151,7 @@ const createWidgetFromSpec = (
          return (
             <ToggleWidget
                {...commonProps}
-               checked={(data.value as boolean) || false}
+               checked={(data.value as boolean) || true}
                disabled={data.isDisabled}
                onChange={(checked: boolean) => updateInputData?.({ ...updateData, value: checked })}
             />
@@ -140,7 +181,7 @@ const createWidgetFromSpec = (
                {...commonProps}
                value={data.value as string}
                onChange={(value: string) => updateInputData?.({ ...updateData, value })}
-               options={{ values: [] }}
+               options={[]}
                disabled={data.isDisabled}
             />
          );
@@ -160,8 +201,6 @@ export const createNodeComponentFromDef = (
       const containerRef = useRef<HTMLDivElement>(null);
 
       const [advanced] = useState(false);
-      const [minWidth, setMinWidth] = useState(0);
-      const [minHeight, setMinHeight] = useState(0);
 
       const { getActiveTheme, activeTheme } = useSettingsStore();
       const { executions } = useFlowStore();
@@ -171,19 +210,24 @@ export const createNodeComponentFromDef = (
 
       const zoomSelector = useStore((s: ReactFlowState) => s.transform[2]);
 
+      const images = useMemo(
+         () =>
+            (data?.inputs?.file?.value
+               ? typeof data?.inputs?.file?.value === 'string'
+                  ? [data?.inputs?.file?.value]
+                  : data?.inputs?.file?.value
+               : []) as string[],
+         [data?.inputs?.file?.value]
+      );
+
+      const { mainRef, minHeight, minWidth } = useResizer(id, images);
+
       useEffect(() => {
          const node = document.querySelector(`[data-id="${id}"]`);
          if (!node) return;
 
          nodeRef.current = node as HTMLDivElement;
       }, []);
-
-      useEffect(() => {
-         if (!nodeRef.current) return;
-
-         setMinWidth(nodeRef.current.clientWidth);
-         setMinHeight(nodeRef.current.clientHeight);
-      }, [nodeRef]);
 
       useEffect(() => {
          if (!nodeRef.current) return;
@@ -206,7 +250,6 @@ export const createNodeComponentFromDef = (
          }
       }, [selected]);
 
-      const onClick = () => toast.success('File uploaded successfully!');
       const { inputs, outputs } = data;
       const resizerStyle = {
          width: '12px',
@@ -247,7 +290,7 @@ export const createNodeComponentFromDef = (
 
          if (isDisplayType(input.edge_type)) {
             displayWidgets.push(
-               <DisplayWidget nodeDef={nodeDef} key={input.display_name} data={input} />
+               <DisplayWidget nodeId={id} nodeDef={nodeDef} key={input.display_name} data={input} />
             );
          }
       }
@@ -276,7 +319,6 @@ export const createNodeComponentFromDef = (
                   <span
                      className="node_label"
                      style={{ ...getTransformStyle(zoomSelector), color: NODE_TITLE_COLOR }}
-                     onClick={onClick}
                   >
                      {typeof nodeDef.display_name === 'string'
                         ? nodeDef.display_name
@@ -290,7 +332,7 @@ export const createNodeComponentFromDef = (
                   </>
                ) : (
                   <>
-                     <div className="flow_content">
+                     <div className="flow_content !p-4" ref={mainRef}>
                         <div className="flow_input_output_container">
                            <div className="flow_input_container">{inputHandles}</div>
                            <div className="flow_output_container">{outputHandles}</div>
@@ -307,6 +349,111 @@ export const createNodeComponentFromDef = (
    };
 };
 
+export function useResizer(
+   id: string,
+   images: string[]
+): {
+   minHeight: number;
+   minWidth: number;
+   mainRef: MutableRefObject<HTMLDivElement | null>;
+} {
+   const mainRef = useRef<HTMLDivElement>(null);
+   const [minHeight, setMinHeight] = useState(200);
+   const [minWidth, setMinWidth] = useState(240);
+   const { onNodesChange } = useFlowStore();
+
+   const updateNodeHeight = useCallback(async () => {
+      if (mainRef.current) {
+         await new Promise((resolve) => {
+            setTimeout(() => {
+               resolve(null);
+            }, 100);
+         });
+         if (!mainRef.current) {
+            return;
+         }
+         const state = useFlowStore.getState();
+         const findNode = state.nodes.find((n) => n.id === id);
+         if (!findNode) {
+            return;
+         }
+         const dimensions = {
+            height: findNode.height,
+            width: findNode.width
+         };
+         let newHeight = mainRef.current.offsetHeight + 50;
+         let newWidth = mainRef.current.offsetWidth + 4;
+
+         if (images.length > 1) {
+            mainRef.current.style.minWidth = '450px';
+            newHeight = mainRef.current.offsetHeight + 50;
+            newWidth = mainRef.current.offsetWidth + 12;
+            setMinWidth(newWidth);
+            const state = useFlowStore.getState();
+            const newNodes = state.nodes.map((n) => {
+               if (n.id === id) {
+                  return {
+                     ...n,
+                     width: newWidth,
+                     height: newHeight
+                  };
+               }
+               return n;
+            });
+            state.setNodes(() => newNodes);
+         } else if (images.length === 1) {
+            mainRef.current.style.minWidth = '212px';
+            newHeight = mainRef.current.offsetHeight + 50;
+            newWidth = mainRef.current.offsetWidth + 12;
+            setMinWidth(240);
+            const state = useFlowStore.getState();
+            const newNodes = state.nodes.map((n) => {
+               if (n.id === id) {
+                  return {
+                     ...n,
+                     width: newWidth,
+                     height: newHeight
+                  };
+               }
+               return n;
+            });
+            state.setNodes(newNodes);
+         }
+         if (!dimensions || (dimensions.height || 0) < newHeight - 2) {
+            onNodesChange([
+               {
+                  type: 'dimensions',
+                  id: id,
+                  dimensions: {
+                     width: !!dimensions && dimensions.width ? dimensions.width : newWidth,
+                     height: newHeight
+                  }
+               }
+            ]);
+         }
+         setMinHeight(newHeight);
+      }
+   }, [id, images]);
+
+   useEffect(() => {
+      updateNodeHeight();
+   }, [mainRef]);
+
+   useEffect(() => {
+      updateNodeHeight();
+   }, [images]);
+
+   return {
+      minHeight,
+      minWidth,
+      mainRef
+   };
+}
+
+const isDisplayImage = (data: NodeData) => {
+   return Object.values(data.inputs).some((input) => input['display_name'] === 'file');
+};
+
 interface InputHandleProps {
    nodeId: string;
    theme: ThemeConfig;
@@ -319,11 +466,12 @@ function InputHandle({ nodeId, handle, theme }: InputHandleProps) {
    const showInput = transformScale < TRANSFORM_POINT;
 
    const appearance = theme.colors.types;
+   const color = appearance[handle.edge_type] || appearance['DEFAULT'];
    const { NODE_TEXT_COLOR } = theme.colors.appearance;
 
    const handleStyle = handle.isConnected
-      ? { background: appearance[handle.edge_type], border: '1px solid transparent' }
-      : { border: `1.5px solid ${appearance[handle.edge_type]}`, backgroundColor: 'transparent' };
+      ? { background: color, border: '1px solid transparent' }
+      : { border: `1.5px solid ${color}`, backgroundColor: 'transparent' };
 
    return showInput ? (
       <div className={`flow_input ${handle.isHighlighted ? 'edge_opacity' : ''}`}>
@@ -334,7 +482,10 @@ function InputHandle({ nodeId, handle, theme }: InputHandleProps) {
             id={makeHandleId(nodeId, handle.display_name)}
             className={`flow_handler left ${handle.edge_type}`}
          />
-         <span className="flow_input_text" style={{ color: NODE_TEXT_COLOR }}>
+         <span
+            className="flow_input_text"
+            style={{ color: NODE_TEXT_COLOR, opacity: handle.isConnected ? 0.7 : 1 }}
+         >
             {handle.display_name}
          </span>
       </div>
@@ -355,11 +506,13 @@ function OutputHandle({ nodeId, handle, theme }: OutputHandleProps) {
    const showOutput = transformScale < TRANSFORM_POINT;
 
    const appearance = theme.colors.types;
+   const color = appearance[handle.edge_type] || appearance['DEFAULT'];
+
    const { NODE_TEXT_COLOR } = theme.colors.appearance;
 
    const handleStyle = handle.isConnected
-      ? { backgroundColor: appearance[handle.edge_type], border: '1px solid transparent' }
-      : { border: `1.5px solid ${appearance[handle.edge_type]}`, backgroundColor: 'transparent' };
+      ? { backgroundColor: color, border: '1px solid transparent' }
+      : { border: `1.5px solid ${color}`, backgroundColor: 'transparent' };
 
    return showOutput ? (
       <div className={`flow_output ${handle.isHighlighted ? 'edge_opacity' : ''}`}>
@@ -370,7 +523,10 @@ function OutputHandle({ nodeId, handle, theme }: OutputHandleProps) {
             id={makeHandleId(nodeId, handle.display_name)}
             className={`flow_handler right ${handle.edge_type}`}
          />
-         <span className="flow_output_text" style={{ color: NODE_TEXT_COLOR }}>
+         <span
+            className="flow_output_text"
+            style={{ color: NODE_TEXT_COLOR, opacity: handle.isConnected ? 0.7 : 1 }}
+         >
             {handle.display_name}
          </span>
       </div>
@@ -401,13 +557,19 @@ function Widget({ theme, nodeId, data, nodeDef, updateInputData }: WidgetProps) 
    };
 
    const isMultiline = (inputDef.widget as WidgetDefinition)?.type === 'TEXT';
-   const containerStyle = !isMultiline ? { display: 'flex', alignItems: 'center' } : {};
+   const containerStyle = !isMultiline ? { display: 'flex', alignItems: 'start' } : {};
 
    return showWidget ? (
       <div className="widget_container" style={{ ...containerStyle }}>
          <WidgetHandle nodeId={nodeId} data={data} theme={theme} />
-         <div style={{ marginLeft: isMultiline ? '0px' : '10px', width: '100%' }}>
-            {createWidgetFromSpec(inputDef, data.display_name, data, update)}
+         <div
+            style={{
+               marginLeft: isMultiline ? '0px' : '5px',
+               width: '100%',
+               opacity: data?.isConnected ? 0.7 : 1
+            }}
+         >
+            {createWidgetFromSpec(nodeId, inputDef, data.display_name, data, update)}
          </div>
       </div>
    ) : (
@@ -425,13 +587,14 @@ export interface WidgetHandleProps {
 
 function WidgetHandle({ nodeId, data, theme }: WidgetHandleProps) {
    const appearance = theme.colors.types;
+   const color = appearance[data.edge_type] || appearance['DEFAULT'];
 
    const handleStyle = data.isConnected
-      ? { background: appearance[data.edge_type], border: '1px solid transparent' }
-      : { border: `1.5px solid ${appearance[data.edge_type]}`, background: 'transparent' };
+      ? { background: color, border: '1px solid transparent' }
+      : { border: `1.5px solid ${color}`, background: 'transparent' };
 
    return (
-      <div style={{ display: 'flex', alignItems: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', marginTop: '12.5px' }}>
          <Handle
             type="target"
             position={Position.Left}
@@ -448,18 +611,18 @@ function WidgetHandle({ nodeId, data, theme }: WidgetHandleProps) {
 }
 
 interface DisplayProps {
+   nodeId: string;
    data: HandleState;
    nodeDef: NodeDefinition;
 }
 
-function DisplayWidget({ data, nodeDef }: DisplayProps) {
+function DisplayWidget({ nodeId, data, nodeDef }: DisplayProps) {
    const inputDef = nodeDef.inputs[data.display_name] ?? (data as HandleState);
    if (!inputDef) return null;
-
    return (
       <div className="widget_container">
          <div style={{ width: '100%' }}>
-            {createWidgetFromSpec(inputDef, data.display_name, data)}
+            {createWidgetFromSpec(nodeId, inputDef, data.display_name, data)}
          </div>
       </div>
    );

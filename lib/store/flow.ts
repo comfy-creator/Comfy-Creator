@@ -27,7 +27,8 @@ import {
    UpdateInputDataParams,
    UpdateOutputData,
    UpdateOutputDataParams,
-   AppNode
+   AppNode,
+   HandleState
 } from '../types/types';
 import {
    addWidgetToPrimitiveNode,
@@ -35,28 +36,25 @@ import {
    disconnectPrimitiveNode,
    getHandleName,
    isPrimitiveNode,
+   isRefInputType,
    isWidgetType
 } from '../utils/node';
 import { createNodeComponentFromDef } from '../components/prototypes/NodeTemplate';
 import {
-   CURRENT_GRAPH_INDEX,
    DEFAULT_HOTKEYS_HANDLERS,
    DEFAULT_SHORTCUT_KEYS,
-   GRAPHS_KEY,
    HANDLE_TYPES,
    NODE_GROUP_NAME
 } from '../config/constants';
 import { createEdgeFromTemplate } from '../components/prototypes/EdgeTemplate';
 import { yjsProvider } from '../yjs';
-import { Transaction, YMapEvent } from 'yjs';
-import { AllNodeDefs, transformNodeDefs } from '../config/nodeDefs';
+import { AllNodeDefs } from '../config/nodeDefs';
 import { ComfyObjectInfo } from '../types/comfy';
-import DB, { IGraphData } from './database';
+import { Database } from './database';
 import { getNodePositionInGroup, getNodePositionOutOfGroup } from '../handlers/helpers';
 
 const nodesMap = yjsProvider.doc.getMap<AppNode>('nodes');
 const edgesMap = yjsProvider.doc.getMap<Edge>('edges');
-const awareness = yjsProvider.awareness; // TO DO: use for cusor location
 
 type NodeCallbackType = 'afterQueued';
 
@@ -67,6 +65,8 @@ export interface IGraphSnapshot {
 }
 
 export type RFState = {
+   appLoading: boolean;
+   setAppLoading: (loading: boolean) => void;
    executions: ExecutionState[];
 
    setExecutionOutput: (executionId: string, output: Record<string, any>) => void;
@@ -76,6 +76,7 @@ export type RFState = {
    panOnDrag: boolean;
    setPanOnDrag: (panOnDrag: boolean) => void;
 
+   refValueNodes: string[];
    nodes: AppNode[];
    edges: Edge[];
    setNodes: (nodes: React.SetStateAction<AppNode[]>, selectGraph?: boolean) => void;
@@ -92,7 +93,6 @@ export type RFState = {
    removeNodeDefs: (typeNames: string[]) => void;
 
    addNode: (params: AddNodeParams) => string;
-   removeNode: (nodeId: string) => void;
    addRawNode: (node: AppNode) => void;
 
    updateNodeData: (nodeId: string, newState: Partial<NodeData>) => void;
@@ -138,49 +138,36 @@ export const useFlowStore = create<RFState>((set, get) => {
       set({ nodes: Array.from(nodesMap.values()) });
 
       // save to db
-      DB.getItem(GRAPHS_KEY).then(async (res) => {
-         const currentGraphIndex = ((await DB.getItem(CURRENT_GRAPH_INDEX)) as string) || '';
-         const fetchedGraphs = (res || []) as IGraphData[];
-
-         const graphs = fetchedGraphs.map((graph) => {
-            if (currentGraphIndex === graph.index) {
-               return {
-                  ...graph,
-                  nodes: [...nodesMap.values()],
-                  edges: [...edgesMap.values()]
-               };
-            } else {
-               return graph;
+      Database.config
+         .where({ id: 'config' })
+         .first()
+         .then((config) => {
+            if (config?.currentGraphId) {
+               Database.graphs.update(config?.currentGraphId, {
+                  nodes: Array.from(nodesMap.values()),
+                  edges: Array.from(edgesMap.values())
+               });
             }
          });
-         // save to DB
-         DB.setItem(GRAPHS_KEY, graphs);
-      });
    };
    yjsNodesObserver();
    nodesMap.observe(yjsNodesObserver);
 
    const yjsEdgesObserver = () => {
       set({ edges: Array.from(edgesMap.values()) });
-      // save to db
-      DB.getItem(GRAPHS_KEY).then(async (res) => {
-         const currentGraphIndex = ((await DB.getItem(CURRENT_GRAPH_INDEX)) as string) || '';
-         const fetchedGraphs = (res || []) as IGraphData[];
 
-         const graphs = fetchedGraphs.map((graph) => {
-            if (currentGraphIndex === graph.index) {
-               return {
-                  ...graph,
-                  nodes: [...nodesMap.values()],
-                  edges: [...edgesMap.values()]
-               };
-            } else {
-               return graph;
+      // save to db
+      Database.config
+         .where({ id: 'config' })
+         .first()
+         .then((config) => {
+            if (config?.currentGraphId) {
+               Database.graphs.update(config?.currentGraphId, {
+                  nodes: Array.from(nodesMap.values()),
+                  edges: Array.from(edgesMap.values())
+               });
             }
          });
-         // save to DB
-         DB.setItem(GRAPHS_KEY, graphs);
-      });
    };
    yjsEdgesObserver();
    nodesMap.observe(yjsEdgesObserver);
@@ -189,9 +176,13 @@ export const useFlowStore = create<RFState>((set, get) => {
 
    // === Return the store object ===
    return {
+      appLoading: false,
+      setAppLoading: (loading) => set({ appLoading: loading }),
+
       panOnDrag: true,
       setPanOnDrag: (panOnDrag) => set({ panOnDrag }),
 
+      refValueNodes: [],
       nodes: [],
 
       edges: [],
@@ -254,16 +245,39 @@ export const useFlowStore = create<RFState>((set, get) => {
                nodesMap.set(change.item.id, change.item);
             } else if (change.type === 'remove' && nodesMap.has(change.id)) {
                const deletedNode = nodesMap.get(change.id)!;
-               const connectedEdges = getConnectedEdges([deletedNode], [...edgesMap.values()]);
+               const connectedEdges = getConnectedEdges([deletedNode], get().edges);
+
+               if (isPrimitiveNode(deletedNode)) {
+                  disconnectPrimitiveNode(deletedNode.id);
+               }
 
                nodesMap.delete(change.id);
 
                // Deletes any edges connected to this deleted node
                for (const edge of connectedEdges) {
                   edgesMap.delete(edge.id);
+                  if (edge.source === change.id) {
+                     let inputData: Partial<HandleState> = { isConnected: false };
+                     const targetNode = nodesMap.get(edge.target);
+                     if (get().refValueNodes.includes(targetNode?.type!)) {
+                        inputData = { ...inputData, ref: undefined };
+                     }
+                     get().updateInputData({
+                        nodeId: edge.target,
+                        display_name: edge.targetHandle?.split('::')?.[1] || '',
+                        data: inputData
+                     });
+                  } else if (edge.target === change.id) {
+                     get().updateOutputData({
+                        nodeId: edge.source,
+                        display_name: edge.sourceHandle?.split('::')?.[1] || '',
+                        data: { isConnected: false }
+                     });
+                  }
                }
             } else {
                // Use the default changes `applyNodeChanges` prepared for us
+               // console.log('Applying node changes>>', change, nextNodes.find((n) => n.id === change.id)!);
                nodesMap.set(change.id, nextNodes.find((n) => n.id === change.id)!);
             }
          }
@@ -285,7 +299,10 @@ export const useFlowStore = create<RFState>((set, get) => {
       },
 
       onConnect: (connection: Connection) => {
-         const filterEdges = get().edges.filter(
+         const edges = get().edges;
+         const pEdge = edges.find((edge) => edge.targetHandle === connection.targetHandle);
+
+         const filterEdges = edges.filter(
             (edge) =>
                !(edge.target === connection.target && edge.targetHandle === connection.targetHandle)
          );
@@ -332,10 +349,27 @@ export const useFlowStore = create<RFState>((set, get) => {
          if (newConn) {
             const { updateInputData, updateOutputData, setEdges } = get();
 
+            if (pEdge) {
+               get().updateOutputData({
+                  nodeId: pEdge.source,
+                  display_name: getHandleName(pEdge.sourceHandle!),
+                  data: { isConnected: false }
+               });
+            }
+
+            let inputData: Partial<HandleState> = { isConnected: true };
+            const sourceNode = get().nodes.find((node) => node.id === connection.source);
+            if (sourceNode && get().refValueNodes.includes(target.type!)) {
+               inputData = {
+                  ...inputData,
+                  ref: { nodeId: sourceNode.id, handleName: getHandleName(sourceHandle) }
+               };
+            }
+
             updateInputData({
                nodeId: target.id,
                display_name: _targetHandle.display_name,
-               data: { isConnected: true }
+               data: inputData
             });
 
             updateOutputData({
@@ -366,6 +400,16 @@ export const useFlowStore = create<RFState>((set, get) => {
                   // components[NODE_GROUP_NAME] = GroupNode;
                } else {
                   components[type] = createNodeComponentFromDef(def, updateInputData);
+               }
+               if (def.inputs) {
+                  const inputs = Object.entries(def.inputs);
+                  for (const [key, _] of inputs) {
+                     if (isRefInputType(key)) {
+                        if (!get().refValueNodes.includes(type)) {
+                           get().refValueNodes.push(type);
+                        }
+                     }
+                  }
                }
                return components;
             }, {} as NodeComponents);
@@ -428,22 +472,6 @@ export const useFlowStore = create<RFState>((set, get) => {
       },
 
       addRawNode: (node: Node<NodeData>) => nodesMap.set(node.id, node),
-      removeNode: (nodeId: string) => {
-         const node = nodesMap.get(nodeId);
-         if (!node) return;
-
-         if (isPrimitiveNode(node)) {
-            disconnectPrimitiveNode(node.id);
-         }
-
-         nodesMap.delete(nodeId);
-         const edges = edgesMap.values();
-         for (const edge of edges) {
-            if (edge.source === nodeId || edge.target === nodeId) {
-               edgesMap.delete(edge.id);
-            }
-         }
-      },
 
       updateNodeData: (nodeId: string, newState: Partial<NodeData>) => {
          const node = nodesMap.get(nodeId);

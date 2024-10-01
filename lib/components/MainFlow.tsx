@@ -56,7 +56,6 @@ const selector = (state: RFState) => ({
    setEdges: state.setEdges,
    nodeComponents: state.nodeComponents,
    loadNodeDefsFromApi: state.loadNodeDefsFromApi,
-   nodeDefs: state.nodeDefs,
    addNode: state.addNode,
    updateInputData: state.updateInputData,
    updateOutputData: state.updateOutputData,
@@ -69,11 +68,9 @@ const selector = (state: RFState) => ({
    registerEdgeType: state.registerEdgeType,
    addRawNode: state.addRawNode,
    executions: state.executions,
-   isUpdatingEdge: state.isUpdatingEdge,
    setIsUpdatingEdge: state.setIsUpdatingEdge,
-   currentHandleEdge: state.currentHandleEdge,
-   setCurrentHandleEdge: state.setCurrentHandleEdge,
-   addNodeDefComponent: state.addNodeDefComponent
+   addNodeDefComponent: state.addNodeDefComponent,
+   refValueNodes: state.refValueNodes,
 });
 
 export function MainFlow() {
@@ -86,25 +83,21 @@ export function MainFlow() {
       onConnect,
       setNodes,
       setEdges,
-      nodeDefs,
       nodeComponents,
       loadNodeDefsFromApi,
       addNode,
       hotKeysShortcut,
       hotKeysHandlers,
-      setCurrentConnectionLineType,
       edgeComponents,
       registerEdgeType,
       updateInputData,
       updateOutputData,
-      isUpdatingEdge,
       setIsUpdatingEdge,
-      currentHandleEdge,
-      setCurrentHandleEdge,
-      addNodeDefComponent
+      addNodeDefComponent,
+      refValueNodes
    } = useFlowStore(selector);
 
-   const { currentStateGraphRunIndex, addNewGraph } = useGraphContext();
+   const { currentSnapshotIndex, addNewGraph } = useGraphContext();
 
    const { getNodes, getEdges, getViewport, fitView, screenToFlowPosition } = useReactFlow<
       AppNode,
@@ -114,10 +107,9 @@ export function MainFlow() {
    const { loadCurrentSettings, addSetting } = useSettings();
    const { getNodeDefs, appConfig, getNodeComponents } = useApiContext();
 
-   const { saveSerializedGraph, loadSerializedGraph } = useGraph();
+   const { loadSerializedGraph } = useGraph();
 
    const debounceTimer = useRef<NodeJS.Timeout | null>(null);
-   const [Component, setComponent] = useState<any>(null);
 
    useEffect(() => {
       loadNodeDefsFromApi(getNodeDefs);
@@ -133,21 +125,6 @@ export function MainFlow() {
       });
    }, [appConfig.serverUrl, appConfig.server]);
 
-   // useEffect(() => {
-   //   if (!execution.output) return;
-
-   //   const node = nodes.find((node) => node.id === execution.currentNodeId);
-   //   if (node?.id !== execution.currentNodeId) return;
-   //   const { images } = execution.output;
-
-   //   const fileView = API_URL.VIEW_FILE({ ...images?.[0] });
-   //   updateInputData({
-   //     name: 'image',
-   //     nodeId: node.id,
-   //     data: { value: makeServerURL(fileView) }
-   //   });
-   // }, [execution, nodes, updateInputData, makeServerURL]);
-
    useEffect(() => {
       const { addThemes } = useSettingsStore.getState();
 
@@ -162,56 +139,9 @@ export function MainFlow() {
       registerEdgeType(HANDLE_TYPES);
    }, []);
 
-   // useEffect(() => {
-   //    (async () => {
-   //       DB.getItem()
-   //       const graphs = [] as IGraphData[];
+   const onConnectEnd = useCallback(handleOnConnectEnd({ onContextMenu, onPaneClick }), [onContextMenu, onPaneClick]);
 
-   //       if (graphs.length > 0) {
-   //          const newGraphs = graphs.map((graph) => {
-   //             return {
-   //                ...graph,
-   //                nodes: graph.nodes.filter(Boolean),
-   //                edges: graph.edges.filter(Boolean)
-   //             };
-   //          });
-
-   //          clearTimeout(debounceTimer?.current ?? '');
-   //          debounceTimer.current = setTimeout(() => {
-   //             saveSerializedGraph(newGraphs);
-   //          }, SAVE_GRAPH_DEBOUNCE);
-   //       }
-   //    })();
-
-   //    // Clean up function
-   //    return () => {
-   //       clearTimeout(debounceTimer?.current ?? '');
-   //    };
-   // }, []);
-
-   // TO DO: open the context menu if you dragged out an edge and didn't connect it,
-   // so we can auto-spawn a compatible node for that edge
-   const onConnectEnd = useCallback(
-      handleOnConnectEnd({
-         nodeDefs,
-         setNodes,
-         onContextMenu,
-         isUpdatingEdge,
-         currentHandleEdge,
-         setCurrentHandleEdge
-      }),
-      [nodes, currentHandleEdge, nodeDefs]
-   );
-
-   const onConnectStart: OnConnectStart = useCallback(
-      handleOnConnectStart({
-         nodes,
-         setNodes,
-         setCurrentHandleEdge,
-         setCurrentConnectionLineType
-      }),
-      [nodes]
-   );
+   const onConnectStart: OnConnectStart = useCallback(handleOnConnectStart(), [nodes]);
 
    // Validation connection for edge-compatability and circular loops
    const isValidConnection = useCallback(validateConnection({ getEdges, getNodes }), [
@@ -235,8 +165,6 @@ export function MainFlow() {
       [hotKeysHandlers]
    );
 
-   // TO DO: this is aggressive; do not change zoom levels. We do not need to have
-   // all nodes on screen at once; we merely do not want to leave too far out
    const onMoveEnd = useCallback(
       (_: MouseEvent | globalThis.TouchEvent | null) => {
          const bounds = getNodesBounds(nodes);
@@ -280,9 +208,11 @@ export function MainFlow() {
          setIsUpdatingEdge,
          updateOutputData,
          updateInputData,
-         setEdges
+         setEdges,
+         refValueNodes,
+         nodes
       }),
-      [edges]
+      [edges, setEdges, nodes]
    );
 
    const { onNodeDrag, onMouseUp } = useDragNode();
@@ -303,13 +233,17 @@ export function MainFlow() {
          onEdgesChange={onEdgesChange}
          connectionMode={ConnectionMode.Loose}
          onConnectStart={(...props) => {
-            if (currentStateGraphRunIndex.length > 0) {
+            // if the current graph is a snapshot, add a new graph 
+            // (with the nodes and edges since they want to continue with it) becasue they can't edit snapshots
+            if (currentSnapshotIndex.length > 0) {
                addNewGraph('', { nodes, edges }, true, true);
             }
             onConnectStart(...props);
          }}
          onConnectEnd={(...props) => {
-            if (currentStateGraphRunIndex.length > 0) {
+            // if the current graph is a snapshot, add a new graph
+            // (with the nodes and edges since they want to continue with it) becasue they can't edit snapshots
+            if (currentSnapshotIndex.length > 0) {
                addNewGraph('', { nodes, edges }, true, true);
             }
             onConnectEnd(...props);
@@ -350,6 +284,7 @@ export function MainFlow() {
          connectionLineComponent={ConnectionLine}
          connectionLineType={ConnectionLineType.Bezier}
          onPaneContextMenu={onContextMenu}
+         // onEdgeClick={onEdgeClick}
       >
          <ReactHotkeys keyName={hotKeysShortcut.join(',')} onKeyDown={handleKeyPress}>
             <Background color={'var(--tr-odd-bg-color)'} variant={BackgroundVariant.Lines} />

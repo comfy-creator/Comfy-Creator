@@ -67,6 +67,7 @@
   align-items: flex-start;
   justify-content: center;
 }
+
 .menu_modal_items_button {
   width: 100%;
   padding: 4px 10px;
@@ -75,11 +76,14 @@
   border-radius: 10px;
   display: flex;
   align-items: center;
+  text-align: center;
+  justify-content: center;
   transition: all ease 0.5s;
   user-select: none;
   cursor: pointer;
   color: var(--input-text);
 }
+
 .menu_modal_items_button .icon {
   display: flex;
   justify-content: center;

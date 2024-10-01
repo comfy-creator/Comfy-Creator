@@ -1,4 +1,4 @@
-import { EdgeType, HandleState, ViewFileArgs } from '../types/types';
+import { EdgeType, HandleState, ViewFileArgs, WidgetType } from '../types/types';
 import { useFlowStore } from '../store/flow';
 import { IPagination } from '../types/api';
 
@@ -100,6 +100,16 @@ export const DEFAULT_HOTKEYS_HANDLERS = {
 
 export const WIDGET_TYPES: EdgeType[] = ['INT', 'STRING', 'BOOLEAN', 'FLOAT', 'ENUM', 'FILEPICKER'];
 export const DISPLAY_TYPES: EdgeType[] = ['IMAGE', 'VIDEO'];
+export const REF_INPUTS: string[] = ['image', 'video', 'Masked Image'];
+export const PASS_OUTPUT_NODE_TYPE = ['MaskImage', 'LoadImage', 'ImageRouter'];
+export const EXCLUDED_NODE_TYPES = [
+   'PreviewImage',
+   'SaveImage',
+   'SaveVideo',
+   'PreviewMaskedImage',
+   'RerouteNode',
+   'Group'
+];
 
 export const HANDLE_TYPES: EdgeType[] = [
    'CLIP',
@@ -114,6 +124,7 @@ export const HANDLE_TYPES: EdgeType[] = [
    'STYLE_MODEL',
    'VAE',
    'TAESD',
+   'EMBEDDING',
 
    // widget types
    'INT',
@@ -144,7 +155,7 @@ export const controlAfterGenerateDef: HandleState | any = {
    options: ['fixed', 'increment', 'decrement', 'randomize']
 };
 
-export const DEFAULT_SERVER_URL = 'http://localhost:8881';
+export const DEFAULT_SERVER_URL = 'http://localhost:9009/api/v1';
 export const DEFAULT_SERVER_PROTOCOL = 'ws' as const;
 
 // export const DEFAULT_SERVER_URL = 'http://localhost:30031';
@@ -156,6 +167,7 @@ export const API_URL = {
    GET_NODE_DEFS: '/object_info',
    GET_REACT_COMPONENTS: '/react-components',
    GENERATE: '/generate',
+   UPLOAD: '/upload',
    GET_HISTORY: (maxItems: number) => `/history?max_items=${maxItems}`,
    GET_SYSTEM_STATS: '/system_stats',
    GET_USER_CONFIG: '/users',

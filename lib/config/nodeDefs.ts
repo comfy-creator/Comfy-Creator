@@ -11,8 +11,12 @@ export const LoadImage: NodeDefinition = {
          edge_type: 'STRING',
          widget: {
             type: 'FILEPICKER',
-            multiple_files: true,
-            file_extensions: ['.png', '.jpg', '.jpeg', '.bmp', '.webp', '.avif']
+            multiple: true,
+            file_extensions: ['.png', '.jpg', '.jpeg', '.bmp', '.webp', '.avif'],
+            output_info: {
+               name: 'image'
+            },
+            display_name: 'Images'
          }
       }
    },
@@ -33,7 +37,7 @@ export const SaveImage: NodeDefinition = {
          display_name: 'image',
          edge_type: 'IMAGE'
       },
-      ['temporary']: {
+      ['temp?']: {
          display_name: 'temp?',
          edge_type: 'BOOLEAN',
          widget: {
@@ -50,6 +54,22 @@ export const SaveImage: NodeDefinition = {
    }
 };
 
+export const MaskImage: NodeDefinition = {
+   category: 'masking',
+   display_name: 'Mask Image',
+   description: 'Mask Image',
+   inputs: {
+      ['image']: {
+         display_name: 'image',
+         edge_type: 'IMAGE',
+         widget: {
+            type: 'MASK'
+         }
+      }
+   },
+   outputs: {}
+};
+
 export const LoadVideo: NodeDefinition = {
    category: 'video',
    display_name: 'Load Video',
@@ -60,7 +80,7 @@ export const LoadVideo: NodeDefinition = {
          edge_type: 'STRING',
          widget: {
             type: 'FILEPICKER',
-            multiple_files: true,
+            multiple: true,
             file_extensions: ['.mp4', '.webm', '.mov']
          }
       }
@@ -82,7 +102,7 @@ export const SaveVideo: NodeDefinition = {
          display_name: 'video',
          edge_type: 'VIDEO'
       },
-      ['temporary']: {
+      ['temp?']: {
          display_name: 'temp?',
          edge_type: 'BOOLEAN',
          widget: {
@@ -131,7 +151,7 @@ export const FeatureExtractor: NodeDefinition = {
          edge_type: 'IMAGE'
       },
       feature: {
-         display_name: 'feature type',
+         display_name: 'feature',
          edge_type: 'ENUM',
          widget: {
             type: 'DROPDOWN',
@@ -216,8 +236,8 @@ export const ImageRegen: NodeDefinition = {
          display_name: 'image',
          edge_type: 'IMAGE'
       },
-      ['mask']: {
-         display_name: 'mask',
+      ['Masked Image']: {
+         display_name: 'Masked Image',
          edge_type: 'MASK',
          optional: true
       },
@@ -323,6 +343,38 @@ export const IC_Light: NodeDefinition = {
    }
 };
 
+export const PreviewMaskedImage: NodeDefinition = {
+   category: 'masking',
+   display_name: 'Preview Mask',
+   description: 'Preview the masked image and the image with the drawings',
+   inputs: {
+      ['Masked Image']: {
+         display_name: 'Masked Image',
+         edge_type: 'MASK',
+         widget: {
+            type: 'PREVIEW_MASKED_IMAGE'
+         }
+      }
+   },
+   outputs: {}
+};
+
+export const ImageRouter: NodeDefinition = {
+   category: 'image',
+   display_name: 'Image Router',
+   description: 'Image Router',
+   inputs: {
+      ['image']: {
+         display_name: 'image',
+         edge_type: 'IMAGE',
+         widget: {
+            type: 'IMAGE_ROUTER'
+         }
+      }
+   },
+   outputs: {}
+};
+
 export const AllNodeDefs = {
    LoadImage,
    SaveImage,
@@ -335,7 +387,10 @@ export const AllNodeDefs = {
    ImageRegen,
    SelectObject,
    RemoveBackground,
-   IC_Light
+   IC_Light,
+   MaskImage,
+   PreviewMaskedImage,
+   ImageRouter
 };
 
 function buildInput(type: string, name: string, options: any, optional: boolean) {

@@ -4,6 +4,7 @@ import './menu.module.scss';
 import { BookmarkIcon } from '@radix-ui/react-icons';
 import ImageFeed from './ImageFeed';
 import Models from './Models';
+import { Button } from '@/components/ui/button';
 
 const Tabs = [
    {
@@ -44,9 +45,14 @@ const Menu = () => {
 
    return (
       <>
-         <button id="comfy-load-default-button" onClick={showModal}>
+         <Button
+            variant="outline"
+            className="!py-1 h-[35px] hover:!bg-white/[1%] hover:!text-fg"
+            id="comfy-load-default-button"
+            onClick={showModal}
+         >
             Menu
-         </button>
+         </Button>
          <Modal
             open={isModalOpen}
             onCancel={handleCancel}
@@ -71,11 +77,7 @@ const Menu = () => {
                   ))}
                </div>
                <div className="menu_modal_content">
-                  {activeTab?.id === 1 ? (
-                     <ImageFeed />
-                  ) : activeTab?.id === 2 ? (
-                     <Models />
-                  ) : null}
+                  {activeTab?.id === 1 ? <ImageFeed /> : activeTab?.id === 2 ? <Models /> : null}
                </div>
             </div>
          </Modal>

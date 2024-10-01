@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { RFState, useFlowStore } from '../../store/flow';
+import { Textarea } from '@/components/ui/textarea';
 
 type TextProps = {
    label: string;
@@ -19,11 +20,11 @@ export function TextWidget({ disabled, value, onChange }: TextProps) {
    const [inputValue, setInputValue] = useState(value);
 
    return (
-      <textarea
+      <Textarea
          rows={4}
          value={inputValue}
          disabled={disabled}
-         className="comfy-multiline-input"
+         className="mt-2 !bg-bg !rounded-lg !text-dragText focus:!bg-bg hover:!bg-bg !text-[10px] !border-none resize-none focus:!ring-0"
          style={{ width: '100%', borderRadius: '4px' }}
          onChange={(e) => {
             setInputValue(e.target.value);

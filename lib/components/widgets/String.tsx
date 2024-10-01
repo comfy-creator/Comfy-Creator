@@ -22,11 +22,11 @@ export function StringWidget({ disabled, label, value, onChange }: StringProps) 
   return (
     <div className="widget_box">
       <div className="widget_input" onClick={() => setShowDialog(true)}>
-        <div className={`widget_input_item ${disabledClass}`}>
+        <div className={`gap-1 flex text-[#b2b2b2] mx-[5px] text-[0.6rem] items-center ${disabledClass}`}>
           <div>{label}</div>
         </div>
 
-        <div className={`widget_input_item ${disabledClass}`}>
+        <div className={`gap-1 flex text-[#b2b2b2] mx-[5px] text-[0.6rem] items-center ${disabledClass}`}>
           <div>{inputValue}</div>
         </div>
       </div>

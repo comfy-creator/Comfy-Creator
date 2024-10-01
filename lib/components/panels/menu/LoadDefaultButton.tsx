@@ -1,31 +1,36 @@
 import { useGraph } from '../../../hooks/useGraph';
 import { defaultEdges, defaultNodes } from '../../../default-graph';
 import { uuidv4 } from 'lib0/random';
-import { RFState, useFlowStore } from '../../../store/flow';
+import { Button } from '@/components/ui/button';
 
 const LoadDefaultButton = () => {
-  const { loadSerializedGraph } = useGraph();
+   const { loadSerializedGraph } = useGraph();
 
-  const handleClick = () => {
-    const value = confirm('Load default workflow?');
+   const handleClick = () => {
+      const value = confirm('Load default workflow?');
 
-    if (value) {
-      const graph = {
-        index: uuidv4(),
-        label: 'Default',
-        nodes: defaultNodes,
-        edges: defaultEdges
-      };
+      if (value) {
+         const graph = {
+            id: uuidv4(),
+            label: 'Default',
+            nodes: defaultNodes,
+            edges: defaultEdges
+         };
 
-      loadSerializedGraph([graph], true);
-    }
-  };
+         loadSerializedGraph(graph, true);
+      }
+   };
 
-  return (
-    <button id="comfy-load-default-button" onClick={handleClick}>
-      Load Default
-    </button>
-  );
+   return (
+      <Button
+         variant="outline"
+         className="!py-1 h-[35px] hover:!bg-white/[1%] hover:!text-fg"
+         id="comfy-load-default-button"
+         onClick={handleClick}
+      >
+         Load Default
+      </Button>
+   );
 };
 
 export default LoadDefaultButton;
