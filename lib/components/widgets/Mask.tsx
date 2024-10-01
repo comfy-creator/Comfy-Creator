@@ -503,9 +503,7 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
 
    const toggleEraser = () => {
       setIsEraserActive(!isEraserActive);
-      // if (isEraserActive) {
-      //    setBrushColor(brushColors[Math.floor(Math.random() * brushColors.length)]); // Restore a random brush color when switching back
-      // }
+   
    };
 
    useEffect(() => {

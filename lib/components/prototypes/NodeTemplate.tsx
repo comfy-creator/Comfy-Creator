@@ -38,7 +38,6 @@ import { useFlowStore } from '../../store/flow';
 import { isDisplayType, makeHandleId } from '../../utils/node';
 import { FilePickerWidget, FileProps } from '../widgets/FilePicker';
 import { TRANSFORM_POINT } from '../../config/constants';
-import { Card, CardHeader, CardBody, CardFooter, Divider, Link, Image } from '@nextui-org/react';
 import { MaskWidget } from '../widgets/Mask';
 import { ImageRouterWidget } from '../widgets/ImageRouter';
 import PreviewMaskedImageWidget from '../widgets/PreviewMask';

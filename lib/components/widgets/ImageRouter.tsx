@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useFlowStore } from '../../store/flow';
-import { AppNode, RefValue } from '../../types/types';
+import { RefValue } from '../../types/types';
 import { makeHandleId } from '../../utils/node';
 
 export const ImageRouterWidget = ({

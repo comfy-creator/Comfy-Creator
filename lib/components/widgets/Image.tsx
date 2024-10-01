@@ -5,14 +5,6 @@ type ImageProps = {
   value?: string | string[];
 };
 
-const demoUrls = [
-  'https://picsum.photos/id/28/4928/3264',
-  'https://picsum.photos/id/22/4434/3729',
-  'https://picsum.photos/id/10/2500/1667',
-  'https://picsum.photos/id/43/1280/831',
-  'https://picsum.photos/id/49/1280/792'
-];
-
 export function ImageWidget({ value }: ImageProps) {
   const imagesRef = useRef<HTMLDivElement>(null);
   const [gallery, setGallery] = useState<Viewer | null>(null);

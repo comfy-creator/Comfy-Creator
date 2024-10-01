@@ -1,6 +1,3 @@
-import { useEffect, useState } from 'react';
-import { WidgetBackwardIcon, WidgetForwardIcon } from '../icons/WidgetDirectionIcon';
-// import { Select, SelectItem } from '@nextui-org/react';
 import {
    SelectContent,
    SelectTrigger,
@@ -19,7 +16,6 @@ type EnumProps = {
 };
 
 export function EnumWidget({ label, disabled, value, options, onChange, multiSelect }: EnumProps) {
-   const [valueIndex, setValueIndex] = useState<number | null>(null);
 
    const handleSelect = (value: string) => {
       if (onChange) {
@@ -47,6 +43,7 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
                alignItems: 'start',
                cursor: 'pointer',
                marginLeft: 0,
+               marginRight: 0,
                flexDirection: 'column',
                justifyContent: 'center !important',
                gap: '0px !important',
@@ -55,57 +52,18 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
          >
             <p className={`widget_input_item_text ${disabledClass}`}>{label}</p>
             <Select>
-               <SelectTrigger className="w-full !text-[10px] p-2 h-[25px] bg-bg border-none outline-none focus:ring-borderColor">
+               <SelectTrigger className="!w-full !text-[10px] p-2 h-[25px] bg-[#3B3B3B] border-none outline-none focus:ring-borderColor">
                   <SelectValue placeholder="Select a feature" />
                </SelectTrigger>
-               <SelectContent className="bg-bg border-none">
+               <SelectContent className="bg-[#3B3B3B] border-none cursor-pointer">
                   {options.map((option) => (
-                     <SelectItem className="!text-xs text-fg" key={option} value={option}>
+                     <SelectItem className="!text-xs text-fg cursor-pointer" key={option} value={option}>
                         {option}
                      </SelectItem>
                   ))}
                </SelectContent>
             </Select>
-            {/* <Select
-               placeholder="Select a feature"
-               onChange={(e) => handleSelect(e.target.value)}
-               value={value}
-               classNames={{
-                  label: 'group-data-[filled=true]:-translate-y-5',
-                  trigger:
-                     '!min-h-[27px] !h-[20px] w-full !text-[10px] !text-dragText bg-bg hover:!bg-bg',
-                  listboxWrapper: 'max-h-[400px]',
-                  innerWrapper: '!h-[20px] !text-dragText',
-                  value: '!text-dragText !text-[10px]'
-               }}
-               listboxProps={{
-                  itemClasses: {
-                     base: [
-                        'rounded-md',
-                        'text-default-500',
-                        'transition-opacity',
-                        'data-[hover=true]:text-fg',
-                        'data-[hover=true]:bg-default-100',
-                        'dark:data-[hover=true]:bg-default-50',
-                        'data-[selectable=true]:focus:bg-default-50',
-                        'data-[pressed=true]:opacity-70',
-                        'data-[focus-visible=true]:ring-default-500'
-                     ]
-                  }
-               }}
-               popoverProps={{
-                  classNames: {
-                     base: 'before:bg-default-200',
-                     content: 'p-0 border-small border-divider bg-bg text-fg'
-                  }
-               }}
-            >
-               {options.map((option) => (
-                  <SelectItem key={option} value={option}>
-                     {option}
-                  </SelectItem>
-               ))}
-            </Select> */}
+            
          </div>
       </div>
    );

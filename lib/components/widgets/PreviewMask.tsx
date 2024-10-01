@@ -8,7 +8,7 @@ type PreviewMaskedImageWidgetProps = {
    nodeId?: string;
 };
 
-const PreviewMaskedImageWidget = ({ nodeId, refValue }: PreviewMaskedImageWidgetProps) => {
+const PreviewMaskedImageWidget = ({  refValue }: PreviewMaskedImageWidgetProps) => {
    const { nodes } = useFlowStore((state) => state);
    const [base64, setBase64] = useState<string | null>(null);
    const canvasRef = useRef<HTMLCanvasElement | null>(null); // Create a ref for the canvas
@@ -39,7 +39,6 @@ const PreviewMaskedImageWidget = ({ nodeId, refValue }: PreviewMaskedImageWidget
    function displayImageFromBase64(base64: string) {
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext('2d');
-      console.log('Here>>>>', ctx, canvas);
       if (!ctx || !canvas) return;
       console.log('Here>>>>');
       const img = new Image();

@@ -1,6 +1,5 @@
 import { ChangeEvent, FC, useEffect, useState } from 'react';
 import { InputDialog } from '../dialogs/InputDialog';
-import { WidgetBackwardIcon, WidgetForwardIcon } from '../icons/WidgetDirectionIcon';
 import { Slider } from '@/components/ui/slider';
 
 type NumberWidgetProps = {
@@ -18,22 +17,6 @@ export const NumberWidget: FC<NumberWidgetProps> = ({ label, disabled, value = 6
       setInputValue(inputValue);
       onChange?.(inputValue);
    }, [inputValue]);
-
-   const handleClickForward = () => {
-      if (disabled) return;
-
-      setInputValue((value) => {
-         return isNaN(value) ? 0 : value + 1;
-      });
-   };
-
-   const handleClickBackward = () => {
-      if (disabled) return;
-
-      setInputValue((value) => {
-         return isNaN(value) ? 0 : value > 0 ? value - 1 : value;
-      });
-   };
 
    const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
       if (disabled) return;
@@ -67,28 +50,7 @@ export const NumberWidget: FC<NumberWidgetProps> = ({ label, disabled, value = 6
             />
          </div>
 
-         {/* <div className="p-1 px-3 w-full flex justify-between border items-center border-borderColor bg-bg rounded-full mt-[4px]">
-            <div className="flex items-center gap-1 text-[0.6rem]">
-               <WidgetBackwardIcon disabled={disabled} onClick={handleClickBackward} />
-               <span
-                  className={`widget_input_item_text  ${disabledClass}`}
-                  onClick={handleShowDialog}
-               >
-                  Value
-               </span>
-            </div>
-
-            <div className="flex items-center gap-1 text-[0.6rem]">
-               <span
-                  className={`widget_input_item_text ${disabledClass}`}
-                  onClick={handleShowDialog}
-               >
-                  {inputValue}
-               </span>
-               <WidgetForwardIcon disabled={disabled} onClick={handleClickForward} />
-            </div>
-         </div> */}
-
+      
          {showDialog && (
             <InputDialog
                onChange={handleInputChange}

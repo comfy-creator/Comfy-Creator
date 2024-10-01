@@ -1,4 +1,3 @@
-import { Checkbox } from '@/components/ui/checkbox';
 import { FC, useEffect, useState } from 'react';
 
 type ToggleProps = {
@@ -35,34 +34,34 @@ export const ToggleWidget: FC<ToggleProps> = ({ label, disabled, checked, onChan
          }}
       >
          <div
-            className="widget_input_item"
-            onClick={handleToggle}
-            style={{
-               alignItems: 'start',
-               cursor: 'pointer',
-               marginLeft: 0,
-               flexDirection: 'column',
-               justifyContent: 'center !important',
-               gap: '0px !important',
-               width: '100%'
-            }}
-         >
+            className=" flex text-[#b2b2b2] mx-[5px] text-[0.6rem] items-start justify-center cursor-pointer w-full flex-col !mx-auto">
             <p className={`widget_input_item_text ${disabledClass}`}>{label}</p>
 
-            {/* <input
-                  type="radio"
-                  checked={input}
-                  onChange={(e) => setInput(e.target.checked)}
-                  style={{ background: 'none', accentColor: '#76b900', margin: 0 }}
-               /> */}
-            <div className="flex !bg-bg hover:!bg-bg items-center justify-between !w-full data-[hover=true]:!bg-bg px-3 py-1.5 rounded-full">
+  
+            <div className="flex !bg-[#3B3B3B] hover:!bg-[#3B3B3B] items-center justify-between !w-full data-[hover=true]:!bg-[#3B3B3B] px-3 py-1.5 rounded-full"
+            
+           
+               onClick={handleToggle}
+            >
                <p className="text-dragText text-[10px]">{input ? 'True' : 'False'}</p>
-               <Checkbox
-                  checked={input}
-                  onCheckedChange={(checked) => setInput(checked === true)}
-                  className="rounded-full"
-                  aria-setsize={10}
-               />
+
+
+
+               
+               <div
+                  className={`w-10 h-5 flex items-center rounded-full p-1 cursor-pointer transition-all duration-300 ease-in-out ${
+                     input ? 'bg-green-500' : 'bg-red-500'
+                  }`}
+                 
+               >
+                  <div
+                     className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ease-in-out ${
+                        input ? 'translate-x-4' : 'translate-x-0'
+                     }`}
+                  ></div>
+               </div>
+
+
             </div>
          </div>
       </div>
