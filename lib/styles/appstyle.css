@@ -275,20 +275,6 @@ dialog::backdrop {
    align-items: center;
 }
 
-.flow_output_text {
-   color: var(--drag-text);
-   margin-right: 5px;
-   font-size: 0.6rem;
-   transform: none !important;
-}
-
-.flow_input_text {
-   color: var(--drag-text);
-   margin-left: 5px;
-   font-size: 0.6rem;
-   transform: none !important;
-}
-
 .react-flow__handle {
    background: gray;
 }
@@ -323,9 +309,7 @@ dialog::backdrop {
    padding: 8px;
 }
 
-.widgets_container {
-   width: 100%;
-}
+
 
 .widget_container {
    width: 100%;
@@ -435,47 +419,12 @@ button.comfy-settings-btn {
    gap: 5px;
 }
 
-.graph_container {
-   padding: 3px;
-   display: flex;
-   flex-direction: row;
-   align-items: center;
-   justify-content: space-between;
-   gap: 7px;
-   cursor: pointer;
-}
 
 .graph_title_container {
    width: 100%;
    display: flex;
    align-items: center;
    justify-content: space-between;
-}
-
-.graph_title {
-   margin: 1px 0;
-   color: #b2b2b2;
-   font-size: 0.9rem;
-}
-
-.add_graph_icon {
-   font-size: 1.2rem;
-   color: #b2b2b2;
-   cursor: pointer;
-}
-
-.graph_label {
-   margin: 1px 0;
-   color: #b2b2b2;
-   font-size: 0.8rem;
-}
-
-.graph_actions {
-   display: flex;
-   gap: 10px;
-   align-items: center;
-   justify-content: space-between;
-   font-size: 1.1rem;
 }
 
 .graph_selected {
@@ -498,19 +447,7 @@ button.comfy-settings-btn {
    position: relative;
 }
 
-.dropdown {
-   width: 100%;
-   padding: 2px;
-   border-radius: 5px;
-   font-size: 10px;
-   background: var(--comfy-menu-bg);
-   color: var(--fg-color);
-}
 
-/* .no_scrollbar {
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-} */
 
 input[type="color"]::-webkit-color-swatch {
    border-radius: 50%;

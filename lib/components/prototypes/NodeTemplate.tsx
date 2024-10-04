@@ -338,8 +338,8 @@ export const createNodeComponentFromDef = (
                            <div className="flow_output_container">{outputHandles}</div>
                         </div>
 
-                        <div className="widgets_container">{inputWidgets}</div>
-                        <div className="widgets_container">{displayWidgets}</div>
+                        <div className="w-full">{inputWidgets}</div>
+                        <div className="w-full">{displayWidgets}</div>
                      </div>
                   </>
                )}
@@ -483,7 +483,7 @@ function InputHandle({ nodeId, handle, theme }: InputHandleProps) {
             className={`flow_handler left ${handle.edge_type}`}
          />
          <span
-            className="flow_input_text"
+            className="text-dragText text-[0.6rem] !transform-none ml-[5px]"
             style={{ color: NODE_TEXT_COLOR, opacity: handle.isConnected ? 0.7 : 1 }}
          >
             {handle.display_name}
@@ -523,8 +523,9 @@ function OutputHandle({ nodeId, handle, theme }: OutputHandleProps) {
             id={makeHandleId(nodeId, handle.display_name)}
             className={`flow_handler right ${handle.edge_type}`}
          />
+
          <span
-            className="flow_output_text"
+            className=" text-dragText text-[0.6rem] !transform-none ml-[5px]"
             style={{ color: NODE_TEXT_COLOR, opacity: handle.isConnected ? 0.7 : 1 }}
          >
             {handle.display_name}
@@ -604,7 +605,7 @@ function WidgetHandle({ nodeId, data, theme }: WidgetHandleProps) {
          />
 
          {(data.widget as WidgetDefinition)?.type === 'TEXT' && (
-            <div className="flow_input_text">{data.display_name}</div>
+            <div className=" text-dragText text-[0.6rem] !transform-none ml-[5px]">{data.display_name}</div>
          )}
       </div>
    );
