@@ -77,7 +77,7 @@ export function FilePickerWidget({
                ...outputs[outputInfo.name],
                value: files?.map((f) => f.url) || []
             };
-         }-
+         }
       }
    };
 
@@ -263,7 +263,7 @@ export function FilePickerWidget({
             open={isModalOpen}
             onCancel={toggleModal}
             footer={null}
-            className="menu_modal"
+            className="menu_modal "
             width={'fit-content'}
             centered
             height="70vh"
@@ -304,10 +304,7 @@ export function FilePickerWidget({
                   />
                   <p
                      onClick={() => handleNavigation('next')}
-                     className="w-full px-[10px] py-[4px] pl-0 mb-[14px]
-                      flex items-center justify-center text-center transition-all 
-                      ease-in-out duration-500 select-none cursor-pointer text-inputText
-                       bg-white !p-1 rounded-full "
+                     className="menu_modal_items_button bg-white !p-1 rounded-full"
                      style={{
                         width: 'fit-content',
                         padding: '0'
