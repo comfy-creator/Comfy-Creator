@@ -50,7 +50,7 @@ const ExtraOptions = ({
         </label>
       </div>
 
-      <div id="extraOptions" style={{ width: '100%', display: 'none' }}>
+      <div id="extraOptions" className='w-full hidden'>
         <div>
           <label>Batch Count</label>
           <input
@@ -58,7 +58,7 @@ const ExtraOptions = ({
             type="number"
             value={batchCount}
             id="batchCountInputNumber"
-            style={{ width: '35%', marginLeft: '0.4em' }}
+            className='w-[35%] ml-[0.4em]'
             onInput={(i) => {
               setBatchCount((i.target as any).value);
               let batchCountInputRange = document.getElementById(

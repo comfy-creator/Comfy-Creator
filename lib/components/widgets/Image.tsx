@@ -17,16 +17,14 @@ export function ImageWidget({ value }: ImageProps) {
   }, [imagesRef]);
 
   const images = Array.isArray(value) ? value : [value];
-  const style =
-    images.length > 1 ? { gap: '5px', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)' } : {};
 
   return (
-    <div ref={imagesRef} style={{ ...style, width: '100%' }}>
+    <div ref={imagesRef} className={`w-full ${images.length > 1 && 'grid grid-cols-2 gap-[5px]'}`}>
       {images.map((image, i) => (
         <img
           src={image}
           alt={image}
-          style={{ maxWidth: '100%', height: '100%', borderRadius: '4px' }}
+          className=' max-w-full h-full rounded'
         />
       ))}
     </div>

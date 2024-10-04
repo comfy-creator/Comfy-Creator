@@ -87,9 +87,9 @@ export const ImageRouterWidget = ({
 
    return (
       <div>
-         <p className="widget_input_item_text mt-[.3rem] text-[.6rem]">images</p>
+         <p className="text-[0.6rem] mt-[0.3rem] text-dragText">images</p>
          {refValue?.nodeId && images?.length <= 0 && (
-            <p>Add image to ref node to get output handles</p>
+            <p className="text-[0.4rem] text-inputText">Add image to ref node to get output handles</p>
          )}
       </div>
    );

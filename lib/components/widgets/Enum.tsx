@@ -23,39 +23,19 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
       }
    };
 
-   const disabledClass = disabled ? 'widget_input_item_disabled' : '';
-
    return (
       <div
-         style={{
-            alignItems: 'center',
-            cursor: 'pointer',
-            position: 'relative',
-            top: '2px',
-            opacity: disabled ? 0.5 : 1,
-            width: '100%'
-         }}
-         className="widget_box mt-[4px]"
+         className={`w-full mt-[4px] relative top-[2px] flex items-center justify-between cursor-pointer ${disabled ? "opacity-50" : "opacity-100"}`}
       >
          <div
-            className="widget_input_item"
-            style={{
-               alignItems: 'start',
-               cursor: 'pointer',
-               marginLeft: 0,
-               marginRight: 0,
-               flexDirection: 'column',
-               justifyContent: 'center !important',
-               gap: '0px !important',
-               width: '100%'
-            }}
-         >
-            <p className={`widget_input_item_text ${disabledClass}`}>{label}</p>
+            className="w-full flex cursor-pointer m-0 flex-col items-start justify-center gap-0 text-[#b2b2b2] text-[0.6rem]"
+			>
+            <p className={`${disabled && "text-[#656565]"}`}>{label}</p>
             <Select>
-               <SelectTrigger className="!w-full !text-[10px] p-2 h-[25px] bg-[#3B3B3B] border-none outline-none focus:ring-borderColor">
+               <SelectTrigger className="!w-full !text-[10px] p-2 h-[25px] !bg-bg border-none outline-none focus:ring-borderColor">
                   <SelectValue placeholder="Select a feature" />
                </SelectTrigger>
-               <SelectContent className="bg-[#3B3B3B] border-none cursor-pointer">
+               <SelectContent className="!bg-bgk border-none cursor-pointer">
                   {options.map((option) => (
                      <SelectItem className="!text-xs text-fg cursor-pointer" key={option} value={option}>
                         {option}

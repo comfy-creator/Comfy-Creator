@@ -162,8 +162,9 @@ export function LoggingDialog() {
       message: 'Message'
     };
     const keys = Object.keys(cols);
+
     const headers = Object.values(cols).map((title, i) => (
-      <div key={`heaader-${i}`} className="comfy-logging-title">
+      <div key={`heaader-${i}`} className=" bg-trEvenBgColor font-bold mb-1 text-center">
         {title}
       </div>
     ));

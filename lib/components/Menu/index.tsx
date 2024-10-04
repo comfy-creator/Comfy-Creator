@@ -45,14 +45,14 @@ const Menu = () => {
 
    return (
       <>
-         <Button
-            variant="outline"
-            className="!py-1 h-[35px] hover:!bg-white/[1%] hover:!text-fg"
-            id="comfy-load-default-button"
-            onClick={showModal}
-         >
-            Menu
-         </Button>
+   <Button
+variant="outline"
+className="!py-1 h-[35px] hover:!bg-white/[1%] hover:!text-fg cursor-pointer text-inputText bg-comfyInputBg rounded-[8px] border border-borderColor mt-[2px] w-full text-[20px]"
+id="comfy-load-default-button"
+onClick={showModal}
+>
+Menu
+</Button>
          <Modal
             open={isModalOpen}
             onCancel={handleCancel}
@@ -62,21 +62,21 @@ const Menu = () => {
             centered
             height="70vh"
          >
-            <div className="menu_modal_container">
-               <div className="menu_modal_items">
+            <div className="w-full h-full flex gap-[30px]">
+               <div className="!w-[150px] h-full flex flex-col items-start justify-center">
                   {tabs.map((tab) => (
                      <div
-                        className={`menu_modal_items_button ${activeTab?.id === tab.id && 'active'}`}
+                        className={`w-full py-1 pr-2.5 mb-3.5 rounded-[10px] flex items-center justify-center transition-all ease-in-out duration-500 text-center select-none cursor-pointer text-inputText hover:color-bg hover:bg-fg ${activeTab?.id === tab.id && 'color-bg bg-fg font-medium'}`}
                         onClick={() => selectTab(tab.id)}
                      >
-                        <span className="icon">
-                           <BookmarkIcon />
+                        <span className={`flex justify-center items-center mr-2 p-1.5 rounded-[10px] bg-fg transition-all ease-in-out duration-500 ${activeTab?.id === tab.id && 'bg-transparent'}`}>
+                           <BookmarkIcon className='fill-current text-bg' />
                         </span>
                         <span>{tab.name}</span>
                      </div>
                   ))}
                </div>
-               <div className="menu_modal_content">
+               <div className="w-full h-full">
                   {activeTab?.id === 1 ? <ImageFeed /> : activeTab?.id === 2 ? <Models /> : null}
                </div>
             </div>
@@ -86,3 +86,5 @@ const Menu = () => {
 };
 
 export default Menu;
+
+

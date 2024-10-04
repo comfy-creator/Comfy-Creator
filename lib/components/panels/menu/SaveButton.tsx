@@ -43,7 +43,7 @@ const SaveButton = ({ promptFilename }: SaveButtonProps) => {
    return (
       <Button
          variant="outline"
-         className="!py-1 h-[35px] hover:!bg-white/[1%] hover:!text-fg"
+         className="!py-1 h-[35px] hover:!bg-white/[1%] hover:!text-fg cursor-pointer text-inputText bg-comfyInputBg rounded-[8px] border border-borderColor mt-[2px] w-full text-[20px]"
          id="comfy-save-button"
          onClick={handleClick}
       >

@@ -194,10 +194,12 @@ export const SettingsContextProvider = ({ children }: { children: ReactNode }) =
         let element: ReactNode;
 
         function buildSettingInput(element: ReactNode) {
+
+          
           return (
             <tr key={i}>
               <td>
-                <label htmlFor={id} className={tooltip !== '' ? 'comfy-tooltip-indicator' : ''}>
+                <label htmlFor={id} className={tooltip !== '' ? 'underline decoration-dashed' : ''}>
                   {name}
                 </label>
               </td>

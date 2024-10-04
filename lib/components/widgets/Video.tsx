@@ -7,7 +7,7 @@ type VideoProps = {
 
 export function VideoWidget({ value }: VideoProps) {
   return (
-    <video autoPlay={true} style={{ width: '100%', height: 'auto' }}>
+    <video autoPlay={true} className="w-full h-auto">
       <source src={value.src} type={value.type} />
       Your browser does not support the videos.
     </video>

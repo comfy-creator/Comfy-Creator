@@ -30,13 +30,11 @@ export const NumberWidget: FC<NumberWidgetProps> = ({ label, disabled, value = 6
       setShowDialog(true);
    };
 
-   const disabledClass = disabled ? 'widget_input_item_disabled' : '';
-
    return (
       <div className="flex flex-col mt-[6px]">
          <div>
             <div className="flex items-center justify-between mb-2 text-[9px]">
-               <p className={` ${disabledClass}`}>{label}</p>
+               <p className={`${disabled && "text-[#656565]"}`}>{label}</p>
                <p onClick={handleShowDialog}>{value}</p>
             </div>
             <Slider

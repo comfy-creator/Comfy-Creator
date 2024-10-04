@@ -12,21 +12,19 @@ export function StringWidget({ disabled, label, value, onChange }: StringProps) 
   const [showDialog, setShowDialog] = useState(false);
   const [inputValue, setInputValue] = useState(value);
 
-  const disabledClass = disabled ? 'widget_input_item_disabled' : '';
-
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
     onChange?.(e.target.value);
   };
 
   return (
-    <div className="widget_box">
-      <div className="widget_input" onClick={() => setShowDialog(true)}>
-        <div className={`gap-1 flex text-[#b2b2b2] mx-[5px] text-[0.6rem] items-center ${disabledClass}`}>
+    <div className="w-full flex items-center justify-between">
+      <div className="w-full mt-[5px] flex gap-[15px] items-center justify-between rounded-[10px] bg-comfyInputBg border border-borderColor" onClick={() => setShowDialog(true)}>
+        <div className={`gap-1 flex text-[#b2b2b2] mx-[5px] text-[0.6rem] items-center ${disabled && "text-[#656565]"}`}>
           <div>{label}</div>
         </div>
 
-        <div className={`gap-1 flex text-[#b2b2b2] mx-[5px] text-[0.6rem] items-center ${disabledClass}`}>
+        <div className={`gap-1 flex text-[#b2b2b2] mx-[5px] text-[0.6rem] items-center ${disabled && "text-[#656565]"}`}>
           <div>{inputValue}</div>
         </div>
       </div>

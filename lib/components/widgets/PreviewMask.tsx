@@ -60,7 +60,7 @@ const PreviewMaskedImageWidget = ({  refValue }: PreviewMaskedImageWidgetProps) 
    }
 
    return (
-      <div className="preview-masked-image-node">
+      <div className="">
          <canvas ref={canvasRef} />
       </div>
    );

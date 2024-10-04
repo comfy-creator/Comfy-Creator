@@ -18,7 +18,7 @@ export function ComfySettingsDialog({ open, content, closeDialog }: ComfySetting
       }}
       open={open}
     >
-      <table className="comfy-modal-content comfy-table">
+      <table className="flex flex-col comfy-table">
         <caption>Settings</caption>
         <tbody>
           {/* Settings for API */}

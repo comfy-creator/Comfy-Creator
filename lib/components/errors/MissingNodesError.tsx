@@ -16,7 +16,7 @@ export function MissingNodesError({ nodeTypes, hasAddedNodes = false }: MissingN
   const seenTypes = new Set();
 
   return (
-    <div className="comfy-missing-nodes">
+    <div className="">
       <span>When loading the graph, the following node types were not found:</span>
       <ul>
         {Array.from(new Set(nodeTypes)).map((t) => {
@@ -30,7 +30,7 @@ export function MissingNodesError({ nodeTypes, hasAddedNodes = false }: MissingN
               <li key={t.type}>
                 <span>{t.type}</span>
                 {t.hint && <span>{t.hint}</span>}
-                {t.action && <button onClick={t.action.callback}>{t.action.text}</button>}
+                {t.action && <button className="text-sm ml-[5px]" onClick={t.action.callback}>{t.action.text}</button>}
               </li>
             );
           } else {

@@ -1,7 +1,4 @@
-
-@import './reactflow.css';
 @import './appstyle.css';
-@import './user.css';
 @import './styles.scss';
 
 @tailwind base;

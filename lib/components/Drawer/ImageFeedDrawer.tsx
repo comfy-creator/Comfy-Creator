@@ -26,7 +26,7 @@ const ImageFeedDrawer: React.FC = () => {
   const handleClose = useCallback(() => setOpen(false), []);
 
   return (
-    <div className="App">
+    <div className="">
       <button type="button" onClick={handleOpen}>
         Image feed
       </button>

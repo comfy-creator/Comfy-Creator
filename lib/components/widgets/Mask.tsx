@@ -559,7 +559,7 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
 
    return (
       <>
-         <p className="text-[9px] mt-[7px]">image</p>
+         <p className="text-[9px] mt-[7px] text-inputText">image</p>
          {DisplayShapes}
 
          <Modal
@@ -592,7 +592,7 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
                      <LuRedo2 color="white" />
                   </Button>
                   <Button
-                     className={`bg-borderColor hover:bg-borderColor text-xs p-2 h-[25px] `}
+                     className={`bg-borderColor hover:bg-borderColor text-xs p-2 h-[25px]`}
                      onClick={toggleEraser}
                   >
                      {isEraserActive ? (
@@ -612,9 +612,7 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
                <div className="flex gap-5 items-center justify-center h-full overflow-auto">
                   <div className="flex gap-5 relative">
                      {image && (
-                        <div className="relative" style={{ width: '350px' }}>
-                           
-
+                        <div className="relative w-[350px]">
                            <div className="">
                               <div className="flex flex-col gap-1 p-3">
                                  <h3 className="text-base font-semibold mb-1 text-fg">

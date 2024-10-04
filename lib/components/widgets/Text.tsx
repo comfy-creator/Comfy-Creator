@@ -24,8 +24,7 @@ export function TextWidget({ disabled, value, onChange }: TextProps) {
          rows={4}
          value={inputValue}
          disabled={disabled}
-         className="mt-2 !bg-bg !rounded-lg !text-dragText focus:!bg-bg hover:!bg-bg !text-[10px] !border-none resize-none focus:!ring-0"
-         style={{ width: '100%', borderRadius: '4px' }}
+         className="w-full mt-2 !bg-bg !rounded-lg !text-dragText focus:!bg-bg hover:!bg-bg !text-[10px] !border-none resize-none focus:!ring-0"
          onChange={(e) => {
             setInputValue(e.target.value);
             onChange?.(e.target.value);

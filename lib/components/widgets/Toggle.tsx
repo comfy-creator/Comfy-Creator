@@ -23,22 +23,14 @@ export const ToggleWidget: FC<ToggleProps> = ({ label, disabled, checked, onChan
 
    return (
       <div
-         className="widget_box mt-[4px]"
-         style={{
-            alignItems: 'center',
-            cursor: 'pointer',
-            position: 'relative',
-            top: '2px',
-            opacity: disabled ? 0.5 : 1,
-            width: '100%'
-         }}
+         className={`w-full relative top-[2px] flex items-center justify-between mt-[4px] cursor-pointer ${disabled ? "opacity-50" : "opacity-100"}`}
       >
          <div
             className=" flex text-[#b2b2b2] mx-[5px] text-[0.6rem] items-start justify-center cursor-pointer w-full flex-col !mx-auto">
             <p className={`widget_input_item_text ${disabledClass}`}>{label}</p>
 
   
-            <div className="flex !bg-[#3B3B3B] hover:!bg-[#3B3B3B] items-center justify-between !w-full data-[hover=true]:!bg-[#3B3B3B] px-3 py-1.5 rounded-full"
+            <div className="flex !bg-bg hover:!bg-bg items-center justify-between !w-full data-[hover=true]:!bg-bg px-3 py-1.5 rounded-full"
             
            
                onClick={handleToggle}

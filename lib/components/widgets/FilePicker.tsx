@@ -77,7 +77,7 @@ export function FilePickerWidget({
                ...outputs[outputInfo.name],
                value: files?.map((f) => f.url) || []
             };
-         }
+         }-
       }
    };
 
@@ -199,21 +199,20 @@ export function FilePickerWidget({
 
    return (
       <>
-         <p className={`text-[9px] mt-[5px]`}>{displayName}</p>
+         <p className="text-[9px] mt-[5px] text-dragText">{displayName}</p>
          <Button
             variant="outline"
-            className="!h-[25px] mt-1 mb-2 !text-[12px] text-dragText bg-bg border-borderColor hover:bg-white/[3%] hover:text-fg"
+            className="h-[25px] mt-1 mb-2 text-[12px] text-dragText bg-bg border-borderColor hover:bg-white/[0.03] hover:text-fg w-full"
             onClick={handleButtonClick}
-            style={{ width: '100%' }}
          >
             Choose {kind}
          </Button>
          {numOfFilesToUpload > 0 && (
             <div className="w-full flex items-center justify-between">
-               <p>
+               <p className="text-dragText">
                   {numOfFilesUploaded} / {numOfFilesToUpload}
                </p>
-               <p>{uploadProgress.toFixed(2)}%</p>
+               <p className="text-dragText">{uploadProgress.toFixed(2)}%</p>
             </div>
          )}
          <ProgressBar progress={(uploadProgress || 0)?.toFixed(2)?.toString()} />
@@ -222,26 +221,20 @@ export function FilePickerWidget({
             onWheelCapture={(e) => e.stopPropagation()}
          >
             {selectedFiles.map(({ url, loading }, index) => (
-               <div className="file relative" key={index}>
+               <div className="relative max-w-[200px]" key={index}>
                   {!loading && (
                      <p
                         onClick={() => removeFile(index)}
-                        className="absolute top-1 right-1 hover:bg-red-500/60 w-[20px] h-[20px] rounded-full flex items-center cursor-pointer justify-center p-1 transition-all duration-300 z-[99]"
+                        className="absolute top-1 right-1 hover:bg-red-500/60 w-[20px] h-[20px] rounded-full flex items-center justify-center p-1 transition-all duration-300 z-[99] cursor-pointer"
                      >
-                        <Cross1Icon
-                           className="icon text-white hover:text-white"
-                           style={{
-                              margin: '0',
-                              fontSize: '4rem'
-                           }}
-                        />
+                        <Cross1Icon className="text-white hover:text-white m-0 text-[4rem]" />
                      </p>
                   )}
-                  <div className="relative" style={{ width: '100%' }}>
+                  <div className="relative w-full">
                      <img
                         src={url}
                         alt="preview"
-                        style={{ width: '100%', opacity: loading ? 0 : 1 }}
+                        className={`w-full ${loading ? 'opacity-0' : 'opacity-100'}`}
                         onClick={() => {
                            toggleModal();
                            setSelectedImage(url);
@@ -249,7 +242,6 @@ export function FilePickerWidget({
                      />
                      {loading && (
                         <div className="absolute inset-0 flex items-center justify-center bg-white/10 z-[999] animate-pulse p-10">
-                           {/* <ProgressBar progress="100" /> */}
                            <Spinner size="sm" />
                         </div>
                      )}
@@ -263,7 +255,7 @@ export function FilePickerWidget({
             ref={fileRef}
             multiple={multiple}
             onChange={handleFileChange}
-            style={{ display: 'none' }}
+            className="hidden"
             key={selectedFiles.length}
          />
 
@@ -271,7 +263,7 @@ export function FilePickerWidget({
             open={isModalOpen}
             onCancel={toggleModal}
             footer={null}
-            className="menu_modal "
+            className="menu_modal"
             width={'fit-content'}
             centered
             height="70vh"
@@ -312,7 +304,10 @@ export function FilePickerWidget({
                   />
                   <p
                      onClick={() => handleNavigation('next')}
-                     className="menu_modal_items_button bg-white !p-1 rounded-full"
+                     className="w-full px-[10px] py-[4px] pl-0 mb-[14px]
+                      flex items-center justify-center text-center transition-all 
+                      ease-in-out duration-500 select-none cursor-pointer text-inputText
+                       bg-white !p-1 rounded-full "
                      style={{
                         width: 'fit-content',
                         padding: '0'

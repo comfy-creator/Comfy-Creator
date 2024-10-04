@@ -137,14 +137,24 @@ const SearchWidget = ({ handleMouseLeave, handleMouseIn, show, widgetRef, props 
    return (
       <div
          ref={widgetRef}
-         className="react-flow litesearchbox graphdialog rounded"
+         className="flex items-center rounded-[12px] p-[4px_10px_4px_2px] absolute top-[10px] left-[10px] min-h-[1em] text-[1.2em] shadow-[0_0_10px_black] z-[9999] bg-comfyMenuBg overflow-hidden pt-[4px]"
          style={{ ...style, display: show ? 'block' : 'none' }}
          onMouseLeave={handleMouseLeave}
          onMouseEnter={handleMouseIn}
       >
-         <span className="name">Search</span>
-         <input autoFocus={true} type="text" className="value rounded" onChange={handleSearch} />
-         <select className="slot_in_type_filter" onChange={(e) => handleFilterChange(e, 'inType')}>
+         <span className="text-[18px] font-sans text-descripText inline-block min-w-[60px] min-h-[1.5em] pl-[5px] pr-[10px]">
+            Search
+         </span>
+         <input
+            autoFocus={true}
+            type="text"
+            className="mt-[3px] min-w-[60px] min-h-[1.5em] bg-comfyInputBg text-inputText pl-[10px] mr-[5px] max-w-[300px] border-2 border-borderColor rounded-[12px] focus:outline-none"
+            onChange={handleSearch}
+         />
+         <select
+            className="mt-[3px] min-w-[60px] min-h-[1.75em] bg-comfyInputBg text-inputText pl-[10px] mr-[5px] max-w-[300px] border-2 border-borderColor rounded-[12px] focus:outline-none"
+            onChange={(e) => handleFilterChange(e, 'inType')}
+         >
             <option value=""></option>
             {data.slotInTypeFilter.map((item, index) => (
                <option key={index} value={item.value}>
@@ -153,7 +163,7 @@ const SearchWidget = ({ handleMouseLeave, handleMouseIn, show, widgetRef, props 
             ))}
          </select>
          <select
-            className="slot_out_type_filter"
+            className="mt-[3px] min-w-[60px] min-h-[1.75em] bg-comfyInputBg text-inputText pl-[10px] mr-[5px] max-w-[300px] border-2 border-borderColor rounded-[12px] focus:outline-none"
             onChange={(e) => handleFilterChange(e, 'outType')}
          >
             <option value=""></option>
@@ -164,12 +174,12 @@ const SearchWidget = ({ handleMouseLeave, handleMouseIn, show, widgetRef, props 
             ))}
          </select>
 
-         <div className="helper">
+         <div className="overflow-auto max-h-[200px] mt-[2px]">
             {displayData.map((item, index) => (
                <div
                   key={index}
                   data-type={item.value}
-                  className={`react-flow lite-search-item ${item.isGeneric ? 'generic_type' : ''}`}
+                  className={`text-inputText bg-comfyInputBg pl-[0.2em] font-tahoma pt-[2px] ${item.isGeneric ? 'opacity-75 text-[#999] italic' : ''} hover:cursor-pointer hover:bg-[#f8f8f8] hover:text-black`}
                   onClick={(e) => handleClick(e, item.value)}
                >
                   {item.label as string}

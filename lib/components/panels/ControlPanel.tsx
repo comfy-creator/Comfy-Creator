@@ -269,24 +269,16 @@ const ControlPanel = () => {
          //  onStop={this.handleStop}
       >
          <div className="control-panel">
-            <div className="comfy-menu" ref={menuContainerEl}>
+            <div
+               className="text-[15px] absolute top-1/2 right-0 text-center z-[999] w-[170px] flex flex-col items-center text-descripText bg-comfyMenuBg font-sans p-[10px] rounded-[8px] shadow-[3px_3px_8px_rgba(0,0,0,0.4)] h-min"
+               ref={menuContainerEl}
+            >
                {loadFileInput}
 
-               <div
-                  className="drag-handle"
-                  style={{
-                     overflow: 'hidden',
-                     position: 'relative',
-                     cursor: 'default',
-                     width: '100%',
-                     display: 'flex',
-                     alignItems: 'center',
-                     justifyContent: 'space-between',
-                     padding: '0 5px',
-                     marginBottom: '10px'
-                  }}
-               >
-                  <span className="drag-handle" />
+               <div className="drag-handle overflow-hidden relative cursor-default w-full flex items-center justify-between px-[5px] mb-[10px]">
+                  <span className="drag-handle w-[10px] h-[20px] inline-block overflow-hidden leading-[5px] p-[3px_4px] cursor-move align-middle mt-[-0.4em] ml-[-0.2em] text-[12px] font-sans tracking-[2px] text-drag-text">
+                     .. .. ..
+                  </span>
                   <button className="comfy-settings-btn" onClick={showSettings}>
                      ⚙️
                   </button>
@@ -295,7 +287,7 @@ const ControlPanel = () => {
                <Button
                   id="queue-button"
                   variant="outline"
-                  className={`!py-1 h-[35px] hover:!bg-white/[1%] hover:!text-fg ${appLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`!py-1 h-[35px] hover:!bg-white/[1%] hover:!text-fg cursor-pointer text-inputText bg-comfyInputBg rounded-[8px] border border-borderColor mt-[2px] w-full text-[20px] ${appLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                   onClick={submitWorkflow}
                   disabled={appLoading}
                   style={{
@@ -308,7 +300,7 @@ const ControlPanel = () => {
                <Button
                   id="comfy-load-button"
                   variant="outline"
-                  className="!py-1 h-[35px] hover:!bg-white/[1%] hover:!text-fg"
+                  className="!py-1 h-[35px] hover:!bg-white/[1%] hover:!text-fg cursor-pointer text-inputText bg-comfyInputBg rounded-[8px] border border-borderColor mt-[2px] w-full text-[20px]"
                   onClick={() => loadFileInputRef?.current?.click()}
                >
                   Load
