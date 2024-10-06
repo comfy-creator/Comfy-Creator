@@ -50,7 +50,7 @@ export function ContextMenu(prps: ContextMenuProps) {
 
    return (
       <div className="context-menu" {...props} style={{ ...style }}>
-         {title && <div>{title}</div>}
+         {title && <div className=" text-fg p-[2px] m-[2px] select-none cursor-pointer ">{title}</div>}
 
          <div
             ref={menuRef}

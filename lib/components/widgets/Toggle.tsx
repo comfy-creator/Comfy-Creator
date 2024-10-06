@@ -31,8 +31,6 @@ export const ToggleWidget: FC<ToggleProps> = ({ label, disabled, checked, onChan
 
   
             <div className="flex !bg-bg hover:!bg-bg items-center justify-between !w-full data-[hover=true]:!bg-bg px-3 py-1.5 rounded-full"
-            
-           
                onClick={handleToggle}
             >
                <p className="text-dragText text-[10px]">{input ? 'True' : 'False'}</p>

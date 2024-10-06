@@ -32,10 +32,10 @@ export function EnumWidget({ label, disabled, value, options, onChange, multiSel
 			>
             <p className={`${disabled && "text-[#656565]"}`}>{label}</p>
             <Select>
-               <SelectTrigger className="!w-full !text-[10px] p-2 h-[25px] !bg-bg border-none outline-none focus:ring-borderColor">
+               <SelectTrigger className="w-full !text-[10px] p-2 h-[25px] !bg-bg border-none outline-none focus:ring-borderColor">
                   <SelectValue placeholder="Select a feature" />
                </SelectTrigger>
-               <SelectContent className="!bg-bgk border-none cursor-pointer">
+               <SelectContent className="!bg-bg border-none cursor-pointer">
                   {options.map((option) => (
                      <SelectItem className="!text-xs text-fg cursor-pointer" key={option} value={option}>
                         {option}

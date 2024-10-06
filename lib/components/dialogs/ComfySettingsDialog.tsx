@@ -18,28 +18,31 @@ export function ComfySettingsDialog({ open, content, closeDialog }: ComfySetting
       }}
       open={open}
     >
+
+
       <table className="flex flex-col comfy-table">
         <caption>Settings</caption>
         <tbody>
           {/* Settings for API */}
           {!appConfig.showAdvanceSettings && (
             <>
-              <tr>
-                <td>
+
+              <tr className='bg-trOddBgColor'>
+                <td className='border-1 border-borderColor p-2'>
                   <label className="">API Key</label>
                 </td>
-                <td>
+                <td className='border-1 border-borderColor p-2'>
                   <input
                     value={appConfig.apiKey}
                     onChange={(e) => setConfig({ apiKey: e.target.value })}
                   />
                 </td>
               </tr>
-              <tr>
-                <td>
+              <tr className='bg-trEvenBgColor'>
+                <td className='border-1 border-borderColor p-2'>
                   <label className="">Server URL</label>
                 </td>
-                <td>
+                <td className='border-1 border-borderColor p-2' >
                   <input
                     value={appConfig.serverUrl}
                     onChange={(e) => setConfig({ serverUrl: e.target.value })}

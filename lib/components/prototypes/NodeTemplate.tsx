@@ -318,7 +318,7 @@ export const createNodeComponentFromDef = (
                <div className="node_label_container">
                   <span
                      className="node_label"
-                     style={{ ...getTransformStyle(zoomSelector), color: NODE_TITLE_COLOR }}
+                     style={{ color: NODE_TITLE_COLOR }}
                   >
                      {typeof nodeDef.display_name === 'string'
                         ? nodeDef.display_name
@@ -473,8 +473,7 @@ function InputHandle({ nodeId, handle, theme }: InputHandleProps) {
       ? { background: color, border: '1px solid transparent' }
       : { border: `1.5px solid ${color}`, backgroundColor: 'transparent' };
 
-   return showInput ? (
-      <div className={`flow_input ${handle.isHighlighted ? 'edge_opacity' : ''}`}>
+   return  <div className={`flow_input ${handle.isHighlighted ? 'edge_opacity' : ''}`}>
          <Handle
             type="target"
             style={{ ...handleStyle }}
@@ -482,16 +481,23 @@ function InputHandle({ nodeId, handle, theme }: InputHandleProps) {
             id={makeHandleId(nodeId, handle.display_name)}
             className={`flow_handler left ${handle.edge_type}`}
          />
-         <span
-            className="text-dragText text-[0.6rem] !transform-none ml-[5px]"
+
+       
+            <span
+               className={`text-dragText text-[0.6rem] !transform-none ml-[5px] `}
             style={{ color: NODE_TEXT_COLOR, opacity: handle.isConnected ? 0.7 : 1 }}
          >
+            <span  style={{  opacity: showInput ? 1 : 0  }}>
+
             {handle.display_name}
-         </span>
+            </span>
+            
+              
+       
+            </span>
+        
       </div>
-   ) : (
-      <div className="flow_input_output_container"></div>
-   );
+ 
 }
 
 interface OutputHandleProps {
@@ -514,7 +520,7 @@ function OutputHandle({ nodeId, handle, theme }: OutputHandleProps) {
       ? { backgroundColor: color, border: '1px solid transparent' }
       : { border: `1.5px solid ${color}`, backgroundColor: 'transparent' };
 
-   return showOutput ? (
+   return (
       <div className={`flow_output ${handle.isHighlighted ? 'edge_opacity' : ''}`}>
          <Handle
             type="source"
@@ -528,12 +534,15 @@ function OutputHandle({ nodeId, handle, theme }: OutputHandleProps) {
             className=" text-dragText text-[0.6rem] !transform-none ml-[5px]"
             style={{ color: NODE_TEXT_COLOR, opacity: handle.isConnected ? 0.7 : 1 }}
          >
-            {handle.display_name}
+           
+
+            <span  style={{  opacity: showOutput ? 1 : 0  }}>
+               {handle.display_name}
+            </span>
+
          </span>
       </div>
-   ) : (
-      <div className="flow_input_output_container"></div>
-   );
+   ) 
 }
 
 interface WidgetProps {
@@ -629,41 +638,41 @@ function DisplayWidget({ nodeId, data, nodeDef }: DisplayProps) {
    );
 }
 
-export function getTransformStyle(scale: number) {
-   const transform = Math.max(1, 1 / scale);
-   if (transform > 1.9) {
-      return {
-         display: 'none'
-      };
-   }
-   if (transform > 1.65) {
-      return {
-         transform: `scale(${transform})`,
-         transformOrigin: '0 90%',
-         top: -16,
-         left: 0,
-         fontSize: 8
-      };
-   }
-   if (transform > 1.5) {
-      return {
-         transform: `scale(${transform})`,
-         transformOrigin: '0 90%',
-         top: -16,
-         left: 0,
-         fontSize: 8
-      };
-   }
-   if (transform > 1.3) {
-      return {
-         transformOrigin: '0 50%',
-         transform: `scale(${transform})`,
-         fontSize: 10
-      };
-   }
+// export function getTransformStyle(scale: number) {
+//    const transform = Math.max(1, 1 / scale);
+//    if (transform > 1.9) {
+//       return {
+//          display: 'none'
+//       };
+//    }
+//    if (transform > 1.65) {
+//       return {
+//          transform: `scale(${transform})`,
+//          transformOrigin: '0 90%',
+//          top: -16,
+//          left: 0,
+//          fontSize: 8
+//       };
+//    }
+//    if (transform > 1.5) {
+//       return {
+//          transform: `scale(${transform})`,
+//          transformOrigin: '0 90%',
+//          top: -16,
+//          left: 0,
+//          fontSize: 8
+//       };
+//    }
+//    if (transform > 1.3) {
+//       return {
+//          transformOrigin: '0 50%',
+//          transform: `scale(${transform})`,
+//          fontSize: 10
+//       };
+//    }
 
-   return {
-      transformOrigin: '0 50%',
-      transform: `scale(${transform})`
-   };
-}
+//    return {
+//       transformOrigin: '0 50%',
+//       transform: `scale(${transform})`
+//    };
+// }

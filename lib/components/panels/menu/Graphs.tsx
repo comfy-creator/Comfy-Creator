@@ -19,9 +19,9 @@ const Graphs = () => {
       <div className="graph_title_container">
   
 
-        <h3 className="text-[0.9rem] text-borderColor my-[1px] mx-0">Workspace</h3>
+        <h3 className="text-[0.9rem] text-fg my-[1px] mx-0">Workspace</h3>
         <span className="text-[1.2rem] text-borderColor cursor-pointer" onClick={handleAdd}>
-          <AddIcon />
+          <AddIcon className='text-borderColor' />
         </span>
       </div>
       {graphs.slice().reverse().map((graph, index) => (
@@ -62,7 +62,7 @@ const Graph = ({ graph }: { graph: IGraphData }) => {
   
 
 
-      <h3 className="text-[0.8rem] text-borderColor my-[1px] mx-0" onClick={handleSelect}>
+      <h3 className="text-[0.8rem] text-fg my-[1px] mx-0" onClick={handleSelect}>
         {graph.label}
       </h3>
       <div className="flex gap-[10px] items-center justify-between text-[1.1rem] ">

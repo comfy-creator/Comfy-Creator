@@ -11,7 +11,7 @@ import { getHandleName, makeHandleId } from '../../utils/node';
 import { Label, RefValue } from '../../types/types';
 import { throttle } from 'lodash';
 import CursorBrush from '../icons/CursorBrush.svg';
-import CursorEraser from '../icons/CursorEraser.svg'
+import CursorEraser from '../icons/CursorEraser.svg';
 
 export type MaskProps = {
    refValue?: RefValue;
@@ -30,7 +30,9 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
    const [imageWidth, setImageWidth] = useState<number>(PreviewImageWidth);
    const [imageHeight, setImageHeight] = useState<number>(PreviewImageHeight);
    const [KonvaImageHeight, setKonvaImageHeight] = useState<number>(350);
-   const { updateInputData, nodes, edges, setEdges, updateNodeData } = useFlowStore((state) => state);
+   const { updateInputData, nodes, edges, setEdges, updateNodeData } = useFlowStore(
+      (state) => state
+   );
    const [isModalOpen, setIsModalOpen] = useState(false);
    const [imageUrl, setImageUrl] = useState<string>('');
    const [image, setImage] = useState<HTMLImageElement | null>(null);
@@ -65,6 +67,7 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
    useEffect(() => {
       if (!refValue?.nodeId) {
          setLabels([]);
+         setShapes([]);
          setImageUrl('');
          const outputs = nodes.find((node) => node.id === nodeId)?.data.outputs;
          for (const output in outputs) {
@@ -110,12 +113,14 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
 
    useMemo(() => {
       const image = refNode?.data?.outputs[refValue?.handleName!]?.value as any;
+      console.log('image>>>>', image)
       const theImage = Array.isArray(image) ? image?.[0] : image;
       if (theImage) {
          loadImage(theImage);
          setImageUrl(theImage);
-      }else {
+      } else {
          setLabels([]);
+         setShapes([]);
          setImageUrl('');
       }
    }, [refNode, refValue]);
@@ -273,7 +278,6 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
    };
 
    const generateBase64 = () => {
-      console.log('Generating base64...');
       if (!image || !stageRef.current) return;
 
       const stageWidth = Math.floor((image.width / image.height) * KonvaImageHeight);
@@ -290,8 +294,6 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
       // Calculate scaling factors
       const scaleX = stageWidth / 350;
       const scaleY = stageHeight / KonvaImageHeight;
-
-      console.log('ScaleX:', scaleX, 'ScaleY:', scaleY);
 
       // Update each label with its base64
       setLabels((prevLabels) =>
@@ -323,22 +325,28 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
             const resizeContext = resizeCanvas.getContext('2d');
 
             if (resizeContext) {
-                resizeContext.imageSmoothingEnabled = true;
-                resizeContext.imageSmoothingQuality = 'high';
+               resizeContext.imageSmoothingEnabled = true;
+               resizeContext.imageSmoothingQuality = 'high';
 
-                // Draw the original canvas onto the resized canvas
-                resizeContext.drawImage(tempCanvas, 0, 0, tempCanvas.width, tempCanvas.height, 0, 0, resizeCanvas.width, resizeCanvas.height);
+               // Draw the original canvas onto the resized canvas
+               resizeContext.drawImage(
+                  tempCanvas,
+                  0,
+                  0,
+                  tempCanvas.width,
+                  tempCanvas.height,
+                  0,
+                  0,
+                  resizeCanvas.width,
+                  resizeCanvas.height
+               );
             }
             const base64 = resizeCanvas.toDataURL('image/png');
-
-            console.log('Base64:', base64);
             label.base64 = base64;
 
             return label;
          })
       );
-
-     
    };
 
    const handleMouseDown = (evt: any) => {
@@ -503,7 +511,6 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
 
    const toggleEraser = () => {
       setIsEraserActive(!isEraserActive);
-   
    };
 
    useEffect(() => {
