@@ -1,7 +1,7 @@
 import { ReactFlowInstance, ReactFlowJsonObject, useReactFlow, Edge } from '@xyflow/react';
 import { AppNode, ConstantValue, HandleState, RefValue, SerializedGraph } from '../types/types';
 import { useApiContext } from '../contexts/api';
-import { getHandleName, isExcludedNodeType, isPassOutputNodeType, isRefInputType, makeHandleId } from '../utils/node';
+import { getHandleName, isRefInputType, makeHandleId } from '../utils/node';
 import { uuidv4 } from 'lib0/random';
 import { useGraphContext } from '../contexts/graph';
 import { toast } from 'react-toastify';
@@ -81,8 +81,6 @@ export const serializeGraph = (
    for (const node of nodes) {
       if (!node.data || !node.type) continue; // Remove non-useful nodes
 
-      if (isExcludedNodeType(node.type)) continue;
-
       const inputs: Record<string, InputValues> = {};
       const outputs: Record<string, InputValues> = {};
 
@@ -107,7 +105,11 @@ export const serializeGraph = (
                         handle_name
                      );
                } else {
-                  inputs[handle_name] = { ref: handle_state?.ref }; // we reference another value
+                  const ref: RefValue = {
+                     nodeId: sourceNode.id,
+                     handleName: edge.sourceHandle?.split('::')[1] || ''
+                  };
+                  inputs[handle_name] = { ref }; // we reference another value
                }
             } else {
                if (!handle_state.optional) {
@@ -211,7 +213,11 @@ export function useWorkflow() {
    const { refValueNodes } = useFlowStore();
 
    const submitWorkflow = async () => {
-      const [serializedGraph, missingInputHandles] = serializeGraph(rflInstance, true, refValueNodes);
+      const [serializedGraph, missingInputHandles] = serializeGraph(
+         rflInstance,
+         true,
+         refValueNodes
+      );
 
       if (missingInputHandles) {
          if (missingInputHandles) {
