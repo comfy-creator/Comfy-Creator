@@ -1,6 +1,8 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
-import { Panel } from "@xyflow/react";
 import { Layers, CopyIcon, PlayIcon } from "lucide-react";
+import { Panel, PanelPosition } from "@xyflow/react";
 
 interface ButtonsPanelProps {
   position?: PanelPosition;

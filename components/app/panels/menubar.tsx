@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Menubar,
   MenubarContent,
@@ -10,7 +12,7 @@ import {
   MenubarSubTrigger,
   MenubarTrigger,
 } from "@/components/ui/menubar";
-import { Panel } from "@xyflow/react";
+import { Panel, PanelPosition } from "@xyflow/react";
 
 interface MenubarPanelProps {
   position?: PanelPosition;

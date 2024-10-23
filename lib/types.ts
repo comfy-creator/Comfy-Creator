@@ -1,4 +1,4 @@
-type PanelPosition =
+export type PanelPosition =
   | "top-left"
   | "top-center"
   | "top-right"
@@ -6,7 +6,22 @@ type PanelPosition =
   | "bottom-center"
   | "bottom-right";
 
-interface UIPosition {
+export interface UIPosition {
   x: number;
   y: number;
+}
+
+export interface NodeDefinition {
+  name: string;
+  type: string;
+  category: string;
+  inputs: NodePort[];
+  outputs: NodePort[];
+}
+
+export interface NodePort {
+  type: string;
+  name: string;
+  label: string;
+  handle: "input" | "output";
 }

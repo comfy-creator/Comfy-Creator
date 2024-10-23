@@ -1,23 +1,25 @@
+"use client";
+
 import { useContextMenu } from "@/components/providers/context-menu";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuPortal,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getCategorizedNodes } from "@/lib/data/nodes";
+import { getCategorizedNodeDefinitions } from "@/lib/data/nodes";
+import { useFlow } from "@/lib/stores/flow";
 
 export function ContextMenu() {
   const { position, setIsOpen } = useContextMenu();
-  const categNodes = getCategorizedNodes();
+  const categNodes = getCategorizedNodeDefinitions();
+  const { addNode } = useFlow();
 
   return (
     <DropdownMenu open={true} onOpenChange={setIsOpen}>
@@ -52,7 +54,9 @@ export function ContextMenu() {
 
                     {categNodes[category].map((node) => {
                       return (
-                        <DropdownMenuItem onClick={() => addNode(node.type)}>
+                        <DropdownMenuItem
+                          onClick={() => addNode(node.type, position)}
+                        >
                           <span>{node.name}</span>
                         </DropdownMenuItem>
                       );
