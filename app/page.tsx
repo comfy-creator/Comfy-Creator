@@ -3,7 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarShortcut, MenubarSub, MenubarSubContent, MenubarSubTrigger, MenubarTrigger } from '@/components/ui/menubar';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuPortal, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
-import { addEdge, applyEdgeChanges, applyNodeChanges, Background, Connection, Controls, Edge, EdgeChange, Node, NodeChange, Panel, ReactFlow, useReactFlow } from '@xyflow/react';
+import { addEdge, applyEdgeChanges, applyNodeChanges, Background, Connection, Controls, Edge, EdgeChange, MiniMap, Node, NodeChange, Panel, ReactFlow, useReactFlow } from '@xyflow/react';
 import { CopyIcon, Layers, PlayIcon } from 'lucide-react';
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { getCategorizedNodes } from '@/lib/data/nodes';
@@ -47,7 +47,7 @@ export default function Page() {
   const closeContextMenu = useCallback(() => setContextMenu(null), []);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = (event: any) => {
       if (contextMenuRef.current && !contextMenuRef.current.contains(event.target)) {
         closeContextMenu();
       }
@@ -103,8 +103,12 @@ export default function Page() {
         onEdgesChange={onEdgesChange}
         onContextMenu={onContextMenu}
       >
+       
+      
         <Background />
-        <Controls />
+        <Controls
+        
+        />
 
         <Panel position="top-left">
           <Menubar className='border hover:bg-opacity-5'>

@@ -22,12 +22,12 @@ export const CozyNode = (node: BaseNode) => {
                     <div className="relative">
                         {node.inputs.map((input, index) => (
                             <div key={input.name} className="flex items-center" style={{ position: 'relative', top: `${index}px`, }}>
-                                <span className="text-xs" style={{ fontSize: '8px', left: `-100px`, position: 'relative', float: 'left' }}>{input.name}</span>
+                                <span className="text-xs" style={{ fontSize: '8px', left: `-90px`, position: 'relative', float: 'left' }}>{input.name}</span>
                                 <Handle
                                     type="target"
                                     id={input.name}
                                     position={Position.Left}
-                                    style={{ left: '-30px' }}
+                                    style={{ left: '-24.5px' }}
                                     className="w-0.5 h-0.5 border rounded-full"
                                 />
                             </div>
@@ -43,9 +43,9 @@ export const CozyNode = (node: BaseNode) => {
                                     position={Position.Right}
                                     id={output.name}
                                     className="w-0.5 h-0.5 border rounded-full"
-                                    style={{ right: '-10px' }}
+                                    style={{ right: '-24.5px' }}
                                 />
-                                <span className="text-xs" style={{ fontSize: '8px' }}>{output.name}</span>
+                                <span className="text-xs" style={{ fontSize: '8px', right: '-65px', position: 'relative' }}>{output.name}</span>
                             </div>
                         ))}
                     </div>
