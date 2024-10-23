@@ -5,6 +5,7 @@ import "./globals.css";
 import "@xyflow/react/dist/style.css";
 import { ThemeProvider } from "@/components/providers/theme";
 import { ReactFlowProvider } from "@xyflow/react";
+import { ContextMenuProvider } from "@/components/providers/context-menu";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -39,7 +40,7 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
           <ReactFlowProvider>
-            {children}
+            <ContextMenuProvider>{children}</ContextMenuProvider>
           </ReactFlowProvider>
         </body>
       </ThemeProvider>
