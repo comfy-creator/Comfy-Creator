@@ -32,6 +32,8 @@ export const useFlow = create<FlowStore>((set, get) => ({
 
   addNode: (type: string, position: UIPosition) => {
     set((state) => {
+      console.log(position);
+
       const newNode: Node = {
         position,
         type: type ?? "default",

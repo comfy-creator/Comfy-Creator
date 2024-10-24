@@ -28,19 +28,19 @@ export function ContextMenuProvider({
   const [position, setPosition] = useState<UIPosition>({ x: 0, y: 0 });
   const [isOpen, setIsOpen] = useState(false);
 
-  const { getZoom, getViewport } = useReactFlow();
+  const { getViewport } = useReactFlow();
   const { x: viewportX, y: viewportY } = getViewport();
 
-  const onContextMenu = useCallback(
-    (e?: MouseEvent<HTMLDivElement>) => {
-      if (!e) return;
-      e.preventDefault();
+  const onContextMenu = useCallback((e?: MouseEvent<HTMLDivElement>) => {
+    if (!e) return;
+    e.preventDefault();
 
-      setIsOpen(true);
-      setPosition({ x: e.clientX - viewportX, y: e.clientY - viewportY });
-    },
-    [getZoom]
-  );
+    setIsOpen(true);
+    setPosition({
+      x: e.clientX - viewportX,
+      y: e.clientY - viewportY,
+    });
+  }, []);
 
   const closeContextMenu = useCallback(() => {
     setIsOpen(false);

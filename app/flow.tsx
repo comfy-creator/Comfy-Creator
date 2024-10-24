@@ -26,7 +26,6 @@ export function Flow() {
 
   return (
     <ReactFlow
-      fitView
       nodes={nodes}
       edges={edges}
       nodeTypes={nodeTypes}
