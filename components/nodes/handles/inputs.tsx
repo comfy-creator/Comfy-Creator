@@ -14,7 +14,7 @@ export const InputHandles = ({ node }: InputHandleProps) => {
           className="flex items-center"
           style={{ position: "relative", top: `${index}px` }}
         >
-          <div className="text-content-base px-1.5 py-0.5 text-xs absolute flex w-fit items-center font-normal right-[30px] mb-[5px] ">
+          <div className="text-content-base px-1.5 py-0.5 text-xs absolute flex w-fit items-center font-normal right-[30px] top-[0px] mb-5 ">
             <span className=" whitespace-nowrap text-xs">{input.name}</span>
           </div>
 
@@ -25,7 +25,7 @@ export const InputHandles = ({ node }: InputHandleProps) => {
             style={{
               left: "-24.5px",
               position: "relative",
-              margin: "5px 0",
+              margin: "10px 0",
             }}
             className="w-0.5 h-0.5 border rounded-full"
           />
