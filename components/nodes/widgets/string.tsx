@@ -8,7 +8,8 @@ interface StringWidgetProps {
 export const StringWidget = ({ label }: StringWidgetProps) => {
   return (
     <div className="flex flex-col gap-1">
-      <Label className="text-xs">{label}</Label>
+ <Label className="text-[12px] font-medium">{label}</Label>
+
       <Input
         type="text"
         placeholder={label}

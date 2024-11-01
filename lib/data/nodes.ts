@@ -12,10 +12,22 @@ const generateImageNode: NodeDefinition = {
       label: "Positive Prompt",
     },
     {
+      type: "slider",
+      handle: "input",
+      name: "number_of_images",
+      label: "Number of Images",
+    },
+    {
       type: "text",
       handle: "input",
       name: "negative_prompt",
       label: "Negative Prompt",
+    },
+    {
+      type: "toggle",
+      handle: "input",
+      name: "enable_safety_checker",
+      label: "Enable Safety Checker",
     },
     {
       type: "string",
@@ -42,7 +54,7 @@ const generateImageNode: NodeDefinition = {
       label: "Aspect Ratio",
     },
     {
-      type: "string",
+      type: "enum",
       handle: "input",
       name: "output_format",
       label: "Output Format",

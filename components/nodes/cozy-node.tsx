@@ -2,13 +2,15 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import { NodeDefinition } from "@/lib/types";
-import { Handle, Position } from "@xyflow/react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ChevronDown, EllipsisIcon, Trash2, ChevronUp } from "lucide-react";
+import { ChevronDown, EllipsisIcon, ChevronUp } from "lucide-react";
 import { InputHandles } from "./handles/inputs";
 import { OutputHandles } from "./handles/outputs";
 import { TextWidget } from "./widgets/text";
 import { StringWidget } from "./widgets/string";
+import { SliderWidget } from "./widgets/slider";
+import { ToggleWidget } from "./widgets/Toggle";
+import { EnumWidget } from "./widgets/Enum";
 
 export const CozyNode = (node: NodeDefinition) => {
   return () => {
@@ -29,7 +31,7 @@ export const CozyNode = (node: NodeDefinition) => {
     return (
       <Card className="min-w-[407px] relative rounded-sm">
         <CardHeader className="px-2 py-2 mb-2 flex items-center flex-row justify-between border-b">
-          <div className="text-[]" style={{ fontSize: "1.125rem" }}>
+          <div className="" style={{ fontSize: "1rem" }}>
             {node.name}
           </div>
 
@@ -57,7 +59,7 @@ export const CozyNode = (node: NodeDefinition) => {
           </div>
 
           <div
-            className="relative -mx-3 -my-1.5 flex flex-col gap-1"
+            className="relative -mx-3 -my-1.5 flex flex-col gap-2"
             style={{ minHeight: maxHeight }}
           >
             {node.inputs.slice(0, showAll ? undefined : maxVisibleWidgets).map((input, index) => {
@@ -66,6 +68,12 @@ export const CozyNode = (node: NodeDefinition) => {
                   return <TextWidget key={index} label={input.label} />;
                 case "string":
                   return <StringWidget key={index} label={input.label} />;
+                case "slider":
+                  return <SliderWidget key={index} label={input.label} />;
+                case "toggle":
+                  return <ToggleWidget key={index} label={input.label} />;
+                case "enum":
+                  return <EnumWidget key={index} label={input.label} />;
                 default:
                   return null;
               }
