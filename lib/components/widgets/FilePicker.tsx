@@ -5,7 +5,7 @@ import { useApiContext } from '../../contexts/api';
 import { API_URL } from '../../config/constants';
 import { useFlowStore } from '../../store/flow';
 import { ProgressBar } from '../ProgressBar';
-import { Button } from '@/components/ui/button';
+import { Button } from '../../components/ui/button';
 import { Spinner } from '@nextui-org/react';
 
 export type FileProps = {

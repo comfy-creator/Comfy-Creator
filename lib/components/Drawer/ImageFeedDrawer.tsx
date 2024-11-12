@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Drawer } from './Drawer';
 import { useApiContext } from '../../contexts/api';
 
 const ImageFeedDrawer: React.FC = () => {
@@ -30,7 +29,7 @@ const ImageFeedDrawer: React.FC = () => {
       <button type="button" onClick={handleOpen}>
         Image feed
       </button>
-      <Drawer images={images} open={open} onClose={handleClose} />
+  
     </div>
   );
 };

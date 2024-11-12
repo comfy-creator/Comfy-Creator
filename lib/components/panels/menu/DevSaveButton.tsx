@@ -1,7 +1,7 @@
 import { useWorkflow } from '../../../hooks/useWorkflow';
 import { useEffect } from 'react';
 import { useFlowStore } from '../../../store/flow';
-import { Button } from '@/components/ui/button';
+import { Button } from '../../ui/button';
 
 interface DevSaveButtonProps {
    promptFilename: {

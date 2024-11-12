@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { RFState, useFlowStore } from '../../store/flow';
-import { Textarea } from '@/components/ui/textarea';
+import { Textarea } from '../../components/ui/textarea';
 
 type TextProps = {
    label: string;

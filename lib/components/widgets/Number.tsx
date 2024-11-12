@@ -1,6 +1,6 @@
 import { ChangeEvent, FC, useEffect, useState } from 'react';
 import { InputDialog } from '../dialogs/InputDialog';
-import { Slider } from '@/components/ui/slider';
+import { Slider } from '../../components/ui/slider';
 
 type NumberWidgetProps = {
    value?: number;

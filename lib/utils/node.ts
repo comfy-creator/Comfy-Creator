@@ -1,4 +1,4 @@
-import { AppNode, EdgeType, HandleState, NodeData, NodeDefinition } from '../types/types';
+import { AppNode, EdgeType, HandleState, NodeData, NodeDefinition, WidgetType } from '../types/types';
 import { DISPLAY_TYPES, EXCLUDED_NODE_TYPES, PASS_OUTPUT_NODE_TYPE, REF_INPUTS, WIDGET_TYPES } from '../config/constants';
 import { useFlowStore } from '../store/flow';
 import { createValueControlInput, isSeedInput } from './widgets';
@@ -6,7 +6,12 @@ import { Edge } from '@xyflow/react';
 
 export function computeInitialNodeData(def: NodeDefinition) {
    const { display_name, inputs, outputs } = def;
-   const state: NodeData = { display_name, inputs: {}, outputs: {}, widgets: {} };
+   const state: NodeData = {
+      display_name: display_name as string || undefined,
+      inputs: {},
+      outputs: {},
+      widgets: {}
+   };
 
    let currentSlot = 0;
    Object.keys(inputs).map((key) => {
@@ -23,7 +28,12 @@ export function computeInitialNodeData(def: NodeDefinition) {
 
          state.inputs[input.display_name] = data;
 
-         if (isSeedInput({ widget_type: input.edge_type, display_name: input.display_name })) {
+         if (
+            isSeedInput({
+               type: input.edge_type as WidgetType,
+               display_name: input.display_name
+            })
+         ) {
             const nextValue = createValueControlInput({ input: data });
             state.inputs[nextValue.display_name] = {
                display_name: nextValue.display_name,

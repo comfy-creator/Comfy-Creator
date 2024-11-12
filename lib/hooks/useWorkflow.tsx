@@ -206,7 +206,7 @@ export const serializeGraph = (
 
 export function useWorkflow() {
    const rflInstance = useReactFlow<AppNode, Edge>();
-   const { addGraphRun } = useGraphContext();
+   const { addNewGraph } = useGraphContext();
    const { runWorkflow } = useApiContext();
    const { refValueNodes } = useFlowStore();
 
@@ -236,7 +236,7 @@ export function useWorkflow() {
 
       await runWorkflow(serializedGraph, runId);
 
-      addGraphRun(runId);
+      // addNewGraph(runId);
 
       // for (const node of flow.nodes) {
       //   applyWidgetControl(node, updateInputData);

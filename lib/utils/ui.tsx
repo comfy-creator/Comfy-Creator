@@ -236,7 +236,7 @@ export function categorizeObjects(nodeDefs: NodeDefinitions, onPaneClick: () => 
                   data: null
                };
                newCategory.subMenu?.push({
-                  label: nodeDef.display_name,
+                  label: nodeDef.display_name as string,
                   hasSubMenu: false,
                   subMenu: null,
                   data: { name, ...nodeDef }
@@ -244,7 +244,7 @@ export function categorizeObjects(nodeDefs: NodeDefinitions, onPaneClick: () => 
                currentCategory.push(newCategory);
             } else {
                foundCategory.subMenu?.push({
-                  label: nodeDef.display_name,
+                  label: nodeDef.display_name as string,
                   hasSubMenu: false,
                   subMenu: null,
                   data: { name, ...nodeDef }
@@ -252,13 +252,13 @@ export function categorizeObjects(nodeDefs: NodeDefinitions, onPaneClick: () => 
             }
          } else if (!foundCategory) {
             const newCategory = {
-               label: stillHasSub(currentCat) ? category : nodeDef.display_name,
+               label: stillHasSub(currentCat) ? category : nodeDef.display_name as string,
                hasSubMenu: stillHasSub(currentCat),
                subMenu: stillHasSub(currentCat) ? [] : null,
                data: stillHasSub(currentCat) ? null : { name, ...nodeDef }
             };
 
-            currentCategory.push(newCategory);
+            currentCategory.push(newCategory as IMenuType);
             if (index < categories.length - 1) {
                currentCategory = (newCategory.subMenu as IMenuType['subMenu'])!;
             }

@@ -4,7 +4,7 @@ import './menu.module.scss';
 import { BookmarkIcon } from '@radix-ui/react-icons';
 import ImageFeed from './ImageFeed';
 import Models from './Models';
-import { Button } from '@/components/ui/button';
+import { Button } from '../ui/button';
 
 const Tabs = [
    {
@@ -64,10 +64,11 @@ const Menu = () => {
          >
             <div className="menu_modal_container">
                <div className="menu_modal_items">
-                  {tabs.map((tab) => (
+                  {tabs.map((tab, index) => (
                      <div
                         className={`menu_modal_items_button ${activeTab?.id === tab.id && 'active'}`}
                         onClick={() => selectTab(tab.id)}
+                        key={index}
                      >
                         <span className="icon">
                            <BookmarkIcon />

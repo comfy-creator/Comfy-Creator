@@ -2,7 +2,7 @@ import { ChangeEvent, useRef, useState, useEffect, createRef, useMemo, useCallba
 import { Modal, Tooltip } from 'antd';
 import { EraserIcon } from '@radix-ui/react-icons';
 import { useFlowStore } from '../../store/flow';
-import { Button } from '@/components/ui/button';
+import { Button } from '../ui/button';
 import { Stage, Layer, Image as KonvaImage, Shape } from 'react-konva';
 import Konva from 'konva';
 import { LuRedo2, LuUndo2 } from 'react-icons/lu';
@@ -525,7 +525,11 @@ export function MaskWidget({ nodeId, onChange, value, refValue }: MaskProps) {
             <div className="mt-3" onClick={() => toggleModal()}>
                <Stage ref={stageRef} width={imageWidth} height={imageHeight}>
                   <Layer>
-                     <KonvaImage image={image} width={imageWidth} height={imageHeight} />
+                     <KonvaImage
+                        image={image}
+                        width={imageWidth}
+                        height={imageHeight}
+                     />
                      {shapes.map((shape, i) => (
                         <Shape
                            key={i}

@@ -247,7 +247,20 @@ export type EdgeType =
    | 'VIDEO'
    | 'LORA'
    | 'CONTROL_NET'
-   | 'PREVIEW';
+   | 'PREVIEW'
+   // we need to add these types below to prevent type errors, but they may not be used at the moment
+   | 'CLIP' 
+   | 'CLIP_VISION'
+   | 'CLIP_VISION_OUTPUT'
+   | 'CONDITIONING'
+   | 'LATENT'
+   | 'MODEL'
+   | 'VAE'
+   | 'STYLE_MODEL'
+   | 'TAESD'
+   | 'FILEPICKER';
+
+
 
 export type WidgetType =
    | 'TOGGLE'
@@ -326,6 +339,10 @@ export interface HandleState {
    isDisabled?: boolean;
    isConnected?: boolean;
    isHighlighted?: boolean;
+   isMultiline?: boolean;
+
+   // for primitive nodes
+   primitiveNodeId?: string | null;
 }
 
 export interface WidgetDefinition {

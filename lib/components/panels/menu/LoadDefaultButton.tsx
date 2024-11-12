@@ -1,7 +1,7 @@
 import { useGraph } from '../../../hooks/useGraph';
 import { defaultEdges, defaultNodes } from '../../../default-graph';
 import { uuidv4 } from 'lib0/random';
-import { Button } from '@/components/ui/button';
+import { Button } from '../../ui/button';
 
 const LoadDefaultButton = () => {
    const { loadSerializedGraph } = useGraph();

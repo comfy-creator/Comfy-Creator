@@ -10,6 +10,7 @@ export function createValueControlInputs(args: any) {
    widgets[name] = {
       display_name: name,
       widget_type: 'ENUM',
+      type: 'TEXT', // TODO: This may need to be changed to ENUM
       props: {
          serialize: true,
          valueControl: true,
@@ -23,6 +24,7 @@ export function createValueControlInputs(args: any) {
       widgets['control_filter_list'] = {
          display_name: 'control_filter_list',
          widget_type: 'STRING',
+         type: 'TEXT', // TODO: This may need to be changed to ENUM
          props: {
             value: '',
             serialize: false

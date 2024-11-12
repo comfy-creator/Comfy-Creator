@@ -15,7 +15,7 @@ import GraphRuns from './menu/GraphRuns';
 import { uuidv4 } from 'lib0/random.js';
 import Graphs from './menu/Graphs';
 import Menu from '../Menu';
-import { Button } from '@/components/ui/button';
+import { Button } from '../ui/button';
 
 type AutoQueueMode =
    | {
@@ -226,29 +226,23 @@ const ControlPanel = () => {
                      const json = JSON.parse(contents);
                      if (isLegacySerializedGraph(json)) {
                         const graph = loadLegacyWorkflow(json, nodeDefs);
-                        loadSerializedGraph(
-                           [
-                              {
-                                 index: uuidv4(),
-                                 label: 'Workflow',
-                                 nodes: graph.nodes,
-                                 edges: graph.edges
-                              }
-                           ],
-                           true
-                        );
+                        const graphData = {
+                           id: uuidv4(),
+                           label: 'Workflow',
+                           nodes: graph.nodes,
+                           edges: graph.edges
+                        };
+                        // loadSerializedGraph([graphData], true);
+                        loadSerializedGraph(graphData, true);
                      } else {
-                        loadSerializedGraph(
-                           [
-                              {
-                                 index: uuidv4(),
-                                 label: 'Workflow',
-                                 nodes: json?.nodes || [],
-                                 edges: json?.edges || []
-                              }
-                           ],
-                           true
-                        );
+                        const graphData = {
+                           id: uuidv4(),
+                           label: 'Workflow',
+                           nodes: json?.nodes || [],
+                           edges: json?.edges || []
+                        };
+                        // loadSerializedGraph([graphData], true);
+                        loadSerializedGraph(graphData, true);
                      }
                   }
                };

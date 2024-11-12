@@ -4,7 +4,7 @@ import {
    SelectValue,
    SelectItem,
    Select
-} from '@/components/ui/select';
+} from '../../components/ui/select';
 
 type EnumProps = {
    label: string;
